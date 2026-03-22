@@ -1,0 +1,337 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/stage_select.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/stage_meadow_bg_v1.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/ui/theme/panel_card.svg" id="3"]
+[ext_resource type="Texture2D" path="res://assets/ui/theme/popup_frame.svg" id="4"]
+
+[sub_resource type="StyleBoxFlat" id="1"]
+bg_color = Color(1, 1, 1, 0.96)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.360784, 0.760784, 0.964706, 1)
+corner_radius_top_left = 32
+corner_radius_top_right = 32
+corner_radius_bottom_right = 32
+corner_radius_bottom_left = 32
+shadow_color = Color(0.341176, 0.560784, 0.65098, 0.18)
+shadow_size = 10
+
+[sub_resource type="StyleBoxFlat" id="2"]
+bg_color = Color(1, 0.815686, 0.286275, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.952941, 0.54902, 0.14902, 1)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+shadow_color = Color(0.513726, 0.419608, 0.14902, 0.18)
+shadow_size = 8
+
+[sub_resource type="StyleBoxFlat" id="3"]
+bg_color = Color(1, 0.984314, 0.929412, 0.98)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.360784, 0.760784, 0.964706, 1)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+shadow_color = Color(0.341176, 0.560784, 0.65098, 0.14)
+shadow_size = 8
+
+[node name="StageSelect" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.94902, 0.976471, 1, 1)
+
+[node name="BackgroundTexture" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2")
+expand_mode = 1
+stretch_mode = 6
+modulate = Color(1, 0.960784, 0.941176, 0.28)
+
+[node name="SafeMargin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="LayoutRoot" type="VBoxContainer" parent="SafeMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 22
+
+[node name="HeaderPanel" type="PanelContainer" parent="SafeMargin/LayoutRoot"]
+custom_minimum_size = Vector2(0, 170)
+layout_mode = 2
+theme_override_styles/panel = SubResource("1")
+
+[node name="HeaderFrame" type="TextureRect" parent="SafeMargin/LayoutRoot/HeaderPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("4")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="HeaderMargin" type="MarginContainer" parent="SafeMargin/LayoutRoot/HeaderPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="HeaderRow" type="HBoxContainer" parent="SafeMargin/LayoutRoot/HeaderPanel/HeaderMargin"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="HeaderText" type="VBoxContainer" parent="SafeMargin/LayoutRoot/HeaderPanel/HeaderMargin/HeaderRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="SafeMargin/LayoutRoot/HeaderPanel/HeaderMargin/HeaderRow/HeaderText"]
+layout_mode = 2
+text = "구조 작전 라인"
+theme_override_font_sizes/font_size = 50
+theme_override_colors/font_color = Color(0.176471, 0.317647, 0.431373, 1)
+
+[node name="SubtitleLabel" type="Label" parent="SafeMargin/LayoutRoot/HeaderPanel/HeaderMargin/HeaderRow/HeaderText"]
+layout_mode = 2
+text = "스토리 라인을 따라 스테이지를 선택하고 구조를 이어가세요."
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.286275, 0.45098, 0.572549, 1)
+
+[node name="HeaderSummaryLabel" type="Label" parent="SafeMargin/LayoutRoot/HeaderPanel/HeaderMargin/HeaderRow/HeaderText"]
+layout_mode = 2
+text = "현재 추천 Stage 1 · 해금 1 / 100"
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.239216, 0.384314, 0.490196, 1)
+
+[node name="HomeButton" type="Button" parent="SafeMargin/LayoutRoot/HeaderPanel/HeaderMargin/HeaderRow"]
+custom_minimum_size = Vector2(220, 78)
+layout_mode = 2
+text = "홈으로"
+theme_override_styles/normal = SubResource("2")
+theme_override_styles/hover = SubResource("3")
+theme_override_styles/pressed = SubResource("3")
+theme_override_styles/disabled = SubResource("3")
+theme_override_colors/font_color = Color(0.407843, 0.243137, 0.027451, 1)
+theme_override_font_sizes/font_size = 28
+
+[node name="ContentRoot" type="BoxContainer" parent="SafeMargin/LayoutRoot"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 20
+
+[node name="StoryPanel" type="PanelContainer" parent="SafeMargin/LayoutRoot/ContentRoot"]
+custom_minimum_size = Vector2(420, 0)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("1")
+
+[node name="StoryFrame" type="TextureRect" parent="SafeMargin/LayoutRoot/ContentRoot/StoryPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("3")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="StoryMargin" type="MarginContainer" parent="SafeMargin/LayoutRoot/ContentRoot/StoryPanel/StoryFrame"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 22
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 22
+theme_override_constants/margin_bottom = 22
+
+[node name="StoryColumn" type="VBoxContainer" parent="SafeMargin/LayoutRoot/ContentRoot/StoryPanel/StoryFrame/StoryMargin"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 14
+
+[node name="StoryTitleLabel" type="Label" parent="SafeMargin/LayoutRoot/ContentRoot/StoryPanel/StoryFrame/StoryMargin/StoryColumn"]
+layout_mode = 2
+text = "1-10 · 정글 입구"
+theme_override_font_sizes/font_size = 30
+theme_override_colors/font_color = Color(0.176471, 0.317647, 0.431373, 1)
+
+[node name="StoryBodyLabel" type="Label" parent="SafeMargin/LayoutRoot/ContentRoot/StoryPanel/StoryFrame/StoryMargin/StoryColumn"]
+layout_mode = 2
+text = "작은 동물 구조로 세계관을 소개하는 시작 구간입니다."
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.239216, 0.384314, 0.490196, 1)
+
+[node name="SelectedStageCard" type="PanelContainer" parent="SafeMargin/LayoutRoot/ContentRoot/StoryPanel/StoryFrame/StoryMargin/StoryColumn"]
+custom_minimum_size = Vector2(0, 160)
+layout_mode = 2
+theme_override_styles/panel = SubResource("3")
+
+[node name="SelectedStageMargin" type="MarginContainer" parent="SafeMargin/LayoutRoot/ContentRoot/StoryPanel/StoryFrame/StoryMargin/StoryColumn/SelectedStageCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="SelectedStageColumn" type="VBoxContainer" parent="SafeMargin/LayoutRoot/ContentRoot/StoryPanel/StoryFrame/StoryMargin/StoryColumn/SelectedStageCard/SelectedStageMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SelectedStageLabel" type="Label" parent="SafeMargin/LayoutRoot/ContentRoot/StoryPanel/StoryFrame/StoryMargin/StoryColumn/SelectedStageCard/SelectedStageMargin/SelectedStageColumn"]
+layout_mode = 2
+text = "Stage 1 · Easy"
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.176471, 0.317647, 0.431373, 1)
+
+[node name="SelectedStageBodyLabel" type="Label" parent="SafeMargin/LayoutRoot/ContentRoot/StoryPanel/StoryFrame/StoryMargin/StoryColumn/SelectedStageCard/SelectedStageMargin/SelectedStageColumn"]
+layout_mode = 2
+text = "목표: 토끼 10"
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.239216, 0.384314, 0.490196, 1)
+
+[node name="BandRouteCard" type="PanelContainer" parent="SafeMargin/LayoutRoot/ContentRoot/StoryPanel/StoryFrame/StoryMargin/StoryColumn"]
+custom_minimum_size = Vector2(0, 138)
+layout_mode = 2
+theme_override_styles/panel = SubResource("3")
+
+[node name="BandRouteMargin" type="MarginContainer" parent="SafeMargin/LayoutRoot/ContentRoot/StoryPanel/StoryFrame/StoryMargin/StoryColumn/BandRouteCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 16
+
+[node name="BandRouteColumn" type="VBoxContainer" parent="SafeMargin/LayoutRoot/ContentRoot/StoryPanel/StoryFrame/StoryMargin/StoryColumn/BandRouteCard/BandRouteMargin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="BandRouteTitleLabel" type="Label" parent="SafeMargin/LayoutRoot/ContentRoot/StoryPanel/StoryFrame/StoryMargin/StoryColumn/BandRouteCard/BandRouteMargin/BandRouteColumn"]
+layout_mode = 2
+text = "현재 밴드 진행"
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.176471, 0.317647, 0.431373, 1)
+
+[node name="BandRouteScroll" type="ScrollContainer" parent="SafeMargin/LayoutRoot/ContentRoot/StoryPanel/StoryFrame/StoryMargin/StoryColumn/BandRouteCard/BandRouteMargin/BandRouteColumn"]
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+horizontal_scroll_mode = 1
+vertical_scroll_mode = 0
+
+[node name="BandRouteRow" type="HBoxContainer" parent="SafeMargin/LayoutRoot/ContentRoot/StoryPanel/StoryFrame/StoryMargin/StoryColumn/BandRouteCard/BandRouteMargin/BandRouteColumn/BandRouteScroll"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TimelineScroll" type="ScrollContainer" parent="SafeMargin/LayoutRoot/ContentRoot/StoryPanel/StoryFrame/StoryMargin/StoryColumn"]
+custom_minimum_size = Vector2(0, 320)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TimelineList" type="VBoxContainer" parent="SafeMargin/LayoutRoot/ContentRoot/StoryPanel/StoryFrame/StoryMargin/StoryColumn/TimelineScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="StagePanel" type="PanelContainer" parent="SafeMargin/LayoutRoot/ContentRoot"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("1")
+
+[node name="StageFrame" type="TextureRect" parent="SafeMargin/LayoutRoot/ContentRoot/StagePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("4")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="StageMargin" type="MarginContainer" parent="SafeMargin/LayoutRoot/ContentRoot/StagePanel/StageFrame"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="StageColumn" type="VBoxContainer" parent="SafeMargin/LayoutRoot/ContentRoot/StagePanel/StageFrame/StageMargin"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 14
+
+[node name="StageHintLabel" type="Label" parent="SafeMargin/LayoutRoot/ContentRoot/StagePanel/StageFrame/StageMargin/StageColumn"]
+layout_mode = 2
+text = "카드를 누르면 바로 해당 스테이지로 이동합니다."
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.239216, 0.384314, 0.490196, 1)
+
+[node name="StageScroll" type="ScrollContainer" parent="SafeMargin/LayoutRoot/ContentRoot/StagePanel/StageFrame/StageMargin/StageColumn"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+follow_focus = true
+
+[node name="StageGrid" type="GridContainer" parent="SafeMargin/LayoutRoot/ContentRoot/StagePanel/StageFrame/StageMargin/StageColumn/StageScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 4
+theme_override_constants/h_separation = 18
+theme_override_constants/v_separation = 18
+
+[connection signal="pressed" from="SafeMargin/LayoutRoot/HeaderPanel/HeaderMargin/HeaderRow/HomeButton" to="." method="_on_home_button_pressed"]

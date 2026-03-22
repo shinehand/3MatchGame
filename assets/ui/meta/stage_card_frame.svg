@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200">
+  <defs>
+    <linearGradient id="fill" x1="160" y1="16" x2="160" y2="184" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFDF6"/>
+      <stop offset="1" stop-color="#FFE8C9"/>
+    </linearGradient>
+    <linearGradient id="pill" x1="238" y1="34" x2="238" y2="74" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE293"/>
+      <stop offset="1" stop-color="#FFC458"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#577A83" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <rect x="16" y="16" width="288" height="168" rx="32" fill="url(#fill)" stroke="#6BC8EE" stroke-width="6"/>
+    <rect x="34" y="28" width="252" height="48" rx="18" fill="#FFFFFF" opacity="0.48"/>
+    <rect x="198" y="34" width="76" height="32" rx="16" fill="url(#pill)" stroke="#F0A43A" stroke-width="4"/>
+    <circle cx="74" cy="136" r="14" fill="#FFD95A"/>
+    <circle cx="110" cy="136" r="14" fill="#FFE9A9"/>
+    <circle cx="146" cy="136" r="14" fill="#FFE9A9"/>
+  </g>
+</svg>

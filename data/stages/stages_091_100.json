@@ -1,0 +1,316 @@
+[
+  {
+    "id": 91,
+    "name": "Stage 91",
+    "band": "91-100",
+    "difficulty": "Hard",
+    "theme_key": "finale_1",
+    "moves": 19,
+    "board_mask": ["00111100", "01111110", "11111111", "11100111", "11100111", "11111111", "01111110", "00111100"],
+    "targets": { "collect": { "rabbit": 7, "bear": 7 }, "score": 3800, "blockers": 13 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 4, "bear": 4, "cat": 2, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "최종 구간 진입입니다. 첫 세 수가 스테이지 전체를 좌우합니다."
+  },
+  {
+    "id": 92,
+    "name": "Stage 92",
+    "band": "91-100",
+    "difficulty": "Hard",
+    "theme_key": "finale_1",
+    "moves": 19,
+    "board_mask": ["00111100", "01111110", "11111111", "11100111", "11100111", "11111111", "01111110", "00111100"],
+    "targets": { "collect": { "cat": 7 }, "score": 5200, "blockers": 13 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 5, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 3, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "점수와 수집을 동시에 요구하는 후반판입니다."
+  },
+  {
+    "id": 93,
+    "name": "Stage 93",
+    "band": "91-100",
+    "difficulty": "Hard",
+    "theme_key": "finale_1",
+    "moves": 19,
+    "board_mask": ["01100110", "11111111", "11111111", "11100111", "11100111", "11111111", "11111111", "01100110"],
+    "targets": { "collect": { "chick": 7, "frog": 7 }, "score": 0, "blockers": 13 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 4, "frog": 4 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "양쪽 구획을 같이 보는 능력을 계속 요구합니다."
+  },
+  {
+    "id": 94,
+    "name": "Stage 94",
+    "band": "91-100",
+    "difficulty": "Hard",
+    "theme_key": "finale_1",
+    "moves": 19,
+    "board_mask": ["00100100", "01111110", "11111111", "11011011", "11011011", "11111111", "01111110", "00100100"],
+    "targets": { "collect": { "rabbit": 5, "cat": 5 }, "score": 5400, "blockers": 13 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 3, "bear": 2, "cat": 3, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 6, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "막힌 중심과 외곽을 동시에 풀어야 하는 진짜 후반형입니다."
+  },
+  {
+    "id": 95,
+    "name": "Stage 95",
+    "band": "91-100",
+    "difficulty": "Hard",
+    "theme_key": "finale_1",
+    "moves": 19,
+    "board_mask": ["00100100", "01111110", "11111111", "11011011", "11011011", "11111111", "01111110", "00100100"],
+    "targets": { "collect": { "rabbit": 4, "chick": 4 }, "score": 0, "blockers": 14 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 4, "bear": 2, "cat": 2, "chick": 4, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 6, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "피날레 압박 시작입니다. 첫 선택부터 연쇄 경로를 생각해야 합니다."
+  },
+  {
+    "id": 96,
+    "name": "Stage 96",
+    "band": "91-100",
+    "difficulty": "Hard",
+    "theme_key": "finale_1",
+    "moves": 19,
+    "board_mask": ["01111110", "11111111", "11100111", "11000011", "11000011", "11100111", "11111111", "01111110"],
+    "targets": { "collect": {}, "score": 5800, "blockers": 13 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 2, "frog": 2 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "마지막 점수전입니다. 폭발 블록을 외곽이 아니라 중심 축에 써야 합니다."
+  },
+  {
+    "id": 97,
+    "name": "Stage 97",
+    "band": "91-100",
+    "difficulty": "Hard",
+    "theme_key": "finale_1",
+    "moves": 19,
+    "board_mask": ["00011100", "00111110", "11111111", "11111111", "11111111", "11111111", "00111110", "00011100"],
+    "targets": { "collect": { "bear": 7, "frog": 7 }, "score": 0, "blockers": 14 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 4, "cat": 2, "chick": 2, "frog": 4 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "후반부는 하나의 잘못된 선택이 크게 손해로 이어집니다."
+  },
+  {
+    "id": 98,
+    "name": "Stage 98",
+    "band": "91-100",
+    "difficulty": "Hard",
+    "theme_key": "finale_1",
+    "moves": 19,
+    "board_mask": ["00011100", "00111110", "11111111", "11111111", "11111111", "11111111", "00111110", "00011100"],
+    "targets": { "collect": { "rabbit": 5 }, "score": 6000, "blockers": 14 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 5, "bear": 2, "cat": 2, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "고점수와 수집을 같이 풀려면 중심에 큰 매치를 유지해야 합니다."
+  },
+  {
+    "id": 99,
+    "name": "Stage 99",
+    "band": "91-100",
+    "difficulty": "Hard",
+    "theme_key": "finale_1",
+    "moves": 19,
+    "board_mask": ["01100110", "11111111", "11111111", "11100111", "11100111", "11111111", "11111111", "01100110"],
+    "targets": { "collect": { "chick": 7, "frog": 7 }, "score": 6200, "blockers": 14 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 4, "frog": 4 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "마지막 전 스테이지입니다. 모든 시스템을 동시에 요구합니다."
+  },
+  {
+    "id": 100,
+    "name": "Stage 100",
+    "band": "91-100",
+    "difficulty": "Hard",
+    "theme_key": "finale_1",
+    "moves": 19,
+    "board_mask": ["00100100", "01111110", "11111111", "11011011", "11011011", "11111111", "01111110", "00100100"],
+    "targets": { "collect": { "rabbit": 6, "bear": 6, "chick": 6, "frog": 6 }, "score": 6200, "blockers": 13 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 3, "bear": 3, "cat": 1, "chick": 3, "frog": 3 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 6, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "100스테이지 피날레입니다. 특수 블록과 연쇄를 의도적으로 설계해야 합니다."
+  }
+]

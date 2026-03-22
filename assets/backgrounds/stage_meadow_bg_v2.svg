@@ -1,0 +1,28 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="sky" x1="960" y1="0" x2="960" y2="1080" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#87DCFF"/>
+    <stop offset="0.48" stop-color="#C8F0FF"/>
+    <stop offset="1" stop-color="#FFE9D4"/>
+  </linearGradient>
+  <linearGradient id="hill1" x1="960" y1="680" x2="960" y2="1080" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#9EF0D0"/>
+    <stop offset="1" stop-color="#6FD3AB"/>
+  </linearGradient>
+  <linearGradient id="hill2" x1="960" y1="760" x2="960" y2="1080" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#FFE9B6"/>
+    <stop offset="1" stop-color="#FFD79D"/>
+  </linearGradient>
+</defs>
+<rect width="1920" height="1080" fill="url(#sky)"/>
+<ellipse cx="232" cy="168" rx="148" ry="62" fill="#FFFFFF" opacity="0.74"/>
+<ellipse cx="340" cy="192" rx="118" ry="46" fill="#FFFFFF" opacity="0.64"/>
+<ellipse cx="1500" cy="154" rx="148" ry="58" fill="#FFFFFF" opacity="0.78"/>
+<ellipse cx="1608" cy="184" rx="118" ry="44" fill="#FFFFFF" opacity="0.64"/>
+<ellipse cx="960" cy="900" rx="1180" ry="310" fill="url(#hill2)"/>
+<ellipse cx="1020" cy="970" rx="1320" ry="280" fill="url(#hill1)"/>
+<ellipse cx="260" cy="842" rx="78" ry="28" fill="#FFB7D5" opacity="0.36"/>
+<ellipse cx="1584" cy="824" rx="86" ry="30" fill="#FFF19D" opacity="0.42"/>
+<ellipse cx="1712" cy="904" rx="54" ry="18" fill="#FFC681" opacity="0.3"/>
+<ellipse cx="114" cy="920" rx="66" ry="24" fill="#FFD57D" opacity="0.28"/>
+</svg>

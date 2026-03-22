@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#7f4d66" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <circle cx="48" cy="48" r="34" fill="#ffe4ef" stroke="#ff8fb1" stroke-width="6"/>
+    <path d="M48 24l7 14 16 2-12 11 3 16-14-7-14 7 3-16-12-11 16-2z" fill="#ffbf4f" stroke="#f28e54" stroke-width="4" stroke-linejoin="round"/>
+  </g>
+</svg>

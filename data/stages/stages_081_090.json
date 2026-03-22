@@ -1,0 +1,310 @@
+[
+  {
+    "id": 81,
+    "name": "Stage 81",
+    "band": "81-90",
+    "difficulty": "Hard",
+    "theme_key": "skyline_2",
+    "moves": 18,
+    "board_mask": ["00111100", "01111110", "11111111", "11100111", "11100111", "11111111", "01111110", "00111100"],
+    "targets": { "collect": { "rabbit": 8, "cat": 6 }, "score": 0, "blockers": 12 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 3, "bear": 2, "cat": 3, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "피날레 직전 구간입니다. 중앙 라인을 여는 판단이 더 중요해집니다."
+  },
+  {
+    "id": 82,
+    "name": "Stage 82",
+    "band": "81-90",
+    "difficulty": "Hard",
+    "theme_key": "skyline_2",
+    "moves": 18,
+    "board_mask": ["00111100", "01111110", "11111111", "11100111", "11100111", "11111111", "01111110", "00111100"],
+    "targets": { "collect": { "bear": 8 }, "score": 5000, "blockers": 12 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 5, "cat": 2, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "수집과 점수를 동시에 끌어올리되 한쪽에 수를 몰지 마세요."
+  },
+  {
+    "id": 83,
+    "name": "Stage 83",
+    "band": "81-90",
+    "difficulty": "Hard",
+    "theme_key": "skyline_2",
+    "moves": 18,
+    "board_mask": ["01100110", "11111111", "11111111", "11100111", "11100111", "11111111", "11111111", "01100110"],
+    "targets": { "collect": { "chick": 8, "frog": 8 }, "score": 0, "blockers": 13 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 4, "frog": 4 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "주머니형 보드는 두 쪽을 균형 있게 열어야 후반 수가 남습니다."
+  },
+  {
+    "id": 84,
+    "name": "Stage 84",
+    "band": "81-90",
+    "difficulty": "Hard",
+    "theme_key": "skyline_2",
+    "moves": 18,
+    "board_mask": ["01100110", "11111111", "11111111", "11100111", "11100111", "11111111", "11111111", "01100110"],
+    "targets": { "collect": { "rabbit": 6, "bear": 6 }, "score": 5200, "blockers": 13 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 3, "bear": 3, "cat": 2, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "점수 목표가 높을수록 폭발 블록을 작은 구역에 쓰지 않는 편이 좋습니다."
+  },
+  {
+    "id": 85,
+    "name": "Stage 85",
+    "band": "81-90",
+    "difficulty": "Hard",
+    "theme_key": "skyline_2",
+    "moves": 18,
+    "board_mask": ["00100100", "01111110", "11111111", "11011011", "11011011", "11111111", "01111110", "00100100"],
+    "targets": { "collect": { "rabbit": 5, "chick": 5 }, "score": 0, "blockers": 13 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 3, "bear": 2, "cat": 2, "chick": 3, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 6, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "최종권 압박 시작입니다. 막힌 중심을 너무 늦게 열면 회복이 어렵습니다."
+  },
+  {
+    "id": 86,
+    "name": "Stage 86",
+    "band": "81-90",
+    "difficulty": "Hard",
+    "theme_key": "skyline_2",
+    "moves": 18,
+    "board_mask": ["00100100", "01111110", "11111111", "11011011", "11011011", "11111111", "01111110", "00100100"],
+    "targets": { "collect": {}, "score": 5800, "blockers": 13 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 2, "frog": 2 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 6, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "후반 점수전은 중심 빈칸 주변에서 연쇄가 오래 살아야 합니다."
+  },
+  {
+    "id": 87,
+    "name": "Stage 87",
+    "band": "81-90",
+    "difficulty": "Hard",
+    "theme_key": "skyline_2",
+    "moves": 18,
+    "board_mask": ["01111110", "11111111", "11100111", "11000011", "11000011", "11100111", "11111111", "01111110"],
+    "targets": { "collect": { "bear": 8, "cat": 8 }, "score": 0, "blockers": 13 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 4, "cat": 4, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "외곽 장애물이 많을수록 줄 제거 특수 블록의 가치가 올라갑니다."
+  },
+  {
+    "id": 88,
+    "name": "Stage 88",
+    "band": "81-90",
+    "difficulty": "Hard",
+    "theme_key": "skyline_2",
+    "moves": 18,
+    "board_mask": ["01111110", "11111111", "11100111", "11000011", "11000011", "11100111", "11111111", "01111110"],
+    "targets": { "collect": { "rabbit": 6, "frog": 6 }, "score": 5400, "blockers": 13 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 3, "bear": 2, "cat": 2, "chick": 2, "frog": 3 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "점수와 수집이 함께 있을수록 첫 폭발 블록 위치가 승부를 가릅니다."
+  },
+  {
+    "id": 89,
+    "name": "Stage 89",
+    "band": "81-90",
+    "difficulty": "Hard",
+    "theme_key": "skyline_2",
+    "moves": 18,
+    "board_mask": ["00011100", "00111110", "11111111", "11111111", "11111111", "11111111", "00111110", "00011100"],
+    "targets": { "collect": { "chick": 8 }, "score": 0, "blockers": 13 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 5, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "마지막 예열 구간입니다. 낙하 방향을 먼저 보는 습관이 중요합니다."
+  },
+  {
+    "id": 90,
+    "name": "Stage 90",
+    "band": "81-90",
+    "difficulty": "Hard",
+    "theme_key": "skyline_2",
+    "moves": 18,
+    "board_mask": ["00011100", "00111110", "11111111", "11111111", "11111111", "11111111", "00111110", "00011100"],
+    "targets": { "collect": { "rabbit": 10 }, "score": 6000, "blockers": 13 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 4, "bear": 2, "cat": 2, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "최종권 마지막 스테이지입니다. 점수와 수집을 동시에 닫아야 합니다."
+  }
+]

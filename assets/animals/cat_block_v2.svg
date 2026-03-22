@@ -1,0 +1,33 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="tile" x1="32" y1="22" x2="220" y2="228" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#FFD9A8"/>
+    <stop offset="1" stop-color="#FF8A6F"/>
+  </linearGradient>
+  <linearGradient id="face" x1="128" y1="68" x2="128" y2="190" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#FFF9F0"/>
+    <stop offset="1" stop-color="#FFE4C7"/>
+  </linearGradient>
+</defs>
+<rect x="24" y="28" width="208" height="208" rx="64" fill="#C85F47" opacity="0.28"/>
+<rect x="20" y="20" width="216" height="208" rx="64" fill="url(#tile)"/>
+<rect x="30" y="30" width="196" height="82" rx="32" fill="#FFFFFF" opacity="0.24"/>
+<path d="M86 72L112 104H72L86 72Z" fill="#FF9B7B"/>
+<path d="M170 72L184 104H144L170 72Z" fill="#FF9B7B"/>
+<path d="M90 80L103 98H84L90 80Z" fill="#FFD4C5"/>
+<path d="M166 80L172 98H153L166 80Z" fill="#FFD4C5"/>
+<circle cx="128" cy="136" r="64" fill="url(#face)"/>
+<path d="M78 126C78 98 99 84 128 84C157 84 178 98 178 126V142H78V126Z" fill="#FFB089"/>
+<ellipse cx="104" cy="132" rx="10" ry="13" fill="#433A61"/>
+<ellipse cx="152" cy="132" rx="10" ry="13" fill="#433A61"/>
+<ellipse cx="101" cy="128" rx="3.5" ry="4.5" fill="#FFFFFF"/>
+<ellipse cx="149" cy="128" rx="3.5" ry="4.5" fill="#FFFFFF"/>
+<path d="M128 145L138 152H118L128 145Z" fill="#FF7F8F"/>
+<path d="M118 160C121 165 124 167 128 167C132 167 135 165 138 160" stroke="#9A5741" stroke-width="4" stroke-linecap="round"/>
+<path d="M104 154H88" stroke="#9A5741" stroke-width="3" stroke-linecap="round"/>
+<path d="M105 160H86" stroke="#9A5741" stroke-width="3" stroke-linecap="round"/>
+<path d="M152 154H168" stroke="#9A5741" stroke-width="3" stroke-linecap="round"/>
+<path d="M151 160H170" stroke="#9A5741" stroke-width="3" stroke-linecap="round"/>
+<circle cx="90" cy="152" r="7" fill="#FFB48C" opacity="0.6"/>
+<circle cx="166" cy="152" r="7" fill="#FFB48C" opacity="0.6"/>
+</svg>

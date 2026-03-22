@@ -1,0 +1,29 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1920" height="1080" fill="#DFF4FF"/>
+  <rect x="0" y="0" width="1920" height="1080" fill="#28404C" fill-opacity="0.28"/>
+  <text x="960" y="100" text-anchor="middle" font-size="34" font-family="Arial, sans-serif" fill="#F7FBFF">OVERLAY / POPUP BOARD</text>
+
+  <rect x="140" y="180" width="480" height="640" rx="36" fill="#FFF9E4" stroke="#F1C95D" stroke-width="8"/>
+  <text x="380" y="254" text-anchor="middle" font-size="42" font-weight="700" font-family="Arial, sans-serif" fill="#5B6A79">Stage Start</text>
+  <text x="380" y="316" text-anchor="middle" font-size="30" font-family="Arial, sans-serif" fill="#E08C33">Stage 1 / Easy</text>
+  <image href="../animals/rabbit_block.png" x="268" y="356" width="224" height="224"/>
+  <text x="380" y="628" text-anchor="middle" font-size="28" font-family="Arial, sans-serif" fill="#687F8E">Collect 10 rabbits</text>
+  <rect x="240" y="694" width="280" height="92" rx="28" fill="#FFD95A" stroke="#E3B540" stroke-width="6"/>
+  <text x="380" y="752" text-anchor="middle" font-size="36" font-weight="700" font-family="Arial, sans-serif" fill="#5B4A20">START</text>
+
+  <rect x="720" y="180" width="480" height="640" rx="36" fill="#FFF7DB" stroke="#F0C85B" stroke-width="8"/>
+  <text x="960" y="254" text-anchor="middle" font-size="42" font-weight="700" font-family="Arial, sans-serif" fill="#5B6A79">Stage Clear</text>
+  <text x="960" y="320" text-anchor="middle" font-size="64" font-family="Arial, sans-serif" fill="#E5B72D">★★★</text>
+  <image href="../animals/chick_block.png" x="848" y="356" width="224" height="224"/>
+  <text x="960" y="628" text-anchor="middle" font-size="28" font-family="Arial, sans-serif" fill="#687F8E">Happy face, reward card feeling</text>
+  <rect x="780" y="694" width="360" height="92" rx="28" fill="#FF9FB6" stroke="#E78199" stroke-width="6"/>
+  <text x="960" y="752" text-anchor="middle" font-size="36" font-weight="700" font-family="Arial, sans-serif" fill="#6E3147">NEXT STAGE</text>
+
+  <rect x="1300" y="180" width="480" height="640" rx="36" fill="#FDF8F6" stroke="#D7E6EF" stroke-width="8"/>
+  <text x="1540" y="254" text-anchor="middle" font-size="42" font-weight="700" font-family="Arial, sans-serif" fill="#5B6A79">Stage Failed</text>
+  <text x="1540" y="316" text-anchor="middle" font-size="28" font-family="Arial, sans-serif" fill="#C47E76">Keep the palette bright. No dark defeat mood.</text>
+  <image href="../animals/bear_block.png" x="1428" y="356" width="224" height="224"/>
+  <text x="1540" y="628" text-anchor="middle" font-size="28" font-family="Arial, sans-serif" fill="#687F8E">Slightly disappointed face only</text>
+  <rect x="1360" y="694" width="360" height="92" rx="28" fill="#FFD95A" stroke="#E3B540" stroke-width="6"/>
+  <text x="1540" y="752" text-anchor="middle" font-size="36" font-weight="700" font-family="Arial, sans-serif" fill="#5B4A20">RETRY</text>
+</svg>

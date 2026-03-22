@@ -1,0 +1,211 @@
+[
+  {
+    "id": 11,
+    "name": "Stage 11",
+    "band": "11-20",
+    "difficulty": "Easy",
+    "theme_key": "meadow_2",
+    "moves": 13,
+    "board_mask": ["00111100", "01111110", "11111111", "11111111", "11111111", "11111111", "01111110", "00111100"],
+    "targets": { "collect": { "rabbit": 8, "chick": 6 }, "score": 0, "blockers": 2 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 4, "bear": 2, "cat": 2, "chick": 4, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "두 목표를 같이 보며 필요한 동물부터 우선적으로 모으세요."
+  },
+  {
+    "id": 12,
+    "name": "Stage 12",
+    "band": "11-20",
+    "difficulty": "Easy",
+    "theme_key": "meadow_2",
+    "moves": 13,
+    "board_mask": ["00011000", "00111100", "01111110", "11111111", "11111111", "01111110", "00111100", "00011000"],
+    "targets": { "collect": { "bear": 8 }, "score": 1200, "blockers": 2 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 4, "cat": 2, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "수집과 점수를 같이 만족시켜야 합니다."
+  },
+  {
+    "id": 13,
+    "name": "Stage 13",
+    "band": "11-20",
+    "difficulty": "Normal",
+    "theme_key": "meadow_2",
+    "moves": 13,
+    "board_mask": ["00111100", "00111100", "11111111", "11111111", "11111111", "11111111", "00111100", "00111100"],
+    "targets": { "collect": { "cat": 8, "frog": 4 }, "score": 1000, "blockers": 2 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 4, "chick": 2, "frog": 3 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 2, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "수집과 점수를 동시에 챙기는 연습 구간입니다."
+  },
+  {
+    "id": 14,
+    "name": "Stage 14",
+    "band": "11-20",
+    "difficulty": "Normal",
+    "theme_key": "meadow_2",
+    "moves": 13,
+    "board_mask": ["00111100", "00111100", "11111111", "11111111", "11111111", "11111111", "00111100", "00111100"],
+    "targets": { "collect": { "rabbit": 6, "bear": 6 }, "score": 0, "blockers": 3 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 4, "bear": 4, "cat": 2, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 3, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "덤불 위치를 보고 먼저 열 구역을 정하세요."
+  },
+  {
+    "id": 15,
+    "name": "Stage 15",
+    "band": "11-20",
+    "difficulty": "Normal",
+    "theme_key": "meadow_2",
+    "moves": 14,
+    "board_mask": ["00111100", "00111100", "11111111", "11111111", "11111111", "11111111", "00111100", "00111100"],
+    "targets": { "collect": { "chick": 8 }, "score": 1500, "blockers": 3 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 5, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 3, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "덤불이 본격적인 난이도 요소로 들어옵니다."
+  },
+  {
+    "id": 16,
+    "name": "Stage 16",
+    "band": "11-20",
+    "difficulty": "Normal",
+    "theme_key": "meadow_2",
+    "moves": 14,
+    "board_mask": ["11100111", "11100111", "11111111", "01111110", "01111110", "11111111", "11100111", "11100111"],
+    "targets": { "collect": { "rabbit": 6, "cat": 6 }, "score": 0, "blockers": 3 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 4, "bear": 2, "cat": 4, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 3, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "분리된 공간을 연결하는 수를 먼저 찾으세요."
+  },
+  {
+    "id": 17,
+    "name": "Stage 17",
+    "band": "11-20",
+    "difficulty": "Normal",
+    "theme_key": "meadow_2",
+    "moves": 14,
+    "board_mask": ["11100111", "11100111", "11111111", "01111110", "01111110", "11111111", "11100111", "11100111"],
+    "targets": { "collect": { "bear": 8 }, "score": 1800, "blockers": 3 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 5, "cat": 2, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 3, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "연쇄를 만들면 점수 목표가 더 쉽게 풀립니다."
+  },
+  {
+    "id": 18,
+    "name": "Stage 18",
+    "band": "11-20",
+    "difficulty": "Normal",
+    "theme_key": "meadow_2",
+    "moves": 14,
+    "board_mask": ["00111100", "01111110", "11111111", "01111110", "01111110", "11111111", "01111110", "00111100"],
+    "targets": { "collect": { "rabbit": 5, "chick": 5, "frog": 5 }, "score": 0, "blockers": 3 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 3, "bear": 2, "cat": 2, "chick": 3, "frog": 3 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 2, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "세 목표가 있을 때는 막힌 구역을 먼저 열어두는 편이 안전합니다."
+  },
+  {
+    "id": 19,
+    "name": "Stage 19",
+    "band": "11-20",
+    "difficulty": "Normal",
+    "theme_key": "meadow_2",
+    "moves": 14,
+    "board_mask": ["00111100", "01111110", "11111111", "01111110", "01111110", "11111111", "01111110", "00111100"],
+    "targets": { "collect": { "cat": 8 }, "score": 2000, "blockers": 4 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 5, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "점수 압박이 올라갑니다. 큰 매치를 계속 만들 수 있게 중앙을 관리하세요."
+  },
+  {
+    "id": 20,
+    "name": "Stage 20",
+    "band": "11-20",
+    "difficulty": "Normal",
+    "theme_key": "meadow_2",
+    "moves": 14,
+    "board_mask": ["01111110", "11111111", "11100111", "11000011", "11000011", "11100111", "11111111", "01111110"],
+    "targets": { "collect": { "bear": 10, "rabbit": 4 }, "score": 0, "blockers": 4 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 3, "bear": 5, "cat": 2, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 6, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "초반 밴드 마감입니다. 점수보다 루트 읽기와 덤불 해제가 더 중요합니다."
+  }
+]

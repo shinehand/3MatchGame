@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="fill" x1="64" y1="14" x2="64" y2="114" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF1D8"/>
+      <stop offset="1" stop-color="#FFD6A1"/>
+    </linearGradient>
+    <linearGradient id="badge" x1="64" y1="40" x2="64" y2="86" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C9F8D6"/>
+      <stop offset="1" stop-color="#84DFAB"/>
+    </linearGradient>
+    <filter id="shadow" x="-18%" y="-18%" width="136%" height="146%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#9A7340" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <circle cx="64" cy="64" r="40" fill="url(#fill)" stroke="#E2A43D" stroke-width="5.5"/>
+    <circle cx="64" cy="64" r="29" fill="#FFFFFF" opacity="0.35"/>
+    <path d="M44 65l13 13 28-31" fill="none" stroke="url(#badge)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M44 65l13 13 28-31" fill="none" stroke="#3E9560" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="64" cy="24" r="6.5" fill="#FFD95A"/>
+    <circle cx="88" cy="40" r="5" fill="#FFE9A9"/>
+    <circle cx="40" cy="42" r="5" fill="#FFE9A9"/>
+  </g>
+</svg>

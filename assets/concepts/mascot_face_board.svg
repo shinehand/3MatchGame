@@ -1,0 +1,20 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1920" height="1080" fill="#E9F8FF"/>
+  <rect x="40" y="40" width="1840" height="1000" rx="40" fill="#F8FCFF" stroke="#C6E4F1" stroke-width="4"/>
+  <text x="960" y="118" text-anchor="middle" font-size="36" font-family="Arial, sans-serif" fill="#4E6C7D">HOME MASCOT FACE BOARD</text>
+  <text x="960" y="164" text-anchor="middle" font-size="24" font-family="Arial, sans-serif" fill="#6C8794">Mascots must look like enlarged versions of the real puzzle blocks.</text>
+
+  <image href="../animals/rabbit_block.png" x="160" y="240" width="240" height="240"/>
+  <image href="../animals/bear_block.png" x="460" y="240" width="240" height="240"/>
+  <image href="../animals/cat_block.png" x="760" y="240" width="240" height="240"/>
+  <image href="../animals/chick_block.png" x="1060" y="240" width="240" height="240"/>
+  <image href="../animals/frog_block.png" x="1360" y="240" width="240" height="240"/>
+
+  <rect x="150" y="540" width="1620" height="360" rx="30" fill="#FFFFFF" stroke="#C9E5F1" stroke-width="4"/>
+  <text x="210" y="604" font-size="30" font-weight="700" font-family="Arial, sans-serif" fill="#4E6C7D">Rules</text>
+  <text x="210" y="660" font-size="26" font-family="Arial, sans-serif" fill="#6A8593">1. Home mascots use the same face ratio, eye size, and outline thickness as block icons.</text>
+  <text x="210" y="706" font-size="26" font-family="Arial, sans-serif" fill="#6A8593">2. Scale up the faces, add simple arms or ears only if needed, but never change the core silhouette.</text>
+  <text x="210" y="752" font-size="26" font-family="Arial, sans-serif" fill="#6A8593">3. Do not switch to painterly illustration, realistic fur, or full-body poster art.</text>
+  <text x="210" y="798" font-size="26" font-family="Arial, sans-serif" fill="#6A8593">4. Expressions for clear/fail can change, but the face language must stay in the same family.</text>
+  <text x="210" y="844" font-size="26" font-family="Arial, sans-serif" fill="#6A8593">5. Rabbit is the primary hero mascot for Stage 1, title, and onboarding.</text>
+</svg>

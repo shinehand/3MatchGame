@@ -1,0 +1,233 @@
+[
+  {
+    "id": 21,
+    "name": "Stage 21",
+    "band": "21-30",
+    "difficulty": "Normal",
+    "theme_key": "meadow_3",
+    "moves": 14,
+    "board_mask": ["00111100", "00111100", "11111111", "11011011", "11011011", "11111111", "00111100", "00111100"],
+    "targets": { "collect": { "rabbit": 8 }, "score": 0, "blockers": 4 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 4, "bear": 2, "cat": 2, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "덤불 밀도가 올라갑니다. 어느 구역부터 열지 먼저 정하세요."
+  },
+  {
+    "id": 22,
+    "name": "Stage 22",
+    "band": "21-30",
+    "difficulty": "Normal",
+    "theme_key": "meadow_3",
+    "moves": 14,
+    "board_mask": ["00111100", "00111100", "11111111", "11011011", "11011011", "11111111", "00111100", "00111100"],
+    "targets": { "collect": { "chick": 8 }, "score": 2200, "blockers": 4 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 5, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 2, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "막힌 구역 안쪽까지 점수를 끌어올려야 합니다."
+  },
+  {
+    "id": 23,
+    "name": "Stage 23",
+    "band": "21-30",
+    "difficulty": "Normal",
+    "theme_key": "meadow_3",
+    "moves": 14,
+    "board_mask": ["11100111", "11100111", "11111111", "01111110", "01111110", "11111111", "11100111", "11100111"],
+    "targets": { "collect": { "bear": 6, "cat": 6 }, "score": 0, "blockers": 5 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 4, "cat": 4, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "구역이 나뉜 보드에서는 4매치가 길을 여는 데 더 중요합니다."
+  },
+  {
+    "id": 24,
+    "name": "Stage 24",
+    "band": "21-30",
+    "difficulty": "Normal",
+    "theme_key": "meadow_3",
+    "moves": 15,
+    "board_mask": ["11100111", "11100111", "11111111", "01111110", "01111110", "11111111", "11100111", "11100111"],
+    "targets": { "collect": { "rabbit": 5, "frog": 5 }, "score": 2500, "blockers": 5 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 3, "bear": 2, "cat": 2, "chick": 2, "frog": 3 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "점수와 수집을 같이 볼 때는 연쇄 가능성이 높은 구역부터 정리하세요."
+  },
+  {
+    "id": 25,
+    "name": "Stage 25",
+    "band": "21-30",
+    "difficulty": "Normal",
+    "theme_key": "meadow_3",
+    "moves": 15,
+    "board_mask": ["01111110", "11111111", "11100111", "11000011", "11000011", "11100111", "11111111", "01111110"],
+    "targets": { "collect": { "chick": 10 }, "score": 0, "blockers": 5 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 5, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 6, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "비대칭 모양이 흔해지는 구간입니다. 가운데 빈칸을 기준으로 읽으세요."
+  },
+  {
+    "id": 26,
+    "name": "Stage 26",
+    "band": "21-30",
+    "difficulty": "Normal",
+    "theme_key": "meadow_3",
+    "moves": 15,
+    "board_mask": ["01111110", "11111111", "11100111", "11000011", "11000011", "11100111", "11111111", "01111110"],
+    "targets": { "collect": { "rabbit": 6, "bear": 6, "cat": 4 }, "score": 0, "blockers": 5 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 3, "bear": 3, "cat": 3, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 3, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "복수 수집 목표는 동시에 조금씩 진척시키는 편이 안정적입니다."
+  },
+  {
+    "id": 27,
+    "name": "Stage 27",
+    "band": "21-30",
+    "difficulty": "Normal",
+    "theme_key": "meadow_3",
+    "moves": 15,
+    "board_mask": ["01111110", "11111111", "11100111", "11000011", "11000011", "11100111", "11111111", "01111110"],
+    "targets": { "collect": {}, "score": 2800, "blockers": 5 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 2, "frog": 2 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 3, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "점수 전용 스테이지입니다. 큰 매치와 연쇄에 집중하세요."
+  },
+  {
+    "id": 28,
+    "name": "Stage 28",
+    "band": "21-30",
+    "difficulty": "Normal",
+    "theme_key": "meadow_3",
+    "moves": 15,
+    "board_mask": ["00100100", "01111110", "11111111", "11111111", "11111111", "11111111", "01111110", "00100100"],
+    "targets": { "collect": { "frog": 8 }, "score": 2200, "blockers": 6 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 2, "frog": 4 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "주머니처럼 끊긴 공간을 특수 블록으로 한 번에 여는 것이 좋습니다."
+  },
+  {
+    "id": 29,
+    "name": "Stage 29",
+    "band": "21-30",
+    "difficulty": "Normal",
+    "theme_key": "meadow_3",
+    "moves": 15,
+    "board_mask": ["00100100", "01111110", "11111111", "11111111", "11111111", "11111111", "01111110", "00100100"],
+    "targets": { "collect": { "rabbit": 5, "chick": 5 }, "score": 0, "blockers": 6 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 3, "bear": 2, "cat": 2, "chick": 3, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "5개 매치를 만들 수 있는 위치를 먼저 찾는 습관이 중요합니다."
+  },
+  {
+    "id": 30,
+    "name": "Stage 30",
+    "band": "21-30",
+    "difficulty": "Normal",
+    "theme_key": "meadow_3",
+    "moves": 15,
+    "board_mask": ["00011000", "00111100", "01111110", "11111111", "11111111", "01111110", "00111100", "00011000"],
+    "targets": { "collect": { "bear": 8, "cat": 8 }, "score": 2600, "blockers": 6 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 4, "cat": 4, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 2, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "중반 밴드 마감입니다. 특수 블록을 엮어 목표를 동시에 처리하세요."
+  }
+]

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="122" viewBox="0 0 920 122">
+  <defs>
+    <linearGradient id="fill" x1="460" y1="10" x2="460" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D2F7FF"/>
+      <stop offset="1" stop-color="#95E3FF"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-20%" width="120%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#397795" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <rect x="10" y="10" width="900" height="92" rx="34" fill="url(#fill)" stroke="#45A7D8" stroke-width="6"/>
+    <rect x="26" y="18" width="868" height="30" rx="15" fill="#FFFFFF" opacity="0.46"/>
+    <circle cx="74" cy="58" r="10" fill="#FFF2A0" opacity="0.9"/>
+    <circle cx="846" cy="52" r="8" fill="#FFD0E3" opacity="0.84"/>
+  </g>
+</svg>

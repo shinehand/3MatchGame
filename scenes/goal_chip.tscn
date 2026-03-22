@@ -1,0 +1,125 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/goal_chip.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/ui/hud/goal_complete_badge.svg" id="2"]
+[ext_resource type="Texture2D" path="res://assets/ui/hud/goal_near_complete_badge.svg" id="3"]
+
+[sub_resource type="StyleBoxFlat" id="1"]
+bg_color = Color(1, 0.992157, 0.937255, 0.98)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.470588, 0.827451, 0.964706, 1)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+shadow_color = Color(0.341176, 0.560784, 0.65098, 0.16)
+shadow_size = 8
+
+[sub_resource type="StyleBoxFlat" id="2"]
+bg_color = Color(1, 0.862745, 0.941176, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 0.529412, 0.713726, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="3"]
+bg_color = Color(0.92549, 0.972549, 1, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="4"]
+bg_color = Color(1, 0.835294, 0.313726, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="GoalChip" type="PanelContainer"]
+custom_minimum_size = Vector2(0, 94)
+layout_mode = 2
+script = ExtResource("1")
+theme_override_styles/panel = SubResource("1")
+
+[node name="Padding" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 14
+
+[node name="Row" type="HBoxContainer" parent="Padding"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="IconPanel" type="PanelContainer" parent="Padding/Row"]
+custom_minimum_size = Vector2(62, 62)
+layout_mode = 2
+theme_override_styles/panel = SubResource("2")
+
+[node name="IconCenter" type="CenterContainer" parent="Padding/Row/IconPanel"]
+layout_mode = 2
+
+[node name="Icon" type="TextureRect" parent="Padding/Row/IconPanel/IconCenter"]
+custom_minimum_size = Vector2(46, 46)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Badge" type="Label" parent="Padding/Row/IconPanel/IconCenter"]
+visible = false
+layout_mode = 2
+text = "★"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_colors/font_color = Color(1, 0.760784, 0.247059, 1)
+theme_override_font_sizes/font_size = 30
+
+[node name="StateBadge" type="TextureRect" parent="Padding/Row/IconPanel"]
+visible = false
+layout_mode = 1
+anchors_preset = 10
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -72.0
+offset_top = -8.0
+offset_right = 8.0
+offset_bottom = 28.0
+grow_horizontal = 0
+texture = ExtResource("2")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Content" type="VBoxContainer" parent="Padding/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="Padding/Row/Content"]
+layout_mode = 2
+text = "목표"
+theme_override_colors/font_color = Color(0.176471, 0.317647, 0.431373, 1)
+theme_override_font_sizes/font_size = 20
+
+[node name="ProgressLabel" type="Label" parent="Padding/Row/Content"]
+layout_mode = 2
+text = "0 / 10"
+theme_override_colors/font_color = Color(0.282353, 0.45098, 0.572549, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="ProgressBar" type="ProgressBar" parent="Padding/Row/Content"]
+custom_minimum_size = Vector2(0, 18)
+layout_mode = 2
+max_value = 10.0
+show_percentage = false
+theme_override_styles/background = SubResource("3")
+theme_override_styles/fill = SubResource("4")

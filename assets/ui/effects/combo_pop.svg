@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="128" viewBox="0 0 256 128">
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="4" flood-color="#8A5B1F" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <path d="M30 58c0-18 14-32 32-32h132c18 0 32 14 32 32s-14 32-32 32H62C44 90 30 76 30 58z" fill="#FFE47E" stroke="#F2A53A" stroke-width="6"/>
+    <text x="128" y="70" text-anchor="middle" font-size="38" font-weight="700" fill="#8F5412" font-family="Arial, sans-serif">POP</text>
+  </g>
+</svg>

@@ -1,0 +1,36 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1920" height="1080" fill="#DFF4FF"/>
+  <rect x="32" y="32" width="1856" height="1016" rx="40" fill="#F8FBFF" stroke="#BFE3F5" stroke-width="4"/>
+  <rect x="72" y="72" width="1776" height="936" rx="32" fill="#EAF8FF"/>
+
+  <text x="960" y="150" text-anchor="middle" font-size="34" font-family="Arial, sans-serif" fill="#4B6B7D">HOME SCENE LAYOUT BOARD</text>
+  <rect x="600" y="190" width="720" height="170" rx="44" fill="#FFF7D6" stroke="#F2C95C" stroke-width="8"/>
+  <text x="960" y="275" text-anchor="middle" font-size="72" font-weight="700" font-family="Arial, sans-serif" fill="#365164">Animal Pop Match</text>
+  <text x="960" y="322" text-anchor="middle" font-size="28" font-family="Arial, sans-serif" fill="#6E8796">Sticker-face animals + toy-like UI + quiet pastel background</text>
+
+  <rect x="760" y="438" width="400" height="140" rx="40" fill="#FFD95A" stroke="#E2B540" stroke-width="8"/>
+  <text x="960" y="525" text-anchor="middle" font-size="56" font-weight="700" font-family="Arial, sans-serif" fill="#5B4A20">PLAY</text>
+
+  <rect x="760" y="610" width="190" height="96" rx="28" fill="#FFFFFF" stroke="#B7D8E8" stroke-width="6"/>
+  <text x="855" y="668" text-anchor="middle" font-size="34" font-weight="700" font-family="Arial, sans-serif" fill="#4B6B7D">SETTINGS</text>
+  <rect x="970" y="610" width="190" height="96" rx="28" fill="#FFFFFF" stroke="#B7D8E8" stroke-width="6"/>
+  <text x="1065" y="668" text-anchor="middle" font-size="34" font-weight="700" font-family="Arial, sans-serif" fill="#4B6B7D">STAGES</text>
+
+  <rect x="132" y="220" width="310" height="620" rx="32" fill="#F6FDFF" stroke="#C4E6F3" stroke-width="4"/>
+  <text x="287" y="270" text-anchor="middle" font-size="30" font-weight="700" font-family="Arial, sans-serif" fill="#537182">LEFT MASCOT STACK</text>
+  <image href="../animals/rabbit_block.png" x="185" y="310" width="200" height="200"/>
+  <image href="../animals/chick_block.png" x="185" y="520" width="200" height="200"/>
+  <text x="287" y="772" text-anchor="middle" font-size="24" font-family="Arial, sans-serif" fill="#6E8796">Use actual block faces, not full-body art</text>
+
+  <rect x="1478" y="220" width="310" height="620" rx="32" fill="#F6FDFF" stroke="#C4E6F3" stroke-width="4"/>
+  <text x="1633" y="270" text-anchor="middle" font-size="30" font-weight="700" font-family="Arial, sans-serif" fill="#537182">RIGHT MASCOT STACK</text>
+  <image href="../animals/bear_block.png" x="1531" y="310" width="200" height="200"/>
+  <image href="../animals/cat_block.png" x="1531" y="520" width="200" height="200"/>
+  <text x="1633" y="772" text-anchor="middle" font-size="24" font-family="Arial, sans-serif" fill="#6E8796">Keep faces large and front-facing</text>
+
+  <rect x="520" y="780" width="880" height="164" rx="28" fill="#FFFFFF" stroke="#C7E6F2" stroke-width="4"/>
+  <text x="560" y="836" font-size="30" font-weight="700" font-family="Arial, sans-serif" fill="#537182">Scene Notes</text>
+  <text x="560" y="882" font-size="24" font-family="Arial, sans-serif" fill="#658392">1. Quiet background. No painted landscape hero shot.</text>
+  <text x="560" y="916" font-size="24" font-family="Arial, sans-serif" fill="#658392">2. Logo + Play button + face mascots are the priority.</text>
+  <text x="560" y="950" font-size="24" font-family="Arial, sans-serif" fill="#658392">3. Bottom props can be clouds, flowers, grass, but must stay secondary.</text>
+</svg>

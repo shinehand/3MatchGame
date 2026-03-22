@@ -1,0 +1,612 @@
+[gd_scene load_steps=18 format=3]
+
+[ext_resource type="Script" path="res://scripts/gameplay.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/ui/theme/panel_card.svg" id="2"]
+[ext_resource type="Texture2D" path="res://assets/ui/hud/goal_chip_frame.svg" id="3"]
+[ext_resource type="Texture2D" path="res://assets/ui/theme/popup_frame.svg" id="4"]
+[ext_resource type="Texture2D" path="res://assets/generated/redesign/overlay_success_cat_v1_flat.png" id="5"]
+[ext_resource type="Texture2D" path="res://assets/ui/effects/combo_pop.svg" id="6"]
+[ext_resource type="Texture2D" path="res://assets/ui/effects/combo_great.svg" id="7"]
+[ext_resource type="Texture2D" path="res://assets/ui/meta/rescue_ribbon.svg" id="8"]
+
+[sub_resource type="StyleBoxFlat" id="1"]
+bg_color = Color(1, 0.988235, 0.941176, 0.98)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.364706, 0.752941, 0.964706, 1)
+corner_radius_top_left = 30
+corner_radius_top_right = 30
+corner_radius_bottom_right = 30
+corner_radius_bottom_left = 30
+shadow_color = Color(0.345098, 0.521569, 0.627451, 0.18)
+shadow_size = 10
+
+[sub_resource type="StyleBoxFlat" id="2"]
+bg_color = Color(0.924, 0.988, 1, 0.98)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.364706, 0.752941, 0.964706, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+shadow_color = Color(0.309804, 0.482353, 0.584314, 0.12)
+shadow_size = 8
+
+[sub_resource type="StyleBoxFlat" id="3"]
+bg_color = Color(1, 0.815686, 0.286275, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.952941, 0.54902, 0.14902, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+shadow_color = Color(0.513726, 0.419608, 0.14902, 0.18)
+shadow_size = 8
+
+[sub_resource type="StyleBoxFlat" id="4"]
+bg_color = Color(1, 0.741176, 0.854902, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.960784, 0.384314, 0.607843, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+shadow_color = Color(0.54902, 0.321569, 0.427451, 0.16)
+shadow_size = 8
+
+[sub_resource type="StyleBoxFlat" id="5"]
+bg_color = Color(1, 0.937255, 0.784314, 0.98)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.952941, 0.756863, 0.384314, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+shadow_color = Color(0.513726, 0.419608, 0.14902, 0.1)
+shadow_size = 4
+
+[sub_resource type="StyleBoxFlat" id="6"]
+bg_color = Color(0.902, 0.956, 0.984, 0.98)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.658824, 0.839216, 0.933333, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+shadow_color = Color(0.309804, 0.482353, 0.584314, 0.08)
+shadow_size = 4
+
+[sub_resource type="StyleBoxFlat" id="7"]
+bg_color = Color(0.475, 0.882, 1, 0.98)
+border_width_left = 6
+border_width_top = 6
+border_width_right = 6
+border_width_bottom = 6
+border_color = Color(0.188235, 0.619608, 0.905882, 1)
+corner_radius_top_left = 34
+corner_radius_top_right = 34
+corner_radius_bottom_right = 34
+corner_radius_bottom_left = 34
+shadow_color = Color(0.196078, 0.423529, 0.65098, 0.24)
+shadow_size = 16
+
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.957, 0.972549, 1, 1)
+
+[node name="BackgroundTexture" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 6
+modulate = Color(1, 0.956863, 0.933333, 0.24)
+
+[node name="SafeMargin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="LayoutRoot" type="BoxContainer" parent="SafeMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 28
+
+[node name="BoardPanel" type="PanelContainer" parent="SafeMargin/LayoutRoot"]
+custom_minimum_size = Vector2(1000, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("1")
+
+[node name="BoardMargin" type="MarginContainer" parent="SafeMargin/LayoutRoot/BoardPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="BoardColumn" type="VBoxContainer" parent="SafeMargin/LayoutRoot/BoardPanel/BoardMargin"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="TopBar" type="HBoxContainer" parent="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="BoardTopLabel" type="Label" parent="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Animal Pop Match"
+theme_override_colors/font_color = Color(0.176471, 0.317647, 0.431373, 1)
+theme_override_font_sizes/font_size = 34
+
+[node name="PauseButton" type="Button" parent="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/TopBar"]
+custom_minimum_size = Vector2(176, 76)
+layout_mode = 2
+text = "일시정지"
+theme_override_styles/normal = SubResource("2")
+theme_override_styles/hover = SubResource("1")
+theme_override_styles/pressed = SubResource("1")
+theme_override_styles/disabled = SubResource("6")
+theme_override_colors/font_color = Color(0.176471, 0.317647, 0.431373, 1)
+theme_override_colors/font_disabled_color = Color(0.458824, 0.607843, 0.682353, 1)
+theme_override_font_sizes/font_size = 28
+
+[node name="Title" type="Label" parent="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn"]
+visible = false
+layout_mode = 2
+text = "Animal Pop Match"
+theme_override_colors/font_color = Color(0.278431, 0.176471, 0.12549, 1)
+theme_override_font_sizes/font_size = 42
+
+[node name="Subtitle" type="Label" parent="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn"]
+visible = false
+layout_mode = 2
+text = "낙하, 연쇄, 점수, 목표가 포함된 플레이 보드"
+theme_override_colors/font_color = Color(0.447059, 0.317647, 0.231373, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="TutorialBanner" type="PanelContainer" parent="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn"]
+visible = false
+layout_mode = 2
+theme_override_styles/panel = SubResource("4")
+
+[node name="TutorialMargin" type="MarginContainer" parent="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/TutorialBanner"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 14
+
+[node name="TutorialLabel" type="Label" parent="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/TutorialBanner/TutorialMargin"]
+layout_mode = 2
+text = "튜토리얼"
+autowrap_mode = 3
+theme_override_colors/font_color = Color(0.509804, 0.196078, 0.356863, 1)
+theme_override_font_sizes/font_size = 24
+
+[node name="BoardFrame" type="PanelContainer" parent="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("7")
+
+[node name="BoardShine" type="ColorRect" parent="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 16.0
+offset_top = 14.0
+offset_right = -16.0
+offset_bottom = 116.0
+grow_horizontal = 2
+color = Color(1, 1, 1, 0.18)
+
+[node name="ComboBanner" type="TextureRect" parent="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame"]
+visible = false
+custom_minimum_size = Vector2(220, 96)
+layout_mode = 1
+anchors_preset = 10
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -110.0
+offset_top = 34.0
+offset_right = 110.0
+offset_bottom = 118.0
+grow_horizontal = 2
+mouse_filter = 2
+texture = ExtResource("6")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="BoardSurfaceMargin" type="MarginContainer" parent="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="BoardScroll" type="ScrollContainer" parent="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame/BoardSurfaceMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="BoardGrid" type="GridContainer" parent="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame/BoardSurfaceMargin/BoardScroll"]
+layout_mode = 2
+columns = 8
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+
+[node name="SidebarScroll" type="ScrollContainer" parent="SafeMargin/LayoutRoot"]
+custom_minimum_size = Vector2(352, 0)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Sidebar" type="VBoxContainer" parent="SafeMargin/LayoutRoot/SidebarScroll"]
+custom_minimum_size = Vector2(352, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 16
+
+[node name="SidebarTitle" type="Label" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar"]
+visible = false
+layout_mode = 2
+text = "플레이 HUD"
+theme_override_colors/font_color = Color(0.278431, 0.176471, 0.12549, 1)
+theme_override_font_sizes/font_size = 30
+
+[node name="StatsCard" type="PanelContainer" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("2")
+
+[node name="StatsFrame" type="TextureRect" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatsCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="StatsPadding" type="MarginContainer" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatsCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="StatsColumn" type="VBoxContainer" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatsCard/StatsPadding"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="StageValue" type="Label" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatsCard/StatsPadding/StatsColumn"]
+layout_mode = 2
+text = "Stage 1"
+theme_override_colors/font_color = Color(0.321569, 0.239216, 0.188235, 1)
+theme_override_font_sizes/font_size = 24
+
+[node name="DifficultyValue" type="Label" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatsCard/StatsPadding/StatsColumn"]
+layout_mode = 2
+text = "Easy"
+theme_override_colors/font_color = Color(0.823529, 0.486275, 0.196078, 1)
+theme_override_font_sizes/font_size = 20
+
+[node name="MovesValue" type="Label" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatsCard/StatsPadding/StatsColumn"]
+layout_mode = 2
+text = "남은 이동 12"
+theme_override_colors/font_color = Color(0.321569, 0.239216, 0.188235, 1)
+theme_override_font_sizes/font_size = 22
+
+[node name="ScoreValue" type="Label" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatsCard/StatsPadding/StatsColumn"]
+layout_mode = 2
+text = "점수 0"
+theme_override_colors/font_color = Color(0.321569, 0.239216, 0.188235, 1)
+theme_override_font_sizes/font_size = 22
+
+[node name="ComboValue" type="Label" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatsCard/StatsPadding/StatsColumn"]
+layout_mode = 2
+text = "현재 콤보 x1"
+theme_override_colors/font_color = Color(0.321569, 0.239216, 0.188235, 1)
+theme_override_font_sizes/font_size = 20
+
+[node name="GoalCard" type="PanelContainer" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("2")
+
+[node name="GoalFrame" type="TextureRect" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/GoalCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("3")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="GoalPadding" type="MarginContainer" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/GoalCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="GoalColumn" type="VBoxContainer" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/GoalCard/GoalPadding"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="GoalHeader" type="Label" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/GoalCard/GoalPadding/GoalColumn"]
+layout_mode = 2
+text = "목표"
+theme_override_colors/font_color = Color(0.321569, 0.239216, 0.188235, 1)
+theme_override_font_sizes/font_size = 22
+
+[node name="GoalList" type="VBoxContainer" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/GoalCard/GoalPadding/GoalColumn"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="StatusCard" type="PanelContainer" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("2")
+
+[node name="StatusFrame" type="TextureRect" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatusCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="StatusPadding" type="MarginContainer" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatusCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="StatusLabel" type="Label" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatusCard/StatusPadding"]
+layout_mode = 2
+text = "보드 준비 중입니다."
+autowrap_mode = 3
+theme_override_colors/font_color = Color(0.321569, 0.239216, 0.188235, 1)
+theme_override_font_sizes/font_size = 22
+
+[node name="TipsCard" type="PanelContainer" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar"]
+visible = false
+layout_mode = 2
+theme_override_styles/panel = SubResource("2")
+
+[node name="TipsPadding" type="MarginContainer" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/TipsCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 18
+
+[node name="TipsLabel" type="Label" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/TipsCard/TipsPadding"]
+layout_mode = 2
+text = "사용법\n1. 블록을 밀어서 스와이프\n2. 또는 탭 후 인접 블록 선택\n3. 유효 매치면 이동 수가 줄고 낙하/연쇄가 진행"
+autowrap_mode = 3
+theme_override_colors/font_color = Color(0.415686, 0.313726, 0.231373, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="PrimaryButtons" type="BoxContainer" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="RetryButton" type="Button" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/PrimaryButtons"]
+custom_minimum_size = Vector2(0, 86)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "재시작"
+theme_override_styles/normal = SubResource("2")
+theme_override_styles/hover = SubResource("1")
+theme_override_styles/pressed = SubResource("1")
+theme_override_styles/disabled = SubResource("6")
+theme_override_colors/font_color = Color(0.176471, 0.317647, 0.431373, 1)
+theme_override_colors/font_disabled_color = Color(0.458824, 0.607843, 0.682353, 1)
+theme_override_font_sizes/font_size = 26
+
+[node name="NextStageButton" type="Button" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/PrimaryButtons"]
+custom_minimum_size = Vector2(0, 86)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "다음 스테이지"
+theme_override_styles/normal = SubResource("3")
+theme_override_styles/hover = SubResource("4")
+theme_override_styles/pressed = SubResource("4")
+theme_override_styles/disabled = SubResource("5")
+theme_override_colors/font_color = Color(0.407843, 0.243137, 0.027451, 1)
+theme_override_colors/font_disabled_color = Color(0.686275, 0.482353, 0.168627, 1)
+theme_override_font_sizes/font_size = 26
+
+[node name="SecondaryButtons" type="BoxContainer" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ShuffleButton" type="Button" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/SecondaryButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "셔플"
+
+[node name="DemoMatchButton" type="Button" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/SecondaryButtons"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "디버그 매치"
+
+[node name="QuitButton" type="Button" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar"]
+custom_minimum_size = Vector2(0, 82)
+layout_mode = 2
+text = "홈으로"
+theme_override_styles/normal = SubResource("2")
+theme_override_styles/hover = SubResource("1")
+theme_override_styles/pressed = SubResource("1")
+theme_override_styles/disabled = SubResource("6")
+theme_override_colors/font_color = Color(0.176471, 0.317647, 0.431373, 1)
+theme_override_colors/font_disabled_color = Color(0.458824, 0.607843, 0.682353, 1)
+theme_override_font_sizes/font_size = 26
+
+[node name="Overlay" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.145098, 0.101961, 0.0705882, 0.72)
+
+[node name="OverlayCenter" type="CenterContainer" parent="Overlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="OverlayPanel" type="PanelContainer" parent="Overlay/OverlayCenter"]
+custom_minimum_size = Vector2(520, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("1")
+
+[node name="OverlayFrame" type="TextureRect" parent="Overlay/OverlayCenter/OverlayPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("4")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="OverlayMargin" type="MarginContainer" parent="Overlay/OverlayCenter/OverlayPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="OverlayColumn" type="VBoxContainer" parent="Overlay/OverlayCenter/OverlayPanel/OverlayMargin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="OverlayRibbon" type="TextureRect" parent="Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn"]
+visible = false
+custom_minimum_size = Vector2(196, 74)
+layout_mode = 2
+size_flags_horizontal = 4
+texture = ExtResource("8")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="OverlayMascot" type="TextureRect" parent="Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn"]
+custom_minimum_size = Vector2(172, 172)
+layout_mode = 2
+size_flags_horizontal = 4
+texture = ExtResource("5")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="OverlayTitle" type="Label" parent="Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn"]
+layout_mode = 2
+text = "Stage Ready"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.176471, 0.317647, 0.431373, 1)
+theme_override_font_sizes/font_size = 40
+
+[node name="OverlayBody" type="Label" parent="Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn"]
+layout_mode = 2
+text = "설명"
+horizontal_alignment = 1
+autowrap_mode = 3
+theme_override_colors/font_color = Color(0.235294, 0.384314, 0.490196, 1)
+theme_override_font_sizes/font_size = 24
+
+[node name="OverlayButtons" type="HBoxContainer" parent="Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="OverlaySecondaryButton" type="Button" parent="Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons"]
+visible = false
+custom_minimum_size = Vector2(180, 72)
+layout_mode = 2
+text = "취소"
+theme_override_styles/normal = SubResource("2")
+theme_override_styles/hover = SubResource("1")
+theme_override_styles/pressed = SubResource("1")
+theme_override_styles/disabled = SubResource("6")
+theme_override_colors/font_color = Color(0.176471, 0.317647, 0.431373, 1)
+theme_override_colors/font_disabled_color = Color(0.458824, 0.607843, 0.682353, 1)
+theme_override_font_sizes/font_size = 24
+
+[node name="OverlayPrimaryButton" type="Button" parent="Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons"]
+custom_minimum_size = Vector2(180, 72)
+layout_mode = 2
+text = "시작"
+theme_override_styles/normal = SubResource("3")
+theme_override_styles/hover = SubResource("4")
+theme_override_styles/pressed = SubResource("4")
+theme_override_styles/disabled = SubResource("5")
+theme_override_colors/font_color = Color(0.407843, 0.243137, 0.027451, 1)
+theme_override_colors/font_disabled_color = Color(0.686275, 0.482353, 0.168627, 1)
+theme_override_font_sizes/font_size = 24
+[connection signal="pressed" from="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/PrimaryButtons/RetryButton" to="." method="_on_retry_button_pressed"]
+[connection signal="pressed" from="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/PrimaryButtons/NextStageButton" to="." method="_on_next_stage_button_pressed"]
+[connection signal="pressed" from="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/TopBar/PauseButton" to="." method="_on_pause_button_pressed"]
+[connection signal="pressed" from="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/SecondaryButtons/DemoMatchButton" to="." method="_on_demo_match_button_pressed"]
+[connection signal="pressed" from="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/QuitButton" to="." method="_on_quit_button_pressed"]
+[connection signal="pressed" from="Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlaySecondaryButton" to="." method="_on_overlay_secondary_button_pressed"]
+[connection signal="pressed" from="Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlayPrimaryButton" to="." method="_on_overlay_primary_button_pressed"]

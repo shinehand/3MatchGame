@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="sky" x1="960" y1="0" x2="960" y2="1080" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#86DCFF"/>
+      <stop offset="0.52" stop-color="#D4F5FF"/>
+      <stop offset="1" stop-color="#FFF1DA"/>
+    </linearGradient>
+    <linearGradient id="groundFar" x1="960" y1="700" x2="960" y2="1080" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C4EAA7"/>
+      <stop offset="1" stop-color="#8FD291"/>
+    </linearGradient>
+    <linearGradient id="groundNear" x1="960" y1="780" x2="960" y2="1080" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#95DFC2"/>
+      <stop offset="1" stop-color="#61C49F"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <ellipse cx="284" cy="174" rx="152" ry="54" fill="#FFFFFF" opacity="0.7"/>
+  <ellipse cx="1544" cy="156" rx="166" ry="58" fill="#FFFFFF" opacity="0.76"/>
+  <ellipse cx="960" cy="900" rx="1200" ry="288" fill="url(#groundFar)"/>
+  <ellipse cx="1034" cy="966" rx="1320" ry="254" fill="url(#groundNear)"/>
+  <g opacity="0.2">
+    <rect x="138" y="324" width="68" height="264" rx="34" fill="#84C587"/>
+    <circle cx="172" cy="300" r="72" fill="#A4DFAB"/>
+    <circle cx="134" cy="344" r="52" fill="#B6E9B8"/>
+    <rect x="1700" y="334" width="72" height="254" rx="36" fill="#80BF84"/>
+    <circle cx="1736" cy="308" r="76" fill="#9FDCA7"/>
+    <circle cx="1774" cy="350" r="54" fill="#B6E9C0"/>
+  </g>
+  <g opacity="0.34">
+    <circle cx="322" cy="844" r="18" fill="#FFCA72"/>
+    <circle cx="354" cy="860" r="16" fill="#FFC2D8"/>
+    <circle cx="1588" cy="826" r="16" fill="#FFD96D"/>
+    <circle cx="1620" cy="842" r="14" fill="#BFF3D2"/>
+  </g>
+</svg>

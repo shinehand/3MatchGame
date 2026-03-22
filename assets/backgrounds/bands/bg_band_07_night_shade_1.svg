@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <linearGradient id="night" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#243157"/>
+      <stop offset="100%" stop-color="#101827"/>
+    </linearGradient>
+    <radialGradient id="moon" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f9f4d2"/>
+      <stop offset="100%" stop-color="#f9f4d2" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#night)"/>
+  <circle cx="1180" cy="162" r="82" fill="url(#moon)" opacity="0.7"/>
+  <circle cx="1180" cy="162" r="38" fill="#faf0c8" opacity="0.75"/>
+  <path d="M0 630 C210 562 400 575 585 660 C785 753 980 758 1170 670 C1330 595 1460 580 1600 620 L1600 900 L0 900 Z" fill="#25324b"/>
+  <path d="M0 720 C180 676 360 682 550 748 C780 828 960 826 1160 766 C1330 715 1470 702 1600 728 L1600 900 L0 900 Z" fill="#172236"/>
+  <path d="M120 0 L250 0 L180 900 L0 900 Z" fill="#0f1725" opacity="0.64"/>
+  <path d="M1460 0 L1600 0 L1600 900 L1380 900 Z" fill="#0f1725" opacity="0.58"/>
+  <circle cx="360" cy="200" r="4" fill="#d9e4ff" opacity="0.85"/>
+  <circle cx="430" cy="130" r="3" fill="#d9e4ff" opacity="0.7"/>
+  <circle cx="510" cy="190" r="5" fill="#d9e4ff" opacity="0.65"/>
+  <ellipse cx="520" cy="272" rx="260" ry="64" fill="#7aa5e8" opacity="0.08"/>
+</svg>

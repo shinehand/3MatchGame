@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="sky" x1="960" y1="0" x2="960" y2="1080" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#89DFFF"/>
+      <stop offset="0.54" stop-color="#D2F1FF"/>
+      <stop offset="1" stop-color="#FFF0D8"/>
+    </linearGradient>
+    <linearGradient id="tree" x1="0" y1="300" x2="0" y2="860" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A0DCAA"/>
+      <stop offset="1" stop-color="#78B889"/>
+    </linearGradient>
+    <linearGradient id="ground" x1="960" y1="720" x2="960" y2="1080" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B6E4A1"/>
+      <stop offset="1" stop-color="#6CC9A7"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <ellipse cx="960" cy="924" rx="1260" ry="272" fill="url(#ground)"/>
+  <g opacity="0.25">
+    <rect x="96" y="280" width="84" height="410" rx="42" fill="url(#tree)"/>
+    <circle cx="138" cy="276" r="88" fill="#8FD7A6"/>
+    <circle cx="102" cy="324" r="66" fill="#97E1B2"/>
+    <rect x="1748" y="294" width="90" height="404" rx="45" fill="url(#tree)"/>
+    <circle cx="1794" cy="286" r="92" fill="#90D6A9"/>
+    <circle cx="1836" cy="340" r="68" fill="#A6E3BC"/>
+  </g>
+  <g opacity="0.34">
+    <ellipse cx="268" cy="852" rx="60" ry="22" fill="#FFD16D"/>
+    <ellipse cx="1620" cy="824" rx="54" ry="20" fill="#FFC2D9"/>
+    <ellipse cx="1718" cy="880" rx="42" ry="15" fill="#FFF0A6"/>
+  </g>
+</svg>

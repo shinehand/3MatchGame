@@ -1,0 +1,9 @@
+.godot/
+.DS_Store
+android/build/
+build/
+.godot/export_credentials.cfg
+.playwright-cli/
+.tools/
+tmp/
+output/

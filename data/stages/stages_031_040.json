@@ -1,0 +1,248 @@
+[
+  {
+    "id": 31,
+    "name": "Stage 31",
+    "band": "31-40",
+    "difficulty": "Normal",
+    "theme_key": "forest_edge_1",
+    "moves": 16,
+    "board_mask": ["00111100", "01111110", "11111111", "11100111", "11100111", "11111111", "01111110", "00111100"],
+    "targets": { "collect": { "rabbit": 7, "frog": 5 }, "score": 0, "blockers": 6 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 4, "bear": 2, "cat": 2, "chick": 2, "frog": 4 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "구멍이 있는 중앙을 기준으로 낙하 경로를 먼저 읽으세요."
+  },
+  {
+    "id": 32,
+    "name": "Stage 32",
+    "band": "31-40",
+    "difficulty": "Normal",
+    "theme_key": "forest_edge_1",
+    "moves": 16,
+    "board_mask": ["00111100", "01111110", "11111111", "11100111", "11100111", "11111111", "01111110", "00111100"],
+    "targets": { "collect": { "chick": 7 }, "score": 2800, "blockers": 6 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 5, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "점수 목표가 올라갑니다. 한 번의 큰 연쇄가 중요합니다."
+  },
+  {
+    "id": 33,
+    "name": "Stage 33",
+    "band": "31-40",
+    "difficulty": "Normal",
+    "theme_key": "forest_edge_1",
+    "moves": 16,
+    "board_mask": ["00011100", "00111110", "11111111", "11111111", "11111111", "11111111", "00111110", "00011100"],
+    "targets": { "collect": { "bear": 7, "cat": 7 }, "score": 0, "blockers": 6 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 4, "cat": 4, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "좁아진 입구를 열고 안쪽 목표 동물을 모아야 합니다."
+  },
+  {
+    "id": 34,
+    "name": "Stage 34",
+    "band": "31-40",
+    "difficulty": "Normal",
+    "theme_key": "forest_edge_1",
+    "moves": 16,
+    "board_mask": ["00011100", "00111110", "11111111", "11111111", "11111111", "11111111", "00111110", "00011100"],
+    "targets": { "collect": { "rabbit": 5, "chick": 5 }, "score": 2600, "blockers": 6 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 3, "bear": 2, "cat": 2, "chick": 3, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "점수와 수집을 함께 볼 때는 한쪽만 몰지 않는 편이 낫습니다."
+  },
+  {
+    "id": 35,
+    "name": "Stage 35",
+    "band": "31-40",
+    "difficulty": "Normal",
+    "theme_key": "forest_edge_1",
+    "moves": 16,
+    "board_mask": ["00100100", "01111110", "11111111", "11100111", "11100111", "11111111", "01111110", "00100100"],
+    "targets": { "collect": { "frog": 9 }, "score": 0, "blockers": 7 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 2, "frog": 6 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "장애물 밀도가 확실히 올라갑니다. 특수 블록을 묶어 쓰세요."
+  },
+  {
+    "id": 36,
+    "name": "Stage 36",
+    "band": "31-40",
+    "difficulty": "Normal",
+    "theme_key": "forest_edge_1",
+    "moves": 16,
+    "board_mask": ["00100100", "01111110", "11111111", "11100111", "11100111", "11111111", "01111110", "00100100"],
+    "targets": { "collect": { "rabbit": 5, "bear": 5, "cat": 5 }, "score": 0, "blockers": 7 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 3, "bear": 3, "cat": 3, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 6, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "세 목표 스테이지입니다. 하나를 끝내기보다 같이 끌어올리세요."
+  },
+  {
+    "id": 37,
+    "name": "Stage 37",
+    "band": "31-40",
+    "difficulty": "Normal",
+    "theme_key": "forest_edge_1",
+    "moves": 16,
+    "board_mask": ["01100110", "11111111", "11111111", "11100111", "11100111", "11111111", "11111111", "01100110"],
+    "targets": { "collect": {}, "score": 3200, "blockers": 7 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 2, "frog": 2 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "점수 전용 보드에서는 중앙 통로를 오래 유지하는 편이 좋습니다."
+  },
+  {
+    "id": 38,
+    "name": "Stage 38",
+    "band": "31-40",
+    "difficulty": "Normal",
+    "theme_key": "forest_edge_1",
+    "moves": 16,
+    "board_mask": ["01100110", "11111111", "11111111", "11100111", "11100111", "11111111", "11111111", "01100110"],
+    "targets": { "collect": { "rabbit": 6, "chick": 6 }, "score": 2800, "blockers": 7 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 3, "bear": 2, "cat": 2, "chick": 3, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "특수 블록 발동 순서를 잘 고르면 점수와 수집이 함께 올라갑니다."
+  },
+  {
+    "id": 39,
+    "name": "Stage 39",
+    "band": "31-40",
+    "difficulty": "Normal",
+    "theme_key": "forest_edge_1",
+    "moves": 16,
+    "board_mask": ["00100100", "01111110", "11111111", "11011011", "11011011", "11111111", "01111110", "00100100"],
+    "targets": { "collect": { "bear": 8, "frog": 8 }, "score": 0, "blockers": 7 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 4, "cat": 2, "chick": 2, "frog": 4 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 6, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "비대칭 경로를 읽고 어느 쪽에서 연쇄를 만들지 먼저 정하세요."
+  },
+  {
+    "id": 40,
+    "name": "Stage 40",
+    "band": "31-40",
+    "difficulty": "Normal",
+    "theme_key": "forest_edge_1",
+    "moves": 16,
+    "board_mask": ["00100100", "01111110", "11111111", "11011011", "11011011", "11111111", "01111110", "00100100"],
+    "targets": { "collect": { "cat": 10 }, "score": 3400, "blockers": 7 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 5, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "중반 마감 스테이지입니다. 수집, 점수, 경로 읽기를 모두 요구합니다."
+  }
+]

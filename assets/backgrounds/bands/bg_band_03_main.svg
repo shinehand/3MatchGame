@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="sky" x1="960" y1="0" x2="960" y2="1080" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7ED6FF"/>
+      <stop offset="0.5" stop-color="#CBEFFF"/>
+      <stop offset="1" stop-color="#FFE7D6"/>
+    </linearGradient>
+    <linearGradient id="forestFar" x1="960" y1="650" x2="960" y2="1080" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A3D99B"/>
+      <stop offset="1" stop-color="#72BE8A"/>
+    </linearGradient>
+    <linearGradient id="forestNear" x1="960" y1="760" x2="960" y2="1080" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8AD6BE"/>
+      <stop offset="1" stop-color="#54B799"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <ellipse cx="960" cy="892" rx="1240" ry="304" fill="url(#forestFar)"/>
+  <ellipse cx="1048" cy="972" rx="1360" ry="266" fill="url(#forestNear)"/>
+  <g opacity="0.22">
+    <rect x="92" y="260" width="76" height="386" rx="38" fill="#7EB889"/>
+    <circle cx="130" cy="244" r="84" fill="#9FD7A7"/>
+    <circle cx="88" cy="298" r="56" fill="#B1E4BA"/>
+    <rect x="1728" y="286" width="80" height="368" rx="40" fill="#78B283"/>
+    <circle cx="1768" cy="266" r="88" fill="#9ED5A8"/>
+    <circle cx="1812" cy="320" r="60" fill="#B7E6C1"/>
+  </g>
+  <g opacity="0.18">
+    <circle cx="332" cy="814" r="20" fill="#FFD073"/>
+    <circle cx="368" cy="838" r="16" fill="#FFC0D6"/>
+    <circle cx="1568" cy="832" r="18" fill="#FFE38F"/>
+    <circle cx="1604" cy="854" r="14" fill="#AEEED1"/>
+  </g>
+  <g opacity="0.14">
+    <ellipse cx="420" cy="690" rx="96" ry="22" fill="#7EBC89"/>
+    <ellipse cx="1494" cy="676" rx="104" ry="24" fill="#7BB688"/>
+  </g>
+</svg>

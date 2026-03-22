@@ -1,0 +1,288 @@
+[
+  {
+    "id": 61,
+    "name": "Stage 61",
+    "band": "61-70",
+    "difficulty": "Hard",
+    "theme_key": "night_shade_1",
+    "moves": 18,
+    "board_mask": ["00111100", "00111100", "11111111", "11100111", "11100111", "11111111", "00111100", "00111100"],
+    "targets": { "collect": { "rabbit": 7, "bear": 7 }, "score": 0, "blockers": 10 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 4, "bear": 4, "cat": 2, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "전문가 구간 시작입니다. 한쪽 통로를 완전히 여는 판단이 중요합니다."
+  },
+  {
+    "id": 62,
+    "name": "Stage 62",
+    "band": "61-70",
+    "difficulty": "Hard",
+    "theme_key": "night_shade_1",
+    "moves": 18,
+    "board_mask": ["00111100", "00111100", "11111111", "11100111", "11100111", "11111111", "00111100", "00111100"],
+    "targets": { "collect": {}, "score": 3800, "blockers": 10 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 2, "frog": 2 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "점수전은 중앙 낙하 라인을 오래 유지해야 안정적입니다."
+  },
+  {
+    "id": 63,
+    "name": "Stage 63",
+    "band": "61-70",
+    "difficulty": "Hard",
+    "theme_key": "night_shade_1",
+    "moves": 18,
+    "board_mask": ["01100110", "11111111", "11111111", "11100111", "11100111", "11111111", "11111111", "01100110"],
+    "targets": { "collect": { "cat": 7, "frog": 7 }, "score": 0, "blockers": 10 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 4, "chick": 2, "frog": 4 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "양쪽 주머니를 모두 열어야 목표가 빨리 모입니다."
+  },
+  {
+    "id": 64,
+    "name": "Stage 64",
+    "band": "61-70",
+    "difficulty": "Hard",
+    "theme_key": "night_shade_1",
+    "moves": 18,
+    "board_mask": ["01100110", "11111111", "11111111", "11100111", "11100111", "11111111", "11111111", "01100110"],
+    "targets": { "collect": { "chick": 7 }, "score": 4200, "blockers": 10 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 5, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "점수와 수집을 같이 보려면 폭발 블록 타이밍이 더 중요합니다."
+  },
+  {
+    "id": 65,
+    "name": "Stage 65",
+    "band": "61-70",
+    "difficulty": "Hard",
+    "theme_key": "night_shade_1",
+    "moves": 18,
+    "board_mask": ["00100100", "01111110", "11111111", "11011011", "11011011", "11111111", "01111110", "00100100"],
+    "targets": { "collect": { "rabbit": 4, "bear": 4, "cat": 4 }, "score": 0, "blockers": 11 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 4, "bear": 4, "cat": 4, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 6, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "루트 판독이 본격적으로 중요해지는 스테이지입니다."
+  },
+  {
+    "id": 66,
+    "name": "Stage 66",
+    "band": "61-70",
+    "difficulty": "Hard",
+    "theme_key": "night_shade_1",
+    "moves": 18,
+    "board_mask": ["00100100", "01111110", "11111111", "11011011", "11011011", "11111111", "01111110", "00100100"],
+    "targets": { "collect": {}, "score": 5000, "blockers": 11 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 2, "frog": 2 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "최대 긴장도의 점수전입니다. 빈칸 주변 연쇄를 계속 활용하세요."
+  },
+  {
+    "id": 67,
+    "name": "Stage 67",
+    "band": "61-70",
+    "difficulty": "Hard",
+    "theme_key": "night_shade_1",
+    "moves": 18,
+    "board_mask": ["00011100", "00111110", "11111111", "11111111", "11111111", "11111111", "00111110", "00011100"],
+    "targets": { "collect": { "frog": 10 }, "score": 0, "blockers": 11 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 2, "frog": 5 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "좁은 입구 보드는 먼저 상단 또는 하단 한쪽을 완전히 푸는 편이 좋습니다."
+  },
+  {
+    "id": 68,
+    "name": "Stage 68",
+    "band": "61-70",
+    "difficulty": "Hard",
+    "theme_key": "night_shade_1",
+    "moves": 18,
+    "board_mask": ["00011100", "00111110", "11111111", "11111111", "11111111", "11111111", "00111110", "00011100"],
+    "targets": { "collect": { "rabbit": 6, "chick": 6 }, "score": 3800, "blockers": 11 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 3, "bear": 2, "cat": 2, "chick": 3, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "장애물 밀도가 높을수록 점수와 수집을 동시에 풀어야 수가 남습니다."
+  },
+  {
+    "id": 69,
+    "name": "Stage 69",
+    "band": "61-70",
+    "difficulty": "Hard",
+    "theme_key": "night_shade_1",
+    "moves": 18,
+    "board_mask": ["01111110", "11111111", "11100111", "11000011", "11000011", "11100111", "11111111", "01111110"],
+    "targets": { "collect": { "bear": 8, "cat": 8 }, "score": 0, "blockers": 11 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 4, "cat": 4, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 3, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "분리된 외곽을 너무 늦게 열면 목표 동물 수가 모자라집니다."
+  },
+  {
+    "id": 70,
+    "name": "Stage 70",
+    "band": "61-70",
+    "difficulty": "Hard",
+    "theme_key": "night_shade_1",
+    "moves": 18,
+    "board_mask": ["01111110", "11111111", "11100111", "11000011", "11000011", "11100111", "11111111", "01111110"],
+    "targets": { "collect": { "rabbit": 6 }, "score": 5200, "blockers": 11 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 4, "bear": 2, "cat": 2, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "전문가 밴드 마감입니다. 점수와 루트 판독을 같이 해결해야 합니다."
+  }
+]

@@ -1,0 +1,174 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/stage_card.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/ui/meta/stage_card_frame.svg" id="2"]
+[ext_resource type="Texture2D" path="res://assets/ui/meta/stage_lock.svg" id="3"]
+[ext_resource type="Texture2D" path="res://assets/ui/meta/stage_current_badge.svg" id="4"]
+[ext_resource type="Texture2D" path="res://assets/ui/meta/stage_finale_badge.svg" id="5"]
+
+[sub_resource type="StyleBoxFlat" id="1"]
+bg_color = Color(1, 0.992157, 0.937255, 0.98)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.470588, 0.827451, 0.964706, 1)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+shadow_color = Color(0.341176, 0.560784, 0.65098, 0.2)
+shadow_size = 10
+
+[sub_resource type="StyleBoxFlat" id="2"]
+bg_color = Color(1, 0.839216, 0.372549, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1, 0.588235, 0.184314, 1)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+shadow_color = Color(0.513726, 0.419608, 0.14902, 0.16)
+shadow_size = 10
+
+[sub_resource type="StyleBoxFlat" id="3"]
+bg_color = Color(1, 0.941176, 0.737255, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 0.756863, 0.278431, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
+[node name="StageCard" type="Button"]
+custom_minimum_size = Vector2(240, 150)
+layout_mode = 3
+focus_mode = 0
+toggle_mode = false
+text = ""
+flat = false
+script = ExtResource("1")
+theme_override_styles/normal = SubResource("1")
+theme_override_styles/hover = SubResource("2")
+theme_override_styles/pressed = SubResource("2")
+theme_override_styles/disabled = SubResource("1")
+
+[node name="CardFrame" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="CurrentBadge" type="TextureRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 10
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -124.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = 46.0
+grow_horizontal = 0
+mouse_filter = 2
+texture = ExtResource("4")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="FinaleBadge" type="TextureRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 1
+anchor_right = 1.0
+offset_left = 12.0
+offset_top = 10.0
+offset_right = 128.0
+offset_bottom = 46.0
+grow_horizontal = 2
+mouse_filter = 2
+texture = ExtResource("5")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CardMargin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 14.0
+offset_top = 12.0
+offset_right = -14.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CardColumn" type="VBoxContainer" parent="CardMargin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="HeaderRow" type="HBoxContainer" parent="CardMargin/CardColumn"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="StageLabel" type="Label" parent="CardMargin/CardColumn"]
+layout_mode = 2
+text = "Stage 1"
+theme_override_colors/font_color = Color(0.160784, 0.286275, 0.376471, 1)
+theme_override_font_sizes/font_size = 32
+
+[node name="DifficultyPill" type="PanelContainer" parent="CardMargin/CardColumn/HeaderRow"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("3")
+
+[node name="DifficultyLabel" type="Label" parent="CardMargin/CardColumn/HeaderRow/DifficultyPill"]
+layout_mode = 2
+text = "Easy"
+theme_override_colors/font_color = Color(0.6, 0.333333, 0.0352941, 1)
+theme_override_font_sizes/font_size = 20
+
+[node name="StarRow" type="HBoxContainer" parent="CardMargin/CardColumn"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="StatusLabel" type="Label" parent="CardMargin/CardColumn"]
+layout_mode = 2
+text = "도전 가능"
+theme_override_colors/font_color = Color(0.427451, 0.478431, 0.541176, 1)
+theme_override_font_sizes/font_size = 20
+
+[node name="LockOverlay" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(1, 1, 1, 0.44)
+
+[node name="LockCenter" type="CenterContainer" parent="LockOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="LockIcon" type="TextureRect" parent="LockOverlay/LockCenter"]
+custom_minimum_size = Vector2(72, 72)
+layout_mode = 2
+texture = ExtResource("3")
+expand_mode = 1
+stretch_mode = 5

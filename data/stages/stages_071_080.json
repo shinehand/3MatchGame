@@ -1,0 +1,299 @@
+[
+  {
+    "id": 71,
+    "name": "Stage 71",
+    "band": "71-80",
+    "difficulty": "Hard",
+    "theme_key": "skyline_1",
+    "moves": 18,
+    "board_mask": ["00100100", "01111110", "11111111", "11011011", "11011011", "11111111", "01111110", "00100100"],
+    "targets": { "collect": { "chick": 8 }, "score": 0, "blockers": 11 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 5, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "마스터리 구간 시작입니다. 처음 두 수 안에 열 구역을 정하세요."
+  },
+  {
+    "id": 72,
+    "name": "Stage 72",
+    "band": "71-80",
+    "difficulty": "Hard",
+    "theme_key": "skyline_1",
+    "moves": 18,
+    "board_mask": ["00100100", "01111110", "11111111", "11011011", "11011011", "11111111", "01111110", "00100100"],
+    "targets": { "collect": { "bear": 8, "frog": 8 }, "score": 4200, "blockers": 11 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 4, "cat": 2, "chick": 2, "frog": 4 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 3, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "점수와 복수 수집을 함께 닫으려면 큰 매치를 중심에 만들어야 합니다."
+  },
+  {
+    "id": 73,
+    "name": "Stage 73",
+    "band": "71-80",
+    "difficulty": "Hard",
+    "theme_key": "skyline_1",
+    "moves": 18,
+    "board_mask": ["01111110", "11111111", "11100111", "11000011", "11000011", "11100111", "11111111", "01111110"],
+    "targets": { "collect": { "rabbit": 5, "cat": 5 }, "score": 0, "blockers": 11 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 3, "bear": 2, "cat": 3, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 0, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 7, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "빈 중심 보드에서는 외곽을 너무 늦게 열면 수가 꼬입니다."
+  },
+  {
+    "id": 74,
+    "name": "Stage 74",
+    "band": "71-80",
+    "difficulty": "Hard",
+    "theme_key": "skyline_1",
+    "moves": 18,
+    "board_mask": ["01111110", "11111111", "11100111", "11000011", "11000011", "11100111", "11111111", "01111110"],
+    "targets": { "collect": {}, "score": 5400, "blockers": 12 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 2, "frog": 2 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "후반 점수전은 5매치 하나의 가치가 매우 큽니다."
+  },
+  {
+    "id": 75,
+    "name": "Stage 75",
+    "band": "71-80",
+    "difficulty": "Hard",
+    "theme_key": "skyline_1",
+    "moves": 18,
+    "board_mask": ["00011100", "00111110", "11111111", "11111111", "11111111", "11111111", "00111110", "00011100"],
+    "targets": { "collect": { "rabbit": 6, "chick": 6, "frog": 6 }, "score": 0, "blockers": 12 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 3, "bear": 2, "cat": 2, "chick": 3, "frog": 3 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 6, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "세 목표를 억지로 나누지 말고, 열리는 축을 따라 같이 진행하세요."
+  },
+  {
+    "id": 76,
+    "name": "Stage 76",
+    "band": "71-80",
+    "difficulty": "Hard",
+    "theme_key": "skyline_1",
+    "moves": 18,
+    "board_mask": ["00011100", "00111110", "11111111", "11111111", "11111111", "11111111", "00111110", "00011100"],
+    "targets": { "collect": { "bear": 8 }, "score": 4800, "blockers": 12 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 5, "cat": 2, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "한 번의 폭발 블록이 중앙 밀집 구역을 크게 정리해 줍니다."
+  },
+  {
+    "id": 77,
+    "name": "Stage 77",
+    "band": "71-80",
+    "difficulty": "Hard",
+    "theme_key": "skyline_1",
+    "moves": 18,
+    "board_mask": ["00111100", "01111110", "11111111", "11100111", "11100111", "11111111", "01111110", "00111100"],
+    "targets": { "collect": { "cat": 8 }, "score": 0, "blockers": 12 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 5, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "가장 읽기 어려운 보드 중 하나입니다. 막힌 세로 라인을 먼저 푸세요."
+  },
+  {
+    "id": 78,
+    "name": "Stage 78",
+    "band": "71-80",
+    "difficulty": "Hard",
+    "theme_key": "skyline_1",
+    "moves": 18,
+    "board_mask": ["00111100", "01111110", "11111111", "11100111", "11100111", "11111111", "01111110", "00111100"],
+    "targets": { "collect": { "rabbit": 5, "bear": 5 }, "score": 5000, "blockers": 12 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 3, "bear": 3, "cat": 2, "chick": 2, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 1, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 6, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "수집과 점수를 같이 닫으려면 연쇄를 끊지 않는 보드 운영이 중요합니다."
+  },
+  {
+    "id": 79,
+    "name": "Stage 79",
+    "band": "71-80",
+    "difficulty": "Hard",
+    "theme_key": "skyline_1",
+    "moves": 18,
+    "board_mask": ["01100110", "11111111", "11111111", "11100111", "11100111", "11111111", "11111111", "01100110"],
+    "targets": { "collect": { "chick": 10 }, "score": 0, "blockers": 12 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 5, "frog": 1 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 3, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 4, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 5, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "후반부는 같은 패턴을 여러 번 정확히 푸는 능력을 봅니다."
+  },
+  {
+    "id": 80,
+    "name": "Stage 80",
+    "band": "71-80",
+    "difficulty": "Hard",
+    "theme_key": "skyline_1",
+    "moves": 18,
+    "board_mask": ["01100110", "11111111", "11111111", "11100111", "11100111", "11111111", "11111111", "01100110"],
+    "targets": { "collect": {}, "score": 5600, "blockers": 12 },
+    "spawn_profile": {
+      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
+      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 2, "frog": 2 }
+    },
+    "blockers": [
+      { "kind": "bush", "row": 1, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 1, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 2, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 2, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 4, "hp": 1 },
+      { "kind": "bush", "row": 5, "col": 5, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 3, "hp": 1 },
+      { "kind": "bush", "row": 6, "col": 4, "hp": 1 }
+    ],
+    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
+    "tutorial": "80스테이지 체크포인트입니다. 순수 점수와 장애물 압박을 동시에 버텨야 합니다."
+  }
+]

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="132" viewBox="0 0 420 132">
+  <defs>
+    <linearGradient id="fill" x1="210" y1="10" x2="210" y2="122" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE57D"/>
+      <stop offset="1" stop-color="#FFBE49"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="210" y1="14" x2="210" y2="70" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF6C8" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#FFF6C8" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-20%" width="120%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#A66E18" flood-opacity="0.24"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <rect x="10" y="18" width="400" height="96" rx="34" fill="#D98A25" opacity="0.45"/>
+    <rect x="10" y="10" width="400" height="96" rx="34" fill="url(#fill)" stroke="#F1932A" stroke-width="6"/>
+    <rect x="24" y="18" width="372" height="38" rx="19" fill="url(#shine)"/>
+    <circle cx="54" cy="56" r="8" fill="#FFF3B5" opacity="0.85"/>
+    <circle cx="366" cy="44" r="6" fill="#FFF3B5" opacity="0.75"/>
+  </g>
+</svg>
