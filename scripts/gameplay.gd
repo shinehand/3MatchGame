@@ -970,19 +970,21 @@ func _check_stage_state() -> void:
 		stage_state = "cleared"
 		Feedback.play_stage_clear()
 		var star_count := _stage_star_rating()
+		var prev_best := GameSession.get_best_stars(_current_stage_id())
 		GameSession.record_stage_result(_current_stage_id(), score, star_count)
 		var star_text := _build_star_text(star_count)
+		var unlock_text := _build_unlock_text(star_count, prev_best)
 		if current_stage_index == stage_defs.size() - 1:
 			_set_status("최종 스테이지 클리어. 홈으로 돌아가거나 다시 플레이할 수 있습니다.")
 			_show_overlay("모든 스테이지 클리어", "%s\nEasy, Normal, Hard 스테이지를 모두 완료했습니다.\n홈으로 돌아가거나 피날레를 다시 플레이할 수 있습니다." % star_text, "all_clear", "홈으로", "다시 플레이", true)
 		else:
 			_set_status("%s 클리어. 홈으로 돌아가거나 다음 스테이지로 이어서 진행할 수 있습니다." % _current_stage()["name"])
-			_show_overlay("%s 클리어" % _current_stage()["name"], "%s\n구조에 성공했습니다.\n홈으로 돌아가거나 다음 스테이지로 이동할 수 있습니다." % star_text, "clear_stage", "다음 스테이지", "홈으로", true)
+			_show_overlay("%s 클리어" % _current_stage()["name"], "%s\n%s\n홈으로 돌아가거나 다음 스테이지로 이동할 수 있습니다." % [star_text, unlock_text], "clear_stage", "다음 스테이지", "홈으로", true)
 	elif remaining_moves <= 0:
 		stage_state = "failed"
 		Feedback.play_stage_fail()
 		_set_status("이동 수를 모두 사용했습니다. 재시작으로 다시 도전하세요.")
-		_show_overlay("%s 실패" % _current_stage()["name"], "목표를 달성하지 못했습니다.\n%s\n같은 스테이지를 다시 시도해 보세요." % _build_failure_hint(), "restart_stage", "재도전", "", false)
+		_show_overlay("%s 실패" % _current_stage()["name"], "목표를 달성하지 못했습니다.\n%s\n같은 스테이지를 다시 시도해 보세요." % _build_failure_hint(), "restart_stage", "재도전", "홈으로", true)
 	_update_hud()
 
 
@@ -1302,14 +1304,15 @@ func _on_overlay_secondary_button_pressed() -> void:
 	var action: String = overlay_action
 	_hide_overlay()
 
-	if action == "next_stage":
-		_start_stage(current_stage_index)
-	elif action == "clear_stage":
+	if action == "clear_stage":
 		GameSession.save_state()
 		get_tree().change_scene_to_file("res://scenes/main.tscn")
 	elif action == "all_clear":
 		_start_stage(current_stage_index)
 	elif action == "resume_stage":
+		GameSession.save_state()
+		get_tree().change_scene_to_file("res://scenes/main.tscn")
+	elif action == "restart_stage":
 		GameSession.save_state()
 		get_tree().change_scene_to_file("res://scenes/main.tscn")
 
@@ -1494,6 +1497,20 @@ func _build_star_text(star_count: int) -> String:
 	return "클리어 등급 %s" % stars
 
 
+func _build_unlock_text(star_count: int, prev_best: int) -> String:
+	var next_id := _current_stage_id() + 1
+	if current_stage_index >= stage_defs.size() - 1:
+		return "모든 스테이지를 완료했습니다."
+	if prev_best == 0:
+		return "Stage %d 해금" % next_id
+	var prev_stars := ""
+	for _i in range(prev_best):
+		prev_stars += "★"
+	if star_count > prev_best:
+		return "최고 등급 갱신 · Stage %d 해금" % next_id
+	return "이전 기록 %s · Stage %d 해금" % [prev_stars, next_id]
+
+
 func _build_failure_hint() -> String:
 	if _target_blockers() > 0 and cleared_blockers < _target_blockers():
 		return "특수 블록으로 덤불 구역을 함께 정리해 보세요."
@@ -1503,10 +1520,12 @@ func _build_failure_hint() -> String:
 
 
 func _setup_tutorial() -> void:
-	tutorial_enabled = _is_soft_tutorial_stage(_current_stage_id())
+	var is_tutorial_stage := _is_soft_tutorial_stage(_current_stage_id())
+	tutorial_enabled = is_tutorial_stage and not GameSession.is_tutorial_seen(_current_stage_id())
 	tutorial_step = 0 if tutorial_enabled else -1
 	tutorial_banner.visible = tutorial_enabled
 	if tutorial_enabled:
+		GameSession.mark_tutorial_seen(_current_stage_id())
 		_update_tutorial_banner()
 
 

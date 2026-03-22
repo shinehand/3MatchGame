@@ -11,6 +11,7 @@ static var _save_data := {
 	"best_star_by_stage_id": {},
 	"sound_enabled": true,
 	"haptics_enabled": true,
+	"seen_tutorial_stage_ids": [],
 }
 
 
@@ -34,6 +35,7 @@ static func load_state() -> void:
 	_save_data["best_star_by_stage_id"] = Dictionary(parsed.get("best_star_by_stage_id", {}))
 	_save_data["sound_enabled"] = bool(parsed.get("sound_enabled", true))
 	_save_data["haptics_enabled"] = bool(parsed.get("haptics_enabled", true))
+	_save_data["seen_tutorial_stage_ids"] = Array(parsed.get("seen_tutorial_stage_ids", []))
 
 
 static func save_state() -> void:
@@ -141,3 +143,17 @@ static func apply_feedback_preferences() -> void:
 	if Engine.has_singleton("Feedback") or typeof(Feedback) != TYPE_NIL:
 		Feedback.sound_enabled = get_sound_enabled()
 		Feedback.haptics_enabled = get_haptics_enabled()
+
+
+static func is_tutorial_seen(stage_id: int) -> bool:
+	load_state()
+	return Array(_save_data.get("seen_tutorial_stage_ids", [])).has(stage_id)
+
+
+static func mark_tutorial_seen(stage_id: int) -> void:
+	load_state()
+	var seen: Array = Array(_save_data.get("seen_tutorial_stage_ids", []))
+	if not seen.has(stage_id):
+		seen.append(stage_id)
+		_save_data["seen_tutorial_stage_ids"] = seen
+		save_state()
