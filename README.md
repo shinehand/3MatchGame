@@ -1,6 +1,6 @@
-# Puzzle Mobile Starter
+# 3MatchGame
 
-Godot 4 기반 모바일 게임 개발 시작용 최소 프로젝트입니다.
+Godot 4 기반 모바일 3매치 퍼즐 게임 프로젝트입니다.
 
 ## 포함 내용
 
