@@ -48,6 +48,7 @@ const SPECIAL_PRIORITY := {
 @onready var board_frame: PanelContainer = $SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame
 @onready var board_shine: ColorRect = $SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame/BoardShine
 @onready var combo_banner: TextureRect = $SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame/ComboBanner
+@onready var combo_label: Label = $SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame/ComboBanner/ComboLabel
 @onready var board_surface_margin: MarginContainer = $SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame/BoardSurfaceMargin
 @onready var board_scroll: ScrollContainer = $SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame/BoardSurfaceMargin/BoardScroll
 @onready var board_grid: GridContainer = $SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame/BoardSurfaceMargin/BoardScroll/BoardGrid
@@ -107,6 +108,7 @@ var overlay_action := ""
 var tutorial_enabled := false
 var tutorial_step := -1
 var portrait_goal_summary: Label
+var _prev_complete_set: Dictionary = {}
 
 
 func _ready() -> void:
@@ -953,13 +955,16 @@ func _is_stage_complete() -> bool:
 
 func _update_hud() -> void:
 	var portrait := MobileLayout.is_portrait(self)
+	var moves_color := _moves_warning_color()
 	if portrait:
 		stage_value.text = "%s · 이동 %d · 점수 %d" % [_current_stage()["name"], remaining_moves, score]
+		stage_value.add_theme_color_override("font_color", moves_color)
 		score_value.text = "점수 %d" % score
 	else:
 		stage_value.text = "%s  (%d / %d)" % [_current_stage()["name"], current_stage_index + 1, stage_defs.size()]
 		difficulty_value.text = "난이도 %s" % _current_stage()["difficulty"]
 		moves_value.text = "남은 이동 %d" % remaining_moves
+		moves_value.add_theme_color_override("font_color", moves_color)
 		score_value.text = "점수 %d" % score
 	combo_value.text = "현재 콤보 x%d" % current_combo
 	_refresh_goal_chips()
@@ -969,6 +974,20 @@ func _update_hud() -> void:
 		next_stage_button.disabled = stage_state != "cleared" or current_stage_index >= stage_defs.size() - 1
 	_configure_action_buttons(MobileLayout.is_portrait(self))
 	_refresh_portrait_goal_summary()
+
+
+func _moves_warning_color() -> Color:
+	if remaining_moves <= 3:
+		return Color(0.75, 0.19, 0.19, 1)
+	if remaining_moves <= 5:
+		return Color(0.88, 0.50, 0.13, 1)
+	return Color(0.32, 0.24, 0.19, 1)
+
+
+func _notify_goal_complete_if_new(key: String, is_complete: bool) -> void:
+	if is_complete and not _prev_complete_set.get(key, false):
+		Feedback.play_goal_complete()
+	_prev_complete_set[key] = is_complete
 
 
 func _refresh_goal_chips() -> void:
@@ -984,6 +1003,10 @@ func _refresh_goal_chips() -> void:
 			int(collected_counts.get(animal_id, 0)),
 			int(collect_targets[animal_id])
 		)
+		_notify_goal_complete_if_new(
+			"collect_%s" % animal_id,
+			int(collected_counts.get(animal_id, 0)) >= int(collect_targets[animal_id])
+		)
 		chip_index += 1
 
 	var target_score: int = _target_score()
@@ -991,6 +1014,7 @@ func _refresh_goal_chips() -> void:
 		var score_chip = goal_list.get_child(chip_index)
 		score_chip.visible = true
 		score_chip.set_score_goal("점수 달성", score, target_score)
+		_notify_goal_complete_if_new("score", score >= target_score)
 		chip_index += 1
 
 	var target_blockers: int = _target_blockers()
@@ -998,6 +1022,7 @@ func _refresh_goal_chips() -> void:
 		var blocker_chip = goal_list.get_child(chip_index)
 		blocker_chip.visible = true
 		blocker_chip.set_icon_goal(ui_textures.get("bush"), "덤불 제거", cleared_blockers, target_blockers)
+		_notify_goal_complete_if_new("blockers", cleared_blockers >= target_blockers)
 		chip_index += 1
 
 	for index in range(chip_index, goal_list.get_child_count()):
@@ -1143,6 +1168,7 @@ func _reset_collected_counts() -> void:
 	collected_counts.clear()
 	for animal_id in ANIMAL_IDS:
 		collected_counts[animal_id] = 0
+	_prev_complete_set.clear()
 
 
 func _board_has_valid_moves() -> bool:
@@ -1198,6 +1224,7 @@ func _show_combo_banner(combo: int) -> void:
 	combo_banner.modulate = Color(1, 1, 1, 0.0)
 	combo_banner.scale = Vector2(0.78, 0.78)
 	combo_banner.position = Vector2(combo_banner.position.x, 34.0)
+	combo_label.text = "×%d" % combo if combo >= 2 else ""
 
 	var tween := create_tween()
 	tween.set_parallel(true)
@@ -1430,9 +1457,12 @@ func _update_tips() -> void:
 
 
 func _stage_star_rating() -> int:
-	if remaining_moves >= 6:
+	var total_moves := int(_current_stage().get("moves", 12))
+	var three_star_threshold := maxi(3, int(round(total_moves * 0.35)))
+	var two_star_threshold := maxi(1, int(round(total_moves * 0.15)))
+	if remaining_moves >= three_star_threshold:
 		return 3
-	if remaining_moves >= 3:
+	if remaining_moves >= two_star_threshold:
 		return 2
 	return 1
 
