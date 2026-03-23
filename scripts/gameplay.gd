@@ -74,7 +74,6 @@ const SPECIAL_PRIORITY := {
 @onready var tips_card: PanelContainer = $SafeMargin/LayoutRoot/SidebarScroll/Sidebar/TipsCard
 @onready var tips_label: Label = $SafeMargin/LayoutRoot/SidebarScroll/Sidebar/TipsCard/TipsPadding/TipsLabel
 @onready var primary_buttons: BoxContainer = $SafeMargin/LayoutRoot/SidebarScroll/Sidebar/PrimaryButtons
-@onready var secondary_buttons: BoxContainer = $SafeMargin/LayoutRoot/SidebarScroll/Sidebar/SecondaryButtons
 @onready var retry_button: Button = $SafeMargin/LayoutRoot/SidebarScroll/Sidebar/PrimaryButtons/RetryButton
 @onready var next_stage_button: Button = $SafeMargin/LayoutRoot/SidebarScroll/Sidebar/PrimaryButtons/NextStageButton
 @onready var quit_button: Button = $SafeMargin/LayoutRoot/SidebarScroll/Sidebar/QuitButton
@@ -257,9 +256,7 @@ func _apply_responsive_layout() -> void:
 	layout_root.vertical = portrait
 	layout_root.add_theme_constant_override("separation", 0 if portrait else 28)
 	primary_buttons.vertical = false
-	secondary_buttons.vertical = false
 	primary_buttons.alignment = BoxContainer.ALIGNMENT_CENTER
-	secondary_buttons.alignment = BoxContainer.ALIGNMENT_CENTER
 
 	if portrait:
 		if sidebar_scroll.get_parent() != board_column:
@@ -895,17 +892,6 @@ func _on_next_stage_button_pressed() -> void:
 	_start_stage(current_stage_index + 1)
 
 
-func _on_shuffle_button_pressed() -> void:
-	if is_busy:
-		return
-	Feedback.play_shuffle()
-	if stage_state != "playing":
-		_set_status("스테이지 종료 상태에서는 재시작 또는 다음 스테이지를 선택하세요.")
-		return
-	_generate_fresh_board()
-	_set_status("보드를 새로 셔플했습니다. 이동 수는 줄지 않았습니다.")
-
-
 func _on_pause_button_pressed() -> void:
 	if is_busy:
 		return
@@ -918,45 +904,6 @@ func _on_pause_button_pressed() -> void:
 		"홈으로",
 		true
 	)
-
-
-func _on_demo_match_button_pressed() -> void:
-	if is_busy:
-		return
-	if stage_state != "playing":
-		_set_status("디버그 매치는 플레이 중일 때만 사용할 수 있습니다.")
-		return
-
-	is_busy = true
-	_clear_selection()
-	var candidates: Array = []
-	for row in range(BOARD_ROWS):
-		for start_col in range(BOARD_COLS - 4):
-			var valid := true
-			for offset in range(5):
-				if not _is_cell_active_xy(row, start_col + offset):
-					valid = false
-					break
-			if valid:
-				candidates.append({"row": row, "col": start_col})
-
-	if candidates.is_empty():
-		_set_status("현재 보드 모양에서는 디버그 5매치를 만들 연속 구간이 없습니다.")
-		is_busy = false
-		return
-
-	var candidate: Dictionary = candidates[rng.randi_range(0, candidates.size() - 1)]
-	var row: int = int(candidate["row"])
-	var start_col: int = int(candidate["col"])
-	var demo_id: String = _pick_stage_animal()
-
-	for offset in range(5):
-		board_data[row][start_col + offset] = _make_piece(demo_id)
-		_refresh_tile(row, start_col + offset)
-
-	await _resolve_matches([])
-	_check_stage_state()
-	is_busy = false
 
 
 func _on_quit_button_pressed() -> void:

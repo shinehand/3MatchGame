@@ -468,21 +468,6 @@ theme_override_colors/font_color = Color(0.407843, 0.243137, 0.027451, 1)
 theme_override_colors/font_disabled_color = Color(0.686275, 0.482353, 0.168627, 1)
 theme_override_font_sizes/font_size = 26
 
-[node name="SecondaryButtons" type="BoxContainer" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar"]
-visible = false
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="ShuffleButton" type="Button" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/SecondaryButtons"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "셔플"
-
-[node name="DemoMatchButton" type="Button" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/SecondaryButtons"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "디버그 매치"
-
 [node name="QuitButton" type="Button" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar"]
 custom_minimum_size = Vector2(0, 82)
 layout_mode = 2
@@ -606,7 +591,6 @@ theme_override_font_sizes/font_size = 24
 [connection signal="pressed" from="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/PrimaryButtons/RetryButton" to="." method="_on_retry_button_pressed"]
 [connection signal="pressed" from="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/PrimaryButtons/NextStageButton" to="." method="_on_next_stage_button_pressed"]
 [connection signal="pressed" from="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/TopBar/PauseButton" to="." method="_on_pause_button_pressed"]
-[connection signal="pressed" from="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/SecondaryButtons/DemoMatchButton" to="." method="_on_demo_match_button_pressed"]
 [connection signal="pressed" from="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/QuitButton" to="." method="_on_quit_button_pressed"]
 [connection signal="pressed" from="Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlaySecondaryButton" to="." method="_on_overlay_secondary_button_pressed"]
 [connection signal="pressed" from="Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlayPrimaryButton" to="." method="_on_overlay_primary_button_pressed"]
