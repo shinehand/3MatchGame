@@ -363,25 +363,49 @@ func _build_goal_summary(stage_def: Dictionary) -> String:
 
 func _build_selected_stage_title(stage_def: Dictionary, meta: Dictionary) -> String:
 	var stage_id := int(stage_def.get("id", 0))
+	var is_tutorial := not String(stage_def.get("tutorial", "")).is_empty()
+	var tutorial_badge := " · [튜토리얼]" if is_tutorial else ""
 	if stage_id == 100:
-		return "Stage 100 · 거대한 코끼리 구출"
+		return "Stage 100 · 거대한 코끼리 구출%s" % tutorial_badge
 	if stage_id % 10 == 0:
-		return "%s 피날레 · %s" % [String(meta.get("title", "피날레")), String(stage_def.get("name", "Stage"))]
-	return "%s · %s · 이동 %d" % [
+		return "%s 피날레 · %s%s" % [String(meta.get("title", "피날레")), String(stage_def.get("name", "Stage")), tutorial_badge]
+	return "%s · %s · 이동 %d%s" % [
 		String(stage_def.get("name", "Stage")),
 		String(stage_def.get("difficulty", "Easy")),
 		int(stage_def.get("moves", 0)),
+		tutorial_badge,
 	]
 
 
 func _build_selected_stage_body(stage_def: Dictionary, meta: Dictionary) -> String:
 	var stage_id := int(stage_def.get("id", 0))
 	var goal_summary := _build_goal_summary(stage_def).trim_prefix("목표: ")
+	var best_stars := GameSession.get_best_stars(stage_id)
+	var record_text := ""
+	if best_stars > 0:
+		var stars := ""
+		for _i in range(best_stars):
+			stars += "★"
+		record_text = " · 최고 %s" % stars
+	var theme_text := _theme_display_name(String(stage_def.get("theme_key", "meadow_1")))
+	var recommended := GameSession.get_selected_stage_id() == stage_id
+	var meta_parts: Array[String] = []
+	if not theme_text.is_empty():
+		meta_parts.append(theme_text)
+	if recommended:
+		meta_parts.append("추천")
+	var meta_line := " · ".join(meta_parts)
 	if stage_id == 100:
-		return "마지막 구조 작전입니다.\n%s / 연쇄와 특수 블록을 계획적으로 사용하세요" % goal_summary
+		return "마지막 구조 작전입니다.\n%s / 연쇄와 특수 블록을 계획적으로 사용하세요%s" % [goal_summary, record_text]
 	if stage_id % 10 == 0:
-		return "%s / 다음 구역을 여는 마지막 구조입니다" % goal_summary
-	return "%s / %s" % [goal_summary, _short_hint(String(stage_def.get("tutorial", "")))]
+		var body := "%s / 다음 구역을 여는 마지막 구조입니다%s" % [goal_summary, record_text]
+		if not meta_line.is_empty():
+			body += "\n%s" % meta_line
+		return body
+	var body := "%s / %s%s" % [goal_summary, _short_hint(String(stage_def.get("tutorial", ""))), record_text]
+	if not meta_line.is_empty():
+		body += "\n%s" % meta_line
+	return body
 
 
 func _short_hint(source_text: String) -> String:
@@ -416,6 +440,32 @@ func _animal_name(animal_id: String) -> String:
 			return "개구리"
 		_:
 			return animal_id
+
+
+func _theme_display_name(theme_key: String) -> String:
+	match theme_key:
+		"meadow_1":
+			return "테마: 초원"
+		"meadow_2":
+			return "테마: 초원 심화"
+		"meadow_3":
+			return "테마: 초원 끝자락"
+		"forest_edge_1":
+			return "테마: 숲 경계"
+		"garden_1":
+			return "테마: 정원 1"
+		"garden_2":
+			return "테마: 정원 2"
+		"night_shade_1":
+			return "테마: 야간 그늘"
+		"skyline_1":
+			return "테마: 스카이라인 1"
+		"skyline_2":
+			return "테마: 스카이라인 2"
+		"finale_1":
+			return "테마: 피날레"
+		_:
+			return ""
 
 
 func _queue_layout_refresh() -> void:
