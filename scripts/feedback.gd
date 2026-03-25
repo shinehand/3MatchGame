@@ -59,6 +59,11 @@ func play_stage_fail() -> void:
 	_vibrate(40)
 
 
+func play_goal_complete() -> void:
+	_play_stream("goal_complete")
+	_vibrate(28)
+
+
 func _build_players() -> void:
 	for _i in range(PLAYER_POOL_SIZE):
 		var player := AudioStreamPlayer.new()
@@ -115,6 +120,11 @@ func _build_streams() -> void:
 		{"freq": 420.0, "duration_ms": 54, "gain": 0.17, "wave": "sine"},
 		{"freq": 360.0, "duration_ms": 62, "gain": 0.15, "wave": "triangle"},
 		{"freq": 300.0, "duration_ms": 90, "gain": 0.13, "wave": "sine"},
+	])
+	_streams["goal_complete"] = _make_stream([
+		{"freq": 1040.0, "duration_ms": 22, "gain": 0.15, "wave": "triangle"},
+		{"freq": 1380.0, "duration_ms": 28, "gain": 0.14, "wave": "sine"},
+		{"freq": 1720.0, "duration_ms": 44, "gain": 0.12, "wave": "sine"},
 	])
 
 
