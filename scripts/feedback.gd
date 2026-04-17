@@ -143,10 +143,6 @@ func _play_stream(key: String) -> void:
 func _vibrate(duration_ms: int) -> void:
 	if not haptics_enabled:
 		return
-	# Android debug export currently lacks the VIBRATE permission.
-	# Skip haptics there until permissions are wired up explicitly.
-	if OS.has_feature("android"):
-		return
 	if not (OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios")):
 		return
 	Input.vibrate_handheld(duration_ms)
