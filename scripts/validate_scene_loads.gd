@@ -1,11 +1,16 @@
 extends SceneTree
 
+const StageCatalog = preload("res://scripts/stage_catalog.gd")
+
 const MAIN_SCENE_PATH: String = "res://scenes/main.tscn"
 const STAGE_SELECT_SCENE_PATH: String = "res://scenes/stage_select.tscn"
 const GAMEPLAY_SCENE_PATH: String = "res://scenes/gameplay.tscn"
 const STAGE_CARD_SCENE_PATH: String = "res://scenes/stage_card.tscn"
 const BLOCK_TILE_SCENE_PATH: String = "res://scenes/block_tile.tscn"
 const GOAL_CHIP_SCENE_PATH: String = "res://scenes/goal_chip.tscn"
+
+var representative_stage_ids: Array[int] = [1, 11, 25, 50, 75, 100]
+var tutorial_stage_ids: Array[int] = [1, 11, 25, 45, 65, 85, 95]
 
 
 func _init() -> void:
@@ -14,6 +19,7 @@ func _init() -> void:
 
 func _run() -> void:
 	var errors: PackedStringArray = PackedStringArray()
+	_validate_alpha_gate_data(errors)
 	var scene_paths: PackedStringArray = PackedStringArray([
 		MAIN_SCENE_PATH,
 		STAGE_SELECT_SCENE_PATH,
@@ -93,3 +99,28 @@ func _validate_stage_select_scene(node: Node, errors: PackedStringArray) -> void
 		errors.append("%s is missing StageGrid." % STAGE_SELECT_SCENE_PATH)
 	elif stage_grid.get_child_count() != 100:
 		errors.append("%s StageGrid expected 100 stage cards, got %d." % [STAGE_SELECT_SCENE_PATH, stage_grid.get_child_count()])
+
+
+func _validate_alpha_gate_data(errors: PackedStringArray) -> void:
+	var stages: Array = StageCatalog.get_stages()
+	if stages.size() < 100:
+		errors.append("Alpha gate expected 100 stages, got %d." % stages.size())
+		return
+
+	var stage_by_id: Dictionary = {}
+	for stage_entry in stages:
+		if stage_entry is Dictionary:
+			var stage_dict: Dictionary = stage_entry
+			stage_by_id[int(stage_dict.get("id", 0))] = stage_dict
+
+	for stage_id in representative_stage_ids:
+		if not stage_by_id.has(stage_id):
+			errors.append("Alpha gate missing representative stage %d." % stage_id)
+
+	for stage_id in tutorial_stage_ids:
+		if not stage_by_id.has(stage_id):
+			errors.append("Alpha gate missing tutorial checkpoint stage %d." % stage_id)
+			continue
+		var tutorial_text := String(Dictionary(stage_by_id[stage_id]).get("tutorial", "")).strip_edges()
+		if tutorial_text.is_empty():
+			errors.append("Alpha gate tutorial checkpoint stage %d is missing tutorial text." % stage_id)
