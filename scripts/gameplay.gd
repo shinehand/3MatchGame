@@ -321,8 +321,11 @@ func _apply_responsive_layout() -> void:
 	retry_button.add_theme_font_size_override("font_size", 30 if portrait else 26)
 	next_stage_button.add_theme_font_size_override("font_size", 30 if portrait else 26)
 	overlay_panel.custom_minimum_size = Vector2(560, 0) if portrait else Vector2(520, 0)
+	overlay_mascot.custom_minimum_size = Vector2(156, 156) if portrait else Vector2(132, 132)
+	overlay_ribbon.custom_minimum_size = Vector2(184, 66) if portrait else Vector2(176, 60)
 	overlay_title.add_theme_font_size_override("font_size", 34 if portrait else 40)
 	overlay_body.add_theme_font_size_override("font_size", 20 if portrait else 24)
+	overlay_body.add_theme_constant_override("line_spacing", 8 if portrait else 10)
 	status_card.visible = not portrait
 	tips_card.visible = false
 	combo_value.visible = not portrait
@@ -921,19 +924,18 @@ func _check_stage_state() -> void:
 		var star_count := _stage_star_rating()
 		var prev_best := GameSession.get_best_stars(_current_stage_id())
 		GameSession.record_stage_result(_current_stage_id(), score, star_count)
-		var star_text := _build_star_text(star_count)
 		var unlock_text := _build_unlock_text(star_count, prev_best)
 		if current_stage_index == stage_defs.size() - 1:
 			_set_status("최종 스테이지 클리어. 홈으로 돌아가거나 다시 플레이할 수 있습니다.")
-			_show_overlay("모든 스테이지 클리어", "%s\nEasy, Normal, Hard 스테이지를 모두 완료했습니다.\n홈으로 돌아가거나 피날레를 다시 플레이할 수 있습니다." % star_text, "all_clear", "홈으로", "다시 플레이", true)
+			_show_overlay("모든 스테이지 구조 완료", _build_clear_overlay_body(star_count, unlock_text, true), "all_clear", "홈으로", "다시 플레이", true)
 		else:
 			_set_status("%s 클리어. 홈으로 돌아가거나 다음 스테이지로 이어서 진행할 수 있습니다." % _current_stage()["name"])
-			_show_overlay("%s 클리어" % _current_stage()["name"], "%s\n%s\n홈으로 돌아가거나 다음 스테이지로 이동할 수 있습니다." % [star_text, unlock_text], "clear_stage", "다음 스테이지", "홈으로", true)
+			_show_overlay("%s 구조 완료" % _current_stage()["name"], _build_clear_overlay_body(star_count, unlock_text, false), "clear_stage", "다음 스테이지", "홈으로", true)
 	elif remaining_moves <= 0:
 		stage_state = "failed"
 		Feedback.play_stage_fail()
 		_set_status("이동 수를 모두 사용했습니다. 재시작으로 다시 도전하세요.")
-		_show_overlay("%s 실패" % _current_stage()["name"], "목표를 달성하지 못했습니다.\n%s\n같은 스테이지를 다시 시도해 보세요." % _build_failure_hint(), "restart_stage", "재도전", "홈으로", true)
+		_show_overlay("%s 재도전 필요" % _current_stage()["name"], _build_failure_overlay_body(), "restart_stage", "재도전", "홈으로", true)
 	_update_hud()
 
 
@@ -1088,8 +1090,13 @@ func _target_blockers() -> int:
 
 func _build_goal_text() -> String:
 	var lines := ["목표"]
-	var targets: Dictionary = _stage_collect_targets()
+	lines.append_array(_build_goal_progress_lines())
+	return "\n".join(lines)
 
+
+func _build_goal_progress_lines() -> Array[String]:
+	var lines: Array[String] = []
+	var targets: Dictionary = _stage_collect_targets()
 	for animal_id in targets.keys():
 		lines.append("%s %d / %d" % [
 			ANIMAL_NAMES[String(animal_id)],
@@ -1104,7 +1111,33 @@ func _build_goal_text() -> String:
 	if target_blockers > 0:
 		lines.append("덤불 %d / %d" % [cleared_blockers, target_blockers])
 
-	return "\n".join(lines)
+	return lines
+
+
+func _build_goal_result_summary() -> String:
+	return " · ".join(_build_goal_progress_lines())
+
+
+func _build_goal_remaining_summary() -> String:
+	var parts: Array[String] = []
+	var targets: Dictionary = _stage_collect_targets()
+
+	for animal_id in targets.keys():
+		var remaining_count: int = int(targets[animal_id]) - int(collected_counts.get(animal_id, 0))
+		if remaining_count > 0:
+			parts.append("%s %d개" % [ANIMAL_NAMES[String(animal_id)], remaining_count])
+
+	var score_remaining: int = _target_score() - score
+	if score_remaining > 0:
+		parts.append("점수 %d점" % score_remaining)
+
+	var blocker_remaining: int = _target_blockers() - cleared_blockers
+	if blocker_remaining > 0:
+		parts.append("덤불 %d개" % blocker_remaining)
+
+	if parts.is_empty():
+		return "마지막 판정 확인 중"
+	return " · ".join(parts)
 
 
 func _build_compact_goal_summary() -> String:
@@ -1125,7 +1158,12 @@ func _build_compact_goal_summary() -> String:
 	if target_blockers > 0:
 		chips.append("덤불 %d/%d" % [cleared_blockers, target_blockers])
 
-	return "  ·  ".join(chips.slice(0, 2))
+	var visible_chips: Array[String] = []
+	for index in range(mini(chips.size(), 2)):
+		visible_chips.append(chips[index])
+	if chips.size() > visible_chips.size():
+		visible_chips.append("+%d" % (chips.size() - visible_chips.size()))
+	return "  ·  ".join(visible_chips)
 
 
 func _build_stage_overlay_text() -> String:
@@ -1133,8 +1171,9 @@ func _build_stage_overlay_text() -> String:
 	if tutorial_enabled:
 		lines.append("[%s]" % _soft_tutorial_label())
 		lines.append(_tutorial_message())
-	lines.append(_build_compact_goal_summary())
-	lines.append("남은 이동 %d" % remaining_moves)
+		lines.append("")
+	lines.append("목표  %s" % _build_goal_result_summary())
+	lines.append("이동  %d회" % remaining_moves)
 	return "\n".join(lines)
 
 
@@ -1152,8 +1191,8 @@ func _ensure_portrait_goal_summary() -> void:
 	portrait_goal_summary.name = "PortraitGoalSummary"
 	portrait_goal_summary.visible = false
 	portrait_goal_summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	portrait_goal_summary.theme_override_colors.font_color = Color(0.321569, 0.239216, 0.188235, 1)
-	portrait_goal_summary.theme_override_font_sizes.font_size = 18
+	portrait_goal_summary.add_theme_color_override("font_color", Color(0.321569, 0.239216, 0.188235, 1))
+	portrait_goal_summary.add_theme_font_size_override("font_size", 18)
 	goal_column.add_child(portrait_goal_summary)
 	goal_column.move_child(portrait_goal_summary, 0)
 
@@ -1201,6 +1240,7 @@ func _swap_creates_match(a: Vector2i, b: Vector2i) -> bool:
 
 func _show_overlay(title: String, body: String, action: String, primary_text: String, secondary_text: String, show_secondary: bool) -> void:
 	overlay.visible = true
+	overlay.modulate = Color(1, 1, 1, 0)
 	overlay_title.text = title
 	overlay_body.text = body
 	overlay_action = action
@@ -1209,10 +1249,13 @@ func _show_overlay(title: String, body: String, action: String, primary_text: St
 	overlay_secondary_button.text = secondary_text
 	_update_overlay_mascot(title, action)
 	_update_overlay_ribbon(action)
+	var tween := create_tween()
+	tween.tween_property(overlay, "modulate", Color(1, 1, 1, 1), 0.14)
 
 
 func _hide_overlay() -> void:
 	overlay.visible = false
+	overlay.modulate = Color(1, 1, 1, 1)
 	overlay_action = ""
 
 
@@ -1468,10 +1511,44 @@ func _stage_star_rating() -> int:
 
 
 func _build_star_text(star_count: int) -> String:
+	return "클리어 등급 %s" % _format_star_rating(star_count)
+
+
+func _format_star_rating(star_count: int) -> String:
 	var stars := ""
 	for _i in range(star_count):
 		stars += "★"
-	return "클리어 등급 %s" % stars
+	for _i in range(maxi(0, 3 - star_count)):
+		stars += "☆"
+	return "%s  %d/3" % [stars, star_count]
+
+
+func _build_clear_overlay_body(star_count: int, unlock_text: String, campaign_complete: bool) -> String:
+	var lines: Array[String] = [
+		"등급  %s" % _format_star_rating(star_count),
+		"점수  %d · 남은 이동 %d" % [score, remaining_moves],
+		"목표 완료  %s" % _build_goal_result_summary(),
+	]
+	if campaign_complete:
+		lines.append("진행  100개 스테이지 완료")
+		lines.append("")
+		lines.append("홈에서 전체 진행을 확인하거나 피날레를 다시 플레이할 수 있습니다.")
+	else:
+		lines.append("다음  %s" % unlock_text)
+		lines.append("")
+		lines.append("바로 다음 스테이지로 이어갈 수 있습니다.")
+	return "\n".join(lines)
+
+
+func _build_failure_overlay_body() -> String:
+	return "\n".join([
+		"목표를 아직 달성하지 못했습니다.",
+		"부족  %s" % _build_goal_remaining_summary(),
+		"진행  %s" % _build_goal_result_summary(),
+		"현재 점수  %d" % score,
+		"",
+		"다음 시도  %s" % _build_failure_hint(),
+	])
 
 
 func _build_unlock_text(star_count: int, prev_best: int) -> String:

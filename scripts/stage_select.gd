@@ -273,7 +273,7 @@ func _rebuild_band_route(current_band: String) -> void:
 
 		var wrapper := VBoxContainer.new()
 		wrapper.alignment = BoxContainer.ALIGNMENT_CENTER
-		wrapper.theme_override_constants.separation = 4
+		wrapper.add_theme_constant_override("separation", 4)
 		wrapper.add_child(node_button)
 
 		var label := Label.new()
@@ -418,9 +418,9 @@ func _short_hint(source_text: String) -> String:
 
 
 func _focus_selected_stage_card() -> void:
-	var selected_index := clamp(GameSession.get_selected_stage_id() - 1, 0, max(stage_grid.get_child_count() - 1, 0))
 	if stage_grid.get_child_count() == 0:
 		return
+	var selected_index: int = clampi(GameSession.get_selected_stage_id() - 1, 0, maxi(stage_grid.get_child_count() - 1, 0))
 	var card: Control = stage_grid.get_child(selected_index)
 	await get_tree().process_frame
 	stage_scroll.scroll_vertical = maxi(0, int(card.position.y) - 80)

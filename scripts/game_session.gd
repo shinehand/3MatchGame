@@ -39,6 +39,7 @@ static func load_state() -> void:
 
 
 static func save_state() -> void:
+	DirAccess.make_dir_recursive_absolute("user://")
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:
 		push_error("GameSession: failed to open save file.")

@@ -2,30 +2,67 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+source scripts/godot_validation_env.sh
+validation_require_godot
 
-echo "[1/5] Stage data structure validation"
+blocking_log_patterns="SCRIPT ERROR:|Parse Error:|Invalid access to property|Cannot call method|Attempt to call function|Failed loading resource|Unable to open file:|GameSession: failed to open save file|Scene load validation error"
+
+echo "[1/7] Stage data structure validation"
 zsh scripts/validate_stage_data.sh
 
-echo "[2/5] Stage balance validation"
+echo "[2/7] Stage balance validation"
 zsh scripts/validate_stage_balance.sh
 
-echo "[3/5] Headless load"
-godot --headless --path . --log-file /tmp/puzzle-headless-validate.log --quit
-if rg -n "SCRIPT ERROR:|Parse Error:|Invalid access to property|Cannot call method|Attempt to call function" /tmp/puzzle-headless-validate.log; then
-  echo "Headless load reported script/runtime errors."
+echo "[3/7] Godot import cache"
+import_log="/tmp/puzzle-import-cache.log"
+import_stdout="/tmp/puzzle-import-cache.stdout"
+if ! godot --headless --quiet --path . --import --quit --log-file "$import_log" >"$import_stdout" 2>&1; then
+  echo "Godot import failed."
+  cat "$import_stdout"
   exit 1
 fi
+validation_fail_on_matches "Godot import" "$blocking_log_patterns" "$import_log" "$import_stdout"
+echo "Godot import cache prepared."
+
+echo "[4/7] Focused scene load smoke"
+scene_log="/tmp/puzzle-scene-load-validate.log"
+scene_stdout="/tmp/puzzle-scene-load-validate.stdout"
+if ! godot --headless --quiet --path . --log-file "$scene_log" --script res://scripts/validate_scene_loads.gd >"$scene_stdout" 2>&1; then
+  echo "Focused scene load smoke failed."
+  cat "$scene_stdout"
+  exit 1
+fi
+validation_fail_on_matches "Focused scene load smoke" "$blocking_log_patterns" "$scene_log" "$scene_stdout"
+if validation_search "Scene load validation passed" "$scene_stdout" >/dev/null 2>&1; then
+  true
+else
+  echo "Scene load validation passed."
+fi
+
+echo "[5/7] Headless main load"
+headless_log="/tmp/puzzle-headless-validate.log"
+headless_stdout="/tmp/puzzle-headless-validate.stdout"
+if ! godot --headless --quiet --path . --log-file "$headless_log" --quit >"$headless_stdout" 2>&1; then
+  echo "Headless main load failed."
+  cat "$headless_stdout"
+  exit 1
+fi
+validation_fail_on_matches "Headless main load" "$blocking_log_patterns" "$headless_log" "$headless_stdout"
 echo "No script/runtime errors reported in headless log."
 
-echo "[4/5] Texture loading anti-pattern scan"
-if rg -n "Image\.load_from_file|ProjectSettings\.globalize_path" scripts >/tmp/puzzle_texture_scan.log 2>&1; then
+echo "[6/7] Texture loading anti-pattern scan"
+if validation_search "Image\.load_from_file|ProjectSettings\.globalize_path" scripts >/tmp/puzzle_texture_scan.log 2>&1; then
   echo "Direct file-based texture loading found:"
+  cat /tmp/puzzle_texture_scan.log
+  exit 1
+elif [ "$?" -gt 1 ]; then
+  echo "Texture loading anti-pattern scan failed:"
   cat /tmp/puzzle_texture_scan.log
   exit 1
 fi
 echo "No direct file-based texture loading in scripts."
 
-echo "[5/5] Manual smoke checklist"
+echo "[7/7] Manual smoke checklist"
 cat <<'EOF'
 - 홈 화면에서 `시작`, `스테이지 라인`, `설정` 버튼이 정상 표시되는지 확인
 - `시작`을 누르면 스토리 라인이 있는 전용 스테이지 선택 씬으로 이동하는지 확인
