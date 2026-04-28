@@ -310,6 +310,8 @@ func _apply_responsive_layout() -> void:
 	goal_padding.add_theme_constant_override("margin_bottom", 12 if portrait else 18)
 	goal_column.add_theme_constant_override("separation", 6 if portrait else 10)
 	goal_list.add_theme_constant_override("separation", 4 if portrait else 8)
+	portrait_goal_summary.add_theme_font_size_override("font_size", 17 if portrait else 18)
+	portrait_goal_summary.add_theme_constant_override("line_spacing", 4 if portrait else 2)
 
 	top_bar.visible = not portrait
 	pause_button.visible = not portrait
@@ -339,7 +341,7 @@ func _apply_responsive_layout() -> void:
 		portrait_goal_summary.visible = portrait
 	stage_value.add_theme_font_size_override("font_size", 20 if portrait else 24)
 	score_value.add_theme_font_size_override("font_size", 18 if portrait else 22)
-	goal_card.custom_minimum_size = Vector2(0, 52) if portrait else Vector2.ZERO
+	goal_card.custom_minimum_size = Vector2(0, 92) if portrait else Vector2.ZERO
 	_configure_action_buttons(portrait)
 
 	_update_board_surface_size()
@@ -1140,30 +1142,29 @@ func _build_goal_remaining_summary() -> String:
 	return " · ".join(parts)
 
 
-func _build_compact_goal_summary() -> String:
-	var chips: Array[String] = []
+func _build_portrait_goal_summary() -> String:
+	var progress_parts: Array[String] = []
 	var targets: Dictionary = _stage_collect_targets()
 
 	for animal_id in targets.keys():
-		chips.append("%s %d/%d" % [
-			ANIMAL_NAMES[String(animal_id)],
-			int(collected_counts.get(animal_id, 0)),
-			int(targets[animal_id]),
-		])
+		var current_count := int(collected_counts.get(animal_id, 0))
+		var target_count := int(targets[animal_id])
+		var marker := "✓" if current_count >= target_count else "•"
+		progress_parts.append("%s %s %d/%d" % [marker, ANIMAL_NAMES[String(animal_id)], current_count, target_count])
 
 	var target_score: int = _target_score()
 	if target_score > 0:
-		chips.append("점수 %d/%d" % [score, target_score])
+		var score_marker := "✓" if score >= target_score else "•"
+		progress_parts.append("%s 점수 %d/%d" % [score_marker, score, target_score])
 	var target_blockers: int = _target_blockers()
 	if target_blockers > 0:
-		chips.append("덤불 %d/%d" % [cleared_blockers, target_blockers])
+		var blocker_marker := "✓" if cleared_blockers >= target_blockers else "•"
+		progress_parts.append("%s 덤불 %d/%d" % [blocker_marker, cleared_blockers, target_blockers])
 
-	var visible_chips: Array[String] = []
-	for index in range(mini(chips.size(), 2)):
-		visible_chips.append(chips[index])
-	if chips.size() > visible_chips.size():
-		visible_chips.append("+%d" % (chips.size() - visible_chips.size()))
-	return "  ·  ".join(visible_chips)
+	var remaining_text := _build_goal_remaining_summary()
+	if remaining_text == "마지막 판정 확인 중":
+		remaining_text = "모든 목표 완료"
+	return "목표  %s\n남은 것  %s" % [" · ".join(progress_parts), remaining_text]
 
 
 func _build_stage_overlay_text() -> String:
@@ -1200,7 +1201,7 @@ func _ensure_portrait_goal_summary() -> void:
 func _refresh_portrait_goal_summary() -> void:
 	if portrait_goal_summary == null:
 		return
-	portrait_goal_summary.text = _build_compact_goal_summary()
+	portrait_goal_summary.text = _build_portrait_goal_summary()
 
 
 func _reset_collected_counts() -> void:
@@ -1526,17 +1527,19 @@ func _format_star_rating(star_count: int) -> String:
 func _build_clear_overlay_body(star_count: int, unlock_text: String, campaign_complete: bool) -> String:
 	var lines: Array[String] = [
 		"등급  %s" % _format_star_rating(star_count),
-		"점수  %d · 남은 이동 %d" % [score, remaining_moves],
-		"목표 완료  %s" % _build_goal_result_summary(),
+		"결과  점수 %d · 남은 이동 %d" % [score, remaining_moves],
+		"완료  %s" % _build_goal_result_summary(),
 	]
 	if campaign_complete:
 		lines.append("진행  100개 스테이지 완료")
+		lines.append("다음 행동  홈으로 / 다시 플레이")
 		lines.append("")
-		lines.append("홈에서 전체 진행을 확인하거나 피날레를 다시 플레이할 수 있습니다.")
+		lines.append("전체 구조 작전을 마쳤습니다. 홈에서 진행도를 확인할 수 있습니다.")
 	else:
-		lines.append("다음  %s" % unlock_text)
+		lines.append("해금  %s" % unlock_text)
+		lines.append("다음 행동  다음 스테이지 / 홈으로")
 		lines.append("")
-		lines.append("바로 다음 스테이지로 이어갈 수 있습니다.")
+		lines.append("바로 다음 구조 작전으로 이어가거나 홈에서 진행도를 확인할 수 있습니다.")
 	return "\n".join(lines)
 
 
@@ -1545,7 +1548,8 @@ func _build_failure_overlay_body() -> String:
 		"목표를 아직 달성하지 못했습니다.",
 		"부족  %s" % _build_goal_remaining_summary(),
 		"진행  %s" % _build_goal_result_summary(),
-		"현재 점수  %d" % score,
+		"결과  점수 %d · 남은 이동 %d" % [score, remaining_moves],
+		"다음 행동  재도전 / 홈으로",
 		"",
 		"다음 시도  %s" % _build_failure_hint(),
 	])
