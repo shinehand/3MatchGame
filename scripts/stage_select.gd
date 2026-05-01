@@ -27,6 +27,18 @@ const BOOSTER_ICONS := {
 	"striped": preload("res://assets/ui/badge_row.svg"),
 	"bomb": preload("res://assets/ui/badge_bomb.svg"),
 }
+const WORLD_NODE_POSITIONS := [
+	Vector2(0.18, 0.76),
+	Vector2(0.34, 0.66),
+	Vector2(0.24, 0.53),
+	Vector2(0.42, 0.43),
+	Vector2(0.60, 0.52),
+	Vector2(0.73, 0.39),
+	Vector2(0.58, 0.27),
+	Vector2(0.40, 0.21),
+	Vector2(0.25, 0.32),
+	Vector2(0.78, 0.18),
+]
 
 const BAND_ORDER := ["1-10", "11-20", "21-30", "31-40", "41-50", "51-60", "61-70", "71-80", "81-90", "91-100"]
 const BAND_META := {
@@ -110,6 +122,14 @@ var map_rabbit: TextureRect
 var map_chick: TextureRect
 var map_tweens: Array[Tween] = []
 var current_stage_node_tween: Tween
+var stage_world_layer: Control
+var world_title_label: Label
+var world_subtitle_label: Label
+var world_status_label: Label
+var world_path_root: Control
+var world_play_button: Button
+var world_selected_label: Label
+var world_node_buttons: Array[Button] = []
 var stage_popup_overlay: ColorRect
 var stage_popup_panel: PanelContainer
 var stage_popup_title_label: Label
@@ -130,6 +150,7 @@ func _ready() -> void:
 	resized.connect(_queue_layout_refresh)
 	get_window().size_changed.connect(_queue_layout_refresh)
 	_build_map_juice_layer()
+	_build_stage_world_layer()
 	_build_stage_popup()
 	_rebuild_stage_grid()
 	_refresh_story_panel()
@@ -153,8 +174,6 @@ func _rebuild_stage_grid() -> void:
 	for stage_def in stage_defs:
 		var node_button := _make_stage_map_node(stage_def)
 		stage_grid.add_child(node_button)
-		if int(stage_def.get("id", 0)) == GameSession.get_selected_stage_id():
-			call_deferred("_start_current_stage_node_pulse", node_button)
 
 
 func _make_stage_map_node(stage_def: Dictionary) -> Button:
@@ -293,6 +312,145 @@ func _make_map_mascot(node_name: String, texture: Texture2D) -> TextureRect:
 	mascot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	mascot.modulate = Color(1, 1, 1, 0.78)
 	return mascot
+
+
+func _build_stage_world_layer() -> void:
+	if stage_world_layer:
+		return
+
+	stage_world_layer = Control.new()
+	stage_world_layer.name = "StageWorldLayer"
+	stage_world_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	stage_world_layer.mouse_filter = Control.MOUSE_FILTER_PASS
+	add_child(stage_world_layer)
+	move_child(stage_world_layer, safe_margin.get_index() + 1)
+
+	var shade := ColorRect.new()
+	shade.name = "WorldShade"
+	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	shade.color = Color(0.10, 0.54, 0.78, 0.10)
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stage_world_layer.add_child(shade)
+
+	var top_hud := HBoxContainer.new()
+	top_hud.name = "WorldTopHud"
+	top_hud.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	top_hud.offset_left = 24.0
+	top_hud.offset_top = 22.0
+	top_hud.offset_right = -24.0
+	top_hud.offset_bottom = 96.0
+	top_hud.add_theme_constant_override("separation", 12)
+	stage_world_layer.add_child(top_hud)
+
+	var home_nav := _make_world_button("홈", Vector2(110, 64), 22)
+	home_nav.pressed.connect(_on_home_button_pressed)
+	top_hud.add_child(home_nav)
+	top_hud.add_child(_make_world_badge("하트", "5"))
+	top_hud.add_child(_make_world_badge("골드", str(120 + GameSession.get_total_stars() * 15)))
+	top_hud.add_child(_make_world_badge("별", str(GameSession.get_total_stars())))
+	var hud_spacer := Control.new()
+	hud_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top_hud.add_child(hud_spacer)
+
+	var title_stack := VBoxContainer.new()
+	title_stack.name = "WorldTitleStack"
+	title_stack.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	title_stack.offset_left = 36.0
+	title_stack.offset_top = 116.0
+	title_stack.offset_right = -36.0
+	title_stack.offset_bottom = 230.0
+	title_stack.alignment = BoxContainer.ALIGNMENT_CENTER
+	title_stack.add_theme_constant_override("separation", 2)
+	stage_world_layer.add_child(title_stack)
+
+	world_title_label = _make_world_label("정글 입구", 54, Color(1.0, 0.92, 0.23, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
+	world_title_label.add_theme_color_override("font_shadow_color", Color(0.06, 0.20, 0.34, 0.80))
+	world_title_label.add_theme_constant_override("shadow_offset_y", 6)
+	title_stack.add_child(world_title_label)
+
+	world_subtitle_label = _make_world_label("동물 구조 월드맵", 24, Color(1, 1, 1, 0.96), HORIZONTAL_ALIGNMENT_CENTER)
+	world_subtitle_label.add_theme_color_override("font_shadow_color", Color(0.06, 0.20, 0.34, 0.62))
+	world_subtitle_label.add_theme_constant_override("shadow_offset_y", 3)
+	title_stack.add_child(world_subtitle_label)
+
+	world_path_root = Control.new()
+	world_path_root.name = "WorldMapPathRoot"
+	world_path_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	world_path_root.mouse_filter = Control.MOUSE_FILTER_PASS
+	stage_world_layer.add_child(world_path_root)
+
+	var cta_panel := PanelContainer.new()
+	cta_panel.name = "WorldSelectedPanel"
+	cta_panel.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	cta_panel.offset_left = 30.0
+	cta_panel.offset_top = -178.0
+	cta_panel.offset_right = -30.0
+	cta_panel.offset_bottom = -28.0
+	cta_panel.add_theme_stylebox_override("panel", _rounded_style(Color(1, 1, 1, 0.80), Color(1.0, 0.82, 0.22, 1), 34, 5))
+	stage_world_layer.add_child(cta_panel)
+
+	var cta_margin := MarginContainer.new()
+	cta_margin.add_theme_constant_override("margin_left", 22)
+	cta_margin.add_theme_constant_override("margin_top", 18)
+	cta_margin.add_theme_constant_override("margin_right", 22)
+	cta_margin.add_theme_constant_override("margin_bottom", 18)
+	cta_panel.add_child(cta_margin)
+
+	var cta_row := HBoxContainer.new()
+	cta_row.add_theme_constant_override("separation", 16)
+	cta_margin.add_child(cta_row)
+
+	world_selected_label = _make_world_label("Stage", 24, Color("213a55"), HORIZONTAL_ALIGNMENT_LEFT)
+	world_selected_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	world_selected_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	cta_row.add_child(world_selected_label)
+
+	world_play_button = _make_world_button("출동", Vector2(190, 88), 30)
+	world_play_button.name = "WorldPlayButton"
+	world_play_button.pressed.connect(_on_world_play_button_pressed)
+	cta_row.add_child(world_play_button)
+
+
+func _make_world_badge(label_text: String, value_text: String) -> PanelContainer:
+	var badge := PanelContainer.new()
+	badge.custom_minimum_size = Vector2(122, 58)
+	badge.add_theme_stylebox_override("panel", _rounded_style(Color(1, 1, 1, 0.80), Color(1.0, 0.82, 0.24, 1.0), 24, 3))
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_top", 8)
+	margin.add_theme_constant_override("margin_bottom", 8)
+	badge.add_child(margin)
+	var label := _make_world_label("%s %s" % [label_text, value_text], 20, Color("213a55"), HORIZONTAL_ALIGNMENT_CENTER)
+	margin.add_child(label)
+	return badge
+
+
+func _make_world_button(text: String, min_size: Vector2, font_size: int) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.custom_minimum_size = min_size
+	button.add_theme_font_size_override("font_size", font_size)
+	button.add_theme_color_override("font_color", Color("653b08"))
+	button.add_theme_stylebox_override("normal", _rounded_style(Color("ffd450"), Color("f28c26"), 28, 4))
+	button.add_theme_stylebox_override("hover", _rounded_style(Color("ffe978"), Color("f28c26"), 28, 4))
+	button.add_theme_stylebox_override("pressed", _rounded_style(Color("ffbd3f"), Color("e86e18"), 28, 4))
+	return button
+
+
+func _make_world_label(text: String, font_size: int, color: Color, alignment: HorizontalAlignment) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.horizontal_alignment = alignment
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	return label
+
+
+func _on_world_play_button_pressed() -> void:
+	Feedback.play_ui_tap()
+	_show_stage_popup(GameSession.get_selected_stage_id())
 
 
 func _build_stage_popup() -> void:
@@ -522,6 +680,149 @@ func _on_stage_popup_start_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/gameplay.tscn")
 
 
+func _refresh_stage_world_layer(stage_def: Dictionary, meta: Dictionary) -> void:
+	if stage_world_layer == null:
+		return
+	var stage_id := int(stage_def.get("id", 1))
+	world_title_label.text = "%s" % String(meta.get("title", "구조 작전"))
+	world_subtitle_label.text = "Stage %d · %s · 해금 %d/%d · 별 %d" % [
+		stage_id,
+		String(stage_def.get("difficulty", "Easy")),
+		min(GameSession.get_highest_unlocked_stage_id(), stage_defs.size()),
+		stage_defs.size(),
+		GameSession.get_total_stars(),
+	]
+	world_selected_label.text = "%s\n%s" % [
+		_build_selected_stage_title(stage_def, meta),
+		_build_goal_summary(stage_def).trim_prefix("목표: "),
+	]
+	_rebuild_stage_world_nodes()
+
+
+func _rebuild_stage_world_nodes() -> void:
+	if world_path_root == null:
+		return
+	if current_stage_node_tween != null and current_stage_node_tween.is_valid():
+		current_stage_node_tween.kill()
+	current_stage_node_tween = null
+	world_node_buttons.clear()
+	for child in world_path_root.get_children():
+		child.queue_free()
+
+	var selected_def := _selected_stage_def()
+	var band := String(selected_def.get("band", "1-10"))
+	var range_values := _band_stage_range(band)
+	var start_id := int(range_values.x)
+	var end_id := int(range_values.y)
+	var positions := _world_node_positions()
+
+	for index in range(mini(positions.size() - 1, end_id - start_id)):
+		_add_world_connector(positions[index], positions[index + 1])
+
+	for index in range(end_id - start_id + 1):
+		var stage_id := start_id + index
+		var stage_def := _stage_def_by_id(stage_id)
+		var node_button := _make_stage_world_node(stage_def, positions[index])
+		world_node_buttons.append(node_button)
+		world_path_root.add_child(node_button)
+		node_button.name = "WorldStageNode%d" % stage_id
+		if stage_id == GameSession.get_selected_stage_id():
+			call_deferred("_start_current_stage_node_pulse", node_button)
+
+
+func _world_node_positions() -> Array[Vector2]:
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var portrait: bool = MobileLayout.is_portrait(self)
+	var left: float = 58.0 if portrait else viewport_size.x * 0.12
+	var top: float = 260.0 if portrait else 248.0
+	var width: float = viewport_size.x - left * 2.0
+	var bottom_reserved: float = 230.0 if portrait else 190.0
+	var height: float = maxf(480.0, viewport_size.y - top - bottom_reserved)
+	var positions: Array[Vector2] = []
+	for normalized: Vector2 in WORLD_NODE_POSITIONS:
+		positions.append(Vector2(left + normalized.x * width, top + normalized.y * height))
+	return positions
+
+
+func _add_world_connector(from_position: Vector2, to_position: Vector2) -> void:
+	var delta := to_position - from_position
+	var length := delta.length()
+	if length <= 0.0:
+		return
+	var shadow := ColorRect.new()
+	shadow.name = "WorldPathShadow"
+	shadow.color = Color(0.08, 0.23, 0.34, 0.18)
+	shadow.size = Vector2(length, 18)
+	shadow.pivot_offset = Vector2(0, 9)
+	shadow.position = from_position + Vector2(2, 5)
+	shadow.rotation = delta.angle()
+	shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	world_path_root.add_child(shadow)
+
+	var path := ColorRect.new()
+	path.name = "WorldPathConnector"
+	path.color = Color(1.0, 0.82, 0.25, 0.92)
+	path.size = Vector2(length, 10)
+	path.pivot_offset = Vector2(0, 5)
+	path.position = from_position
+	path.rotation = delta.angle()
+	path.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	world_path_root.add_child(path)
+
+
+func _make_stage_world_node(stage_def: Dictionary, center_position: Vector2) -> Button:
+	var stage_id := int(stage_def.get("id", 0))
+	var unlocked := GameSession.is_stage_unlocked(stage_id)
+	var best_stars := GameSession.get_best_stars(stage_id)
+	var current := stage_id == GameSession.get_selected_stage_id()
+	var finale := stage_id % 10 == 0
+	var node_size := 112.0 if not finale else 124.0
+	if current:
+		node_size = 132.0
+
+	var button := Button.new()
+	button.name = "WorldStageNode%d" % stage_id
+	button.position = center_position - Vector2(node_size, node_size) * 0.5
+	button.size = Vector2(node_size, node_size)
+	button.custom_minimum_size = Vector2(node_size, node_size)
+	button.focus_mode = Control.FOCUS_NONE
+	button.disabled = not unlocked
+	button.text = _stage_world_node_text(stage_id, unlocked, best_stars, current)
+	button.add_theme_font_size_override("font_size", 25 if current else 22)
+	button.add_theme_color_override("font_color", Color("1f415c") if unlocked else Color("7f8792"))
+	button.add_theme_color_override("font_disabled_color", Color("7f8792"))
+	button.add_theme_stylebox_override("normal", _stage_node_style(unlocked, current, finale, best_stars))
+	button.add_theme_stylebox_override("hover", _stage_node_style(unlocked, true, finale, best_stars))
+	button.add_theme_stylebox_override("pressed", _stage_node_style(unlocked, true, finale, best_stars, true))
+	button.add_theme_stylebox_override("disabled", _stage_node_style(false, false, finale, best_stars))
+	button.pressed.connect(_on_stage_card_pressed.bind(stage_id))
+
+	if not unlocked:
+		var lock_center := CenterContainer.new()
+		lock_center.set_anchors_preset(Control.PRESET_FULL_RECT)
+		lock_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var lock_icon := TextureRect.new()
+		lock_icon.texture = STAGE_LOCK_TEXTURE
+		lock_icon.custom_minimum_size = Vector2(38, 38)
+		lock_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		lock_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		lock_icon.modulate = Color(1, 1, 1, 0.76)
+		lock_center.add_child(lock_icon)
+		button.add_child(lock_center)
+
+	return button
+
+
+func _stage_world_node_text(stage_id: int, unlocked: bool, best_stars: int, current: bool) -> String:
+	if not unlocked:
+		return "\n%d" % stage_id
+	if current:
+		return "GO\n%d\n%s" % [stage_id, _stage_stars_text(best_stars)]
+	if stage_id % 10 == 0:
+		return "BOSS\n%d" % stage_id
+	return "%d\n%s" % [stage_id, _stage_stars_text(best_stars)]
+
+
 func _refresh_story_panel() -> void:
 	var stage_def := _selected_stage_def()
 	var band := String(stage_def.get("band", "1-10"))
@@ -545,6 +846,7 @@ func _refresh_story_panel() -> void:
 	band_route_title_label.text = "%s 진행 노드" % String(meta.get("title", "현재 밴드"))
 	_rebuild_band_route(band)
 	_rebuild_timeline(band)
+	_refresh_stage_world_layer(stage_def, meta)
 
 
 func _rebuild_timeline(current_band: String) -> void:
@@ -892,6 +1194,9 @@ func _queue_layout_refresh() -> void:
 func _apply_responsive_layout() -> void:
 	var portrait := MobileLayout.is_portrait(self)
 	MobileLayout.apply_safe_area(safe_margin, self, 16 if portrait else 14)
+	layout_root.visible = false
+	if stage_world_layer:
+		stage_world_layer.visible = true
 	layout_root.add_theme_constant_override("separation", 16 if portrait else 22)
 	content_root.vertical = portrait
 	content_root.add_theme_constant_override("separation", 16 if portrait else 20)
@@ -900,11 +1205,26 @@ func _apply_responsive_layout() -> void:
 	stage_grid.add_theme_constant_override("v_separation", 16 if portrait else 20)
 	if stage_popup_panel:
 		stage_popup_panel.custom_minimum_size = Vector2(700, 760) if portrait else Vector2(720, 720)
+	_layout_stage_world_layer(portrait)
 	_layout_map_juice_layer(portrait)
 	header_panel.custom_minimum_size = Vector2.ZERO if portrait else Vector2(0, 170)
 	story_panel.custom_minimum_size = Vector2(0, 420) if portrait else Vector2(420, 0)
 	stage_panel.custom_minimum_size = Vector2(0, 760) if portrait else Vector2(0, 0)
 	home_button.custom_minimum_size = Vector2(180, 72) if portrait else Vector2(220, 78)
+
+
+func _layout_stage_world_layer(portrait: bool) -> void:
+	if stage_world_layer == null:
+		return
+	if world_title_label:
+		world_title_label.add_theme_font_size_override("font_size", 54 if portrait else 62)
+	if world_subtitle_label:
+		world_subtitle_label.add_theme_font_size_override("font_size", 24 if portrait else 28)
+	if world_selected_label:
+		world_selected_label.add_theme_font_size_override("font_size", 23 if portrait else 26)
+	if world_play_button:
+		world_play_button.custom_minimum_size = Vector2(180, 86) if portrait else Vector2(220, 92)
+	_rebuild_stage_world_nodes()
 
 
 func _layout_map_juice_layer(portrait: bool) -> void:

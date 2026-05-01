@@ -15,7 +15,7 @@
 - Use normal Godot scene validation scripts and app launches for verification.
 - Treat the current accumulated visual/gameplay pass as a checkpoint, then continue with smaller atomic commits.
 
-### Next Work
+### Planned Work At Start
 - Run secret scan and validation before committing the accumulated gameification checkpoint.
 - Add a real loading scene and set it as `run/main_scene`.
 - Improve presentation/animation in home, stage, and gameplay screens.
@@ -139,3 +139,35 @@
 ### Residual Notes
 - A prior `godot --headless --write-movie` process remains in uninterruptible macOS state from an earlier experiment, so visual QA now avoids `--write-movie`.
 - The current game pass covers loading, home, map/stage flow, Stage Popup, gameplay intro/feedback, block idle animation, FX layer, and result flow validation.
+
+## 2026-05-01 19:24 KST
+
+### Rebuild Pass Restart
+- User rejected the result as still not game-like enough.
+- Decision: stop decorating the old stage-select panels and replace the first-view stage screen with a full-screen `StageWorldLayer`.
+
+### Completed
+- Added `StageWorldLayer` with top currency HUD, title, a 10-node current-band path, gold path connectors, selected-stage panel, and a large `출동` action button.
+- Hid the old `SafeMargin/LayoutRoot` panel-heavy stage-select layout by default.
+- Updated validation and QA checklist so old panel-first stage selection is now a failure condition.
+
+### Follow-Up Completed Below
+- Run strict Godot validation and visual QA on the new map-first stage-select flow.
+- Then apply the same “screen-first, not panel-first” treatment to gameplay HUD if validation passes.
+
+## 2026-05-01 22:40 KST
+
+### Completed
+- Fixed the stage-select validation to inspect the new nested world-map node structure.
+- Confirmed `zsh scripts/validate_gameplay.sh` passes after the full-screen StageWorldLayer rebuild.
+- Captured a live Godot screenshot at `output/visual-qa/zoo-zoo-stage-world-layer-live-check.png`.
+- Began gameplay HUD rebuild: added a top-level `GameplayHudLayer` with compact level, moves, score, goal, combo, home, retry, and pause controls.
+
+### Technical Decisions
+- In portrait gameplay, the old sidebar card stack is now hidden so the board becomes the primary visual object.
+- The legacy goal chips remain built for logic, validation, and landscape layout, while the new top HUD carries the mobile first-view information.
+
+### Verification
+- `zsh scripts/validate_gameplay.sh` passed after the StageWorldLayer and GameplayHudLayer rebuild.
+- Captured live gameplay HUD visual QA at `output/visual-qa/zoo-zoo-gameplay-hud-rebuild-live-check.png`.
+- Goal-complete FX origin now uses the visible top HUD goal label in portrait instead of the hidden legacy goal card.

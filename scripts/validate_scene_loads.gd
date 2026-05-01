@@ -149,8 +149,38 @@ func _validate_gameplay_scene(node: Node, errors: PackedStringArray) -> void:
 	if intro_label == null:
 		errors.append("%s is missing the READY/GO stage intro label." % GAMEPLAY_SCENE_PATH)
 
+	var gameplay_hud_layer := node.get_node_or_null("GameplayHudLayer") as CanvasItem
+	if gameplay_hud_layer == null:
+		errors.append("%s is missing the compact GameplayHudLayer." % GAMEPLAY_SCENE_PATH)
+	elif node.find_child("HudGoalDock", true, false) == null:
+		errors.append("%s GameplayHudLayer is missing the goal dock." % GAMEPLAY_SCENE_PATH)
+
 
 func _validate_stage_select_scene(node: Node, errors: PackedStringArray) -> void:
+	var legacy_layout := node.get_node_or_null("SafeMargin/LayoutRoot") as CanvasItem
+	if legacy_layout == null:
+		errors.append("%s is missing legacy LayoutRoot." % STAGE_SELECT_SCENE_PATH)
+	elif legacy_layout.visible:
+		errors.append("%s should hide the old panel-heavy LayoutRoot behind StageWorldLayer." % STAGE_SELECT_SCENE_PATH)
+
+	var stage_world_layer := node.get_node_or_null("StageWorldLayer") as CanvasItem
+	if stage_world_layer == null:
+		errors.append("%s is missing the full-screen StageWorldLayer." % STAGE_SELECT_SCENE_PATH)
+	elif not stage_world_layer.visible:
+		errors.append("%s StageWorldLayer should be visible on first launch." % STAGE_SELECT_SCENE_PATH)
+
+	var world_path_root := node.get_node_or_null("StageWorldLayer/WorldMapPathRoot")
+	if world_path_root == null:
+		errors.append("%s is missing WorldMapPathRoot." % STAGE_SELECT_SCENE_PATH)
+	else:
+			var world_node_count := world_path_root.find_children("WorldStageNode*", "Button", true, false).size()
+			if world_node_count != 10:
+				errors.append("%s WorldMapPathRoot expected 10 visible band nodes, got %d." % [STAGE_SELECT_SCENE_PATH, world_node_count])
+
+	var world_play_button := node.find_child("WorldPlayButton", true, false) as Button
+	if world_play_button == null:
+		errors.append("%s is missing the world-map action button." % STAGE_SELECT_SCENE_PATH)
+
 	var stage_grid := node.get_node_or_null("SafeMargin/LayoutRoot/ContentRoot/StagePanel/StageFrame/StageMargin/StageColumn/StageScroll/StageGrid")
 	if stage_grid == null:
 		errors.append("%s is missing StageGrid." % STAGE_SELECT_SCENE_PATH)

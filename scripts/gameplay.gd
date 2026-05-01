@@ -122,6 +122,16 @@ var overlay_action := ""
 var tutorial_enabled := false
 var tutorial_step := -1
 var portrait_goal_summary: Label
+var gameplay_hud_layer: Control
+var hud_level_label: Label
+var hud_moves_label: Label
+var hud_score_label: Label
+var hud_goal_label: Label
+var hud_combo_label: Label
+var hud_combo_gauge: ProgressBar
+var hud_home_button: Button
+var hud_retry_button: Button
+var hud_pause_button: Button
 var gameplay_juice_layer: Control
 var stage_intro_label: Label
 var _prev_complete_set: Dictionary = {}
@@ -141,6 +151,7 @@ func _ready() -> void:
 	_load_ui_textures()
 	_ensure_portrait_goal_summary()
 	_build_gameplay_juice_layer()
+	_build_gameplay_hud_layer()
 	_build_board_nodes()
 	_reset_collected_counts()
 	_start_stage(GameSession.get_selected_stage_id() - 1)
@@ -306,7 +317,7 @@ func _apply_responsive_layout() -> void:
 	board_margin.add_theme_constant_override("margin_top", 14 if portrait else 24)
 	board_margin.add_theme_constant_override("margin_right", 14 if portrait else 24)
 	board_margin.add_theme_constant_override("margin_bottom", 14 if portrait else 24)
-	board_column.add_theme_constant_override("separation", 10 if portrait else 18)
+	board_column.add_theme_constant_override("separation", 8 if portrait else 18)
 	board_surface_margin.add_theme_constant_override("margin_left", 10 if portrait else 18)
 	board_surface_margin.add_theme_constant_override("margin_top", 12 if portrait else 20)
 	board_surface_margin.add_theme_constant_override("margin_right", 10 if portrait else 18)
@@ -325,6 +336,7 @@ func _apply_responsive_layout() -> void:
 	sidebar.add_theme_constant_override("separation", 12 if portrait else 16)
 	sidebar_scroll.scroll_horizontal = 0
 	sidebar_scroll.scroll_vertical = 0
+	sidebar_scroll.visible = not portrait
 	stats_padding.add_theme_constant_override("margin_left", 14 if portrait else 18)
 	stats_padding.add_theme_constant_override("margin_top", 12 if portrait else 18)
 	stats_padding.add_theme_constant_override("margin_right", 14 if portrait else 18)
@@ -342,6 +354,13 @@ func _apply_responsive_layout() -> void:
 	portrait_goal_summary.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	portrait_goal_summary.custom_minimum_size = Vector2(0, 84) if portrait else Vector2.ZERO
 
+	if gameplay_hud_layer:
+		gameplay_hud_layer.visible = portrait
+	board_margin.add_theme_constant_override("margin_top", 206 if portrait else 24)
+	tutorial_banner.custom_minimum_size = Vector2(0, 72) if portrait else Vector2.ZERO
+	tutorial_label.add_theme_font_size_override("font_size", 19 if portrait else 24)
+	tutorial_label.add_theme_constant_override("line_spacing", 4 if portrait else 0)
+
 	top_bar.visible = not portrait
 	pause_button.visible = not portrait
 	pause_button.custom_minimum_size = Vector2(156, 72) if portrait else Vector2(176, 76)
@@ -357,6 +376,7 @@ func _apply_responsive_layout() -> void:
 	overlay_title.add_theme_font_size_override("font_size", 34 if portrait else 40)
 	overlay_body.add_theme_font_size_override("font_size", 20 if portrait else 24)
 	overlay_body.add_theme_constant_override("line_spacing", 8 if portrait else 10)
+	stats_card.visible = not portrait
 	status_card.visible = not portrait
 	tips_card.visible = false
 	combo_value.visible = not portrait
@@ -365,7 +385,7 @@ func _apply_responsive_layout() -> void:
 	difficulty_value.visible = not portrait
 	score_value.visible = false
 	moves_value.visible = not portrait
-	goal_card.visible = true
+	goal_card.visible = not portrait
 	goal_header.visible = not portrait
 	goal_list.visible = not portrait
 	if portrait_goal_summary:
@@ -382,8 +402,34 @@ func _apply_responsive_layout() -> void:
 	score_value.add_theme_font_size_override("font_size", 18 if portrait else 22)
 	goal_card.custom_minimum_size = Vector2(0, 126) if portrait else Vector2.ZERO
 	_configure_action_buttons(portrait)
+	_layout_gameplay_hud(portrait)
 
 	_update_board_surface_size()
+
+
+func _layout_gameplay_hud(portrait: bool) -> void:
+	if gameplay_hud_layer == null:
+		return
+
+	var top_dock := gameplay_hud_layer.get_node_or_null("HudTopDock") as Control
+	var goal_dock := gameplay_hud_layer.get_node_or_null("HudGoalDock") as Control
+	if top_dock:
+		top_dock.offset_left = 18.0 if portrait else 26.0
+		top_dock.offset_top = 18.0 if portrait else 22.0
+		top_dock.offset_right = -18.0 if portrait else -26.0
+		top_dock.offset_bottom = 112.0 if portrait else 106.0
+	if goal_dock:
+		goal_dock.offset_left = 28.0 if portrait else 36.0
+		goal_dock.offset_top = 124.0 if portrait else 112.0
+		goal_dock.offset_right = -28.0 if portrait else -36.0
+		goal_dock.offset_bottom = 208.0 if portrait else 174.0
+	if hud_goal_label:
+		hud_goal_label.add_theme_font_size_override("font_size", 22 if portrait else 18)
+	if hud_combo_label:
+		hud_combo_label.add_theme_font_size_override("font_size", 17 if portrait else 15)
+	if hud_combo_gauge:
+		hud_combo_gauge.custom_minimum_size = Vector2(180, 16) if portrait else Vector2(150, 14)
+	_update_gameplay_hud()
 
 
 func _configure_action_buttons(portrait: bool) -> void:
@@ -474,6 +520,153 @@ func _play_fx_method(method_name: String, args: Array = []) -> void:
 	if not fx_layer.has_method(method_name):
 		return
 	fx_layer.callv(method_name, args)
+
+
+func _build_gameplay_hud_layer() -> void:
+	if gameplay_hud_layer:
+		return
+
+	gameplay_hud_layer = Control.new()
+	gameplay_hud_layer.name = "GameplayHudLayer"
+	gameplay_hud_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	gameplay_hud_layer.mouse_filter = Control.MOUSE_FILTER_PASS
+	add_child(gameplay_hud_layer)
+	if gameplay_juice_layer:
+		move_child(gameplay_hud_layer, gameplay_juice_layer.get_index())
+
+	var top_dock := PanelContainer.new()
+	top_dock.name = "HudTopDock"
+	top_dock.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	top_dock.offset_left = 18.0
+	top_dock.offset_top = 18.0
+	top_dock.offset_right = -18.0
+	top_dock.offset_bottom = 112.0
+	top_dock.add_theme_stylebox_override("panel", _hud_style(Color(1.0, 0.98, 0.74, 0.94), Color("ffbf32"), 26, 4))
+	gameplay_hud_layer.add_child(top_dock)
+
+	var top_margin := MarginContainer.new()
+	top_margin.add_theme_constant_override("margin_left", 14)
+	top_margin.add_theme_constant_override("margin_top", 10)
+	top_margin.add_theme_constant_override("margin_right", 14)
+	top_margin.add_theme_constant_override("margin_bottom", 10)
+	top_dock.add_child(top_margin)
+
+	var top_row := HBoxContainer.new()
+	top_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	top_row.add_theme_constant_override("separation", 10)
+	top_margin.add_child(top_row)
+
+	hud_home_button = _make_hud_icon_button("⌂", "홈")
+	hud_home_button.pressed.connect(_on_quit_button_pressed)
+	top_row.add_child(hud_home_button)
+
+	hud_retry_button = _make_hud_icon_button("↺", "재시작")
+	hud_retry_button.pressed.connect(_on_retry_button_pressed)
+	top_row.add_child(hud_retry_button)
+
+	hud_level_label = _add_hud_stat(top_row, "레벨", "1", Color("ffffff"), Color("4c8bff"))
+	hud_moves_label = _add_hud_stat(top_row, "이동", "0", Color("ffffff"), Color("ff7a42"))
+	hud_score_label = _add_hud_stat(top_row, "점수", "0", Color("ffffff"), Color("47c978"))
+
+	hud_pause_button = _make_hud_icon_button("Ⅱ", "일시정지")
+	hud_pause_button.pressed.connect(_on_pause_button_pressed)
+	top_row.add_child(hud_pause_button)
+
+	var goal_dock := PanelContainer.new()
+	goal_dock.name = "HudGoalDock"
+	goal_dock.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	goal_dock.offset_left = 28.0
+	goal_dock.offset_top = 124.0
+	goal_dock.offset_right = -28.0
+	goal_dock.offset_bottom = 208.0
+	goal_dock.add_theme_stylebox_override("panel", _hud_style(Color(1.0, 1.0, 1.0, 0.86), Color("7fd7ff"), 24, 3))
+	gameplay_hud_layer.add_child(goal_dock)
+
+	var goal_margin := MarginContainer.new()
+	goal_margin.add_theme_constant_override("margin_left", 18)
+	goal_margin.add_theme_constant_override("margin_top", 8)
+	goal_margin.add_theme_constant_override("margin_right", 18)
+	goal_margin.add_theme_constant_override("margin_bottom", 8)
+	goal_dock.add_child(goal_margin)
+
+	var goal_column := VBoxContainer.new()
+	goal_column.add_theme_constant_override("separation", 4)
+	goal_margin.add_child(goal_column)
+
+	hud_goal_label = _make_hud_label("목표", 22, Color("213a55"), HORIZONTAL_ALIGNMENT_CENTER)
+	hud_goal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	goal_column.add_child(hud_goal_label)
+
+	var combo_row := HBoxContainer.new()
+	combo_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	combo_row.add_theme_constant_override("separation", 10)
+	goal_column.add_child(combo_row)
+
+	hud_combo_label = _make_hud_label("콤보 0/6", 17, Color("376072"), HORIZONTAL_ALIGNMENT_CENTER)
+	combo_row.add_child(hud_combo_label)
+
+	hud_combo_gauge = ProgressBar.new()
+	hud_combo_gauge.custom_minimum_size = Vector2(180, 16)
+	hud_combo_gauge.show_percentage = false
+	hud_combo_gauge.max_value = COMBO_GAUGE_MAX
+	hud_combo_gauge.add_theme_stylebox_override("background", _hud_style(Color(0.82, 0.92, 1.0, 0.86), Color(0.82, 0.92, 1.0, 0.0), 8, 0))
+	hud_combo_gauge.add_theme_stylebox_override("fill", _hud_style(Color("ff68a9"), Color("ff68a9"), 8, 0))
+	combo_row.add_child(hud_combo_gauge)
+
+
+func _add_hud_stat(parent: Control, title: String, value: String, bg_color: Color, border_color: Color) -> Label:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(132, 62)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", _hud_style(bg_color, border_color, 20, 3))
+	parent.add_child(panel)
+
+	var label := _make_hud_label("%s\n%s" % [title, value], 18, Color("213a55"), HORIZONTAL_ALIGNMENT_CENTER)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_constant_override("line_spacing", 1)
+	panel.add_child(label)
+	return label
+
+
+func _make_hud_icon_button(text: String, tooltip: String) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.tooltip_text = tooltip
+	button.custom_minimum_size = Vector2(68, 62)
+	button.focus_mode = Control.FOCUS_NONE
+	button.add_theme_font_size_override("font_size", 30)
+	button.add_theme_color_override("font_color", Color("61340b"))
+	button.add_theme_stylebox_override("normal", _hud_style(Color("ffd55a"), Color("f38a22"), 20, 3))
+	button.add_theme_stylebox_override("hover", _hud_style(Color("ffe985"), Color("f38a22"), 20, 3))
+	button.add_theme_stylebox_override("pressed", _hud_style(Color("ffc23d"), Color("e76d18"), 20, 3))
+	return button
+
+
+func _make_hud_label(text: String, font_size: int, color: Color, alignment: HorizontalAlignment) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.horizontal_alignment = alignment
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	return label
+
+
+func _hud_style(bg_color: Color, border_color: Color, radius: int, border_width: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg_color
+	style.border_color = border_color
+	style.border_width_left = border_width
+	style.border_width_top = border_width
+	style.border_width_right = border_width
+	style.border_width_bottom = border_width
+	style.corner_radius_top_left = radius
+	style.corner_radius_top_right = radius
+	style.corner_radius_bottom_right = radius
+	style.corner_radius_bottom_left = radius
+	style.shadow_color = Color(0.08, 0.16, 0.27, 0.16)
+	style.shadow_size = 8
+	return style
 
 
 func _build_gameplay_juice_layer() -> void:
@@ -1387,6 +1580,31 @@ func _update_hud() -> void:
 		next_stage_button.disabled = stage_state != "cleared" or current_stage_index >= stage_defs.size() - 1
 	_configure_action_buttons(MobileLayout.is_portrait(self))
 	_refresh_portrait_goal_summary()
+	_update_gameplay_hud()
+
+
+func _update_gameplay_hud() -> void:
+	if gameplay_hud_layer == null:
+		return
+	if hud_level_label:
+		hud_level_label.text = "레벨\n%d" % _current_stage_id()
+	if hud_moves_label:
+		hud_moves_label.text = "이동\n%d" % remaining_moves
+		hud_moves_label.add_theme_color_override("font_color", _moves_warning_color())
+	if hud_score_label:
+		hud_score_label.text = "점수\n%d" % score
+	if hud_goal_label:
+		var remaining_text := _build_goal_remaining_summary()
+		if remaining_text.is_empty():
+			remaining_text = "구조 완료"
+		hud_goal_label.text = "목표  %s   ·   남은 구조  %s" % [_build_goal_result_summary(), remaining_text]
+	if hud_combo_label:
+		hud_combo_label.text = "콤보 %d/%d" % [combo_gauge_points, COMBO_GAUGE_MAX]
+	if hud_combo_gauge:
+		hud_combo_gauge.max_value = COMBO_GAUGE_MAX
+		hud_combo_gauge.value = combo_gauge_points
+	if hud_pause_button:
+		hud_pause_button.disabled = stage_state != "playing"
 
 
 func _moves_warning_color() -> Color:
@@ -1400,7 +1618,10 @@ func _moves_warning_color() -> Color:
 func _notify_goal_complete_if_new(key: String, is_complete: bool) -> void:
 	if is_complete and not _prev_complete_set.get(key, false):
 		Feedback.play_goal_complete()
-		_play_fx_method("play_goal_rescue", [goal_card.get_global_rect().get_center(), "구출!"])
+		var fx_origin := goal_card.get_global_rect().get_center()
+		if MobileLayout.is_portrait(self) and hud_goal_label != null:
+			fx_origin = hud_goal_label.get_global_rect().get_center()
+		_play_fx_method("play_goal_rescue", [fx_origin, "구출!"])
 	_prev_complete_set[key] = is_complete
 
 
