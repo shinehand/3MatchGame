@@ -43,3 +43,18 @@
 
 ### Verification
 - `zsh scripts/validate_gameplay.sh` passed after adding the loading scene.
+
+## 2026-05-01 17:50 KST
+
+### Completed
+- Added a top-level `GameplayJuiceLayer` with a `LEVEL / READY / GO` stage intro label.
+- Added board entrance animation at stage start.
+- Added board shake feedback for invalid swaps, normal matches, rainbow clears, and Combo Gauge rewards.
+- Added validation checks and manual smoke checklist items for gameplay presentation effects.
+
+### Technical Decisions
+- Presentation effects live above the board and below result overlays, so gameplay remains clickable while effects read as game-layer animation.
+- Board shake is lightweight tween-based feedback and does not change board data or tile identity.
+
+### Verification
+- `zsh scripts/validate_gameplay.sh` passed after gameplay presentation effects were added.

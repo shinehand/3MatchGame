@@ -142,6 +142,13 @@ func _validate_gameplay_scene(node: Node, errors: PackedStringArray) -> void:
 	elif overlay.visible:
 		errors.append("%s should start with the board immediately playable, not blocked by an overlay." % GAMEPLAY_SCENE_PATH)
 
+	var juice_layer := node.get_node_or_null("GameplayJuiceLayer") as CanvasItem
+	if juice_layer == null:
+		errors.append("%s is missing the top-level gameplay juice layer." % GAMEPLAY_SCENE_PATH)
+	var intro_label := node.get_node_or_null("GameplayJuiceLayer/StageIntroLabel") as Label
+	if intro_label == null:
+		errors.append("%s is missing the READY/GO stage intro label." % GAMEPLAY_SCENE_PATH)
+
 
 func _validate_stage_select_scene(node: Node, errors: PackedStringArray) -> void:
 	var stage_grid := node.get_node_or_null("SafeMargin/LayoutRoot/ContentRoot/StagePanel/StageFrame/StageMargin/StageColumn/StageScroll/StageGrid")

@@ -122,6 +122,8 @@ var overlay_action := ""
 var tutorial_enabled := false
 var tutorial_step := -1
 var portrait_goal_summary: Label
+var gameplay_juice_layer: Control
+var stage_intro_label: Label
 var _prev_complete_set: Dictionary = {}
 var _last_moves_warning := -1
 var last_zoo_zoo_bonus_score := 0
@@ -138,6 +140,7 @@ func _ready() -> void:
 	_load_animal_textures()
 	_load_ui_textures()
 	_ensure_portrait_goal_summary()
+	_build_gameplay_juice_layer()
 	_build_board_nodes()
 	_reset_collected_counts()
 	_start_stage(GameSession.get_selected_stage_id() - 1)
@@ -247,6 +250,7 @@ func _start_stage(stage_index: int) -> void:
 	_set_status(start_message)
 	_hide_overlay()
 	_apply_responsive_layout()
+	call_deferred("_play_stage_intro")
 
 
 func _generate_fresh_board() -> void:
@@ -472,6 +476,90 @@ func _play_fx_method(method_name: String, args: Array = []) -> void:
 	fx_layer.callv(method_name, args)
 
 
+func _build_gameplay_juice_layer() -> void:
+	if gameplay_juice_layer:
+		return
+
+	gameplay_juice_layer = Control.new()
+	gameplay_juice_layer.name = "GameplayJuiceLayer"
+	gameplay_juice_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	gameplay_juice_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(gameplay_juice_layer)
+	move_child(gameplay_juice_layer, overlay.get_index())
+
+	stage_intro_label = Label.new()
+	stage_intro_label.name = "StageIntroLabel"
+	stage_intro_label.visible = false
+	stage_intro_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	stage_intro_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stage_intro_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	stage_intro_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	stage_intro_label.add_theme_font_size_override("font_size", 58)
+	stage_intro_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.18, 1.0))
+	stage_intro_label.add_theme_color_override("font_shadow_color", Color(0.06, 0.16, 0.34, 0.78))
+	stage_intro_label.add_theme_constant_override("shadow_offset_y", 7)
+	stage_intro_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	gameplay_juice_layer.add_child(stage_intro_label)
+
+
+func _play_stage_intro() -> void:
+	if stage_intro_label == null or not is_inside_tree():
+		return
+
+	_animate_board_enter()
+	stage_intro_label.visible = true
+	stage_intro_label.text = "LEVEL %d\nREADY" % _current_stage_id()
+	stage_intro_label.modulate = Color(1, 1, 1, 0)
+	stage_intro_label.scale = Vector2(0.72, 0.72)
+	stage_intro_label.pivot_offset = get_viewport_rect().size * 0.5
+
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_BACK)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(stage_intro_label, "scale", Vector2.ONE, 0.22)
+	tween.parallel().tween_property(stage_intro_label, "modulate", Color(1, 1, 1, 1), 0.16)
+	tween.tween_interval(0.32)
+	tween.tween_callback(func() -> void:
+		stage_intro_label.text = "GO!"
+		stage_intro_label.add_theme_font_size_override("font_size", 76)
+	)
+	tween.tween_property(stage_intro_label, "scale", Vector2(1.12, 1.12), 0.18)
+	tween.parallel().tween_property(stage_intro_label, "modulate", Color(1, 1, 1, 0), 0.18)
+	tween.tween_callback(func() -> void:
+		stage_intro_label.visible = false
+		stage_intro_label.add_theme_font_size_override("font_size", 58)
+		stage_intro_label.scale = Vector2.ONE
+	)
+
+
+func _animate_board_enter() -> void:
+	if board_panel == null or not is_inside_tree():
+		return
+	board_panel.pivot_offset = board_panel.size * 0.5
+	board_panel.modulate = Color(1, 1, 1, 0.35)
+	board_panel.scale = Vector2(0.96, 0.96)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.set_trans(Tween.TRANS_BACK)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(board_panel, "modulate", Color(1, 1, 1, 1), 0.24)
+	tween.tween_property(board_panel, "scale", Vector2.ONE, 0.24)
+
+
+func _shake_board(strength: float, duration: float) -> void:
+	if board_frame == null or not is_inside_tree():
+		return
+	var base_position := board_frame.position
+	var steps := 5
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_OUT)
+	for _step in range(steps):
+		var offset := Vector2(rng.randf_range(-strength, strength), rng.randf_range(-strength * 0.45, strength * 0.45))
+		tween.tween_property(board_frame, "position", base_position + offset, duration / float(steps))
+	tween.tween_property(board_frame, "position", base_position, 0.05)
+
+
 func _on_tile_pressed(row: int, col: int) -> void:
 	if is_busy or overlay.visible:
 		return
@@ -571,6 +659,7 @@ func _resolve_swap(from_cell: Vector2i, to_cell: Vector2i) -> void:
 		_refresh_tile(to_cell.x, to_cell.y)
 		tile_nodes[from_cell.x][from_cell.y].play_invalid_feedback()
 		tile_nodes[to_cell.x][to_cell.y].play_invalid_feedback()
+		_shake_board(2.0, 0.10)
 		Feedback.play_swap_invalid()
 		_set_status("매치가 없어 원래 위치로 되돌렸습니다.")
 		is_busy = false
@@ -611,6 +700,7 @@ func _resolve_matches(preferred_cells: Array) -> void:
 		_update_hud()
 		_set_status(_build_resolution_status(combo, removed_cells.size(), special_spawns, cleared_obstacle_cells.size()))
 		_show_combo_banner(combo)
+		_shake_board(4.0 + float(combo) * 1.4, 0.18)
 
 		for cell in clear_cells:
 			tile_nodes[cell.x][cell.y].set_selected(true)
@@ -688,6 +778,7 @@ func _resolve_rainbow_swap(rainbow_cell: Vector2i, target_animal: String) -> voi
 	Feedback.play_rainbow_clear()
 	_set_status("무지개 구슬 발동. %s 블록을 한꺼번에 제거합니다." % ANIMAL_NAMES.get(target_animal, target_animal))
 	_update_hud()
+	_shake_board(9.0, 0.28)
 	var rainbow_positions: Array = []
 	for cell in clear_cells:
 		rainbow_positions.append(_tile_global_center(cell))
@@ -735,6 +826,7 @@ func _trigger_combo_gauge_reward() -> void:
 
 	Feedback.play_combo_gauge_reward()
 	_play_fx_method("play_combo_banner", [COMBO_GAUGE_MAX])
+	_shake_board(7.0, 0.18)
 	_set_status("Combo Gauge 충전 완료. 무작위 블록 3개가 특수 블록으로 변했습니다.")
 	_update_hud()
 	await get_tree().create_timer(0.26).timeout
