@@ -1,0 +1,168 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/loading.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/generated/candy/candy_world_bg.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/generated/candy/rabbit_candy_block.png" id="3"]
+[ext_resource type="Texture2D" path="res://assets/generated/candy/cat_candy_block.png" id="4"]
+[ext_resource type="Texture2D" path="res://assets/generated/candy/chick_candy_block.png" id="5"]
+[ext_resource type="Texture2D" path="res://assets/generated/candy/panda_candy_block.png" id="6"]
+[ext_resource type="Texture2D" path="res://assets/generated/candy/fox_candy_block.png" id="7"]
+
+[node name="Loading" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.34, 0.72, 1, 1)
+
+[node name="BackgroundTexture" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+modulate = Color(1, 1, 1, 0.92)
+texture = ExtResource("2")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="TopGlow" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 320.0
+grow_horizontal = 2
+color = Color(1, 1, 1, 0.22)
+
+[node name="BottomStage" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -360.0
+grow_horizontal = 2
+grow_vertical = 0
+color = Color(1, 0.79, 0.22, 0.24)
+
+[node name="SafeMargin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 34
+theme_override_constants/margin_top = 34
+theme_override_constants/margin_right = 34
+theme_override_constants/margin_bottom = 34
+
+[node name="MainStack" type="VBoxContainer" parent="SafeMargin"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+alignment = 1
+theme_override_constants/separation = 18
+
+[node name="TopSpacer" type="Control" parent="SafeMargin/MainStack"]
+custom_minimum_size = Vector2(0, 140)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Logo" type="Label" parent="SafeMargin/MainStack"]
+layout_mode = 2
+text = "Zoo-Zoo
+Pop"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 88
+
+[node name="Subtitle" type="Label" parent="SafeMargin/MainStack"]
+layout_mode = 2
+text = "ANIMAL CANDY PUZZLE"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 24
+
+[node name="TokenRow" type="HBoxContainer" parent="SafeMargin/MainStack"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 14
+
+[node name="Rabbit" type="TextureRect" parent="SafeMargin/MainStack/TokenRow"]
+custom_minimum_size = Vector2(88, 88)
+layout_mode = 2
+texture = ExtResource("3")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Cat" type="TextureRect" parent="SafeMargin/MainStack/TokenRow"]
+custom_minimum_size = Vector2(88, 88)
+layout_mode = 2
+texture = ExtResource("4")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Chick" type="TextureRect" parent="SafeMargin/MainStack/TokenRow"]
+custom_minimum_size = Vector2(88, 88)
+layout_mode = 2
+texture = ExtResource("5")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Panda" type="TextureRect" parent="SafeMargin/MainStack/TokenRow"]
+custom_minimum_size = Vector2(88, 88)
+layout_mode = 2
+texture = ExtResource("6")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Fox" type="TextureRect" parent="SafeMargin/MainStack/TokenRow"]
+custom_minimum_size = Vector2(88, 88)
+layout_mode = 2
+texture = ExtResource("7")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ProgressFrame" type="PanelContainer" parent="SafeMargin/MainStack"]
+custom_minimum_size = Vector2(620, 58)
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="ProgressMargin" type="MarginContainer" parent="SafeMargin/MainStack/ProgressFrame"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="ProgressBar" type="ProgressBar" parent="SafeMargin/MainStack/ProgressFrame/ProgressMargin"]
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+max_value = 100.0
+show_percentage = false
+
+[node name="TipLabel" type="Label" parent="SafeMargin/MainStack"]
+layout_mode = 2
+text = "동물 캔디 구조 작전 준비 중..."
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 22
+
+[node name="BottomSpacer" type="Control" parent="SafeMargin/MainStack"]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+size_flags_vertical = 3

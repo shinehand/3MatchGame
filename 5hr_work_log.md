@@ -29,3 +29,17 @@
 
 ### Decision
 - Commit the already-accumulated gameification work as the first recoverable checkpoint, then continue with loading/presentation upgrades in smaller commits.
+
+## 2026-05-01 17:39 KST
+
+### Completed
+- Created `scenes/loading.tscn` and `scripts/loading.gd`.
+- Changed `project.godot` main scene from direct home to the new animated loading scene.
+- Added scene-load validation coverage for the loading scene and expanded the manual smoke checklist.
+
+### Technical Decisions
+- Loading screen lasts about 1.55 seconds, enough to give a game-branded first impression without slowing repeated local testing.
+- Built the loading UI from existing generated candy assets so no new external art dependency blocks progress.
+
+### Verification
+- `zsh scripts/validate_gameplay.sh` passed after adding the loading scene.

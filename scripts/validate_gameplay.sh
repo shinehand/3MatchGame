@@ -64,6 +64,7 @@ echo "No direct file-based texture loading in scripts."
 
 echo "[7/7] Manual smoke checklist"
 cat <<'EOF'
+- 앱 실행 직후 캔디 배경, 큰 `Zoo-Zoo Pop` 로고, 움직이는 동물 캔디, 진행바가 있는 로딩 화면이 먼저 보이는지 확인
 - 홈 화면에서 큰 `Zoo-Zoo Pop` 로고, 동물 마스코트, `PLAY`, `맵`, `랭킹`, `설정`이 게임 화면처럼 보이는지 확인
 - `PLAY`를 누르면 월드맵/스테이지 선택 씬으로 이동하는지 확인
 - 스테이지 선택 씬에서 밴드 스토리, 추천 스테이지, 잠금/해금/별 수가 정상 반영되는지 확인

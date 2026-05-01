@@ -2,6 +2,7 @@ extends SceneTree
 
 const StageCatalog = preload("res://scripts/stage_catalog.gd")
 
+const LOADING_SCENE_PATH: String = "res://scenes/loading.tscn"
 const MAIN_SCENE_PATH: String = "res://scenes/main.tscn"
 const STAGE_SELECT_SCENE_PATH: String = "res://scenes/stage_select.tscn"
 const GAMEPLAY_SCENE_PATH: String = "res://scenes/gameplay.tscn"
@@ -21,6 +22,7 @@ func _run() -> void:
 	var errors: PackedStringArray = PackedStringArray()
 	_validate_alpha_gate_data(errors)
 	var scene_paths: PackedStringArray = PackedStringArray([
+		LOADING_SCENE_PATH,
 		MAIN_SCENE_PATH,
 		STAGE_SELECT_SCENE_PATH,
 		GAMEPLAY_SCENE_PATH,
@@ -65,6 +67,8 @@ func _validate_scene_specifics(scene_path: String, node: Node) -> PackedStringAr
 	var errors := PackedStringArray()
 
 	match scene_path:
+		LOADING_SCENE_PATH:
+			_validate_loading_scene(node, errors)
 		MAIN_SCENE_PATH:
 			_validate_main_scene(node, errors)
 		GAMEPLAY_SCENE_PATH:
@@ -73,6 +77,24 @@ func _validate_scene_specifics(scene_path: String, node: Node) -> PackedStringAr
 			_validate_stage_select_scene(node, errors)
 
 	return errors
+
+
+func _validate_loading_scene(node: Node, errors: PackedStringArray) -> void:
+	var logo := node.get_node_or_null("SafeMargin/MainStack/Logo") as Label
+	if logo == null:
+		errors.append("%s is missing the animated game logo." % LOADING_SCENE_PATH)
+	elif not logo.text.contains("Zoo-Zoo"):
+		errors.append("%s logo should present the game brand immediately." % LOADING_SCENE_PATH)
+
+	var progress_bar := node.get_node_or_null("SafeMargin/MainStack/ProgressFrame/ProgressMargin/ProgressBar") as ProgressBar
+	if progress_bar == null:
+		errors.append("%s is missing the visible loading progress bar." % LOADING_SCENE_PATH)
+
+	var token_row := node.get_node_or_null("SafeMargin/MainStack/TokenRow") as HBoxContainer
+	if token_row == null:
+		errors.append("%s is missing the animated animal candy row." % LOADING_SCENE_PATH)
+	elif token_row.get_child_count() < 5:
+		errors.append("%s should show at least five candy tokens while loading." % LOADING_SCENE_PATH)
 
 
 func _validate_main_scene(node: Node, errors: PackedStringArray) -> void:
