@@ -22,6 +22,11 @@ const STORY_PATH_CONNECTOR = preload("res://assets/ui/meta/story_path_connector.
 const STAGE_LOCK_TEXTURE = preload("res://assets/ui/meta/stage_lock.svg")
 const MAP_RABBIT_TEXTURE = preload("res://assets/generated/polish/home_mascot_rabbit_clean.png")
 const MAP_CHICK_TEXTURE = preload("res://assets/generated/polish/home_mascot_chick_clean.png")
+const BOOSTER_ICONS := {
+	"rainbow_paw": preload("res://assets/ui/badge_rainbow.svg"),
+	"striped": preload("res://assets/ui/badge_row.svg"),
+	"bomb": preload("res://assets/ui/badge_bomb.svg"),
+}
 
 const BAND_ORDER := ["1-10", "11-20", "21-30", "31-40", "41-50", "51-60", "61-70", "71-80", "81-90", "91-100"]
 const BAND_META := {
@@ -391,6 +396,8 @@ func _make_booster_button(booster_id: String) -> Button:
 	var button := Button.new()
 	button.toggle_mode = true
 	button.custom_minimum_size = Vector2(190, 118)
+	button.icon = BOOSTER_ICONS.get(booster_id)
+	button.expand_icon = true
 	button.add_theme_font_size_override("font_size", 22)
 	button.add_theme_color_override("font_color", Color("213a55"))
 	button.add_theme_stylebox_override("normal", _rounded_style(Color(1, 1, 1, 0.82), Color("86c3e5"), 26, 4))

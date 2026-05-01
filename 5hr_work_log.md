@@ -110,3 +110,15 @@
 
 ### Verification
 - `zsh scripts/validate_gameplay.sh` passed after adding block idle animation.
+
+## 2026-05-01 19:05 KST
+
+### Completed
+- Added visual badge icons to Stage Popup pre-booster buttons.
+- Updated manual QA checklist to require icon-backed booster choices.
+
+### Technical Decisions
+- Reused existing badge assets for rainbow, striped, and bomb boosters to keep the popup visually consistent with in-board special blocks.
+
+### Verification
+- `zsh scripts/validate_gameplay.sh` passed after adding Stage Popup booster icons.
