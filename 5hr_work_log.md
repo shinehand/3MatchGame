@@ -98,3 +98,15 @@
 - Captured visual QA screenshots:
   - `output/visual-qa/zoo-zoo-stage-map-nodes-live-check.png`
   - `output/visual-qa/zoo-zoo-stage-map-round-nodes-live-check.png`
+
+## 2026-05-01 18:58 KST
+
+### Completed
+- Added subtle idle breathing animation to each visible animal block icon.
+- Updated manual QA checklist to include the idle block animation expectation.
+
+### Technical Decisions
+- Idle motion animates only the icon node, not the tile content root, so swap/drop/match feedback can still use the parent transform without fighting the idle tween.
+
+### Verification
+- `zsh scripts/validate_gameplay.sh` passed after adding block idle animation.

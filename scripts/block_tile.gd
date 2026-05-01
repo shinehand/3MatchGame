@@ -33,6 +33,7 @@ var is_dragging := false
 var suppress_next_press := false
 var match_effect_texture: Texture2D
 var is_inactive := false
+var idle_tween: Tween
 
 
 func _ready() -> void:
@@ -58,6 +59,7 @@ func set_match_effect_texture(texture: Texture2D) -> void:
 
 func set_inactive(inactive: bool) -> void:
 	is_inactive = inactive
+	_stop_idle_motion()
 	inactive_slot.visible = inactive
 	icon.visible = not inactive and icon.texture != null
 	match_burst.visible = false
@@ -77,6 +79,8 @@ func set_inactive(inactive: bool) -> void:
 func set_tile(texture: Texture2D, new_animal_id: String, special_type: String = "") -> void:
 	icon.texture = texture
 	icon.visible = texture != null
+	icon.scale = Vector2.ONE
+	icon.position = Vector2.ZERO
 	animal_id = new_animal_id
 	inactive_slot.visible = false
 	is_inactive = false
@@ -98,6 +102,10 @@ func set_tile(texture: Texture2D, new_animal_id: String, special_type: String = 
 	obstacle_burst.visible = false
 	obstacle_burst.modulate = Color(1, 1, 1, 0)
 	_update_special_badge(special_type)
+	if texture != null:
+		call_deferred("_start_idle_motion")
+	else:
+		_stop_idle_motion()
 
 
 func set_obstacle(texture: Texture2D, hp: int) -> void:
@@ -384,9 +392,34 @@ func _update_special_badge(special_type: String) -> void:
 func _update_visual_pivots() -> void:
 	var tile_center := size * 0.5
 	content.pivot_offset = tile_center
+	icon.pivot_offset = icon.size * 0.5
 	selection_glow.pivot_offset = selection_glow.size * 0.5
 	match_burst.pivot_offset = match_burst.size * 0.5
 	match_pop.pivot_offset = match_pop.size * 0.5
 	invalid_puff.pivot_offset = invalid_puff.size * 0.5
 	obstacle_burst.pivot_offset = obstacle_burst.size * 0.5
 	special_badge.pivot_offset = special_badge.size * 0.5
+
+
+func _start_idle_motion() -> void:
+	if not is_inside_tree() or is_inactive or not icon.visible:
+		return
+	_stop_idle_motion()
+	_update_visual_pivots()
+	var delay := fmod(float(row * 7 + col * 5) * 0.037, 0.62)
+	idle_tween = create_tween()
+	idle_tween.set_loops()
+	idle_tween.set_trans(Tween.TRANS_SINE)
+	idle_tween.set_ease(Tween.EASE_IN_OUT)
+	idle_tween.tween_interval(delay)
+	idle_tween.tween_property(icon, "scale", Vector2(1.025, 1.025), 0.84)
+	idle_tween.tween_property(icon, "scale", Vector2.ONE, 0.84)
+
+
+func _stop_idle_motion() -> void:
+	if idle_tween != null and idle_tween.is_valid():
+		idle_tween.kill()
+	idle_tween = null
+	if icon:
+		icon.scale = Vector2.ONE
+		icon.position = Vector2.ZERO
