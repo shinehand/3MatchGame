@@ -122,3 +122,20 @@
 
 ### Verification
 - `zsh scripts/validate_gameplay.sh` passed after adding Stage Popup booster icons.
+
+## 2026-05-01 19:09 KST
+
+### Final Checkpoint For This Autonomous Pass
+- Worktree was clean after the last feature commit.
+- Latest commits:
+  - `2ce0877 feat: add booster icons to stage popup`
+  - `d536852 feat: animate idle animal blocks`
+  - `4ecf84b feat: convert stage select to map nodes`
+  - `d377f90 feat: add gameplay presentation juice`
+  - `efd0e70 feat: add animated loading screen`
+- Final `zsh scripts/validate_gameplay.sh` run passed.
+- Godot GUI was launched for visual checks; visual QA screenshots were written under `output/visual-qa/`.
+
+### Residual Notes
+- A prior `godot --headless --write-movie` process remains in uninterruptible macOS state from an earlier experiment, so visual QA now avoids `--write-movie`.
+- The current game pass covers loading, home, map/stage flow, Stage Popup, gameplay intro/feedback, block idle animation, FX layer, and result flow validation.
