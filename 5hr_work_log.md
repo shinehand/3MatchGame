@@ -73,3 +73,11 @@
 
 ### Verification
 - `zsh scripts/validate_gameplay.sh` passed after stage-map presentation work.
+
+## 2026-05-01 18:08 KST
+
+### Completed
+- Detected Godot-generated `scripts/loading.gd.uid` after import validation.
+
+### Decision
+- Track the UID file so Godot resource identity remains stable across future launches and team machines.
