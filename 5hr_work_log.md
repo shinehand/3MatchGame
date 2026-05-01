@@ -58,3 +58,18 @@
 
 ### Verification
 - `zsh scripts/validate_gameplay.sh` passed after gameplay presentation effects were added.
+
+## 2026-05-01 18:04 KST
+
+### Completed
+- Added floating ambient mascots to the stage select world map layer.
+- Added a pulse animation to the currently selected stage card.
+- Added Stage Popup pop-in and close-out animation.
+- Expanded validation and manual QA checklist for stage-map game presentation.
+
+### Technical Decisions
+- Map mascots are non-interactive and placed behind the main stage UI, preserving stage-card click behavior.
+- Current stage pulse lives inside `StageCard` so any screen using the card gets the same “recommended node” signal.
+
+### Verification
+- `zsh scripts/validate_gameplay.sh` passed after stage-map presentation work.

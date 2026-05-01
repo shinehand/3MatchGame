@@ -163,6 +163,10 @@ func _validate_stage_select_scene(node: Node, errors: PackedStringArray) -> void
 	elif stage_popup.visible:
 		errors.append("%s StagePopupOverlay should start hidden until a stage node is pressed." % STAGE_SELECT_SCENE_PATH)
 
+	var map_juice_layer := node.get_node_or_null("StageMapJuiceLayer") as CanvasItem
+	if map_juice_layer == null:
+		errors.append("%s is missing StageMapJuiceLayer ambient mascots." % STAGE_SELECT_SCENE_PATH)
+
 
 func _validate_alpha_gate_data(errors: PackedStringArray) -> void:
 	var stages: Array = StageCatalog.get_stages()

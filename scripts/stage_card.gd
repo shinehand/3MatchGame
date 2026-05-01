@@ -19,6 +19,7 @@ const FRAME_LOCKED_PATH := "res://assets/ui/meta/stage_card_frame_locked.svg"
 @onready var finale_badge: TextureRect = $FinaleBadge
 
 var stage_id := 0
+var pulse_tween: Tween
 
 
 func _ready() -> void:
@@ -36,6 +37,10 @@ func setup(stage_def: Dictionary, unlocked: bool, best_stars: int) -> void:
 	_apply_frame_variant(unlocked, best_stars)
 	status_label.text = _status_text(unlocked, best_stars)
 	_rebuild_stars(best_stars)
+	if unlocked and stage_id == GameSession.get_selected_stage_id():
+		call_deferred("_start_current_pulse")
+	else:
+		_stop_current_pulse()
 
 
 func _rebuild_stars(best_stars: int) -> void:
@@ -61,6 +66,31 @@ func _rebuild_stars(best_stars: int) -> void:
 
 func _on_pressed() -> void:
 	stage_selected.emit(stage_id)
+
+
+func _start_current_pulse() -> void:
+	if not is_inside_tree():
+		return
+	_stop_current_pulse()
+	pivot_offset = size * 0.5
+	current_badge.scale = Vector2(0.92, 0.92)
+	pulse_tween = create_tween()
+	pulse_tween.set_loops()
+	pulse_tween.set_trans(Tween.TRANS_SINE)
+	pulse_tween.set_ease(Tween.EASE_IN_OUT)
+	pulse_tween.tween_property(self, "scale", Vector2(1.025, 1.025), 0.62)
+	pulse_tween.parallel().tween_property(current_badge, "scale", Vector2(1.04, 1.04), 0.62)
+	pulse_tween.tween_property(self, "scale", Vector2.ONE, 0.62)
+	pulse_tween.parallel().tween_property(current_badge, "scale", Vector2(0.92, 0.92), 0.62)
+
+
+func _stop_current_pulse() -> void:
+	if pulse_tween != null and pulse_tween.is_valid():
+		pulse_tween.kill()
+	pulse_tween = null
+	scale = Vector2.ONE
+	if current_badge:
+		current_badge.scale = Vector2.ONE
 
 
 func _ensure_refs() -> void:

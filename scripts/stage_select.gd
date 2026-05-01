@@ -19,6 +19,8 @@ const STORY_PATH_NODE_LOCKED = preload("res://assets/ui/meta/story_path_node_loc
 const STORY_PATH_NODE_CURRENT = preload("res://assets/ui/meta/story_path_node_current.svg")
 const STORY_PATH_NODE_CLEARED = preload("res://assets/ui/meta/story_path_node_cleared.svg")
 const STORY_PATH_CONNECTOR = preload("res://assets/ui/meta/story_path_connector.svg")
+const MAP_RABBIT_TEXTURE = preload("res://assets/generated/polish/home_mascot_rabbit_clean.png")
+const MAP_CHICK_TEXTURE = preload("res://assets/generated/polish/home_mascot_chick_clean.png")
 
 const BAND_ORDER := ["1-10", "11-20", "21-30", "31-40", "41-50", "51-60", "61-70", "71-80", "81-90", "91-100"]
 const BAND_META := {
@@ -97,6 +99,10 @@ const BAND_META := {
 var stage_defs: Array = []
 var selected_popup_stage_id := 1
 var selected_pre_boosters: Array[String] = []
+var map_juice_layer: Control
+var map_rabbit: TextureRect
+var map_chick: TextureRect
+var map_tweens: Array[Tween] = []
 var stage_popup_overlay: ColorRect
 var stage_popup_panel: PanelContainer
 var stage_popup_title_label: Label
@@ -116,11 +122,13 @@ func _ready() -> void:
 		GameSession.set_selected_stage_id(1)
 	resized.connect(_queue_layout_refresh)
 	get_window().size_changed.connect(_queue_layout_refresh)
+	_build_map_juice_layer()
 	_build_stage_popup()
 	_rebuild_stage_grid()
 	_refresh_story_panel()
 	call_deferred("_focus_selected_stage_card")
 	call_deferred("_apply_responsive_layout")
+	call_deferred("_start_map_ambient_animations")
 
 
 func _on_home_button_pressed() -> void:
@@ -149,6 +157,34 @@ func _on_stage_card_pressed(stage_id: int) -> void:
 	_refresh_story_panel()
 	_rebuild_stage_grid()
 	_show_stage_popup(stage_id)
+
+
+func _build_map_juice_layer() -> void:
+	if map_juice_layer:
+		return
+
+	map_juice_layer = Control.new()
+	map_juice_layer.name = "StageMapJuiceLayer"
+	map_juice_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	map_juice_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(map_juice_layer)
+	move_child(map_juice_layer, safe_margin.get_index())
+
+	map_rabbit = _make_map_mascot("MapRabbit", MAP_RABBIT_TEXTURE)
+	map_juice_layer.add_child(map_rabbit)
+	map_chick = _make_map_mascot("MapChick", MAP_CHICK_TEXTURE)
+	map_juice_layer.add_child(map_chick)
+
+
+func _make_map_mascot(node_name: String, texture: Texture2D) -> TextureRect:
+	var mascot := TextureRect.new()
+	mascot.name = node_name
+	mascot.texture = texture
+	mascot.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	mascot.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	mascot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mascot.modulate = Color(1, 1, 1, 0.78)
+	return mascot
 
 
 func _build_stage_popup() -> void:
@@ -293,8 +329,11 @@ func _show_stage_popup(stage_id: int) -> void:
 	_refresh_booster_buttons()
 	stage_popup_overlay.visible = true
 	stage_popup_overlay.modulate = Color(1, 1, 1, 0)
+	stage_popup_panel.scale = Vector2(0.84, 0.84)
+	stage_popup_panel.pivot_offset = stage_popup_panel.size * 0.5
 	var tween := create_tween()
 	tween.tween_property(stage_popup_overlay, "modulate", Color(1, 1, 1, 1), 0.12)
+	tween.parallel().tween_property(stage_popup_panel, "scale", Vector2(1.0, 1.0), 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _stage_def_by_id(stage_id: int) -> Dictionary:
@@ -357,7 +396,13 @@ func _booster_title(booster_id: String) -> String:
 
 func _on_stage_popup_close_pressed() -> void:
 	Feedback.play_ui_tap()
-	stage_popup_overlay.visible = false
+	var tween := create_tween()
+	tween.tween_property(stage_popup_overlay, "modulate", Color(1, 1, 1, 0), 0.10)
+	tween.parallel().tween_property(stage_popup_panel, "scale", Vector2(0.92, 0.92), 0.10)
+	tween.tween_callback(func() -> void:
+		stage_popup_overlay.visible = false
+		stage_popup_panel.scale = Vector2.ONE
+	)
 
 
 func _on_stage_popup_start_pressed() -> void:
@@ -706,6 +751,30 @@ func _theme_display_name(theme_key: String) -> String:
 			return ""
 
 
+func _start_map_ambient_animations() -> void:
+	for tween in map_tweens:
+		if tween != null and tween.is_valid():
+			tween.kill()
+	map_tweens.clear()
+	_float_map_mascot(map_rabbit, 14.0, 1.35)
+	_float_map_mascot(map_chick, 10.0, 1.08)
+
+
+func _float_map_mascot(target: Control, distance: float, duration: float) -> void:
+	if target == null or not is_inside_tree():
+		return
+	target.pivot_offset = target.size * 0.5
+	var base_y := target.position.y
+	var tween := create_tween()
+	tween.set_loops()
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(target, "position:y", base_y - distance, duration)
+	tween.tween_property(target, "position:y", base_y + distance * 0.34, duration)
+	tween.tween_property(target, "position:y", base_y, duration * 0.7)
+	map_tweens.append(tween)
+
+
 func _queue_layout_refresh() -> void:
 	call_deferred("_apply_responsive_layout")
 
@@ -719,7 +788,22 @@ func _apply_responsive_layout() -> void:
 	stage_grid.columns = 2 if portrait else 4
 	if stage_popup_panel:
 		stage_popup_panel.custom_minimum_size = Vector2(700, 760) if portrait else Vector2(720, 720)
+	_layout_map_juice_layer(portrait)
 	header_panel.custom_minimum_size = Vector2.ZERO if portrait else Vector2(0, 170)
 	story_panel.custom_minimum_size = Vector2(0, 420) if portrait else Vector2(420, 0)
 	stage_panel.custom_minimum_size = Vector2(0, 760) if portrait else Vector2(0, 0)
 	home_button.custom_minimum_size = Vector2(180, 72) if portrait else Vector2(220, 78)
+
+
+func _layout_map_juice_layer(portrait: bool) -> void:
+	if map_juice_layer == null:
+		return
+	var viewport_size := get_viewport_rect().size
+	var rabbit_height := viewport_size.y * (0.28 if portrait else 0.32)
+	var chick_height := viewport_size.y * (0.20 if portrait else 0.26)
+	if map_rabbit:
+		map_rabbit.size = Vector2(rabbit_height * 0.78, rabbit_height)
+		map_rabbit.position = Vector2(-map_rabbit.size.x * 0.28, viewport_size.y - map_rabbit.size.y - (120.0 if portrait else 70.0))
+	if map_chick:
+		map_chick.size = Vector2(chick_height * 0.84, chick_height)
+		map_chick.position = Vector2(viewport_size.x - map_chick.size.x * 0.68, 98.0 if portrait else 132.0)
