@@ -34,9 +34,12 @@ var suppress_next_press := false
 var match_effect_texture: Texture2D
 var is_inactive := false
 var idle_tween: Tween
+var slot_frame: PanelContainer
+var slot_highlight: PanelContainer
 
 
 func _ready() -> void:
+	_build_candy_slot_frame()
 	invalid_puff.texture = INVALID_PUFF_TEXTURE
 	obstacle_burst.texture = OBSTACLE_BURST_TEXTURE
 	_update_visual_pivots()
@@ -60,6 +63,11 @@ func set_match_effect_texture(texture: Texture2D) -> void:
 func set_inactive(inactive: bool) -> void:
 	is_inactive = inactive
 	_stop_idle_motion()
+	if slot_frame:
+		slot_frame.visible = true
+		slot_frame.add_theme_stylebox_override("panel", _slot_style(Color(0.57, 0.74, 0.95, 0.36), Color(1, 1, 1, 0.26), 16, 2))
+	if slot_highlight:
+		slot_highlight.visible = false
 	inactive_slot.visible = inactive
 	icon.visible = not inactive and icon.texture != null
 	match_burst.visible = false
@@ -89,6 +97,11 @@ func set_tile(texture: Texture2D, new_animal_id: String, special_type: String = 
 	content.position = Vector2.ZERO
 	content.modulate = Color(1, 1, 1, 1)
 	$Button.disabled = texture == null
+	if slot_frame:
+		slot_frame.visible = texture != null
+		slot_frame.add_theme_stylebox_override("panel", _slot_style(_slot_color(new_animal_id), Color(1, 1, 1, 0.72), 20, 3))
+	if slot_highlight:
+		slot_highlight.visible = texture != null
 	selection_glow.visible = false
 	match_burst.visible = false
 	match_burst.modulate = Color(1, 1, 1, 0)
@@ -106,6 +119,78 @@ func set_tile(texture: Texture2D, new_animal_id: String, special_type: String = 
 		call_deferred("_start_idle_motion")
 	else:
 		_stop_idle_motion()
+
+
+func _build_candy_slot_frame() -> void:
+	if slot_frame != null:
+		return
+	slot_frame = PanelContainer.new()
+	slot_frame.name = "CandySlotFrame"
+	slot_frame.set_anchors_preset(Control.PRESET_FULL_RECT)
+	slot_frame.offset_left = 4.0
+	slot_frame.offset_top = 4.0
+	slot_frame.offset_right = -4.0
+	slot_frame.offset_bottom = -4.0
+	slot_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	slot_frame.add_theme_stylebox_override("panel", _slot_style(Color(1, 1, 1, 0.9), Color(1, 1, 1, 0.72), 20, 3))
+	content.add_child(slot_frame)
+	content.move_child(slot_frame, 0)
+
+	slot_highlight = PanelContainer.new()
+	slot_highlight.name = "CandySlotHighlight"
+	slot_highlight.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	slot_highlight.offset_left = 16.0
+	slot_highlight.offset_top = 10.0
+	slot_highlight.offset_right = -16.0
+	slot_highlight.offset_bottom = 34.0
+	slot_highlight.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	slot_highlight.add_theme_stylebox_override("panel", _slot_style(Color(1, 1, 1, 0.34), Color(1, 1, 1, 0.0), 14, 0))
+	content.add_child(slot_highlight)
+	content.move_child(slot_highlight, 1)
+
+
+func _slot_color(new_animal_id: String) -> Color:
+	match new_animal_id:
+		"rabbit":
+			return Color("ff9bd0")
+		"bear":
+			return Color("ffb76a")
+		"cat":
+			return Color("7cc4ff")
+		"chick":
+			return Color("ffe052")
+		"frog":
+			return Color("77ee82")
+		"dog":
+			return Color("d7b4ff")
+		"panda":
+			return Color("f1f5ff")
+		"pig":
+			return Color("ff9bb5")
+		"penguin":
+			return Color("91ddff")
+		"fox":
+			return Color("ff945f")
+		_:
+			return Color("ffffff")
+
+
+func _slot_style(bg_color: Color, border_color: Color, radius: int, border_width: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg_color
+	style.border_color = border_color
+	style.border_width_left = border_width
+	style.border_width_top = border_width
+	style.border_width_right = border_width
+	style.border_width_bottom = border_width
+	style.corner_radius_top_left = radius
+	style.corner_radius_top_right = radius
+	style.corner_radius_bottom_right = radius
+	style.corner_radius_bottom_left = radius
+	style.shadow_color = Color(0.05, 0.12, 0.22, 0.22)
+	style.shadow_size = 7
+	style.shadow_offset = Vector2(0, 3)
+	return style
 
 
 func set_obstacle(texture: Texture2D, hp: int) -> void:

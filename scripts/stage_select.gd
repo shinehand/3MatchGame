@@ -39,6 +39,14 @@ const WORLD_NODE_POSITIONS := [
 	Vector2(0.25, 0.32),
 	Vector2(0.78, 0.18),
 ]
+const WORLD_CANDY_COLORS := [
+	Color("ff6fae"),
+	Color("ffd84f"),
+	Color("57d4ff"),
+	Color("7cf47b"),
+	Color("b98cff"),
+	Color("ff934f"),
+]
 
 const BAND_ORDER := ["1-10", "11-20", "21-30", "31-40", "41-50", "51-60", "61-70", "71-80", "81-90", "91-100"]
 const BAND_META := {
@@ -123,6 +131,7 @@ var map_chick: TextureRect
 var map_tweens: Array[Tween] = []
 var current_stage_node_tween: Tween
 var stage_world_layer: Control
+var world_decor_root: Control
 var world_title_label: Label
 var world_subtitle_label: Label
 var world_status_label: Label
@@ -241,24 +250,25 @@ func _stage_node_style(unlocked: bool, current: bool, finale: bool, best_stars: 
 	var bg_color := Color("ffffff")
 	var border_color := Color("64c5f4")
 	if not unlocked:
-		bg_color = Color(0.92, 0.93, 0.96, 0.78)
+		bg_color = Color(0.90, 0.91, 0.96, 0.80)
 		border_color = Color(0.70, 0.75, 0.82, 0.92)
 	elif current:
-		bg_color = Color("fff0a6") if not pressed else Color("ffd45a")
-		border_color = Color("ff8f26")
+		bg_color = Color("ffe05a") if not pressed else Color("ffc445")
+		border_color = Color("ff6fae")
 	elif finale:
-		bg_color = Color("ffe4f0")
-		border_color = Color("ff74a8")
+		bg_color = Color("f0dcff")
+		border_color = Color("8d5cff")
 	elif best_stars > 0:
-		bg_color = Color("d9fff0")
-		border_color = Color("2dc78b")
+		bg_color = Color("a7ffd4")
+		border_color = Color("22bb86")
 	else:
-		bg_color = Color("f4fbff")
-		border_color = Color("54c7ff")
+		bg_color = Color("ffffff")
+		border_color = Color("4fcaff")
 
-	var style := _rounded_style(bg_color, border_color, 62, 5 if current else 4)
-	style.shadow_color = Color(0.09, 0.22, 0.32, 0.20 if unlocked else 0.08)
-	style.shadow_size = 12 if unlocked else 5
+	var style := _rounded_style(bg_color, border_color, 72, 8 if current else 6)
+	style.shadow_color = Color(0.08, 0.16, 0.30, 0.32 if unlocked else 0.10)
+	style.shadow_size = 18 if unlocked else 7
+	style.shadow_offset = Vector2(0, 8 if unlocked else 3)
 	return style
 
 
@@ -328,9 +338,15 @@ func _build_stage_world_layer() -> void:
 	var shade := ColorRect.new()
 	shade.name = "WorldShade"
 	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
-	shade.color = Color(0.10, 0.54, 0.78, 0.10)
+	shade.color = Color(0.05, 0.32, 0.62, 0.16)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stage_world_layer.add_child(shade)
+
+	world_decor_root = Control.new()
+	world_decor_root.name = "WorldDecorRoot"
+	world_decor_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	world_decor_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stage_world_layer.add_child(world_decor_root)
 
 	var top_hud := HBoxContainer.new()
 	top_hud.name = "WorldTopHud"
@@ -342,7 +358,7 @@ func _build_stage_world_layer() -> void:
 	top_hud.add_theme_constant_override("separation", 12)
 	stage_world_layer.add_child(top_hud)
 
-	var home_nav := _make_world_button("홈", Vector2(110, 64), 22)
+	var home_nav := _make_world_button("홈", Vector2(112, 66), 22)
 	home_nav.pressed.connect(_on_home_button_pressed)
 	top_hud.add_child(home_nav)
 	top_hud.add_child(_make_world_badge("하트", "5"))
@@ -363,12 +379,12 @@ func _build_stage_world_layer() -> void:
 	title_stack.add_theme_constant_override("separation", 2)
 	stage_world_layer.add_child(title_stack)
 
-	world_title_label = _make_world_label("정글 입구", 54, Color(1.0, 0.92, 0.23, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
+	world_title_label = _make_world_label("정글 입구", 58, Color(1.0, 0.93, 0.18, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
 	world_title_label.add_theme_color_override("font_shadow_color", Color(0.06, 0.20, 0.34, 0.80))
 	world_title_label.add_theme_constant_override("shadow_offset_y", 6)
 	title_stack.add_child(world_title_label)
 
-	world_subtitle_label = _make_world_label("동물 구조 월드맵", 24, Color(1, 1, 1, 0.96), HORIZONTAL_ALIGNMENT_CENTER)
+	world_subtitle_label = _make_world_label("동물 구조 월드맵", 24, Color(1, 1, 1, 0.98), HORIZONTAL_ALIGNMENT_CENTER)
 	world_subtitle_label.add_theme_color_override("font_shadow_color", Color(0.06, 0.20, 0.34, 0.62))
 	world_subtitle_label.add_theme_constant_override("shadow_offset_y", 3)
 	title_stack.add_child(world_subtitle_label)
@@ -386,7 +402,7 @@ func _build_stage_world_layer() -> void:
 	cta_panel.offset_top = -178.0
 	cta_panel.offset_right = -30.0
 	cta_panel.offset_bottom = -28.0
-	cta_panel.add_theme_stylebox_override("panel", _rounded_style(Color(1, 1, 1, 0.80), Color(1.0, 0.82, 0.22, 1), 34, 5))
+	cta_panel.add_theme_stylebox_override("panel", _rounded_style(Color(1, 0.98, 0.78, 0.94), Color("ffbf32"), 34, 6))
 	stage_world_layer.add_child(cta_panel)
 
 	var cta_margin := MarginContainer.new()
@@ -413,8 +429,8 @@ func _build_stage_world_layer() -> void:
 
 func _make_world_badge(label_text: String, value_text: String) -> PanelContainer:
 	var badge := PanelContainer.new()
-	badge.custom_minimum_size = Vector2(122, 58)
-	badge.add_theme_stylebox_override("panel", _rounded_style(Color(1, 1, 1, 0.80), Color(1.0, 0.82, 0.24, 1.0), 24, 3))
+	badge.custom_minimum_size = Vector2(124, 60)
+	badge.add_theme_stylebox_override("panel", _rounded_style(Color(1, 1, 1, 0.90), Color("ffcf3f"), 24, 4))
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 12)
 	margin.add_theme_constant_override("margin_right", 12)
@@ -432,9 +448,9 @@ func _make_world_button(text: String, min_size: Vector2, font_size: int) -> Butt
 	button.custom_minimum_size = min_size
 	button.add_theme_font_size_override("font_size", font_size)
 	button.add_theme_color_override("font_color", Color("653b08"))
-	button.add_theme_stylebox_override("normal", _rounded_style(Color("ffd450"), Color("f28c26"), 28, 4))
-	button.add_theme_stylebox_override("hover", _rounded_style(Color("ffe978"), Color("f28c26"), 28, 4))
-	button.add_theme_stylebox_override("pressed", _rounded_style(Color("ffbd3f"), Color("e86e18"), 28, 4))
+	button.add_theme_stylebox_override("normal", _rounded_style(Color("ffd450"), Color("f28c26"), 30, 5))
+	button.add_theme_stylebox_override("hover", _rounded_style(Color("ffe978"), Color("f28c26"), 30, 5))
+	button.add_theme_stylebox_override("pressed", _rounded_style(Color("ffbd3f"), Color("e86e18"), 30, 5))
 	return button
 
 
@@ -696,7 +712,60 @@ func _refresh_stage_world_layer(stage_def: Dictionary, meta: Dictionary) -> void
 		_build_selected_stage_title(stage_def, meta),
 		_build_goal_summary(stage_def).trim_prefix("목표: "),
 	]
+	_rebuild_world_decorations()
 	_rebuild_stage_world_nodes()
+
+
+func _rebuild_world_decorations() -> void:
+	if world_decor_root == null:
+		return
+	for child in world_decor_root.get_children():
+		child.queue_free()
+
+	var viewport_size := get_viewport_rect().size
+	var selected_id := GameSession.get_selected_stage_id()
+	var color_shift := selected_id % WORLD_CANDY_COLORS.size()
+	_add_world_blob("WorldHillBack", Vector2(-80, viewport_size.y * 0.62), Vector2(viewport_size.x + 180.0, viewport_size.y * 0.30), Color(0.54, 0.92, 0.82, 0.50), Color(0.54, 0.92, 0.82, 0.0), 180, -0.04)
+	_add_world_blob("WorldHillFront", Vector2(-120, viewport_size.y * 0.74), Vector2(viewport_size.x + 240.0, viewport_size.y * 0.28), Color(0.86, 0.94, 1.0, 0.72), Color(0.86, 0.94, 1.0, 0.0), 190, 0.035)
+	_add_world_blob("WorldCandyLake", Vector2(viewport_size.x * 0.58, viewport_size.y * 0.50), Vector2(viewport_size.x * 0.34, viewport_size.y * 0.17), Color(0.48, 0.70, 1.0, 0.30), Color(0.48, 0.70, 1.0, 0.0), 96, 0.18)
+
+	for index in range(14):
+		var color: Color = WORLD_CANDY_COLORS[(index + color_shift) % WORLD_CANDY_COLORS.size()]
+		var x_ratio := 0.08 + float((index * 19) % 83) / 100.0
+		var y_ratio := 0.16 + float((index * 29) % 70) / 100.0
+		var size := 34.0 + float((index * 11) % 42)
+		var alpha := 0.16 + float(index % 4) * 0.045
+		_add_world_blob(
+			"WorldCandyBlob%d" % index,
+			Vector2(viewport_size.x * x_ratio, viewport_size.y * y_ratio),
+			Vector2(size * 1.35, size),
+			Color(color.r, color.g, color.b, alpha),
+			Color(1, 1, 1, alpha * 0.72),
+			int(size * 0.5),
+			-0.42 + float(index % 5) * 0.19
+		)
+
+	for index in range(10):
+		var sparkle := Label.new()
+		sparkle.name = "WorldSparkle%d" % index
+		sparkle.text = "✦" if index % 2 == 0 else "●"
+		sparkle.position = Vector2(viewport_size.x * (0.06 + float((index * 23) % 88) / 100.0), viewport_size.y * (0.12 + float((index * 31) % 76) / 100.0))
+		sparkle.add_theme_font_size_override("font_size", 22 + (index % 3) * 7)
+		sparkle.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.35))
+		sparkle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		world_decor_root.add_child(sparkle)
+
+
+func _add_world_blob(node_name: String, position: Vector2, size: Vector2, bg_color: Color, border_color: Color, radius: int, rotation_radians: float) -> void:
+	var blob := PanelContainer.new()
+	blob.name = node_name
+	blob.position = position
+	blob.size = size
+	blob.custom_minimum_size = size
+	blob.rotation = rotation_radians
+	blob.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	blob.add_theme_stylebox_override("panel", _rounded_style(bg_color, border_color, radius, 2 if border_color.a > 0.0 else 0))
+	world_decor_root.add_child(blob)
 
 
 func _rebuild_stage_world_nodes() -> void:
@@ -733,11 +802,11 @@ func _rebuild_stage_world_nodes() -> void:
 func _world_node_positions() -> Array[Vector2]:
 	var viewport_size: Vector2 = get_viewport_rect().size
 	var portrait: bool = MobileLayout.is_portrait(self)
-	var left: float = 58.0 if portrait else viewport_size.x * 0.12
-	var top: float = 260.0 if portrait else 248.0
+	var left: float = 72.0 if portrait else viewport_size.x * 0.15
+	var top: float = 282.0 if portrait else 246.0
 	var width: float = viewport_size.x - left * 2.0
-	var bottom_reserved: float = 230.0 if portrait else 190.0
-	var height: float = maxf(480.0, viewport_size.y - top - bottom_reserved)
+	var bottom_reserved: float = 245.0 if portrait else 198.0
+	var height: float = maxf(520.0, viewport_size.y - top - bottom_reserved)
 	var positions: Array[Vector2] = []
 	for normalized: Vector2 in WORLD_NODE_POSITIONS:
 		positions.append(Vector2(left + normalized.x * width, top + normalized.y * height))
@@ -749,25 +818,37 @@ func _add_world_connector(from_position: Vector2, to_position: Vector2) -> void:
 	var length := delta.length()
 	if length <= 0.0:
 		return
-	var shadow := ColorRect.new()
+	var shadow := PanelContainer.new()
 	shadow.name = "WorldPathShadow"
-	shadow.color = Color(0.08, 0.23, 0.34, 0.18)
-	shadow.size = Vector2(length, 18)
-	shadow.pivot_offset = Vector2(0, 9)
-	shadow.position = from_position + Vector2(2, 5)
+	shadow.size = Vector2(length, 24)
+	shadow.pivot_offset = Vector2(0, 12)
+	shadow.position = from_position + Vector2(3, 7)
 	shadow.rotation = delta.angle()
 	shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shadow.add_theme_stylebox_override("panel", _rounded_style(Color(0.08, 0.18, 0.32, 0.22), Color(0, 0, 0, 0), 12, 0))
 	world_path_root.add_child(shadow)
 
-	var path := ColorRect.new()
+	var path := PanelContainer.new()
 	path.name = "WorldPathConnector"
-	path.color = Color(1.0, 0.82, 0.25, 0.92)
-	path.size = Vector2(length, 10)
-	path.pivot_offset = Vector2(0, 5)
+	path.size = Vector2(length, 15)
+	path.pivot_offset = Vector2(0, 7.5)
 	path.position = from_position
 	path.rotation = delta.angle()
 	path.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	path.add_theme_stylebox_override("panel", _rounded_style(Color("ffd949"), Color("ff9c24"), 8, 3))
 	world_path_root.add_child(path)
+
+	var dot_count := clampi(int(length / 48.0), 2, 7)
+	for dot_index in range(dot_count):
+		var t := float(dot_index + 1) / float(dot_count + 1)
+		var dot := PanelContainer.new()
+		dot.size = Vector2(22, 22)
+		dot.position = from_position.lerp(to_position, t) - dot.size * 0.5
+		dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var dot_color: Color = WORLD_CANDY_COLORS[(dot_index + dot_count) % WORLD_CANDY_COLORS.size()]
+		dot.add_theme_stylebox_override("panel", _rounded_style(dot_color, Color(1, 1, 1, 0.82), 14, 2))
+		world_path_root.add_child(dot)
+		dot.name = "WorldPathCandyDot%d_%d" % [dot_index, world_path_root.get_child_count()]
 
 
 func _make_stage_world_node(stage_def: Dictionary, center_position: Vector2) -> Button:
@@ -787,7 +868,7 @@ func _make_stage_world_node(stage_def: Dictionary, center_position: Vector2) -> 
 	button.custom_minimum_size = Vector2(node_size, node_size)
 	button.focus_mode = Control.FOCUS_NONE
 	button.disabled = not unlocked
-	button.text = _stage_world_node_text(stage_id, unlocked, best_stars, current)
+	button.text = ""
 	button.add_theme_font_size_override("font_size", 25 if current else 22)
 	button.add_theme_color_override("font_color", Color("1f415c") if unlocked else Color("7f8792"))
 	button.add_theme_color_override("font_disabled_color", Color("7f8792"))
@@ -796,6 +877,7 @@ func _make_stage_world_node(stage_def: Dictionary, center_position: Vector2) -> 
 	button.add_theme_stylebox_override("pressed", _stage_node_style(unlocked, true, finale, best_stars, true))
 	button.add_theme_stylebox_override("disabled", _stage_node_style(false, false, finale, best_stars))
 	button.pressed.connect(_on_stage_card_pressed.bind(stage_id))
+	_add_world_node_content(button, stage_id, unlocked, best_stars, current, finale)
 
 	if not unlocked:
 		var lock_center := CenterContainer.new()
@@ -811,6 +893,76 @@ func _make_stage_world_node(stage_def: Dictionary, center_position: Vector2) -> 
 		button.add_child(lock_center)
 
 	return button
+
+
+func _add_world_node_content(button: Button, stage_id: int, unlocked: bool, best_stars: int, current: bool, finale: bool) -> void:
+	var shine := PanelContainer.new()
+	shine.name = "WorldNodeShine"
+	shine.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	shine.offset_left = 14.0
+	shine.offset_top = 10.0
+	shine.offset_right = -14.0
+	shine.offset_bottom = 36.0
+	shine.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shine.add_theme_stylebox_override("panel", _rounded_style(Color(1, 1, 1, 0.35 if unlocked else 0.14), Color(1, 1, 1, 0.0), 20, 0))
+	button.add_child(shine)
+
+	var number := Label.new()
+	number.name = "WorldStageNumber"
+	number.set_anchors_preset(Control.PRESET_FULL_RECT)
+	number.offset_top = 4.0 if not current else 12.0
+	number.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	number.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	number.text = str(stage_id)
+	number.add_theme_font_size_override("font_size", 40 if current else 32)
+	number.add_theme_color_override("font_color", Color("24405d") if unlocked else Color("8d95a3"))
+	number.add_theme_color_override("font_shadow_color", Color(1, 1, 1, 0.55))
+	number.add_theme_constant_override("shadow_offset_y", 2)
+	number.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(number)
+
+	var stars := Label.new()
+	stars.name = "WorldStageStars"
+	stars.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	stars.offset_left = 0.0
+	stars.offset_top = -34.0
+	stars.offset_right = 0.0
+	stars.offset_bottom = -8.0
+	stars.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stars.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	stars.text = _compact_stars_text(best_stars)
+	stars.add_theme_font_size_override("font_size", 17 if current else 14)
+	stars.add_theme_color_override("font_color", Color("1c5c83") if best_stars > 0 else Color(1, 1, 1, 0.72))
+	stars.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(stars)
+
+	if current or finale:
+		var badge := PanelContainer.new()
+		badge.name = "WorldNodeBadge"
+		badge.position = Vector2(button.size.x * 0.5 - 37.0, -18.0)
+		badge.size = Vector2(74, 34)
+		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		badge.add_theme_stylebox_override("panel", _rounded_style(Color("ff6fae") if current else Color("b98cff"), Color("ffffff"), 18, 3))
+		button.add_child(badge)
+
+		var badge_label := Label.new()
+		badge_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+		badge_label.text = "PLAY" if current else "BOSS"
+		badge_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		badge_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		badge_label.add_theme_font_size_override("font_size", 15)
+		badge_label.add_theme_color_override("font_color", Color("ffffff"))
+		badge_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		badge.add_child(badge_label)
+
+
+func _compact_stars_text(best_stars: int) -> String:
+	if best_stars <= 0:
+		return "☆ ☆ ☆"
+	var stars := ""
+	for index in range(3):
+		stars += "★" if index < best_stars else "☆"
+	return stars
 
 
 func _stage_world_node_text(stage_id: int, unlocked: bool, best_stars: int, current: bool) -> String:
@@ -1217,13 +1369,14 @@ func _layout_stage_world_layer(portrait: bool) -> void:
 	if stage_world_layer == null:
 		return
 	if world_title_label:
-		world_title_label.add_theme_font_size_override("font_size", 54 if portrait else 62)
+		world_title_label.add_theme_font_size_override("font_size", 60 if portrait else 68)
 	if world_subtitle_label:
 		world_subtitle_label.add_theme_font_size_override("font_size", 24 if portrait else 28)
 	if world_selected_label:
 		world_selected_label.add_theme_font_size_override("font_size", 23 if portrait else 26)
 	if world_play_button:
-		world_play_button.custom_minimum_size = Vector2(180, 86) if portrait else Vector2(220, 92)
+		world_play_button.custom_minimum_size = Vector2(196, 92) if portrait else Vector2(236, 98)
+	_rebuild_world_decorations()
 	_rebuild_stage_world_nodes()
 
 

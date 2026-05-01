@@ -171,3 +171,23 @@
 - `zsh scripts/validate_gameplay.sh` passed after the StageWorldLayer and GameplayHudLayer rebuild.
 - Captured live gameplay HUD visual QA at `output/visual-qa/zoo-zoo-gameplay-hud-rebuild-live-check.png`.
 - Goal-complete FX origin now uses the visible top HUD goal label in portrait instead of the hidden legacy goal card.
+
+## 2026-05-01 23:25 KST
+
+### Correction Pass
+- User rejected the prior "Candy Crush-like" claim as inaccurate.
+- Decision: acknowledge that the prior pass was mostly structural and push the visual language harder toward saga-map and toy-like match-3 presentation.
+
+### Completed
+- Reworked StageWorldLayer with candy-map decorations, thicker yellow route segments, colored candy dots, glossy circular stage nodes, PLAY/BOSS badges, and stronger current-node emphasis.
+- Added runtime candy slot frames under each animal block so board pieces read as glossy candy tiles instead of flat images on blue holes.
+- Re-skinned the gameplay board tray with a heavier yellow rim, deeper blue tray, stronger shadow, tighter grid spacing, and colored tile slot backing.
+- Added a bottom icon booster dock to the portrait gameplay HUD so the lower screen no longer feels empty.
+- Strengthened validation and manual checklist checks for candy-dot map dressing and the bottom booster dock.
+
+### Verification
+- `zsh scripts/validate_gameplay.sh` passed after the correction pass.
+- Captured visual QA screenshots:
+  - `output/visual-qa/zoo-zoo-stage-candy-saga-pass.png`
+  - `output/visual-qa/zoo-zoo-gameplay-candy-saga-pass.png`
+  - `output/visual-qa/zoo-zoo-gameplay-booster-dock-pass.png`

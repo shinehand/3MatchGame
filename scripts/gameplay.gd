@@ -12,6 +12,9 @@ const OVERLAY_FAIL_TEXTURE = preload("res://assets/generated/polish/overlay_fail
 const OVERLAY_FINALE_TEXTURE = preload("res://assets/generated/polish/overlay_finale_rabbit_clean.png")
 const COMBO_POP_TEXTURE = preload("res://assets/generated/chatgpt/fx_combo_pop_chatgpt.png")
 const COMBO_GREAT_TEXTURE = preload("res://assets/generated/chatgpt/fx_combo_great_chatgpt.png")
+const BOOSTER_RAINBOW_TEXTURE = preload("res://assets/ui/badge_rainbow.svg")
+const BOOSTER_ROW_TEXTURE = preload("res://assets/ui/badge_row.svg")
+const BOOSTER_BOMB_TEXTURE = preload("res://assets/ui/badge_bomb.svg")
 const SOFT_TUTORIAL_STAGE_HINTS := {
 	1: "첫 구조 안내",
 	3: "4매치 학습",
@@ -132,6 +135,7 @@ var hud_combo_gauge: ProgressBar
 var hud_home_button: Button
 var hud_retry_button: Button
 var hud_pause_button: Button
+var hud_booster_dock: Control
 var gameplay_juice_layer: Control
 var stage_intro_label: Label
 var _prev_complete_set: Dictionary = {}
@@ -152,6 +156,7 @@ func _ready() -> void:
 	_ensure_portrait_goal_summary()
 	_build_gameplay_juice_layer()
 	_build_gameplay_hud_layer()
+	_apply_candy_runtime_skin()
 	_build_board_nodes()
 	_reset_collected_counts()
 	_start_stage(GameSession.get_selected_stage_id() - 1)
@@ -323,6 +328,8 @@ func _apply_responsive_layout() -> void:
 	board_surface_margin.add_theme_constant_override("margin_right", 10 if portrait else 18)
 	board_surface_margin.add_theme_constant_override("margin_bottom", 12 if portrait else 18)
 	board_shine.visible = not portrait
+	board_grid.add_theme_constant_override("h_separation", 5 if portrait else 7)
+	board_grid.add_theme_constant_override("v_separation", 5 if portrait else 7)
 	board_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	board_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 
@@ -429,6 +436,12 @@ func _layout_gameplay_hud(portrait: bool) -> void:
 		hud_combo_label.add_theme_font_size_override("font_size", 17 if portrait else 15)
 	if hud_combo_gauge:
 		hud_combo_gauge.custom_minimum_size = Vector2(180, 16) if portrait else Vector2(150, 14)
+	if hud_booster_dock:
+		hud_booster_dock.visible = portrait
+		hud_booster_dock.offset_left = 72.0 if portrait else 120.0
+		hud_booster_dock.offset_top = -154.0 if portrait else -132.0
+		hud_booster_dock.offset_right = -72.0 if portrait else -120.0
+		hud_booster_dock.offset_bottom = -34.0 if portrait else -24.0
 	_update_gameplay_hud()
 
 
@@ -522,6 +535,37 @@ func _play_fx_method(method_name: String, args: Array = []) -> void:
 	fx_layer.callv(method_name, args)
 
 
+func _apply_candy_runtime_skin() -> void:
+	board_panel.add_theme_stylebox_override("panel", _hud_style(Color(1.0, 0.72, 0.94, 0.18), Color(1, 1, 1, 0.0), 42, 0))
+	board_frame.add_theme_stylebox_override("panel", _board_tray_style())
+	board_shine.color = Color(1, 1, 1, 0.22)
+	combo_banner.modulate = Color(1, 1, 1, 0.96)
+	stats_card.add_theme_stylebox_override("panel", _hud_style(Color("ffd65d"), Color("ff8b25"), 26, 5))
+	goal_card.add_theme_stylebox_override("panel", _hud_style(Color("ff9fc9"), Color("ff5c9a"), 26, 5))
+	status_card.add_theme_stylebox_override("panel", _hud_style(Color(1, 1, 1, 0.86), Color("70cfff"), 24, 4))
+	retry_button.add_theme_stylebox_override("normal", _hud_style(Color("ffd55a"), Color("f38a22"), 24, 4))
+	next_stage_button.add_theme_stylebox_override("normal", _hud_style(Color("70ec96"), Color("1fa96b"), 24, 4))
+	quit_button.add_theme_stylebox_override("normal", _hud_style(Color("ffffff"), Color("86c3e5"), 24, 4))
+
+
+func _board_tray_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("2c54e8")
+	style.border_color = Color("ffe23a")
+	style.border_width_left = 9
+	style.border_width_top = 9
+	style.border_width_right = 9
+	style.border_width_bottom = 9
+	style.corner_radius_top_left = 38
+	style.corner_radius_top_right = 38
+	style.corner_radius_bottom_right = 38
+	style.corner_radius_bottom_left = 38
+	style.shadow_color = Color(0.05, 0.06, 0.18, 0.44)
+	style.shadow_size = 24
+	style.shadow_offset = Vector2(0, 12)
+	return style
+
+
 func _build_gameplay_hud_layer() -> void:
 	if gameplay_hud_layer:
 		return
@@ -613,6 +657,33 @@ func _build_gameplay_hud_layer() -> void:
 	hud_combo_gauge.add_theme_stylebox_override("fill", _hud_style(Color("ff68a9"), Color("ff68a9"), 8, 0))
 	combo_row.add_child(hud_combo_gauge)
 
+	var booster_dock := PanelContainer.new()
+	booster_dock.name = "HudBoosterDock"
+	booster_dock.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	booster_dock.offset_left = 72.0
+	booster_dock.offset_top = -154.0
+	booster_dock.offset_right = -72.0
+	booster_dock.offset_bottom = -34.0
+	booster_dock.mouse_filter = Control.MOUSE_FILTER_PASS
+	booster_dock.add_theme_stylebox_override("panel", _hud_style(Color(1.0, 0.96, 0.78, 0.90), Color("ffbf32"), 34, 5))
+	gameplay_hud_layer.add_child(booster_dock)
+	hud_booster_dock = booster_dock
+
+	var booster_margin := MarginContainer.new()
+	booster_margin.add_theme_constant_override("margin_left", 18)
+	booster_margin.add_theme_constant_override("margin_top", 12)
+	booster_margin.add_theme_constant_override("margin_right", 18)
+	booster_margin.add_theme_constant_override("margin_bottom", 12)
+	booster_dock.add_child(booster_margin)
+
+	var booster_row := HBoxContainer.new()
+	booster_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	booster_row.add_theme_constant_override("separation", 18)
+	booster_margin.add_child(booster_row)
+	booster_row.add_child(_make_hud_booster_button("무지개", BOOSTER_RAINBOW_TEXTURE))
+	booster_row.add_child(_make_hud_booster_button("폭탄", BOOSTER_BOMB_TEXTURE))
+	booster_row.add_child(_make_hud_booster_button("줄무늬", BOOSTER_ROW_TEXTURE))
+
 
 func _add_hud_stat(parent: Control, title: String, value: String, bg_color: Color, border_color: Color) -> Label:
 	var panel := PanelContainer.new()
@@ -639,6 +710,25 @@ func _make_hud_icon_button(text: String, tooltip: String) -> Button:
 	button.add_theme_stylebox_override("normal", _hud_style(Color("ffd55a"), Color("f38a22"), 20, 3))
 	button.add_theme_stylebox_override("hover", _hud_style(Color("ffe985"), Color("f38a22"), 20, 3))
 	button.add_theme_stylebox_override("pressed", _hud_style(Color("ffc23d"), Color("e76d18"), 20, 3))
+	return button
+
+
+func _make_hud_booster_button(text: String, texture: Texture2D) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.icon = texture
+	button.expand_icon = true
+	button.custom_minimum_size = Vector2(160, 86)
+	button.focus_mode = Control.FOCUS_NONE
+	button.add_theme_font_size_override("font_size", 18)
+	button.add_theme_color_override("font_color", Color("61340b"))
+	button.add_theme_stylebox_override("normal", _hud_style(Color("ffffff"), Color("86c3e5"), 26, 4))
+	button.add_theme_stylebox_override("hover", _hud_style(Color("e9fbff"), Color("6ec6ff"), 26, 4))
+	button.add_theme_stylebox_override("pressed", _hud_style(Color("fff0a8"), Color("ff74a8"), 26, 4))
+	button.pressed.connect(func() -> void:
+		Feedback.play_ui_tap()
+		_set_status("%s 부스터는 스테이지 시작 팝업에서 장착할 수 있습니다." % text)
+	)
 	return button
 
 

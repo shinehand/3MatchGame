@@ -154,6 +154,8 @@ func _validate_gameplay_scene(node: Node, errors: PackedStringArray) -> void:
 		errors.append("%s is missing the compact GameplayHudLayer." % GAMEPLAY_SCENE_PATH)
 	elif node.find_child("HudGoalDock", true, false) == null:
 		errors.append("%s GameplayHudLayer is missing the goal dock." % GAMEPLAY_SCENE_PATH)
+	elif node.find_child("HudBoosterDock", true, false) == null:
+		errors.append("%s GameplayHudLayer is missing the bottom booster dock." % GAMEPLAY_SCENE_PATH)
 
 
 func _validate_stage_select_scene(node: Node, errors: PackedStringArray) -> void:
@@ -173,9 +175,19 @@ func _validate_stage_select_scene(node: Node, errors: PackedStringArray) -> void
 	if world_path_root == null:
 		errors.append("%s is missing WorldMapPathRoot." % STAGE_SELECT_SCENE_PATH)
 	else:
-			var world_node_count := world_path_root.find_children("WorldStageNode*", "Button", true, false).size()
-			if world_node_count != 10:
-				errors.append("%s WorldMapPathRoot expected 10 visible band nodes, got %d." % [STAGE_SELECT_SCENE_PATH, world_node_count])
+		var world_node_count := world_path_root.find_children("WorldStageNode*", "Button", true, false).size()
+		if world_node_count != 10:
+			errors.append("%s WorldMapPathRoot expected 10 visible band nodes, got %d." % [STAGE_SELECT_SCENE_PATH, world_node_count])
+		var route_dressing_count := 0
+		for child in world_path_root.get_children():
+			if child is PanelContainer:
+				route_dressing_count += 1
+		if route_dressing_count < 20:
+			errors.append("%s world path should include candy-dot route dressing, got %d route panels." % [STAGE_SELECT_SCENE_PATH, route_dressing_count])
+
+	var world_decor_root := node.get_node_or_null("StageWorldLayer/WorldDecorRoot")
+	if world_decor_root == null:
+		errors.append("%s is missing WorldDecorRoot candy-map dressing." % STAGE_SELECT_SCENE_PATH)
 
 	var world_play_button := node.find_child("WorldPlayButton", true, false) as Button
 	if world_play_button == null:
