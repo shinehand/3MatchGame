@@ -156,6 +156,8 @@ func _validate_stage_select_scene(node: Node, errors: PackedStringArray) -> void
 		errors.append("%s is missing StageGrid." % STAGE_SELECT_SCENE_PATH)
 	elif stage_grid.get_child_count() != 100:
 		errors.append("%s StageGrid expected 100 stage cards, got %d." % [STAGE_SELECT_SCENE_PATH, stage_grid.get_child_count()])
+	elif not String(stage_grid.get_child(0).name).begins_with("StageNode"):
+		errors.append("%s StageGrid should render world-map stage nodes, not plain list cards." % STAGE_SELECT_SCENE_PATH)
 
 	var stage_popup := node.get_node_or_null("StagePopupOverlay") as CanvasItem
 	if stage_popup == null:

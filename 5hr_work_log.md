@@ -81,3 +81,20 @@
 
 ### Decision
 - Track the UID file so Godot resource identity remains stable across future launches and team machines.
+
+## 2026-05-01 18:17 KST
+
+### Completed
+- Replaced the large stage-selection card grid with compact circular world-map stage nodes.
+- Added current-node pulse directly in the stage map node flow.
+- Updated validation and QA checklist to require map nodes instead of plain cards.
+
+### Technical Decisions
+- Stage details remain in the story panel and Stage Popup, while the selection surface now behaves like a casual puzzle world map.
+- Locked nodes keep a lock icon overlay and disabled behavior so progression rules remain intact.
+
+### Verification
+- `zsh scripts/validate_gameplay.sh` passed after converting stage selection to world-map nodes.
+- Captured visual QA screenshots:
+  - `output/visual-qa/zoo-zoo-stage-map-nodes-live-check.png`
+  - `output/visual-qa/zoo-zoo-stage-map-round-nodes-live-check.png`

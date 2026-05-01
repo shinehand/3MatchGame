@@ -19,6 +19,7 @@ const STORY_PATH_NODE_LOCKED = preload("res://assets/ui/meta/story_path_node_loc
 const STORY_PATH_NODE_CURRENT = preload("res://assets/ui/meta/story_path_node_current.svg")
 const STORY_PATH_NODE_CLEARED = preload("res://assets/ui/meta/story_path_node_cleared.svg")
 const STORY_PATH_CONNECTOR = preload("res://assets/ui/meta/story_path_connector.svg")
+const STAGE_LOCK_TEXTURE = preload("res://assets/ui/meta/stage_lock.svg")
 const MAP_RABBIT_TEXTURE = preload("res://assets/generated/polish/home_mascot_rabbit_clean.png")
 const MAP_CHICK_TEXTURE = preload("res://assets/generated/polish/home_mascot_chick_clean.png")
 
@@ -103,6 +104,7 @@ var map_juice_layer: Control
 var map_rabbit: TextureRect
 var map_chick: TextureRect
 var map_tweens: Array[Tween] = []
+var current_stage_node_tween: Tween
 var stage_popup_overlay: ColorRect
 var stage_popup_panel: PanelContainer
 var stage_popup_title_label: Label
@@ -137,16 +139,117 @@ func _on_home_button_pressed() -> void:
 
 
 func _rebuild_stage_grid() -> void:
+	if current_stage_node_tween != null and current_stage_node_tween.is_valid():
+		current_stage_node_tween.kill()
+	current_stage_node_tween = null
 	for child in stage_grid.get_children():
 		child.queue_free()
 
 	for stage_def in stage_defs:
-		var stage_id := int(stage_def.get("id", 0))
-		var card = STAGE_CARD_SCENE.instantiate()
-		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		card.setup(stage_def, GameSession.is_stage_unlocked(stage_id), GameSession.get_best_stars(stage_id))
-		card.stage_selected.connect(_on_stage_card_pressed)
-		stage_grid.add_child(card)
+		var node_button := _make_stage_map_node(stage_def)
+		stage_grid.add_child(node_button)
+		if int(stage_def.get("id", 0)) == GameSession.get_selected_stage_id():
+			call_deferred("_start_current_stage_node_pulse", node_button)
+
+
+func _make_stage_map_node(stage_def: Dictionary) -> Button:
+	var stage_id := int(stage_def.get("id", 0))
+	var unlocked := GameSession.is_stage_unlocked(stage_id)
+	var best_stars := GameSession.get_best_stars(stage_id)
+	var current := stage_id == GameSession.get_selected_stage_id()
+	var finale := stage_id % 10 == 0
+
+	var button := Button.new()
+	button.name = "StageNode%d" % stage_id
+	button.custom_minimum_size = Vector2(124, 124)
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	button.focus_mode = Control.FOCUS_NONE
+	button.disabled = not unlocked
+	button.text = _stage_node_text(stage_id, unlocked, best_stars, current)
+	button.add_theme_font_size_override("font_size", 23 if unlocked else 21)
+	button.add_theme_color_override("font_color", Color("1f415c") if unlocked else Color("7f8792"))
+	button.add_theme_color_override("font_disabled_color", Color("7f8792"))
+	button.add_theme_stylebox_override("normal", _stage_node_style(unlocked, current, finale, best_stars))
+	button.add_theme_stylebox_override("hover", _stage_node_style(unlocked, true, finale, best_stars))
+	button.add_theme_stylebox_override("pressed", _stage_node_style(unlocked, true, finale, best_stars, true))
+	button.add_theme_stylebox_override("disabled", _stage_node_style(false, false, finale, best_stars))
+	button.pressed.connect(_on_stage_card_pressed.bind(stage_id))
+
+	if not unlocked:
+		var lock_center := CenterContainer.new()
+		lock_center.set_anchors_preset(Control.PRESET_FULL_RECT)
+		lock_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var lock_icon := TextureRect.new()
+		lock_icon.texture = STAGE_LOCK_TEXTURE
+		lock_icon.custom_minimum_size = Vector2(44, 44)
+		lock_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		lock_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		lock_icon.modulate = Color(1, 1, 1, 0.76)
+		lock_center.add_child(lock_icon)
+		button.add_child(lock_center)
+
+	return button
+
+
+func _stage_node_text(stage_id: int, unlocked: bool, best_stars: int, current: bool) -> String:
+	if not unlocked:
+		return "\n%d" % stage_id
+	if current:
+		return "GO\n%d\n%s" % [stage_id, _stage_stars_text(best_stars)]
+	if stage_id % 10 == 0:
+		return "BOSS\n%d\n%s" % [stage_id, _stage_stars_text(best_stars)]
+	return "%d\n%s" % [stage_id, _stage_stars_text(best_stars)]
+
+
+func _stage_stars_text(best_stars: int) -> String:
+	if best_stars <= 0:
+		return "☆ ☆ ☆"
+	var stars := ""
+	for index in range(3):
+		stars += "★" if index < best_stars else "☆"
+		if index < 2:
+			stars += " "
+	return stars
+
+
+func _stage_node_style(unlocked: bool, current: bool, finale: bool, best_stars: int, pressed: bool = false) -> StyleBoxFlat:
+	var bg_color := Color("ffffff")
+	var border_color := Color("64c5f4")
+	if not unlocked:
+		bg_color = Color(0.92, 0.93, 0.96, 0.78)
+		border_color = Color(0.70, 0.75, 0.82, 0.92)
+	elif current:
+		bg_color = Color("fff0a6") if not pressed else Color("ffd45a")
+		border_color = Color("ff8f26")
+	elif finale:
+		bg_color = Color("ffe4f0")
+		border_color = Color("ff74a8")
+	elif best_stars > 0:
+		bg_color = Color("d9fff0")
+		border_color = Color("2dc78b")
+	else:
+		bg_color = Color("f4fbff")
+		border_color = Color("54c7ff")
+
+	var style := _rounded_style(bg_color, border_color, 62, 5 if current else 4)
+	style.shadow_color = Color(0.09, 0.22, 0.32, 0.20 if unlocked else 0.08)
+	style.shadow_size = 12 if unlocked else 5
+	return style
+
+
+func _start_current_stage_node_pulse(node_button: Button) -> void:
+	if not is_instance_valid(node_button) or not node_button.is_inside_tree():
+		return
+	if current_stage_node_tween != null and current_stage_node_tween.is_valid():
+		current_stage_node_tween.kill()
+	node_button.pivot_offset = node_button.size * 0.5
+	current_stage_node_tween = create_tween()
+	current_stage_node_tween.set_loops()
+	current_stage_node_tween.set_trans(Tween.TRANS_SINE)
+	current_stage_node_tween.set_ease(Tween.EASE_IN_OUT)
+	current_stage_node_tween.tween_property(node_button, "scale", Vector2(1.055, 1.055), 0.58)
+	current_stage_node_tween.tween_property(node_button, "scale", Vector2.ONE, 0.58)
 
 
 func _on_stage_card_pressed(stage_id: int) -> void:
@@ -431,7 +534,7 @@ func _refresh_story_panel() -> void:
 		stage_defs.size(),
 		GameSession.get_total_stars(),
 	]
-	stage_hint_label.text = "스토리 라인을 따라 스테이지를 선택하세요.\n현재 강조 스테이지: Stage %d" % int(stage_def.get("id", 1))
+	stage_hint_label.text = "월드맵 노드를 따라 구조 작전을 선택하세요.\n현재 강조 스테이지: Stage %d" % int(stage_def.get("id", 1))
 	band_route_title_label.text = "%s 진행 노드" % String(meta.get("title", "현재 밴드"))
 	_rebuild_band_route(band)
 	_rebuild_timeline(band)
@@ -785,7 +888,9 @@ func _apply_responsive_layout() -> void:
 	layout_root.add_theme_constant_override("separation", 16 if portrait else 22)
 	content_root.vertical = portrait
 	content_root.add_theme_constant_override("separation", 16 if portrait else 20)
-	stage_grid.columns = 2 if portrait else 4
+	stage_grid.columns = 4 if portrait else 7
+	stage_grid.add_theme_constant_override("h_separation", 14 if portrait else 18)
+	stage_grid.add_theme_constant_override("v_separation", 16 if portrait else 20)
 	if stage_popup_panel:
 		stage_popup_panel.custom_minimum_size = Vector2(700, 760) if portrait else Vector2(720, 720)
 	_layout_map_juice_layer(portrait)
