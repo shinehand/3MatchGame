@@ -2,7 +2,7 @@
 
 ## 프로젝트
 
-- 이름: Animal Pop Match
+- 이름: Zoo-Zoo Pop
 - 장르: 모바일 매치3 퍼즐 게임
 - 엔진: Godot 4
 - 플랫폼: Android 우선, landscape 고정

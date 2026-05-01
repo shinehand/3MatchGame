@@ -1,35 +1,36 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=21 format=3]
 
 [ext_resource type="Script" path="res://scripts/gameplay.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/ui/theme/panel_card.svg" id="2"]
 [ext_resource type="Texture2D" path="res://assets/ui/hud/goal_chip_frame.svg" id="3"]
 [ext_resource type="Texture2D" path="res://assets/ui/theme/popup_frame.svg" id="4"]
-[ext_resource type="Texture2D" path="res://assets/generated/redesign/overlay_success_cat_v1_flat.png" id="5"]
-[ext_resource type="Texture2D" path="res://assets/ui/effects/combo_pop.svg" id="6"]
-[ext_resource type="Texture2D" path="res://assets/ui/effects/combo_great.svg" id="7"]
+[ext_resource type="Texture2D" path="res://assets/generated/polish/overlay_success_cat_clean.png" id="5"]
+[ext_resource type="Texture2D" path="res://assets/generated/chatgpt/fx_combo_pop_chatgpt.png" id="6"]
+[ext_resource type="Texture2D" path="res://assets/generated/chatgpt/fx_combo_great_chatgpt.png" id="7"]
 [ext_resource type="Texture2D" path="res://assets/ui/meta/rescue_ribbon.svg" id="8"]
+[ext_resource type="PackedScene" path="res://scenes/fx_layer.tscn" id="9"]
 
 [sub_resource type="StyleBoxFlat" id="1"]
-bg_color = Color(1, 0.988235, 0.941176, 0.98)
-border_width_left = 4
-border_width_top = 4
-border_width_right = 4
-border_width_bottom = 4
-border_color = Color(0.364706, 0.752941, 0.964706, 1)
+bg_color = Color(0.231373, 0.109804, 0.545098, 0.18)
+border_width_left = 0
+border_width_top = 0
+border_width_right = 0
+border_width_bottom = 0
+border_color = Color(1, 1, 1, 0)
 corner_radius_top_left = 30
 corner_radius_top_right = 30
 corner_radius_bottom_right = 30
 corner_radius_bottom_left = 30
-shadow_color = Color(0.345098, 0.521569, 0.627451, 0.18)
-shadow_size = 10
+shadow_color = Color(0.137255, 0.054902, 0.290196, 0.18)
+shadow_size = 6
 
 [sub_resource type="StyleBoxFlat" id="2"]
-bg_color = Color(0.924, 0.988, 1, 0.98)
+bg_color = Color(1, 0.956863, 0.701961, 0.96)
 border_width_left = 4
 border_width_top = 4
 border_width_right = 4
 border_width_bottom = 4
-border_color = Color(0.364706, 0.752941, 0.964706, 1)
+border_color = Color(1, 0.776471, 0.14902, 1)
 corner_radius_top_left = 24
 corner_radius_top_right = 24
 corner_radius_bottom_right = 24
@@ -94,18 +95,32 @@ shadow_color = Color(0.309804, 0.482353, 0.584314, 0.08)
 shadow_size = 4
 
 [sub_resource type="StyleBoxFlat" id="7"]
-bg_color = Color(0.475, 0.882, 1, 0.98)
+bg_color = Color(0.215686, 0.364706, 0.921569, 0.97)
 border_width_left = 6
 border_width_top = 6
 border_width_right = 6
 border_width_bottom = 6
-border_color = Color(0.188235, 0.619608, 0.905882, 1)
+border_color = Color(1, 0.878431, 0.247059, 1)
 corner_radius_top_left = 34
 corner_radius_top_right = 34
 corner_radius_bottom_right = 34
 corner_radius_bottom_left = 34
-shadow_color = Color(0.196078, 0.423529, 0.65098, 0.24)
-shadow_size = 16
+shadow_color = Color(0.082353, 0.043137, 0.235294, 0.42)
+shadow_size = 20
+
+[sub_resource type="StyleBoxFlat" id="8"]
+bg_color = Color(1, 0.988235, 0.858824, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="9"]
+bg_color = Color(1, 0.458824, 0.698039, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -123,7 +138,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.957, 0.972549, 1, 1)
+color = Color(0.431373, 0.752941, 1, 1)
 
 [node name="BackgroundTexture" type="TextureRect" parent="."]
 layout_mode = 1
@@ -135,7 +150,7 @@ grow_vertical = 2
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 6
-modulate = Color(1, 0.956863, 0.933333, 0.24)
+modulate = Color(1, 1, 1, 1)
 
 [node name="SafeMargin" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -176,7 +191,7 @@ theme_override_constants/separation = 12
 [node name="BoardTopLabel" type="Label" parent="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/TopBar"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Animal Pop Match"
+text = "Zoo-Zoo Pop"
 theme_override_colors/font_color = Color(0.176471, 0.317647, 0.431373, 1)
 theme_override_font_sizes/font_size = 34
 
@@ -195,7 +210,7 @@ theme_override_font_sizes/font_size = 28
 [node name="Title" type="Label" parent="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn"]
 visible = false
 layout_mode = 2
-text = "Animal Pop Match"
+text = "Zoo-Zoo Pop"
 theme_override_colors/font_color = Color(0.278431, 0.176471, 0.12549, 1)
 theme_override_font_sizes/font_size = 42
 
@@ -240,7 +255,7 @@ offset_top = 14.0
 offset_right = -16.0
 offset_bottom = 116.0
 grow_horizontal = 2
-color = Color(1, 1, 1, 0.18)
+color = Color(1, 1, 1, 0.28)
 
 [node name="ComboBanner" type="TextureRect" parent="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame"]
 visible = false
@@ -277,10 +292,10 @@ theme_override_font_sizes/font_size = 34
 
 [node name="BoardSurfaceMargin" type="MarginContainer" parent="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame"]
 layout_mode = 2
-theme_override_constants/margin_left = 18
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 18
-theme_override_constants/margin_bottom = 18
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 14
 
 [node name="BoardScroll" type="ScrollContainer" parent="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame/BoardSurfaceMargin"]
 layout_mode = 2
@@ -290,8 +305,8 @@ size_flags_vertical = 3
 [node name="BoardGrid" type="GridContainer" parent="SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame/BoardSurfaceMargin/BoardScroll"]
 layout_mode = 2
 columns = 8
-theme_override_constants/h_separation = 6
-theme_override_constants/v_separation = 6
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
 
 [node name="SidebarScroll" type="ScrollContainer" parent="SafeMargin/LayoutRoot"]
 custom_minimum_size = Vector2(352, 0)
@@ -313,7 +328,7 @@ theme_override_font_sizes/font_size = 30
 
 [node name="StatsCard" type="PanelContainer" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar"]
 layout_mode = 2
-theme_override_styles/panel = SubResource("2")
+theme_override_styles/panel = SubResource("3")
 
 [node name="StatsFrame" type="TextureRect" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatsCard"]
 layout_mode = 1
@@ -364,13 +379,21 @@ theme_override_font_sizes/font_size = 22
 
 [node name="ComboValue" type="Label" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatsCard/StatsPadding/StatsColumn"]
 layout_mode = 2
-text = "현재 콤보 x1"
+text = "Combo Gauge 0 / 6"
 theme_override_colors/font_color = Color(0.321569, 0.239216, 0.188235, 1)
 theme_override_font_sizes/font_size = 20
 
+[node name="ComboGauge" type="ProgressBar" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatsCard/StatsPadding/StatsColumn"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+max_value = 6.0
+show_percentage = false
+theme_override_styles/background = SubResource("8")
+theme_override_styles/fill = SubResource("9")
+
 [node name="GoalCard" type="PanelContainer" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar"]
 layout_mode = 2
-theme_override_styles/panel = SubResource("2")
+theme_override_styles/panel = SubResource("4")
 
 [node name="GoalFrame" type="TextureRect" parent="SafeMargin/LayoutRoot/SidebarScroll/Sidebar/GoalCard"]
 layout_mode = 1
@@ -496,6 +519,8 @@ theme_override_colors/font_color = Color(0.176471, 0.317647, 0.431373, 1)
 theme_override_colors/font_disabled_color = Color(0.458824, 0.607843, 0.682353, 1)
 theme_override_font_sizes/font_size = 26
 
+[node name="FxLayer" parent="." instance=ExtResource("9")]
+
 [node name="Overlay" type="ColorRect" parent="."]
 visible = false
 layout_mode = 1
@@ -553,7 +578,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="OverlayMascot" type="TextureRect" parent="Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn"]
-custom_minimum_size = Vector2(172, 172)
+custom_minimum_size = Vector2(176, 176)
 layout_mode = 2
 size_flags_horizontal = 4
 texture = ExtResource("5")

@@ -4,7 +4,7 @@ const StageCatalog = preload("res://scripts/stage_catalog.gd")
 const GameSession = preload("res://scripts/game_session.gd")
 const STAGE_CARD_SCENE = preload("res://scenes/stage_card.tscn")
 const MobileLayout = preload("res://scripts/mobile_layout.gd")
-const DEFAULT_BG = preload("res://assets/backgrounds/stage_meadow_bg_v1.png")
+const DEFAULT_BG = preload("res://assets/generated/candy/candy_world_bg.png")
 const BG_BAND_02 = preload("res://assets/backgrounds/bands/bg_band_02_main.svg")
 const BG_BAND_02_SUB = preload("res://assets/backgrounds/bands/bg_band_02_sub.svg")
 const BG_BAND_03 = preload("res://assets/backgrounds/bands/bg_band_03_main.svg")
@@ -95,6 +95,15 @@ const BAND_META := {
 @onready var stage_grid: GridContainer = $SafeMargin/LayoutRoot/ContentRoot/StagePanel/StageFrame/StageMargin/StageColumn/StageScroll/StageGrid
 
 var stage_defs: Array = []
+var selected_popup_stage_id := 1
+var selected_pre_boosters: Array[String] = []
+var stage_popup_overlay: ColorRect
+var stage_popup_panel: PanelContainer
+var stage_popup_title_label: Label
+var stage_popup_goal_label: Label
+var stage_popup_meta_label: Label
+var stage_popup_reward_label: Label
+var stage_popup_booster_buttons: Dictionary = {}
 
 
 func _ready() -> void:
@@ -107,6 +116,7 @@ func _ready() -> void:
 		GameSession.set_selected_stage_id(1)
 	resized.connect(_queue_layout_refresh)
 	get_window().size_changed.connect(_queue_layout_refresh)
+	_build_stage_popup()
 	_rebuild_stage_grid()
 	_refresh_story_panel()
 	call_deferred("_focus_selected_stage_card")
@@ -136,6 +146,224 @@ func _on_stage_card_pressed(stage_id: int) -> void:
 		return
 	Feedback.play_ui_tap()
 	GameSession.set_selected_stage_id(stage_id)
+	_refresh_story_panel()
+	_rebuild_stage_grid()
+	_show_stage_popup(stage_id)
+
+
+func _build_stage_popup() -> void:
+	stage_popup_overlay = ColorRect.new()
+	stage_popup_overlay.name = "StagePopupOverlay"
+	stage_popup_overlay.visible = false
+	stage_popup_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	stage_popup_overlay.color = Color(0.11, 0.14, 0.20, 0.72)
+	add_child(stage_popup_overlay)
+
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	stage_popup_overlay.add_child(center)
+
+	stage_popup_panel = PanelContainer.new()
+	stage_popup_panel.name = "StagePopupPanel"
+	stage_popup_panel.custom_minimum_size = Vector2(680, 720)
+	stage_popup_panel.add_theme_stylebox_override("panel", _rounded_style(Color(1.0, 0.98, 0.90, 0.98), Color(1.0, 0.77, 0.18, 1.0), 34, 8))
+	center.add_child(stage_popup_panel)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 28)
+	margin.add_theme_constant_override("margin_top", 28)
+	margin.add_theme_constant_override("margin_right", 28)
+	margin.add_theme_constant_override("margin_bottom", 28)
+	stage_popup_panel.add_child(margin)
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 18)
+	margin.add_child(column)
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 12)
+	column.add_child(header)
+
+	stage_popup_title_label = _make_popup_label("Level Ready", 38, Color("213a55"), HORIZONTAL_ALIGNMENT_LEFT)
+	stage_popup_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(stage_popup_title_label)
+
+	var close_button := Button.new()
+	close_button.text = "×"
+	close_button.custom_minimum_size = Vector2(72, 72)
+	close_button.add_theme_font_size_override("font_size", 34)
+	close_button.add_theme_color_override("font_color", Color("213a55"))
+	close_button.add_theme_stylebox_override("normal", _rounded_style(Color(1, 1, 1, 0.66), Color("86c3e5"), 22, 3))
+	close_button.add_theme_stylebox_override("hover", _rounded_style(Color("e9fbff"), Color("6ec6ff"), 22, 3))
+	close_button.add_theme_stylebox_override("pressed", _rounded_style(Color("d8f6ff"), Color("6ec6ff"), 22, 3))
+	close_button.pressed.connect(_on_stage_popup_close_pressed)
+	header.add_child(close_button)
+
+	stage_popup_goal_label = _make_popup_label("목표", 26, Color("513d30"), HORIZONTAL_ALIGNMENT_CENTER)
+	stage_popup_goal_label.custom_minimum_size = Vector2(0, 104)
+	stage_popup_goal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(stage_popup_goal_label)
+
+	stage_popup_meta_label = _make_popup_label("이동 · 난이도", 24, Color("2f617d"), HORIZONTAL_ALIGNMENT_CENTER)
+	stage_popup_meta_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(stage_popup_meta_label)
+
+	stage_popup_reward_label = _make_popup_label("보상", 24, Color("7a4d11"), HORIZONTAL_ALIGNMENT_CENTER)
+	stage_popup_reward_label.custom_minimum_size = Vector2(0, 76)
+	stage_popup_reward_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(stage_popup_reward_label)
+
+	var booster_title := _make_popup_label("시작 부스터", 28, Color("213a55"), HORIZONTAL_ALIGNMENT_CENTER)
+	column.add_child(booster_title)
+
+	var booster_row := HBoxContainer.new()
+	booster_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	booster_row.add_theme_constant_override("separation", 12)
+	column.add_child(booster_row)
+	for booster_id in ["rainbow_paw", "striped", "bomb"]:
+		var button := _make_booster_button(booster_id)
+		stage_popup_booster_buttons[booster_id] = button
+		booster_row.add_child(button)
+
+	var start_button := Button.new()
+	start_button.text = "START"
+	start_button.custom_minimum_size = Vector2(0, 92)
+	start_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	start_button.add_theme_font_size_override("font_size", 36)
+	start_button.add_theme_color_override("font_color", Color("6a3e07"))
+	start_button.add_theme_stylebox_override("normal", _rounded_style(Color("ffd85a"), Color("f28c26"), 28, 5))
+	start_button.add_theme_stylebox_override("hover", _rounded_style(Color("ffe67d"), Color("f28c26"), 28, 5))
+	start_button.add_theme_stylebox_override("pressed", _rounded_style(Color("ffbf42"), Color("f28c26"), 28, 5))
+	start_button.pressed.connect(_on_stage_popup_start_pressed)
+	column.add_child(start_button)
+
+
+func _make_popup_label(text: String, font_size: int, color: Color, alignment: HorizontalAlignment) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.horizontal_alignment = alignment
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	return label
+
+
+func _make_booster_button(booster_id: String) -> Button:
+	var button := Button.new()
+	button.toggle_mode = true
+	button.custom_minimum_size = Vector2(190, 118)
+	button.add_theme_font_size_override("font_size", 22)
+	button.add_theme_color_override("font_color", Color("213a55"))
+	button.add_theme_stylebox_override("normal", _rounded_style(Color(1, 1, 1, 0.82), Color("86c3e5"), 26, 4))
+	button.add_theme_stylebox_override("hover", _rounded_style(Color("e9fbff"), Color("6ec6ff"), 26, 4))
+	button.add_theme_stylebox_override("pressed", _rounded_style(Color("fff0a8"), Color("ff74a8"), 26, 4))
+	button.pressed.connect(_on_booster_button_pressed.bind(booster_id))
+	return button
+
+
+func _rounded_style(bg_color: Color, border_color: Color, radius: int, border_width: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg_color
+	style.border_color = border_color
+	style.border_width_left = border_width
+	style.border_width_top = border_width
+	style.border_width_right = border_width
+	style.border_width_bottom = border_width
+	style.corner_radius_top_left = radius
+	style.corner_radius_top_right = radius
+	style.corner_radius_bottom_right = radius
+	style.corner_radius_bottom_left = radius
+	style.shadow_color = Color(0.16, 0.22, 0.28, 0.16)
+	style.shadow_size = 10
+	return style
+
+
+func _show_stage_popup(stage_id: int) -> void:
+	selected_popup_stage_id = stage_id
+	selected_pre_boosters = []
+	var stage_def := _stage_def_by_id(stage_id)
+	stage_popup_title_label.text = "Level %d · %s" % [stage_id, String(stage_def.get("name", "Stage"))]
+	stage_popup_goal_label.text = _build_stage_popup_goal_text(stage_def)
+	stage_popup_meta_label.text = "이동 %d회 · 난이도 %s · %s" % [
+		int(stage_def.get("moves", 0)),
+		String(stage_def.get("difficulty", "Easy")),
+		_theme_display_name(String(stage_def.get("theme_key", "meadow_1"))),
+	]
+	stage_popup_reward_label.text = "클리어 보상  골드 %d · 별 최대 3개 · 다음 구조 노드 해금" % _stage_gold_reward(stage_def)
+	_refresh_booster_buttons()
+	stage_popup_overlay.visible = true
+	stage_popup_overlay.modulate = Color(1, 1, 1, 0)
+	var tween := create_tween()
+	tween.tween_property(stage_popup_overlay, "modulate", Color(1, 1, 1, 1), 0.12)
+
+
+func _stage_def_by_id(stage_id: int) -> Dictionary:
+	for stage_def in stage_defs:
+		if int(stage_def.get("id", 0)) == stage_id:
+			return stage_def
+	return stage_defs[0]
+
+
+func _build_stage_popup_goal_text(stage_def: Dictionary) -> String:
+	var lines: Array[String] = ["목표"]
+	var targets: Dictionary = Dictionary(stage_def.get("target_collect", {}))
+	for animal_id in targets.keys():
+		lines.append("%s %d마리 구조" % [_animal_name(String(animal_id)), int(targets[animal_id])])
+	var target_score := int(stage_def.get("target_score", 0))
+	if target_score > 0:
+		lines.append("점수 %d 달성" % target_score)
+	var target_blockers := int(stage_def.get("target_blockers", 0))
+	if target_blockers > 0:
+		lines.append("덤불 %d개 제거" % target_blockers)
+	return "\n".join(lines)
+
+
+func _stage_gold_reward(stage_def: Dictionary) -> int:
+	var stage_id := int(stage_def.get("id", 1))
+	var difficulty := String(stage_def.get("difficulty", "Easy"))
+	var difficulty_bonus := 10 if difficulty == "Easy" else 18
+	if difficulty == "Hard":
+		difficulty_bonus = 30
+	return 40 + stage_id * 2 + difficulty_bonus
+
+
+func _on_booster_button_pressed(booster_id: String) -> void:
+	if selected_pre_boosters.has(booster_id):
+		selected_pre_boosters.erase(booster_id)
+	else:
+		selected_pre_boosters.append(booster_id)
+	Feedback.play_ui_tap()
+	_refresh_booster_buttons()
+
+
+func _refresh_booster_buttons() -> void:
+	for booster_id in stage_popup_booster_buttons.keys():
+		var button := stage_popup_booster_buttons[booster_id] as Button
+		var selected := selected_pre_boosters.has(String(booster_id))
+		button.button_pressed = selected
+		button.text = "%s\n%s" % [_booster_title(String(booster_id)), "장착됨" if selected else "탭해서 장착"]
+
+
+func _booster_title(booster_id: String) -> String:
+	match booster_id:
+		"rainbow_paw":
+			return "무지개 발바닥"
+		"striped":
+			return "줄무늬 동물"
+		"bomb":
+			return "폭탄 동물"
+	return "부스터"
+
+
+func _on_stage_popup_close_pressed() -> void:
+	Feedback.play_ui_tap()
+	stage_popup_overlay.visible = false
+
+
+func _on_stage_popup_start_pressed() -> void:
+	Feedback.play_ui_tap()
+	GameSession.set_selected_stage_id(selected_popup_stage_id)
+	GameSession.set_selected_pre_boosters(selected_pre_boosters)
 	get_tree().change_scene_to_file("res://scenes/gameplay.tscn")
 
 
@@ -152,7 +380,7 @@ func _refresh_story_panel() -> void:
 	selected_stage_label.text = _build_selected_stage_title(stage_def, meta)
 	selected_stage_body_label.text = _build_selected_stage_body(stage_def, meta)
 	_update_background_for_stage(stage_def)
-	header_summary_label.text = "현재 추천 Stage %d · 해금 %d / %d · 누적 별 %d\n카드를 누르면 바로 해당 스테이지로 출동합니다." % [
+	header_summary_label.text = "현재 추천 Stage %d · 해금 %d / %d · 누적 별 %d\n카드를 누르면 목표와 부스터를 확인한 뒤 출동합니다." % [
 		int(stage_def.get("id", 1)),
 		min(GameSession.get_highest_unlocked_stage_id(), stage_defs.size()),
 		stage_defs.size(),
@@ -438,6 +666,16 @@ func _animal_name(animal_id: String) -> String:
 			return "병아리"
 		"frog":
 			return "개구리"
+		"dog":
+			return "강아지"
+		"panda":
+			return "판다"
+		"pig":
+			return "돼지"
+		"penguin":
+			return "펭귄"
+		"fox":
+			return "여우"
 		_:
 			return animal_id
 
@@ -479,6 +717,8 @@ func _apply_responsive_layout() -> void:
 	content_root.vertical = portrait
 	content_root.add_theme_constant_override("separation", 16 if portrait else 20)
 	stage_grid.columns = 2 if portrait else 4
+	if stage_popup_panel:
+		stage_popup_panel.custom_minimum_size = Vector2(700, 760) if portrait else Vector2(720, 720)
 	header_panel.custom_minimum_size = Vector2.ZERO if portrait else Vector2(0, 170)
 	story_panel.custom_minimum_size = Vector2(0, 420) if portrait else Vector2(420, 0)
 	stage_panel.custom_minimum_size = Vector2(0, 760) if portrait else Vector2(0, 0)

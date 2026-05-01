@@ -2,7 +2,7 @@ extends RefCounted
 
 const BOARD_ROWS := 8
 const BOARD_COLS := 8
-const VALID_ANIMALS := ["rabbit", "bear", "cat", "chick", "frog"]
+const VALID_ANIMALS := ["rabbit", "bear", "cat", "chick", "frog", "dog", "panda", "pig", "penguin", "fox"]
 
 
 static func validate_stages(stages: Array) -> PackedStringArray:

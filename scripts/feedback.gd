@@ -64,6 +64,16 @@ func play_goal_complete() -> void:
 	_vibrate(28)
 
 
+func play_rainbow_clear() -> void:
+	_play_stream("rainbow_clear")
+	_vibrate(48)
+
+
+func play_combo_gauge_reward() -> void:
+	_play_stream("combo_gauge_reward")
+	_vibrate(42)
+
+
 func _build_players() -> void:
 	for _i in range(PLAYER_POOL_SIZE):
 		var player := AudioStreamPlayer.new()
@@ -125,6 +135,19 @@ func _build_streams() -> void:
 		{"freq": 1040.0, "duration_ms": 22, "gain": 0.15, "wave": "triangle"},
 		{"freq": 1380.0, "duration_ms": 28, "gain": 0.14, "wave": "sine"},
 		{"freq": 1720.0, "duration_ms": 44, "gain": 0.12, "wave": "sine"},
+	])
+	_streams["rainbow_clear"] = _make_stream([
+		{"freq": 760.0, "duration_ms": 20, "gain": 0.15, "wave": "triangle"},
+		{"freq": 960.0, "duration_ms": 22, "gain": 0.15, "wave": "triangle"},
+		{"freq": 1210.0, "duration_ms": 24, "gain": 0.14, "wave": "sine"},
+		{"freq": 1520.0, "duration_ms": 28, "gain": 0.13, "wave": "sine"},
+		{"freq": 1910.0, "duration_ms": 56, "gain": 0.11, "wave": "sine"},
+	])
+	_streams["combo_gauge_reward"] = _make_stream([
+		{"freq": 620.0, "duration_ms": 24, "gain": 0.15, "wave": "triangle"},
+		{"freq": 920.0, "duration_ms": 28, "gain": 0.14, "wave": "triangle"},
+		{"freq": 1240.0, "duration_ms": 32, "gain": 0.13, "wave": "sine"},
+		{"freq": 1660.0, "duration_ms": 70, "gain": 0.11, "wave": "sine"},
 	])
 
 

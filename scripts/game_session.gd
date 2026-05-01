@@ -12,6 +12,7 @@ static var _save_data := {
 	"sound_enabled": true,
 	"haptics_enabled": true,
 	"seen_tutorial_stage_ids": [],
+	"selected_pre_boosters": [],
 }
 
 
@@ -36,6 +37,7 @@ static func load_state() -> void:
 	_save_data["sound_enabled"] = bool(parsed.get("sound_enabled", true))
 	_save_data["haptics_enabled"] = bool(parsed.get("haptics_enabled", true))
 	_save_data["seen_tutorial_stage_ids"] = Array(parsed.get("seen_tutorial_stage_ids", []))
+	_save_data["selected_pre_boosters"] = Array(parsed.get("selected_pre_boosters", []))
 
 
 static func save_state() -> void:
@@ -158,3 +160,21 @@ static func mark_tutorial_seen(stage_id: int) -> void:
 		seen.append(stage_id)
 		_save_data["seen_tutorial_stage_ids"] = seen
 		save_state()
+
+
+static func set_selected_pre_boosters(boosters: Array) -> void:
+	load_state()
+	_save_data["selected_pre_boosters"] = boosters.duplicate()
+	save_state()
+
+
+static func get_selected_pre_boosters() -> Array:
+	load_state()
+	return Array(_save_data.get("selected_pre_boosters", [])).duplicate()
+
+
+static func consume_selected_pre_boosters() -> Array:
+	var boosters := get_selected_pre_boosters()
+	_save_data["selected_pre_boosters"] = []
+	save_state()
+	return boosters

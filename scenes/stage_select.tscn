@@ -1,7 +1,7 @@
 [gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/stage_select.gd" id="1"]
-[ext_resource type="Texture2D" path="res://assets/backgrounds/stage_meadow_bg_v1.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/generated/candy/candy_world_bg.png" id="2"]
 [ext_resource type="Texture2D" path="res://assets/ui/theme/panel_card.svg" id="3"]
 [ext_resource type="Texture2D" path="res://assets/ui/theme/popup_frame.svg" id="4"]
 
@@ -316,7 +316,7 @@ theme_override_constants/separation = 14
 
 [node name="StageHintLabel" type="Label" parent="SafeMargin/LayoutRoot/ContentRoot/StagePanel/StageFrame/StageMargin/StageColumn"]
 layout_mode = 2
-text = "카드를 누르면 바로 해당 스테이지로 이동합니다."
+text = "카드를 누르면 목표와 부스터를 고르는 Stage Popup이 열립니다."
 autowrap_mode = 3
 theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0.239216, 0.384314, 0.490196, 1)

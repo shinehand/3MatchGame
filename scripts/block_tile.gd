@@ -9,7 +9,10 @@ const SPECIAL_BADGE_TEXTURES := {
 	"row": preload("res://assets/ui/badge_row.svg"),
 	"col": preload("res://assets/ui/badge_col.svg"),
 	"bomb": preload("res://assets/ui/badge_bomb.svg"),
+	"rainbow": preload("res://assets/ui/badge_rainbow.svg"),
 }
+const INVALID_PUFF_TEXTURE := preload("res://assets/generated/chatgpt/fx_invalid_puff_chatgpt.png")
+const OBSTACLE_BURST_TEXTURE := preload("res://assets/generated/chatgpt/fx_blocker_leaf_burst_chatgpt.png")
 
 @onready var content: Control = $Content
 @onready var inactive_slot: ColorRect = $Content/InactiveSlot
@@ -19,6 +22,8 @@ const SPECIAL_BADGE_TEXTURES := {
 @onready var obstacle_overlay: TextureRect = $Content/ObstacleOverlay
 @onready var special_badge: TextureRect = $Content/SpecialBadge
 @onready var match_pop: TextureRect = $Content/MatchPop
+@onready var invalid_puff: TextureRect = $Content/InvalidPuff
+@onready var obstacle_burst: TextureRect = $Content/ObstacleBurst
 
 var row: int = -1
 var col: int = -1
@@ -31,6 +36,8 @@ var is_inactive := false
 
 
 func _ready() -> void:
+	invalid_puff.texture = INVALID_PUFF_TEXTURE
+	obstacle_burst.texture = OBSTACLE_BURST_TEXTURE
 	_update_visual_pivots()
 	resized.connect(_update_visual_pivots)
 
@@ -51,13 +58,15 @@ func set_match_effect_texture(texture: Texture2D) -> void:
 
 func set_inactive(inactive: bool) -> void:
 	is_inactive = inactive
-	inactive_slot.visible = false
+	inactive_slot.visible = inactive
 	icon.visible = not inactive and icon.texture != null
 	match_burst.visible = false
 	selection_glow.visible = false
 	obstacle_overlay.visible = false
 	special_badge.visible = false
 	match_pop.visible = false
+	invalid_puff.visible = false
+	obstacle_burst.visible = false
 	content.position = Vector2.ZERO
 	content.scale = Vector2.ONE
 	content.rotation = 0.0
@@ -84,6 +93,10 @@ func set_tile(texture: Texture2D, new_animal_id: String, special_type: String = 
 	special_badge.visible = false
 	match_pop.visible = false
 	match_pop.modulate = Color(1, 1, 1, 0)
+	invalid_puff.visible = false
+	invalid_puff.modulate = Color(1, 1, 1, 0)
+	obstacle_burst.visible = false
+	obstacle_burst.modulate = Color(1, 1, 1, 0)
 	_update_special_badge(special_type)
 
 
@@ -163,12 +176,45 @@ func play_invalid_feedback() -> void:
 	_update_visual_pivots()
 	if not is_inside_tree():
 		return
+
+	invalid_puff.visible = true
+	invalid_puff.scale = Vector2(0.58, 0.58)
+	invalid_puff.modulate = Color(1, 1, 1, 0.9)
+	var puff_tween := create_tween()
+	puff_tween.set_parallel(true)
+	puff_tween.set_trans(Tween.TRANS_BACK)
+	puff_tween.set_ease(Tween.EASE_OUT)
+	puff_tween.tween_property(invalid_puff, "scale", Vector2(1.18, 1.18), 0.18)
+	puff_tween.tween_property(invalid_puff, "modulate", Color(1, 1, 1, 0), 0.2)
+
 	var tween := create_tween()
 	tween.set_trans(Tween.TRANS_SINE)
 	tween.set_ease(Tween.EASE_IN_OUT)
 	tween.tween_property(content, "position:x", -8.0, 0.05)
 	tween.tween_property(content, "position:x", 8.0, 0.08)
 	tween.tween_property(content, "position:x", 0.0, 0.05)
+	await puff_tween.finished
+	invalid_puff.visible = false
+	invalid_puff.scale = Vector2.ONE
+
+
+func play_obstacle_clear_effect() -> void:
+	_update_visual_pivots()
+	if not is_inside_tree():
+		return
+
+	obstacle_burst.visible = true
+	obstacle_burst.scale = Vector2(0.5, 0.5)
+	obstacle_burst.modulate = Color(1, 1, 1, 0.92)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.set_trans(Tween.TRANS_BACK)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(obstacle_burst, "scale", Vector2(1.2, 1.2), 0.2)
+	tween.tween_property(obstacle_burst, "modulate", Color(1, 1, 1, 0), 0.24)
+	await tween.finished
+	obstacle_burst.visible = false
+	obstacle_burst.scale = Vector2.ONE
 
 
 func snap_back_drag_preview(duration: float = 0.12) -> void:
@@ -341,4 +387,6 @@ func _update_visual_pivots() -> void:
 	selection_glow.pivot_offset = selection_glow.size * 0.5
 	match_burst.pivot_offset = match_burst.size * 0.5
 	match_pop.pivot_offset = match_pop.size * 0.5
+	invalid_puff.pivot_offset = invalid_puff.size * 0.5
+	obstacle_burst.pivot_offset = obstacle_burst.size * 0.5
 	special_badge.pivot_offset = special_badge.size * 0.5

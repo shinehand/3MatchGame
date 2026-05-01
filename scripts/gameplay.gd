@@ -7,10 +7,11 @@ const GOAL_CHIP_SCENE := preload("res://scenes/goal_chip.tscn")
 const StageCatalog = preload("res://scripts/stage_catalog.gd")
 const GameSession = preload("res://scripts/game_session.gd")
 const MobileLayout = preload("res://scripts/mobile_layout.gd")
-const OVERLAY_SUCCESS_TEXTURE = preload("res://assets/generated/redesign/overlay_success_cat_v1_flat.png")
-const OVERLAY_FAIL_TEXTURE = preload("res://assets/generated/redesign/overlay_fail_bear_v1_flat.png")
-const COMBO_POP_TEXTURE = preload("res://assets/ui/effects/combo_pop.svg")
-const COMBO_GREAT_TEXTURE = preload("res://assets/ui/effects/combo_great.svg")
+const OVERLAY_SUCCESS_TEXTURE = preload("res://assets/generated/polish/overlay_success_cat_clean.png")
+const OVERLAY_FAIL_TEXTURE = preload("res://assets/generated/polish/overlay_fail_bear_clean.png")
+const OVERLAY_FINALE_TEXTURE = preload("res://assets/generated/polish/overlay_finale_rabbit_clean.png")
+const COMBO_POP_TEXTURE = preload("res://assets/generated/chatgpt/fx_combo_pop_chatgpt.png")
+const COMBO_GREAT_TEXTURE = preload("res://assets/generated/chatgpt/fx_combo_great_chatgpt.png")
 const SOFT_TUTORIAL_STAGE_HINTS := {
 	1: "첫 구조 안내",
 	3: "4매치 학습",
@@ -23,19 +24,26 @@ const SOFT_TUTORIAL_STAGE_HINTS := {
 	85: "최종권 압박",
 	95: "피날레 압박",
 }
-const ANIMAL_IDS := ["rabbit", "bear", "cat", "chick", "frog"]
+const ANIMAL_IDS := ["rabbit", "bear", "cat", "chick", "frog", "dog", "panda", "pig", "penguin", "fox"]
 const ANIMAL_NAMES := {
 	"rabbit": "토끼",
 	"bear": "곰",
 	"cat": "고양이",
 	"chick": "병아리",
 	"frog": "개구리",
+	"dog": "강아지",
+	"panda": "판다",
+	"pig": "돼지",
+	"penguin": "펭귄",
+	"fox": "여우",
 }
+const COMBO_GAUGE_MAX := 6
 const SPECIAL_PRIORITY := {
 	"": 0,
 	"row": 1,
 	"col": 1,
 	"bomb": 2,
+	"rainbow": 3,
 }
 
 @onready var background_texture: TextureRect = $BackgroundTexture
@@ -55,6 +63,7 @@ const SPECIAL_PRIORITY := {
 @onready var sidebar_scroll: ScrollContainer = $SafeMargin/LayoutRoot/SidebarScroll
 @onready var sidebar: VBoxContainer = $SafeMargin/LayoutRoot/SidebarScroll/Sidebar
 @onready var stats_card: PanelContainer = $SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatsCard
+@onready var stats_frame: TextureRect = $SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatsCard/StatsFrame
 @onready var stats_padding: MarginContainer = $SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatsCard/StatsPadding
 @onready var stats_column: VBoxContainer = $SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatsCard/StatsPadding/StatsColumn
 @onready var tutorial_banner: PanelContainer = $SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/TutorialBanner
@@ -65,7 +74,9 @@ const SPECIAL_PRIORITY := {
 @onready var moves_value: Label = $SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatsCard/StatsPadding/StatsColumn/MovesValue
 @onready var score_value: Label = $SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatsCard/StatsPadding/StatsColumn/ScoreValue
 @onready var combo_value: Label = $SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatsCard/StatsPadding/StatsColumn/ComboValue
+@onready var combo_gauge: ProgressBar = $SafeMargin/LayoutRoot/SidebarScroll/Sidebar/StatsCard/StatsPadding/StatsColumn/ComboGauge
 @onready var goal_card: PanelContainer = $SafeMargin/LayoutRoot/SidebarScroll/Sidebar/GoalCard
+@onready var goal_frame: TextureRect = $SafeMargin/LayoutRoot/SidebarScroll/Sidebar/GoalCard/GoalFrame
 @onready var goal_padding: MarginContainer = $SafeMargin/LayoutRoot/SidebarScroll/Sidebar/GoalCard/GoalPadding
 @onready var goal_column: VBoxContainer = $SafeMargin/LayoutRoot/SidebarScroll/Sidebar/GoalCard/GoalPadding/GoalColumn
 @onready var goal_header: Label = $SafeMargin/LayoutRoot/SidebarScroll/Sidebar/GoalCard/GoalPadding/GoalColumn/GoalHeader
@@ -86,6 +97,7 @@ const SPECIAL_PRIORITY := {
 @onready var overlay_body: Label = $Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayBody
 @onready var overlay_primary_button: Button = $Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlayPrimaryButton
 @onready var overlay_secondary_button: Button = $Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlaySecondaryButton
+@onready var fx_layer: CanvasLayer = $FxLayer
 
 var rng := RandomNumberGenerator.new()
 var animal_textures: Dictionary = {}
@@ -101,6 +113,8 @@ var stage_defs: Array = []
 var remaining_moves := 0
 var score := 0
 var current_combo := 1
+var combo_gauge_points := 0
+var combo_gauge_ready := false
 var stage_state := "playing"
 var collected_counts: Dictionary = {}
 var cleared_blockers := 0
@@ -109,6 +123,9 @@ var tutorial_enabled := false
 var tutorial_step := -1
 var portrait_goal_summary: Label
 var _prev_complete_set: Dictionary = {}
+var _last_moves_warning := -1
+var last_zoo_zoo_bonus_score := 0
+var last_zoo_zoo_moves_spent := 0
 
 
 func _ready() -> void:
@@ -206,28 +223,29 @@ func _start_stage(stage_index: int) -> void:
 	remaining_moves = int(_current_stage()["moves"])
 	score = 0
 	current_combo = 1
+	combo_gauge_points = 0
+	combo_gauge_ready = false
 	stage_state = "playing"
 	cleared_blockers = 0
+	_last_moves_warning = -1
+	last_zoo_zoo_bonus_score = 0
+	last_zoo_zoo_moves_spent = 0
 	_clear_selection()
 	_reset_collected_counts()
 	_setup_board_mask()
 	_setup_stage_blockers()
 	_setup_tutorial()
 	_generate_fresh_board()
+	var start_booster_count := _apply_start_boosters()
 	_update_stage_background()
 	_rebuild_goal_chips()
 	_update_hud()
 	_update_tips()
-	_set_status("%s 시작. 목표를 달성하기 전까지 유효 스왑만 이동 수를 소모합니다." % _current_stage()["name"])
-	_show_overlay(
-		"%s  %s" % [_current_stage()["name"], _current_stage()["difficulty"]],
-		_build_stage_overlay_text(),
-		"start_stage",
-		"시작",
-		"",
-		false
-	)
-	Feedback.play_ui_tap()
+	var start_message := "%s 시작. 목표를 달성하기 전까지 유효 스왑만 이동 수를 소모합니다." % _current_stage()["name"]
+	if start_booster_count > 0:
+		start_message += " 시작 부스터 %d개가 보드에 배치되었습니다." % start_booster_count
+	_set_status(start_message)
+	_hide_overlay()
 	_apply_responsive_layout()
 
 
@@ -286,15 +304,19 @@ func _apply_responsive_layout() -> void:
 	board_margin.add_theme_constant_override("margin_bottom", 14 if portrait else 24)
 	board_column.add_theme_constant_override("separation", 10 if portrait else 18)
 	board_surface_margin.add_theme_constant_override("margin_left", 10 if portrait else 18)
-	board_surface_margin.add_theme_constant_override("margin_top", 10 if portrait else 20)
+	board_surface_margin.add_theme_constant_override("margin_top", 12 if portrait else 20)
 	board_surface_margin.add_theme_constant_override("margin_right", 10 if portrait else 18)
-	board_surface_margin.add_theme_constant_override("margin_bottom", 10 if portrait else 18)
+	board_surface_margin.add_theme_constant_override("margin_bottom", 12 if portrait else 18)
 	board_shine.visible = not portrait
+	board_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	board_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 
-	var portrait_hud_height := clampf(viewport_size.y * 0.18, 170.0, 250.0)
+	var portrait_hud_height := clampf(viewport_size.y * 0.22, 250.0, 330.0)
 	sidebar_scroll.custom_minimum_size = Vector2(0, portrait_hud_height) if portrait else Vector2(352, 0)
 	sidebar_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	sidebar_scroll.size_flags_vertical = Control.SIZE_FILL if portrait else Control.SIZE_EXPAND_FILL
+	sidebar_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	sidebar_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED if portrait else ScrollContainer.SCROLL_MODE_AUTO
 	sidebar.custom_minimum_size = Vector2(0, 0) if portrait else Vector2(352, 0)
 	sidebar.add_theme_constant_override("separation", 12 if portrait else 16)
 	sidebar_scroll.scroll_horizontal = 0
@@ -303,15 +325,18 @@ func _apply_responsive_layout() -> void:
 	stats_padding.add_theme_constant_override("margin_top", 12 if portrait else 18)
 	stats_padding.add_theme_constant_override("margin_right", 14 if portrait else 18)
 	stats_padding.add_theme_constant_override("margin_bottom", 12 if portrait else 18)
-	stats_column.add_theme_constant_override("separation", 4 if portrait else 8)
+	stats_column.add_theme_constant_override("separation", 6 if portrait else 8)
 	goal_padding.add_theme_constant_override("margin_left", 14 if portrait else 18)
-	goal_padding.add_theme_constant_override("margin_top", 12 if portrait else 18)
+	goal_padding.add_theme_constant_override("margin_top", 14 if portrait else 18)
 	goal_padding.add_theme_constant_override("margin_right", 14 if portrait else 18)
-	goal_padding.add_theme_constant_override("margin_bottom", 12 if portrait else 18)
+	goal_padding.add_theme_constant_override("margin_bottom", 14 if portrait else 18)
 	goal_column.add_theme_constant_override("separation", 6 if portrait else 10)
 	goal_list.add_theme_constant_override("separation", 4 if portrait else 8)
-	portrait_goal_summary.add_theme_font_size_override("font_size", 17 if portrait else 18)
-	portrait_goal_summary.add_theme_constant_override("line_spacing", 4 if portrait else 2)
+	portrait_goal_summary.add_theme_font_size_override("font_size", 22 if portrait else 18)
+	portrait_goal_summary.add_theme_constant_override("line_spacing", 7 if portrait else 2)
+	portrait_goal_summary.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER if portrait else HORIZONTAL_ALIGNMENT_LEFT
+	portrait_goal_summary.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	portrait_goal_summary.custom_minimum_size = Vector2(0, 84) if portrait else Vector2.ZERO
 
 	top_bar.visible = not portrait
 	pause_button.visible = not portrait
@@ -323,7 +348,7 @@ func _apply_responsive_layout() -> void:
 	retry_button.add_theme_font_size_override("font_size", 30 if portrait else 26)
 	next_stage_button.add_theme_font_size_override("font_size", 30 if portrait else 26)
 	overlay_panel.custom_minimum_size = Vector2(560, 0) if portrait else Vector2(520, 0)
-	overlay_mascot.custom_minimum_size = Vector2(156, 156) if portrait else Vector2(132, 132)
+	overlay_mascot.custom_minimum_size = Vector2(176, 176) if portrait else Vector2(156, 156)
 	overlay_ribbon.custom_minimum_size = Vector2(184, 66) if portrait else Vector2(176, 60)
 	overlay_title.add_theme_font_size_override("font_size", 34 if portrait else 40)
 	overlay_body.add_theme_font_size_override("font_size", 20 if portrait else 24)
@@ -331,6 +356,8 @@ func _apply_responsive_layout() -> void:
 	status_card.visible = not portrait
 	tips_card.visible = false
 	combo_value.visible = not portrait
+	combo_gauge.visible = true
+	combo_gauge.custom_minimum_size = Vector2(0, 18 if portrait else 20)
 	difficulty_value.visible = not portrait
 	score_value.visible = false
 	moves_value.visible = not portrait
@@ -339,9 +366,17 @@ func _apply_responsive_layout() -> void:
 	goal_list.visible = not portrait
 	if portrait_goal_summary:
 		portrait_goal_summary.visible = portrait
-	stage_value.add_theme_font_size_override("font_size", 20 if portrait else 24)
+	stats_card.custom_minimum_size = Vector2(0, 104) if portrait else Vector2.ZERO
+	stats_frame.visible = not portrait
+	goal_frame.visible = not portrait
+	stage_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER if portrait else HORIZONTAL_ALIGNMENT_LEFT
+	stage_value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	stage_value.custom_minimum_size = Vector2(0, 44) if portrait else Vector2.ZERO
+	stage_value.add_theme_font_size_override("font_size", 30 if portrait else 24)
+	stage_value.add_theme_color_override("font_shadow_color", Color(1.0, 1.0, 1.0, 0.42) if portrait else Color(1.0, 1.0, 1.0, 0.0))
+	stage_value.add_theme_constant_override("shadow_offset_y", 2 if portrait else 0)
 	score_value.add_theme_font_size_override("font_size", 18 if portrait else 22)
-	goal_card.custom_minimum_size = Vector2(0, 92) if portrait else Vector2.ZERO
+	goal_card.custom_minimum_size = Vector2(0, 126) if portrait else Vector2.ZERO
 	_configure_action_buttons(portrait)
 
 	_update_board_surface_size()
@@ -418,6 +453,23 @@ func _refresh_tile(row: int, col: int) -> void:
 	tile_nodes[row][col].set_inactive(false)
 	tile_nodes[row][col].set_tile(animal_textures[animal_id], animal_id, _piece_special(piece_data))
 	tile_nodes[row][col].set_obstacle(ui_textures.get("bush"), int(obstacle_data[row][col]))
+
+
+func _tile_global_center(cell: Vector2i) -> Vector2:
+	if cell.x < 0 or cell.x >= tile_nodes.size():
+		return get_viewport_rect().size * 0.5
+	if cell.y < 0 or cell.y >= tile_nodes[cell.x].size():
+		return get_viewport_rect().size * 0.5
+	var tile: Control = tile_nodes[cell.x][cell.y]
+	return tile.get_global_rect().get_center()
+
+
+func _play_fx_method(method_name: String, args: Array = []) -> void:
+	if fx_layer == null:
+		return
+	if not fx_layer.has_method(method_name):
+		return
+	fx_layer.callv(method_name, args)
 
 
 func _on_tile_pressed(row: int, col: int) -> void:
@@ -501,6 +553,17 @@ func _resolve_swap(from_cell: Vector2i, to_cell: Vector2i) -> void:
 	tile_nodes[from_cell.x][from_cell.y].finalize_swap_feedback()
 	tile_nodes[to_cell.x][to_cell.y].finalize_swap_feedback()
 
+	var rainbow_swap := _rainbow_swap_outcome(from_cell, to_cell)
+	if not rainbow_swap.is_empty():
+		Feedback.play_swap_valid()
+		remaining_moves -= 1
+		_update_hud()
+		await _resolve_rainbow_swap(Vector2i(rainbow_swap["rainbow_cell"]), String(rainbow_swap["target_animal"]))
+		_maybe_advance_tutorial(3)
+		await _check_stage_state()
+		is_busy = false
+		return
+
 	if _find_matches().is_empty():
 		await get_tree().create_timer(0.1).timeout
 		_swap_cells(from_cell, to_cell)
@@ -518,7 +581,7 @@ func _resolve_swap(from_cell: Vector2i, to_cell: Vector2i) -> void:
 	_update_hud()
 	await _resolve_matches([from_cell, to_cell])
 	_maybe_advance_tutorial(3)
-	_check_stage_state()
+	await _check_stage_state()
 	is_busy = false
 
 
@@ -543,6 +606,7 @@ func _resolve_matches(preferred_cells: Array) -> void:
 		current_combo = combo
 		_apply_match_rewards(removed_cells, combo)
 		score += cleared_obstacle_cells.size() * 150 * combo
+		_charge_combo_gauge(combo, special_spawns.size())
 		Feedback.play_match(combo, special_spawns.size(), cleared_obstacle_cells.size())
 		_update_hud()
 		_set_status(_build_resolution_status(combo, removed_cells.size(), special_spawns, cleared_obstacle_cells.size()))
@@ -551,6 +615,7 @@ func _resolve_matches(preferred_cells: Array) -> void:
 		for cell in clear_cells:
 			tile_nodes[cell.x][cell.y].set_selected(true)
 			tile_nodes[cell.x][cell.y].play_match_effect()
+			_play_fx_method("play_match_burst_at", [_tile_global_center(cell), combo])
 
 		await get_tree().create_timer(0.22).timeout
 
@@ -561,6 +626,7 @@ func _resolve_matches(preferred_cells: Array) -> void:
 				board_data[cell.x][cell.y] = _make_piece(animal_id, String(special_spawns[cell]))
 				_refresh_tile(cell.x, cell.y)
 				tile_nodes[cell.x][cell.y].play_special_ready_effect()
+				_play_fx_method("play_special_created", [_tile_global_center(cell), String(special_spawns[cell])])
 			else:
 				board_data[cell.x][cell.y] = ""
 				_refresh_tile(cell.x, cell.y)
@@ -580,9 +646,160 @@ func _resolve_matches(preferred_cells: Array) -> void:
 		next_preferred.clear()
 		combo += 1
 
+	if combo_gauge_ready:
+		await _trigger_combo_gauge_reward()
+
 	current_combo = 1
 	_update_hud()
 	_set_status("연쇄 처리와 리필이 끝났습니다. 다음 스왑을 진행할 수 있습니다.")
+
+
+func _rainbow_swap_outcome(from_cell: Vector2i, to_cell: Vector2i) -> Dictionary:
+	var from_special := _piece_special(board_data[from_cell.x][from_cell.y])
+	var to_special := _piece_special(board_data[to_cell.x][to_cell.y])
+	var from_animal := _piece_animal(board_data[from_cell.x][from_cell.y])
+	var to_animal := _piece_animal(board_data[to_cell.x][to_cell.y])
+
+	if from_special == "rainbow" and not to_animal.is_empty():
+		return {"rainbow_cell": from_cell, "target_animal": to_animal}
+	if to_special == "rainbow" and not from_animal.is_empty():
+		return {"rainbow_cell": to_cell, "target_animal": from_animal}
+	return {}
+
+
+func _resolve_rainbow_swap(rainbow_cell: Vector2i, target_animal: String) -> void:
+	var clear_cells: Array = []
+	var seen := {}
+	for row in range(BOARD_ROWS):
+		for col in range(BOARD_COLS):
+			var cell := Vector2i(row, col)
+			if not _is_cell_active(cell):
+				continue
+			if _piece_animal(board_data[row][col]) == target_animal:
+				clear_cells.append(cell)
+				seen[cell] = true
+	if not seen.has(rainbow_cell):
+		clear_cells.append(rainbow_cell)
+
+	current_combo = 1
+	_apply_match_rewards(clear_cells, 1)
+	var cleared_obstacle_cells: Array = _damage_obstacles(clear_cells)
+	score += clear_cells.size() * 120 + cleared_obstacle_cells.size() * 150
+	Feedback.play_rainbow_clear()
+	_set_status("무지개 구슬 발동. %s 블록을 한꺼번에 제거합니다." % ANIMAL_NAMES.get(target_animal, target_animal))
+	_update_hud()
+	var rainbow_positions: Array = []
+	for cell in clear_cells:
+		rainbow_positions.append(_tile_global_center(cell))
+	_play_fx_method("play_rainbow_clear", [rainbow_positions])
+
+	for cell in clear_cells:
+		tile_nodes[cell.x][cell.y].set_selected(true)
+		tile_nodes[cell.x][cell.y].play_match_effect()
+
+	await get_tree().create_timer(0.26).timeout
+
+	for cell in clear_cells:
+		tile_nodes[cell.x][cell.y].set_selected(false)
+		board_data[cell.x][cell.y] = ""
+		_refresh_tile(cell.x, cell.y)
+
+	var fall_events: Array = _collapse_and_refill_board()
+	_refresh_tiles_from_events(fall_events)
+	_play_fall_events(fall_events)
+	await get_tree().create_timer(0.24).timeout
+	await _resolve_matches([])
+
+
+func _charge_combo_gauge(combo: int, special_spawn_count: int) -> void:
+	var charge := maxi(1, combo) + mini(special_spawn_count, 2)
+	combo_gauge_points = mini(COMBO_GAUGE_MAX, combo_gauge_points + charge)
+	if combo_gauge_points >= COMBO_GAUGE_MAX:
+		combo_gauge_ready = true
+
+
+func _trigger_combo_gauge_reward() -> void:
+	combo_gauge_ready = false
+	combo_gauge_points = 0
+	var reward_cells := _pick_combo_reward_cells(3)
+	if reward_cells.is_empty():
+		_update_hud()
+		return
+
+	for cell in reward_cells:
+		var animal_id := _piece_animal(board_data[cell.x][cell.y])
+		board_data[cell.x][cell.y] = _make_piece(animal_id, _random_combo_reward_special())
+		_refresh_tile(cell.x, cell.y)
+		tile_nodes[cell.x][cell.y].play_special_ready_effect()
+		_play_fx_method("play_special_created", [_tile_global_center(cell), _piece_special(board_data[cell.x][cell.y])])
+
+	Feedback.play_combo_gauge_reward()
+	_play_fx_method("play_combo_banner", [COMBO_GAUGE_MAX])
+	_set_status("Combo Gauge 충전 완료. 무작위 블록 3개가 특수 블록으로 변했습니다.")
+	_update_hud()
+	await get_tree().create_timer(0.26).timeout
+
+
+func _apply_start_boosters() -> int:
+	var boosters: Array = GameSession.consume_selected_pre_boosters()
+	if boosters.is_empty():
+		return 0
+
+	var applied := 0
+	for booster_id in boosters:
+		var reward_cells := _pick_combo_reward_cells(1)
+		if reward_cells.is_empty():
+			continue
+		var cell: Vector2i = reward_cells[0]
+		var animal_id := _piece_animal(board_data[cell.x][cell.y])
+		var special_type := _special_from_pre_booster(String(booster_id))
+		board_data[cell.x][cell.y] = _make_piece(animal_id, special_type)
+		_refresh_tile(cell.x, cell.y)
+		tile_nodes[cell.x][cell.y].play_special_ready_effect()
+		_play_fx_method("play_special_created", [_tile_global_center(cell), special_type])
+		applied += 1
+
+	if applied > 0:
+		Feedback.play_combo_gauge_reward()
+	return applied
+
+
+func _special_from_pre_booster(booster_id: String) -> String:
+	match booster_id:
+		"rainbow_paw":
+			return "rainbow"
+		"striped":
+			return "row" if rng.randi_range(0, 1) == 0 else "col"
+		"bomb":
+			return "bomb"
+	return _random_combo_reward_special()
+
+
+func _pick_combo_reward_cells(max_count: int) -> Array:
+	var candidates: Array = []
+	for row in range(BOARD_ROWS):
+		for col in range(BOARD_COLS):
+			if not _is_cell_active_xy(row, col):
+				continue
+			if String(board_data[row][col]).is_empty():
+				continue
+			if not _piece_special(board_data[row][col]).is_empty():
+				continue
+			candidates.append(Vector2i(row, col))
+
+	candidates.shuffle()
+	return candidates.slice(0, mini(max_count, candidates.size()))
+
+
+func _random_combo_reward_special() -> String:
+	var roll := rng.randi_range(0, 5)
+	if roll <= 1:
+		return "row"
+	if roll <= 3:
+		return "col"
+	if roll == 4:
+		return "bomb"
+	return "rainbow"
 
 
 func _collapse_and_refill_board() -> Array:
@@ -720,21 +937,33 @@ func _find_match_runs() -> Array:
 func _analyze_match_outcome(preferred_cells: Array) -> Dictionary:
 	var base_found := {}
 	var special_spawns := {}
+	var row_runs: Array = []
+	var col_runs: Array = []
 
 	for run in _find_match_runs():
 		var cells: Array = run["cells"]
 		var orientation: String = String(run["orientation"])
 		for cell in cells:
 			base_found[cell] = true
+		if orientation == "row":
+			row_runs.append(cells)
+		else:
+			col_runs.append(cells)
 
 		var special_type: String = _special_from_run(cells.size(), orientation)
 		if special_type.is_empty():
 			continue
 
 		var spawn_cell: Vector2i = _pick_special_spawn_cell(cells, preferred_cells)
-		var current_special: String = String(special_spawns.get(spawn_cell, ""))
-		if int(SPECIAL_PRIORITY.get(special_type, 0)) > int(SPECIAL_PRIORITY.get(current_special, 0)):
-			special_spawns[spawn_cell] = special_type
+		_register_special_spawn(special_spawns, spawn_cell, special_type)
+
+	for row_run in row_runs:
+		for col_run in col_runs:
+			var intersection := _find_run_intersection(row_run, col_run)
+			if intersection.x == -1:
+				continue
+			if row_run.size() + col_run.size() - 1 >= 5:
+				_register_special_spawn(special_spawns, intersection, "bomb")
 
 	var base_cells: Array = []
 	for cell in base_found.keys():
@@ -744,6 +973,20 @@ func _analyze_match_outcome(preferred_cells: Array) -> Dictionary:
 		"base_cells": base_cells,
 		"special_spawns": special_spawns,
 	}
+
+
+func _register_special_spawn(special_spawns: Dictionary, spawn_cell: Vector2i, special_type: String) -> void:
+	var current_special: String = String(special_spawns.get(spawn_cell, ""))
+	if int(SPECIAL_PRIORITY.get(special_type, 0)) > int(SPECIAL_PRIORITY.get(current_special, 0)):
+		special_spawns[spawn_cell] = special_type
+
+
+func _find_run_intersection(row_run: Array, col_run: Array) -> Vector2i:
+	for row_cell in row_run:
+		for col_cell in col_run:
+			if row_cell == col_cell:
+				return row_cell
+	return Vector2i(-1, -1)
 
 
 func _expand_special_clears(base_cells: Array, special_spawns: Dictionary) -> Array:
@@ -793,6 +1036,7 @@ func _damage_obstacles(clear_cells: Array) -> Array:
 		cleared_cells.append(cell)
 		cleared_blockers += 1
 		_refresh_tile(cell.x, cell.y)
+		tile_nodes[cell.x][cell.y].play_obstacle_clear_effect()
 
 	return cleared_cells
 
@@ -817,13 +1061,20 @@ func _special_clear_cells(cell: Vector2i, special_type: String) -> Array:
 					var next_cell := Vector2i(row, col)
 					if _is_cell_active(next_cell):
 						cells.append(next_cell)
+		"rainbow":
+			var target_animal := _piece_animal(board_data[cell.x][cell.y])
+			for row in range(BOARD_ROWS):
+				for col in range(BOARD_COLS):
+					var next_cell := Vector2i(row, col)
+					if _is_cell_active(next_cell) and _piece_animal(board_data[row][col]) == target_animal:
+						cells.append(next_cell)
 
 	return cells
 
 
 func _special_from_run(run_length: int, orientation: String) -> String:
 	if run_length >= 5:
-		return "bomb"
+		return "rainbow"
 	if run_length == 4:
 		return orientation
 	return ""
@@ -858,6 +1109,8 @@ func _special_label(special_type: String) -> String:
 			return "세로 줄"
 		"bomb":
 			return "폭발"
+		"rainbow":
+			return "무지개 구슬"
 	return "일반"
 
 
@@ -921,9 +1174,13 @@ func _on_quit_button_pressed() -> void:
 
 func _check_stage_state() -> void:
 	if _is_stage_complete():
+		var star_count := _stage_star_rating()
+		if remaining_moves > 0:
+			stage_state = "bonus"
+			await _run_zoo_zoo_time()
 		stage_state = "cleared"
 		Feedback.play_stage_clear()
-		var star_count := _stage_star_rating()
+		_play_fx_method("play_star_reveal", [star_count])
 		var prev_best := GameSession.get_best_stars(_current_stage_id())
 		GameSession.record_stage_result(_current_stage_id(), score, star_count)
 		var unlock_text := _build_unlock_text(star_count, prev_best)
@@ -939,6 +1196,61 @@ func _check_stage_state() -> void:
 		_set_status("이동 수를 모두 사용했습니다. 재시작으로 다시 도전하세요.")
 		_show_overlay("%s 재도전 필요" % _current_stage()["name"], _build_failure_overlay_body(), "restart_stage", "재도전", "홈으로", true)
 	_update_hud()
+
+
+func _run_zoo_zoo_time() -> void:
+	last_zoo_zoo_moves_spent = remaining_moves
+	last_zoo_zoo_bonus_score = 0
+	Feedback.play_combo_gauge_reward()
+	_play_fx_method("play_zoo_zoo_time_banner", [remaining_moves])
+	await get_tree().create_timer(0.54).timeout
+
+	while remaining_moves > 0:
+		remaining_moves -= 1
+		var reward_cells := _pick_combo_reward_cells(1)
+		if reward_cells.is_empty():
+			_update_hud()
+			await get_tree().create_timer(0.06).timeout
+			continue
+
+		var cell: Vector2i = reward_cells[0]
+		var special_type := _random_combo_reward_special()
+		var animal_id := _piece_animal(board_data[cell.x][cell.y])
+		board_data[cell.x][cell.y] = _make_piece(animal_id, special_type)
+		_refresh_tile(cell.x, cell.y)
+		tile_nodes[cell.x][cell.y].play_special_ready_effect()
+		_play_fx_method("play_special_created", [_tile_global_center(cell), special_type])
+		await get_tree().create_timer(0.16).timeout
+
+		var clear_cells: Array = _special_clear_cells(cell, special_type)
+		if clear_cells.is_empty():
+			clear_cells.append(cell)
+		var cleared_obstacle_cells: Array = _damage_obstacles(clear_cells)
+		var score_before := score
+		_apply_match_rewards(clear_cells, 1)
+		score += clear_cells.size() * 80 + cleared_obstacle_cells.size() * 120 + 250
+		var bonus_score := score - score_before
+		last_zoo_zoo_bonus_score += bonus_score
+		_play_fx_method("play_bonus_score", [_tile_global_center(cell), bonus_score])
+
+		for clear_cell in clear_cells:
+			tile_nodes[clear_cell.x][clear_cell.y].set_selected(true)
+			tile_nodes[clear_cell.x][clear_cell.y].play_match_effect()
+			_play_fx_method("play_match_burst_at", [_tile_global_center(clear_cell), 2])
+		await get_tree().create_timer(0.18).timeout
+
+		for clear_cell in clear_cells:
+			tile_nodes[clear_cell.x][clear_cell.y].set_selected(false)
+			board_data[clear_cell.x][clear_cell.y] = ""
+			_refresh_tile(clear_cell.x, clear_cell.y)
+
+		var fall_events: Array = _collapse_and_refill_board()
+		_refresh_tiles_from_events(fall_events)
+		_play_fall_events(fall_events)
+		_update_hud()
+		await get_tree().create_timer(0.18).timeout
+
+	await _resolve_matches([])
 
 
 func _is_stage_complete() -> bool:
@@ -961,7 +1273,7 @@ func _update_hud() -> void:
 	var portrait := MobileLayout.is_portrait(self)
 	var moves_color := _moves_warning_color()
 	if portrait:
-		stage_value.text = "%s · 이동 %d · 점수 %d" % [_current_stage()["name"], remaining_moves, score]
+		stage_value.text = "레벨 %d     이동 %d     점수 %d" % [_current_stage_id(), remaining_moves, score]
 		stage_value.add_theme_color_override("font_color", moves_color)
 		score_value.text = "점수 %d" % score
 	else:
@@ -970,7 +1282,12 @@ func _update_hud() -> void:
 		moves_value.text = "남은 이동 %d" % remaining_moves
 		moves_value.add_theme_color_override("font_color", moves_color)
 		score_value.text = "점수 %d" % score
-	combo_value.text = "현재 콤보 x%d" % current_combo
+	combo_value.text = "Combo Gauge  %d / %d" % [combo_gauge_points, COMBO_GAUGE_MAX]
+	combo_gauge.max_value = COMBO_GAUGE_MAX
+	combo_gauge.value = combo_gauge_points
+	if stage_state == "playing" and remaining_moves <= 5 and remaining_moves > 0 and remaining_moves != _last_moves_warning:
+		_last_moves_warning = remaining_moves
+		_play_fx_method("play_last_moves_warning", [remaining_moves])
 	_refresh_goal_chips()
 	if MobileLayout.is_portrait(self) and stage_state == "playing":
 		next_stage_button.disabled = false
@@ -991,6 +1308,7 @@ func _moves_warning_color() -> Color:
 func _notify_goal_complete_if_new(key: String, is_complete: bool) -> void:
 	if is_complete and not _prev_complete_set.get(key, false):
 		Feedback.play_goal_complete()
+		_play_fx_method("play_goal_rescue", [goal_card.get_global_rect().get_center(), "구출!"])
 	_prev_complete_set[key] = is_complete
 
 
@@ -1261,6 +1579,7 @@ func _hide_overlay() -> void:
 
 
 func _show_combo_banner(combo: int) -> void:
+	_play_fx_method("play_combo_banner", [combo])
 	if combo_banner == null:
 		return
 	combo_banner.texture = COMBO_POP_TEXTURE if combo <= 1 else COMBO_GREAT_TEXTURE
@@ -1337,23 +1656,23 @@ func _on_overlay_secondary_button_pressed() -> void:
 
 func _load_animal_textures() -> void:
 	for animal_id in ANIMAL_IDS:
-		animal_textures[animal_id] = _load_texture_from_png("res://assets/animals/%s_block.png" % animal_id)
+		animal_textures[animal_id] = _load_texture_from_png("res://assets/generated/candy/%s_candy_block.png" % animal_id)
 
 
 func _load_ui_textures() -> void:
-	ui_textures["background"] = _load_texture_from_png("res://assets/backgrounds/stage_meadow_bg_v1.png")
-	ui_textures["background_band_02"] = _load_texture_from_png("res://assets/backgrounds/bands/bg_band_02_main.svg")
-	ui_textures["background_band_02_sub"] = _load_texture_from_png("res://assets/backgrounds/bands/bg_band_02_sub.svg")
-	ui_textures["background_band_03"] = _load_texture_from_png("res://assets/backgrounds/bands/bg_band_03_main.svg")
-	ui_textures["background_band_04"] = _load_texture_from_png("res://assets/backgrounds/bands/bg_band_04_forest_edge.svg")
-	ui_textures["background_band_05"] = _load_texture_from_png("res://assets/backgrounds/bands/bg_band_05_garden_1.svg")
-	ui_textures["background_band_06"] = _load_texture_from_png("res://assets/backgrounds/bands/bg_band_06_garden_2.svg")
-	ui_textures["background_band_07"] = _load_texture_from_png("res://assets/backgrounds/bands/bg_band_07_night_shade_1.svg")
-	ui_textures["background_band_08"] = _load_texture_from_png("res://assets/backgrounds/bands/bg_band_08_skyline_1.svg")
-	ui_textures["background_band_09"] = _load_texture_from_png("res://assets/backgrounds/bands/bg_band_09_skyline_2.svg")
-	ui_textures["background_band_10"] = _load_texture_from_png("res://assets/backgrounds/bands/bg_band_10_finale_1.svg")
-	ui_textures["match_burst"] = _load_texture_from_png("res://assets/effects/match_burst_v1.png")
-	ui_textures["bush"] = _load_texture_from_png("res://assets/effects/bush_obstacle_v1.png")
+	ui_textures["background"] = _load_texture_from_png("res://assets/generated/candy/candy_world_bg.png")
+	ui_textures["background_band_02"] = ui_textures["background"]
+	ui_textures["background_band_02_sub"] = ui_textures["background"]
+	ui_textures["background_band_03"] = ui_textures["background"]
+	ui_textures["background_band_04"] = ui_textures["background"]
+	ui_textures["background_band_05"] = ui_textures["background"]
+	ui_textures["background_band_06"] = ui_textures["background"]
+	ui_textures["background_band_07"] = ui_textures["background"]
+	ui_textures["background_band_08"] = ui_textures["background"]
+	ui_textures["background_band_09"] = ui_textures["background"]
+	ui_textures["background_band_10"] = ui_textures["background"]
+	ui_textures["match_burst"] = _load_texture_from_png("res://assets/generated/chatgpt/fx_match_burst_chatgpt.png")
+	ui_textures["bush"] = _load_texture_from_png("res://assets/effects/bush_obstacle_v2.png")
 	background_texture.texture = ui_textures["background"]
 
 
@@ -1405,7 +1724,10 @@ func _update_overlay_mascot(title: String, action: String) -> void:
 	if overlay_mascot == null:
 		return
 	overlay_mascot.visible = true
-	if action in ["next_stage", "clear_stage", "all_clear"]:
+	if action == "all_clear":
+		overlay_mascot.texture = OVERLAY_FINALE_TEXTURE
+		return
+	if action in ["next_stage", "clear_stage"]:
 		overlay_mascot.texture = OVERLAY_SUCCESS_TEXTURE
 		return
 	if title.contains("실패") or stage_state == "failed":
@@ -1494,19 +1816,23 @@ func _update_tips() -> void:
 	var lines := [
 		"핵심 팁",
 		"1. 4매치: 줄 제거 특수 블록",
-		"2. 5매치: 3x3 폭발 블록",
-		"3. 덤불은 매치된 칸과 인접 칸의 충격으로 제거",
+		"2. L/T매치: 3x3 폭발 블록, 5매치: 무지개 구슬",
+		"3. Combo Gauge가 차면 일반 블록 3개가 특수 블록으로 변환",
 	]
 	tips_label.text = "\n".join(lines)
 
 
 func _stage_star_rating() -> int:
+	return _stage_star_rating_for_moves(remaining_moves)
+
+
+func _stage_star_rating_for_moves(moves_left: int) -> int:
 	var total_moves := int(_current_stage().get("moves", 12))
 	var three_star_threshold := maxi(3, int(round(total_moves * 0.35)))
 	var two_star_threshold := maxi(1, int(round(total_moves * 0.15)))
-	if remaining_moves >= three_star_threshold:
+	if moves_left >= three_star_threshold:
 		return 3
-	if remaining_moves >= two_star_threshold:
+	if moves_left >= two_star_threshold:
 		return 2
 	return 1
 
@@ -1525,34 +1851,45 @@ func _format_star_rating(star_count: int) -> String:
 
 
 func _build_clear_overlay_body(star_count: int, unlock_text: String, campaign_complete: bool) -> String:
+	var reward_gold := _stage_gold_reward(star_count)
 	var lines: Array[String] = [
-		"등급  %s" % _format_star_rating(star_count),
-		"결과  점수 %d · 남은 이동 %d" % [score, remaining_moves],
-		"완료  %s" % _build_goal_result_summary(),
+		"%s" % _format_star_rating(star_count),
+		"보상  골드 %d · 별 %d개 · 점수 %d" % [reward_gold, star_count, score],
 	]
+	if last_zoo_zoo_moves_spent > 0:
+		lines.append("Zoo-Zoo Time  이동 %d회 폭발 · 보너스 +%d" % [last_zoo_zoo_moves_spent, last_zoo_zoo_bonus_score])
+	lines.append("목표  %s" % _build_goal_result_summary())
 	if campaign_complete:
-		lines.append("진행  100개 스테이지 완료")
-		lines.append("다음 행동  홈으로 / 다시 플레이")
+		lines.append("진행  전체 구조 작전 완료")
+		lines.append("다음  홈으로 / 다시 플레이")
 		lines.append("")
-		lines.append("전체 구조 작전을 마쳤습니다. 홈에서 진행도를 확인할 수 있습니다.")
+		lines.append("모든 구조 노드가 열렸습니다.")
 	else:
 		lines.append("해금  %s" % unlock_text)
-		lines.append("다음 행동  다음 스테이지 / 홈으로")
+		lines.append("다음  다음 스테이지 / 홈으로")
 		lines.append("")
-		lines.append("바로 다음 구조 작전으로 이어가거나 홈에서 진행도를 확인할 수 있습니다.")
+		lines.append("바로 다음 구조 작전으로 이어갈 수 있습니다.")
 	return "\n".join(lines)
 
 
 func _build_failure_overlay_body() -> String:
 	return "\n".join([
-		"목표를 아직 달성하지 못했습니다.",
-		"부족  %s" % _build_goal_remaining_summary(),
-		"진행  %s" % _build_goal_result_summary(),
-		"결과  점수 %d · 남은 이동 %d" % [score, remaining_moves],
-		"다음 행동  재도전 / 홈으로",
+		"조금만 더!",
+		"남은 목표  %s" % _build_goal_remaining_summary(),
+		"현재 진행  %s" % _build_goal_result_summary(),
+		"점수  %d" % score,
+		"다음  재도전 / 홈으로",
 		"",
-		"다음 시도  %s" % _build_failure_hint(),
+		"추천  %s" % _build_failure_hint(),
 	])
+
+
+func _stage_gold_reward(star_count: int) -> int:
+	var difficulty := String(_current_stage().get("difficulty", "Easy"))
+	var difficulty_bonus := 10 if difficulty == "Easy" else 18
+	if difficulty == "Hard":
+		difficulty_bonus = 30
+	return 40 + _current_stage_id() * 2 + difficulty_bonus + star_count * 25
 
 
 func _build_unlock_text(star_count: int, prev_best: int) -> String:

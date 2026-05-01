@@ -1,15 +1,21 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=24 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1"]
-[ext_resource type="Texture2D" path="res://assets/backgrounds/stage_meadow_bg_v1.png" id="2"]
-[ext_resource type="Texture2D" path="res://assets/animals/rabbit_block.png" id="3"]
-[ext_resource type="Texture2D" path="res://assets/animals/bear_block.png" id="4"]
-[ext_resource type="Texture2D" path="res://assets/animals/cat_block.png" id="5"]
-[ext_resource type="Texture2D" path="res://assets/animals/chick_block.png" id="6"]
+[ext_resource type="Texture2D" path="res://assets/generated/candy/candy_world_bg.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/generated/candy/rabbit_candy_block.png" id="3"]
+[ext_resource type="Texture2D" path="res://assets/generated/candy/bear_candy_block.png" id="4"]
+[ext_resource type="Texture2D" path="res://assets/generated/candy/cat_candy_block.png" id="5"]
+[ext_resource type="Texture2D" path="res://assets/generated/candy/chick_candy_block.png" id="6"]
 [ext_resource type="Texture2D" path="res://assets/ui/theme/panel_card.svg" id="7"]
 [ext_resource type="Texture2D" path="res://assets/ui/theme/popup_frame.svg" id="8"]
-[ext_resource type="Texture2D" path="res://assets/generated/redesign/home_mascot_rabbit_v1_flat.png" id="9"]
-[ext_resource type="Texture2D" path="res://assets/generated/redesign/home_mascot_chick_v1_flat.png" id="10"]
+[ext_resource type="Texture2D" path="res://assets/generated/polish/home_mascot_rabbit_clean.png" id="9"]
+[ext_resource type="Texture2D" path="res://assets/generated/polish/home_mascot_chick_clean.png" id="10"]
+[ext_resource type="Texture2D" path="res://assets/generated/candy/frog_candy_block.png" id="11"]
+[ext_resource type="Texture2D" path="res://assets/generated/candy/dog_candy_block.png" id="12"]
+[ext_resource type="Texture2D" path="res://assets/generated/candy/panda_candy_block.png" id="13"]
+[ext_resource type="Texture2D" path="res://assets/generated/candy/pig_candy_block.png" id="14"]
+[ext_resource type="Texture2D" path="res://assets/generated/candy/penguin_candy_block.png" id="15"]
+[ext_resource type="Texture2D" path="res://assets/generated/candy/fox_candy_block.png" id="16"]
 
 [sub_resource type="StyleBoxFlat" id="1"]
 bg_color = Color(1, 1, 1, 0.97)
@@ -83,7 +89,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.94902, 0.976471, 1, 1)
+color = Color(0.431373, 0.752941, 1, 1)
 
 [node name="BackgroundTexture" type="TextureRect" parent="."]
 layout_mode = 1
@@ -95,7 +101,7 @@ grow_vertical = 2
 texture = ExtResource("2")
 expand_mode = 1
 stretch_mode = 6
-modulate = Color(1, 0.960784, 0.941176, 0.3)
+modulate = Color(1, 1, 1, 1)
 
 [node name="TopGlow" type="ColorRect" parent="."]
 layout_mode = 1
@@ -159,7 +165,7 @@ layout_mode = 2
 [node name="RabbitIcon" type="TextureRect" parent="SafeMargin/LayoutRoot/LeftMascots/RabbitCard/RabbitCenter"]
 custom_minimum_size = Vector2(168, 168)
 layout_mode = 2
-texture = ExtResource("9")
+texture = ExtResource("3")
 expand_mode = 1
 stretch_mode = 5
 
@@ -186,7 +192,7 @@ layout_mode = 2
 [node name="ChickIcon" type="TextureRect" parent="SafeMargin/LayoutRoot/LeftMascots/ChickCard/ChickCenter"]
 custom_minimum_size = Vector2(168, 168)
 layout_mode = 2
-texture = ExtResource("10")
+texture = ExtResource("6")
 expand_mode = 1
 stretch_mode = 5
 
@@ -227,17 +233,173 @@ theme_override_constants/separation = 8
 
 [node name="Title" type="Label" parent="SafeMargin/LayoutRoot/CenterColumn/LogoCard/LogoMargin/LogoColumn"]
 layout_mode = 2
-text = "Animal Pop Match"
+text = "Zoo-Zoo Pop"
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.176471, 0.317647, 0.431373, 1)
 theme_override_font_sizes/font_size = 76
 
 [node name="Subtitle" type="Label" parent="SafeMargin/LayoutRoot/CenterColumn/LogoCard/LogoMargin/LogoColumn"]
 layout_mode = 2
-text = "동물 얼굴 블록으로 즐기는 말랑한 매치3 퍼즐"
+text = "10종 동물 캔디 블록으로 즐기는 말랑한 매치3 퍼즐"
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.286275, 0.45098, 0.572549, 1)
 theme_override_font_sizes/font_size = 28
+
+[node name="PreviewStrip" type="HBoxContainer" parent="SafeMargin/LayoutRoot/CenterColumn"]
+custom_minimum_size = Vector2(0, 94)
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 8
+
+[node name="RabbitPreview" type="PanelContainer" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip"]
+custom_minimum_size = Vector2(84, 84)
+layout_mode = 2
+theme_override_styles/panel = SubResource("4")
+
+[node name="RabbitPreviewCenter" type="CenterContainer" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip/RabbitPreview"]
+layout_mode = 2
+
+[node name="RabbitPreviewIcon" type="TextureRect" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip/RabbitPreview/RabbitPreviewCenter"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+texture = ExtResource("3")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="BearPreview" type="PanelContainer" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip"]
+custom_minimum_size = Vector2(84, 84)
+layout_mode = 2
+theme_override_styles/panel = SubResource("4")
+
+[node name="BearPreviewCenter" type="CenterContainer" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip/BearPreview"]
+layout_mode = 2
+
+[node name="BearPreviewIcon" type="TextureRect" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip/BearPreview/BearPreviewCenter"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+texture = ExtResource("4")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CatPreview" type="PanelContainer" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip"]
+custom_minimum_size = Vector2(84, 84)
+layout_mode = 2
+theme_override_styles/panel = SubResource("4")
+
+[node name="CatPreviewCenter" type="CenterContainer" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip/CatPreview"]
+layout_mode = 2
+
+[node name="CatPreviewIcon" type="TextureRect" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip/CatPreview/CatPreviewCenter"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+texture = ExtResource("5")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ChickPreview" type="PanelContainer" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip"]
+custom_minimum_size = Vector2(84, 84)
+layout_mode = 2
+theme_override_styles/panel = SubResource("4")
+
+[node name="ChickPreviewCenter" type="CenterContainer" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip/ChickPreview"]
+layout_mode = 2
+
+[node name="ChickPreviewIcon" type="TextureRect" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip/ChickPreview/ChickPreviewCenter"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+texture = ExtResource("6")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="FrogPreview" type="PanelContainer" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip"]
+custom_minimum_size = Vector2(84, 84)
+layout_mode = 2
+theme_override_styles/panel = SubResource("4")
+
+[node name="FrogPreviewCenter" type="CenterContainer" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip/FrogPreview"]
+layout_mode = 2
+
+[node name="FrogPreviewIcon" type="TextureRect" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip/FrogPreview/FrogPreviewCenter"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+texture = ExtResource("11")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="DogPreview" type="PanelContainer" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip"]
+custom_minimum_size = Vector2(84, 84)
+layout_mode = 2
+theme_override_styles/panel = SubResource("4")
+
+[node name="DogPreviewCenter" type="CenterContainer" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip/DogPreview"]
+layout_mode = 2
+
+[node name="DogPreviewIcon" type="TextureRect" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip/DogPreview/DogPreviewCenter"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+texture = ExtResource("12")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="PandaPreview" type="PanelContainer" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip"]
+custom_minimum_size = Vector2(84, 84)
+layout_mode = 2
+theme_override_styles/panel = SubResource("4")
+
+[node name="PandaPreviewCenter" type="CenterContainer" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip/PandaPreview"]
+layout_mode = 2
+
+[node name="PandaPreviewIcon" type="TextureRect" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip/PandaPreview/PandaPreviewCenter"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+texture = ExtResource("13")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="PigPreview" type="PanelContainer" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip"]
+custom_minimum_size = Vector2(84, 84)
+layout_mode = 2
+theme_override_styles/panel = SubResource("4")
+
+[node name="PigPreviewCenter" type="CenterContainer" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip/PigPreview"]
+layout_mode = 2
+
+[node name="PigPreviewIcon" type="TextureRect" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip/PigPreview/PigPreviewCenter"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+texture = ExtResource("14")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="PenguinPreview" type="PanelContainer" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip"]
+custom_minimum_size = Vector2(84, 84)
+layout_mode = 2
+theme_override_styles/panel = SubResource("4")
+
+[node name="PenguinPreviewCenter" type="CenterContainer" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip/PenguinPreview"]
+layout_mode = 2
+
+[node name="PenguinPreviewIcon" type="TextureRect" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip/PenguinPreview/PenguinPreviewCenter"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+texture = ExtResource("15")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="FoxPreview" type="PanelContainer" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip"]
+custom_minimum_size = Vector2(84, 84)
+layout_mode = 2
+theme_override_styles/panel = SubResource("4")
+
+[node name="FoxPreviewCenter" type="CenterContainer" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip/FoxPreview"]
+layout_mode = 2
+
+[node name="FoxPreviewIcon" type="TextureRect" parent="SafeMargin/LayoutRoot/CenterColumn/PreviewStrip/FoxPreview/FoxPreviewCenter"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+texture = ExtResource("16")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="ButtonsColumn" type="VBoxContainer" parent="SafeMargin/LayoutRoot/CenterColumn"]
 layout_mode = 2
@@ -261,7 +423,7 @@ alignment = 1
 theme_override_constants/separation = 16
 
 [node name="StageButton" type="Button" parent="SafeMargin/LayoutRoot/CenterColumn/ButtonsColumn/SecondaryButtons"]
-custom_minimum_size = Vector2(236, 96)
+custom_minimum_size = Vector2(210, 90)
 layout_mode = 2
 text = "스테이지"
 theme_override_styles/normal = SubResource("4")
@@ -272,8 +434,20 @@ theme_override_colors/font_color = Color(0.176471, 0.317647, 0.431373, 1)
 theme_override_colors/font_disabled_color = Color(0.458824, 0.607843, 0.682353, 1)
 theme_override_font_sizes/font_size = 28
 
+[node name="RankingButton" type="Button" parent="SafeMargin/LayoutRoot/CenterColumn/ButtonsColumn/SecondaryButtons"]
+custom_minimum_size = Vector2(210, 90)
+layout_mode = 2
+text = "랭킹"
+theme_override_styles/normal = SubResource("4")
+theme_override_styles/hover = SubResource("1")
+theme_override_styles/pressed = SubResource("1")
+theme_override_styles/disabled = SubResource("4")
+theme_override_colors/font_color = Color(0.176471, 0.317647, 0.431373, 1)
+theme_override_colors/font_disabled_color = Color(0.458824, 0.607843, 0.682353, 1)
+theme_override_font_sizes/font_size = 28
+
 [node name="SettingsButton" type="Button" parent="SafeMargin/LayoutRoot/CenterColumn/ButtonsColumn/SecondaryButtons"]
-custom_minimum_size = Vector2(236, 96)
+custom_minimum_size = Vector2(210, 90)
 layout_mode = 2
 text = "설정"
 theme_override_styles/normal = SubResource("4")
@@ -581,6 +755,7 @@ theme_override_font_sizes/font_size = 28
 
 [connection signal="pressed" from="SafeMargin/LayoutRoot/CenterColumn/ButtonsColumn/PlayButton" to="." method="_on_play_button_pressed"]
 [connection signal="pressed" from="SafeMargin/LayoutRoot/CenterColumn/ButtonsColumn/SecondaryButtons/StageButton" to="." method="_on_stage_button_pressed"]
+[connection signal="pressed" from="SafeMargin/LayoutRoot/CenterColumn/ButtonsColumn/SecondaryButtons/RankingButton" to="." method="_on_ranking_button_pressed"]
 [connection signal="pressed" from="SafeMargin/LayoutRoot/CenterColumn/ButtonsColumn/SecondaryButtons/SettingsButton" to="." method="_on_settings_button_pressed"]
 [connection signal="pressed" from="SafeMargin/LayoutRoot/CenterColumn/ExitButton" to="." method="_on_exit_button_pressed"]
 [connection signal="pressed" from="StageOverlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayHeader/StageOverlayCloseButton" to="." method="_on_stage_overlay_close_button_pressed"]

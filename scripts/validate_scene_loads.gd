@@ -65,12 +65,40 @@ func _validate_scene_specifics(scene_path: String, node: Node) -> PackedStringAr
 	var errors := PackedStringArray()
 
 	match scene_path:
+		MAIN_SCENE_PATH:
+			_validate_main_scene(node, errors)
 		GAMEPLAY_SCENE_PATH:
 			_validate_gameplay_scene(node, errors)
 		STAGE_SELECT_SCENE_PATH:
 			_validate_stage_select_scene(node, errors)
 
 	return errors
+
+
+func _validate_main_scene(node: Node, errors: PackedStringArray) -> void:
+	var play_button := node.get_node_or_null("SafeMargin/LayoutRoot/CenterColumn/ButtonsColumn/PlayButton") as Button
+	if play_button == null:
+		errors.append("%s is missing PlayButton." % MAIN_SCENE_PATH)
+	elif play_button.text != "PLAY":
+		errors.append("%s PlayButton should use the game-first PLAY label." % MAIN_SCENE_PATH)
+
+	var game_home_layer := node.get_node_or_null("GameHomeLayer") as CanvasItem
+	if game_home_layer == null:
+		errors.append("%s is missing the game-first GameHomeLayer." % MAIN_SCENE_PATH)
+	elif not game_home_layer.visible:
+		errors.append("%s GameHomeLayer should be visible on first launch." % MAIN_SCENE_PATH)
+
+	var legacy_layout := node.get_node_or_null("SafeMargin/LayoutRoot") as CanvasItem
+	if legacy_layout == null:
+		errors.append("%s is missing legacy layout root." % MAIN_SCENE_PATH)
+	elif legacy_layout.visible:
+		errors.append("%s should hide the legacy card layout behind GameHomeLayer." % MAIN_SCENE_PATH)
+
+	var info_card := node.get_node_or_null("SafeMargin/LayoutRoot/CenterColumn/InfoCard") as CanvasItem
+	if info_card == null:
+		errors.append("%s is missing InfoCard." % MAIN_SCENE_PATH)
+	elif info_card.visible:
+		errors.append("%s should not show a developer-style info card by default." % MAIN_SCENE_PATH)
 
 
 func _validate_gameplay_scene(node: Node, errors: PackedStringArray) -> void:
@@ -88,9 +116,9 @@ func _validate_gameplay_scene(node: Node, errors: PackedStringArray) -> void:
 
 	var overlay := node.get_node_or_null("Overlay") as CanvasItem
 	if overlay == null:
-		errors.append("%s is missing start overlay." % GAMEPLAY_SCENE_PATH)
-	elif not overlay.visible:
-		errors.append("%s start overlay should be visible after scene ready." % GAMEPLAY_SCENE_PATH)
+		errors.append("%s is missing result overlay." % GAMEPLAY_SCENE_PATH)
+	elif overlay.visible:
+		errors.append("%s should start with the board immediately playable, not blocked by an overlay." % GAMEPLAY_SCENE_PATH)
 
 
 func _validate_stage_select_scene(node: Node, errors: PackedStringArray) -> void:
@@ -99,6 +127,12 @@ func _validate_stage_select_scene(node: Node, errors: PackedStringArray) -> void
 		errors.append("%s is missing StageGrid." % STAGE_SELECT_SCENE_PATH)
 	elif stage_grid.get_child_count() != 100:
 		errors.append("%s StageGrid expected 100 stage cards, got %d." % [STAGE_SELECT_SCENE_PATH, stage_grid.get_child_count()])
+
+	var stage_popup := node.get_node_or_null("StagePopupOverlay") as CanvasItem
+	if stage_popup == null:
+		errors.append("%s is missing StagePopupOverlay." % STAGE_SELECT_SCENE_PATH)
+	elif stage_popup.visible:
+		errors.append("%s StagePopupOverlay should start hidden until a stage node is pressed." % STAGE_SELECT_SCENE_PATH)
 
 
 func _validate_alpha_gate_data(errors: PackedStringArray) -> void:
