@@ -344,10 +344,14 @@ static func set_haptics_enabled(enabled: bool) -> void:
 
 static func apply_feedback_preferences() -> void:
 	load_state()
-	if Engine.has_singleton("Feedback"):
-		var feedback := Engine.get_singleton("Feedback")
-		feedback.set("sound_enabled", get_sound_enabled())
-		feedback.set("haptics_enabled", get_haptics_enabled())
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return
+	var feedback := tree.root.get_node_or_null("Feedback")
+	if feedback == null:
+		return
+	feedback.set("sound_enabled", get_sound_enabled())
+	feedback.set("haptics_enabled", get_haptics_enabled())
 
 
 static func is_tutorial_seen(stage_id: int) -> bool:

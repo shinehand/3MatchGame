@@ -300,6 +300,7 @@ func _build_game_home_layer() -> void:
 	top_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_hud.add_child(top_spacer)
 	var settings_button := _make_home_icon_button("설정")
+	settings_button.name = "HomeTopSettingsButton"
 	settings_button.pressed.connect(_on_settings_button_pressed)
 	top_hud.add_child(settings_button)
 
@@ -369,12 +370,15 @@ func _build_game_home_layer() -> void:
 	home_nav_row.add_theme_constant_override("separation", 12)
 	game_home_layer.add_child(home_nav_row)
 	var map_button := _make_home_icon_button("맵")
+	map_button.name = "HomeMapButton"
 	map_button.pressed.connect(_on_stage_button_pressed)
 	home_nav_row.add_child(map_button)
 	var ranking_nav_button := _make_home_icon_button("도감")
+	ranking_nav_button.name = "HomeCollectionButton"
 	ranking_nav_button.pressed.connect(_on_ranking_button_pressed)
 	home_nav_row.add_child(ranking_nav_button)
 	var settings_nav_button := _make_home_icon_button("설정")
+	settings_nav_button.name = "HomeSettingsButton"
 	settings_nav_button.pressed.connect(_on_settings_button_pressed)
 	home_nav_row.add_child(settings_nav_button)
 

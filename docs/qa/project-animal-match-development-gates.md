@@ -79,6 +79,7 @@
 - idle expression은 atlas region 변경 또는 단일 Tween 위주로 처리한다.
 - 동물별 개별 Timer를 64개 타일 전체에 붙이지 않는다.
 - 저사양 기준에서 콤보 5단계 연출 중 체감 입력 지연이 없어야 한다.
+- 홈 설정의 사운드/햅틱 토글은 저장값과 실제 `Feedback` 상태를 함께 바꾸며, 자동 scene smoke가 이 연결을 검증한다.
 
 ## Gate 7. FTUE/첫 세션 리텐션
 

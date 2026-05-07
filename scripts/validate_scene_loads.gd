@@ -132,6 +132,8 @@ func _validate_scene_specifics(scene_path: String, node: Node) -> PackedStringAr
 
 func _validate_scene_runtime_specifics(scene_path: String, node: Node, errors: PackedStringArray) -> void:
 	match scene_path:
+		MAIN_SCENE_PATH:
+			_validate_main_settings_runtime(node, errors)
 		GAMEPLAY_SCENE_PATH:
 			await _validate_special_combo_swap_runtime(node, errors)
 			await _validate_result_overlay_runtime(node, errors)
@@ -165,8 +167,11 @@ func _validate_main_viewport_layout(node: Node, viewport_size: Vector2i, errors:
 	var game_home_layer := node.get_node_or_null("GameHomeLayer") as CanvasItem
 	if game_home_layer != null and not game_home_layer.visible:
 		errors.append("%s GameHomeLayer should remain visible at %s." % [MAIN_SCENE_PATH, viewport_size])
-	_validate_control_in_viewport(node.find_child("PlayButton", true, false), viewport_size, MAIN_SCENE_PATH, "PlayButton", errors)
-	_validate_control_in_viewport(node.find_child("StageButton", true, false), viewport_size, MAIN_SCENE_PATH, "StageButton", errors)
+	_validate_control_in_viewport(node.find_child("HomePlayButton", true, false), viewport_size, MAIN_SCENE_PATH, "HomePlayButton", errors)
+	_validate_control_in_viewport(node.find_child("BottomNav", true, false), viewport_size, MAIN_SCENE_PATH, "BottomNav", errors)
+	_validate_control_in_viewport(node.find_child("HomeMapButton", true, false), viewport_size, MAIN_SCENE_PATH, "HomeMapButton", errors)
+	_validate_control_in_viewport(node.find_child("HomeCollectionButton", true, false), viewport_size, MAIN_SCENE_PATH, "HomeCollectionButton", errors)
+	_validate_control_in_viewport(node.find_child("HomeSettingsButton", true, false), viewport_size, MAIN_SCENE_PATH, "HomeSettingsButton", errors)
 
 
 func _validate_stage_select_viewport_layout(node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
@@ -212,7 +217,7 @@ func _validate_control_in_viewport(candidate: Node, viewport_size: Vector2i, sce
 		errors.append("%s missing responsive layout target %s at %s." % [scene_path, label, viewport_size])
 		return
 	var control := candidate as Control
-	if not control.visible:
+	if not control.is_visible_in_tree():
 		errors.append("%s %s should be visible at %s." % [scene_path, label, viewport_size])
 		return
 	var rect := control.get_global_rect()
@@ -475,6 +480,52 @@ func _validate_main_event_detail_overlay(node: Node, errors: PackedStringArray) 
 			offline_chip.queue_free()
 	if node.has_method("_track_live_event_impression"):
 		node.call("_track_live_event_impression", _live_event_by_id("daily_reward_v1"), "home")
+
+
+func _validate_main_settings_runtime(node: Node, errors: PackedStringArray) -> void:
+	for method_name in ["_on_settings_button_pressed", "_on_sound_toggle_button_pressed", "_on_haptics_toggle_button_pressed", "_on_settings_overlay_close_button_pressed"]:
+		if not node.has_method(method_name):
+			errors.append("%s should expose %s for settings smoke validation." % [MAIN_SCENE_PATH, method_name])
+			return
+
+	var original_sound := GameSession.get_sound_enabled()
+	var original_haptics := GameSession.get_haptics_enabled()
+	GameSession.set_sound_enabled(true)
+	GameSession.set_haptics_enabled(true)
+	GameSession.apply_feedback_preferences()
+	var feedback := root.get_node_or_null("Feedback")
+	if feedback == null:
+		errors.append("%s settings smoke should find the Feedback autoload." % MAIN_SCENE_PATH)
+		return
+	if not bool(feedback.get("sound_enabled")) or not bool(feedback.get("haptics_enabled")):
+		errors.append("%s settings smoke should apply initial sound/haptics ON state to Feedback." % MAIN_SCENE_PATH)
+
+	node.call("_on_settings_button_pressed")
+	var settings_overlay := node.get_node_or_null("SettingsOverlay") as CanvasItem
+	if settings_overlay == null or not settings_overlay.visible:
+		errors.append("%s settings smoke should open SettingsOverlay." % MAIN_SCENE_PATH)
+
+	node.call("_on_sound_toggle_button_pressed")
+	var sound_toggle_button := node.get_node_or_null("SettingsOverlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/SettingsButtons/SoundToggleButton") as Button
+	if GameSession.get_sound_enabled() or bool(feedback.get("sound_enabled")):
+		errors.append("%s sound toggle should persist OFF and apply it to Feedback." % MAIN_SCENE_PATH)
+	if sound_toggle_button == null or sound_toggle_button.text != "사운드: OFF":
+		errors.append("%s sound toggle button should show 사운드: OFF after disabling." % MAIN_SCENE_PATH)
+
+	node.call("_on_haptics_toggle_button_pressed")
+	var haptics_toggle_button := node.get_node_or_null("SettingsOverlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/SettingsButtons/HapticsToggleButton") as Button
+	if GameSession.get_haptics_enabled() or bool(feedback.get("haptics_enabled")):
+		errors.append("%s haptics toggle should persist OFF and apply it to Feedback." % MAIN_SCENE_PATH)
+	if haptics_toggle_button == null or haptics_toggle_button.text != "햅틱: OFF":
+		errors.append("%s haptics toggle button should show 햅틱: OFF after disabling." % MAIN_SCENE_PATH)
+
+	node.call("_on_settings_overlay_close_button_pressed")
+	if settings_overlay != null and settings_overlay.visible:
+		errors.append("%s settings close should hide SettingsOverlay." % MAIN_SCENE_PATH)
+
+	GameSession.set_sound_enabled(original_sound)
+	GameSession.set_haptics_enabled(original_haptics)
+	GameSession.apply_feedback_preferences()
 
 
 func _validate_gameplay_scene(node: Node, errors: PackedStringArray) -> void:

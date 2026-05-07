@@ -18,6 +18,7 @@
 - 밴드별 이동 수/덤불 수 밸런스 검증
 - Godot 임포트 캐시 준비 (`.godot/`가 없는 클린 체크아웃 대응)
 - 핵심 씬 로드 스모크 체크 (`main`, `stage_select`, `gameplay`, 카드/타일/목표 칩)
+- 실제 홈 첫 화면의 `GameHomeLayer` CTA/하단 내비게이션과 설정 overlay 토글 확인
 - 게임플레이 보드 64칸 생성과 스테이지 선택 카드 100장 생성 확인
 - Godot 헤드리스 로드
 - 파일 직접 읽기 안티패턴 스캔
@@ -43,6 +44,20 @@
 - 블록 얼굴이 safe area, board scroll, HUD에 의해 잘리지 않는지 확인한다.
 - 빠른 연쇄 매치, 낙하, 리필 중 표정/VFX 겹침이 과하지 않은지 확인한다.
 - 터치감, UI 사운드, 햅틱 강도가 플레이 흐름을 방해하지 않는지 확인한다.
+
+## No-device 홈/설정 readiness
+
+`./scripts/validate_gameplay.sh`의 scene load smoke는 기기 없이 아래 항목을 먼저 막는다.
+
+- 실제 런타임 홈 UI인 `GameHomeLayer`가 첫 화면에서 보이고, `HomePlayButton`, `BottomNav`, `HomeMapButton`, `HomeCollectionButton`, `HomeSettingsButton`이 논리 viewport 안에 있다.
+- 설정 버튼은 `SettingsOverlay`를 열고, 닫기 버튼은 overlay를 숨긴다.
+- 사운드/햅틱 토글은 `GameSession` 저장값과 `/root/Feedback`의 `sound_enabled`, `haptics_enabled` 상태를 함께 갱신한다.
+- 토글 버튼 라벨은 OFF 상태를 즉시 반영한다.
+
+아래 항목은 no-device readiness로 승인하지 않는다. 실제 기기 또는 시뮬레이터에서 수동 확인해야 한다.
+
+- 실제 스피커/무음 모드/OS 볼륨에서 UI 사운드가 의도한 크기로 들리는지 확인한다.
+- Android/iOS 햅틱 강도와 반복 빈도가 플레이 흐름을 방해하지 않는지 확인한다.
 
 ## No-device Stage Popup / 시작 부스터 readiness
 
