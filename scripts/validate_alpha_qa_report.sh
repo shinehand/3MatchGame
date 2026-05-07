@@ -45,7 +45,7 @@ add_failure() {
 require_text() {
 	local label="$1"
 	local text="$2"
-	if ! grep -Fq "$text" "$REPORT_PATH"; then
+	if ! grep -Fq -- "$text" "$REPORT_PATH"; then
 		add_failure "missing ${label}: ${text}"
 	fi
 }
@@ -139,6 +139,77 @@ append_evidence_path() {
 	case "$evidence_path" in
 		output/alpha-lock-pass/*|build/android/*)
 			evidence_paths+=("$evidence_path")
+			;;
+	esac
+}
+
+require_evidence_text() {
+	local evidence_path="$1"
+	local label="$2"
+	local text="$3"
+	if ! grep -Fq -- "$text" "$evidence_path"; then
+		add_failure "${label} missing '${text}': ${evidence_path}"
+	fi
+}
+
+reject_evidence_regex() {
+	local evidence_path="$1"
+	local label="$2"
+	local pattern="$3"
+	if grep -Eq -- "$pattern" "$evidence_path"; then
+		add_failure "${label} contains failing result matching ${pattern}: ${evidence_path}"
+	fi
+}
+
+evidence_field_value() {
+	local evidence_path="$1"
+	local field_label="$2"
+	awk -v label="$field_label" '
+		$0 ~ "^" label ":" {
+			sub("^" label ":[[:space:]]*", "", $0)
+			sub(/[[:space:]]+$/, "", $0)
+			print
+			exit
+		}
+	' "$evidence_path"
+}
+
+require_evidence_field_value() {
+	local evidence_path="$1"
+	local field_label="$2"
+	local value
+	value="$(evidence_field_value "$evidence_path" "$field_label")"
+	case "$value" in
+		""|unknown|null)
+			add_failure "${evidence_path##*/} field '${field_label}' is unresolved: ${value:-empty}"
+			;;
+	esac
+}
+
+validate_known_evidence_file() {
+	local evidence_path="$1"
+	local evidence_name="${evidence_path##*/}"
+	case "$evidence_name" in
+		android-debug-export.txt)
+			require_evidence_text "$evidence_path" "$evidence_name" "Export result: PASS"
+			require_evidence_text "$evidence_path" "$evidence_name" "Signature verify result: PASS"
+			reject_evidence_regex "$evidence_path" "$evidence_name" '(Export|Signature verify|Install) result: (FAIL|BLOCKED)'
+			;;
+		android-device-evidence.txt)
+			require_evidence_text "$evidence_path" "$evidence_name" "Capture result: PASS"
+			reject_evidence_regex "$evidence_path" "$evidence_name" '(Capture|Launch|Portrait screenshot|Landscape screenshot|Screenrecord|Logcat) result: (FAIL|BLOCKED)'
+			;;
+		device-info.txt)
+			require_evidence_field_value "$evidence_path" "ADB device id"
+			require_evidence_field_value "$evidence_path" "Model"
+			require_evidence_field_value "$evidence_path" "Android version"
+			require_evidence_field_value "$evidence_path" "Window size"
+			if ! grep -Eq -- '^Window size:.*[0-9]+x[0-9]+' "$evidence_path"; then
+				add_failure "device-info.txt Window size does not include a pixel size: ${evidence_path}"
+			fi
+			;;
+		install-log.txt)
+			require_evidence_text "$evidence_path" "$evidence_name" "Success"
 			;;
 	esac
 }
@@ -238,6 +309,8 @@ for evidence_path in "${evidence_paths[@]}"; do
 			for match_path in "${matches[@]}"; do
 				if [ ! -s "$match_path" ]; then
 					add_failure "evidence glob match is empty: ${match_path}"
+				else
+					validate_known_evidence_file "$match_path"
 				fi
 			done
 		fi
@@ -246,6 +319,8 @@ for evidence_path in "${evidence_paths[@]}"; do
 			add_failure "evidence path missing: ${evidence_path}"
 		elif [ ! -s "$evidence_path" ]; then
 			add_failure "evidence path is empty: ${evidence_path}"
+		else
+			validate_known_evidence_file "$evidence_path"
 		fi
 	fi
 done

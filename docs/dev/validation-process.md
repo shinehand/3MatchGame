@@ -34,7 +34,7 @@
 
 `zsh scripts/capture_android_device_evidence.sh --allow-orientation-change`는 연결된 Android 실기기가 정확히 1대일 때 앱을 실행하고 `device-info.txt`, `device-portrait.png`, `device-landscape.png`, `device-10s.mp4`, `device-log.txt`, `android-device-evidence.txt`를 `output/alpha-lock-pass/YYYY-MM-DD/captures/`에 남긴다. 기본 실행은 기기 회전 설정을 바꾸지 않으며, `--allow-orientation-change`를 줄 때만 현재 회전 설정을 저장한 뒤 portrait/landscape 캡처를 시도하고 종료 시 복원한다. 소리, 햅틱, 터치감은 자동 판정하지 않고 manifest의 수동 후속 항목으로 남긴다. 기기가 없거나 unauthorized/offline이면 capture는 Blocked로 실패하며 일반 `validate_gameplay.sh`에는 포함하지 않는다.
 
-`zsh scripts/validate_alpha_qa_report.sh --report=output/alpha-lock-pass/YYYY-MM-DD/alpha-lock-pass-manual-qa-YYYY-MM-DD.md`는 수동 QA 보고서의 최종 승인 직전 게이트다. 템플릿 placeholder, `Pending`/`Fail`/`Blocked`/`Open` 결과, `Overall result: Pass`와 `QA result: Approve` 불일치, 현재 HEAD와 맞지 않는 build commit, 비어 있거나 존재하지 않는 evidence path가 남아 있으면 실패한다. 이 검사는 작성 중인 보고서에는 의도적으로 실패하므로 일반 `validate_gameplay.sh`에는 포함하지 않는다.
+`zsh scripts/validate_alpha_qa_report.sh --report=output/alpha-lock-pass/YYYY-MM-DD/alpha-lock-pass-manual-qa-YYYY-MM-DD.md`는 수동 QA 보고서의 최종 승인 직전 게이트다. 템플릿 placeholder, `Pending`/`Fail`/`Blocked`/`Open` 결과, `Overall result: Pass`와 `QA result: Approve` 불일치, 현재 HEAD와 맞지 않는 build commit, 비어 있거나 존재하지 않는 evidence path가 남아 있으면 실패한다. `android-debug-export.txt`, `android-device-evidence.txt`, `device-info.txt`, `install-log.txt`는 파일 존재뿐 아니라 내부 PASS/Success 문구, 필수 device field 값, `Window size`의 pixel size도 검사한다. 이 검사는 작성 중인 보고서에는 의도적으로 실패하므로 일반 `validate_gameplay.sh`에는 포함하지 않는다.
 
 검증 스크립트는 임시 `HOME`을 사용해 `user://save_game.json`을 격리한다. 따라서 자동 검증은 로컬 플레이 진행도, 튜토리얼 확인 여부, 사운드/햅틱 설정을 변경하지 않는다.
 
