@@ -38,6 +38,7 @@ validate_template_contract() {
 		"Required Preflight" \
 		"Device Evidence Pack" \
 		"Representative Course Results" \
+		"Stage Data Smoke Coverage" \
 		"Focused Device Gate Matrix" \
 		"Stage 31 Special Combo Evidence" \
 		"Rescue Buddy Stage Matrix" \
@@ -52,9 +53,10 @@ validate_template_contract() {
 
 	require_template_text "device evidence header" "| Evidence | Result | Evidence path | Notes |"
 	require_template_text "representative course header" "| Course | Result | Capture path | 10s understanding | HUD/board readability | Overlay/action clarity | Save/unlock/star persistence | Sound | Haptics | Orientation | Notes |"
+	require_template_text "stage data smoke header" "| Scenario ID | Stage | Stage data trigger | Result | Evidence path | Notes |"
 	require_template_text "focused gate header" "| Scenario ID | Gate | Required scenario | Result | Evidence path | Notes |"
 	require_template_text "special combo header" "| Combo | combo_type | Result | Portrait evidence | Landscape evidence | cleared_count | obstacles_cleared | special_combo_trigger | VFX label distinct | SFX/haptic distinct | input recovers <2s | Notes |"
-	require_template_text "buddy header" "| Stage | Buddy focus | Result | Portrait evidence | Landscape evidence | HUD readable | VFX overlap acceptable | Analytics events | Notes |"
+	require_template_text "buddy header" "| Scenario ID | Stage | Buddy focus | Result | Portrait evidence | Landscape evidence | HUD readable | VFX overlap acceptable | Analytics events | Notes |"
 	require_template_text "failure gateway request log" "request log source/stage_id/fail_reason/provider_id/status/result"
 
 	for course in \
@@ -66,6 +68,25 @@ validate_template_contract() {
 		"Stage 75" \
 		"Stage 100"; do
 		require_template_regex "representative course row" "^\\|[[:space:]]*${course}[[:space:]]*\\|"
+	done
+
+	for smoke_id in \
+		"STAGE_SMOKE_001" \
+		"STAGE_SMOKE_004" \
+		"STAGE_SMOKE_005" \
+		"STAGE_SMOKE_008" \
+		"STAGE_SMOKE_010" \
+		"STAGE_SMOKE_016" \
+		"STAGE_SMOKE_018" \
+		"STAGE_SMOKE_020" \
+		"STAGE_SMOKE_024" \
+		"STAGE_SMOKE_025" \
+		"STAGE_SMOKE_031" \
+		"STAGE_SMOKE_041" \
+		"STAGE_SMOKE_051" \
+		"STAGE_SMOKE_081" \
+		"STAGE_SMOKE_100"; do
+		require_template_regex "stage data smoke row" "^\\|[[:space:]]*${smoke_id}[[:space:]]*\\|"
 	done
 
 	for scenario_id in \
@@ -100,13 +121,36 @@ validate_template_contract() {
 		require_template_regex "Stage 31 combo row" "^\\|[[:space:]]*${combo}[[:space:]]*\\|"
 	done
 
-	for buddy_stage in \
-		"Stage 4" \
-		"Stage 8" \
-		"Stage 18" \
-		"Stage 81" \
-		"Stages 4/5/8/16/18/20/24/25/31/41/51/81"; do
-		require_template_regex "Rescue Buddy row" "^\\|[[:space:]]*${buddy_stage}[[:space:]]*\\|"
+	for buddy_id in \
+		"BUDDY_STAGE_004" \
+		"BUDDY_STAGE_005" \
+		"BUDDY_STAGE_008" \
+		"BUDDY_STAGE_016" \
+		"BUDDY_STAGE_018" \
+		"BUDDY_STAGE_020" \
+		"BUDDY_STAGE_024" \
+		"BUDDY_STAGE_025" \
+		"BUDDY_STAGE_031" \
+		"BUDDY_STAGE_041" \
+		"BUDDY_STAGE_051" \
+		"BUDDY_STAGE_081"; do
+		require_template_regex "Rescue Buddy row" "^\\|[[:space:]]*${buddy_id}[[:space:]]*\\|"
+	done
+
+	for buddy_skill in \
+		"quick_refill" \
+		"soft_bomb_plus" \
+		"combo_peep" \
+		"smart_hint" \
+		"leap_clear" \
+		"loyal_fetch" \
+		"calm_fever" \
+		"coin_sniff" \
+		"cascade_slide" \
+		"sly_route" \
+		"brave_start" \
+		"mighty_push"; do
+		require_template_text "Rescue Buddy skill" "$buddy_skill"
 	done
 
 	for required_text in \

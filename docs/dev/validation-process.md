@@ -22,7 +22,8 @@
 - 게임플레이 보드 64칸 생성과 스테이지 선택 카드 100장 생성 확인
 - Godot 헤드리스 로드
 - 파일 직접 읽기 안티패턴 스캔
-- Alpha QA packet dry-run 및 템플릿 계약 검증. 대표 코스, Device Evidence Pack, Focused Device Gate Matrix, Stage 31 Special Combo Evidence, Rescue Buddy Stage Matrix, Failure Continue Gateway, Analytics Gateway Local Buffer가 빠지면 실패한다.
+- Alpha QA packet dry-run 및 템플릿 계약 검증. 대표 코스, Device Evidence Pack, Stage Data Smoke Coverage, Focused Device Gate Matrix, Stage 31 Special Combo Evidence, Rescue Buddy Stage Matrix, Failure Continue Gateway, Analytics Gateway Local Buffer가 빠지면 실패한다.
+- Scene smoke는 `StageCatalog`의 `recommended_smoke`/Buddy 스테이지를 Alpha QA 템플릿의 `STAGE_SMOKE_###`/`BUDDY_STAGE_###` 행과 대조해 stage data와 수동 QA packet이 어긋나면 실패한다.
 - 수동 스모크 체크리스트 출력
 
 검증 스크립트는 임시 `HOME`을 사용해 `user://save_game.json`을 격리한다. 따라서 자동 검증은 로컬 플레이 진행도, 튜토리얼 확인 여부, 사운드/햅틱 설정을 변경하지 않는다.

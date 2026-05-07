@@ -26,6 +26,7 @@
 - 클리어 오버레이에서 별 등급, 다음 해금, 다음 행동이 명확하다.
 - 실패 오버레이에서 부족한 목표와 재도전 행동이 명확하다.
 - 저장/해금/별 수가 대표 스테이지 전환 후 유지된다.
+- Stage Data Smoke Coverage가 `StageCatalog.recommended_smoke` 스테이지를 `STAGE_SMOKE_###` 행으로 기록하고, Buddy 스테이지는 `BUDDY_STAGE_###` 행과 skill evidence를 남긴다.
 - Device Evidence Pack이 build source commit, APK/AAB, install result, device/OS, portrait/landscape screenshot, 10s video, sound/haptics/touch/log evidence를 기록한다.
 - Focused Device Gate Matrix가 PAM-QA-040 표정, PAM-QA-041 Stage Popup, Rescue Buddy, Stage 31 특수 조합, monetization gateway, analytics local buffer를 stable scenario ID와 evidence path로 기록한다.
 - Stage 31 Special Combo Evidence는 특수+특수 조합 6종을 각각 portrait/landscape evidence, `special_combo_trigger`, 보드 판독성, 사운드/햅틱, 낙하/리필 안정성과 함께 기록한다.

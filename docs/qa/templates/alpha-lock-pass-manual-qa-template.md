@@ -48,6 +48,26 @@
 | Stage 75 | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/stage-075.png` | Pending | Pending | Pending | Pending | Pending | Pending | Pending |  |
 | Stage 100 | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/stage-100.png` | Pending | Pending | Pending | Pending | Pending | Pending | Pending |  |
 
+## Stage Data Smoke Coverage
+
+| Scenario ID | Stage | Stage data trigger | Result | Evidence path | Notes |
+| --- | --- | --- | --- | --- | --- |
+| STAGE_SMOKE_001 | Stage 1 | recommended_smoke: basic_match, collect_goal | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/stage-smoke-001.*` |  |
+| STAGE_SMOKE_004 | Stage 4 | recommended_smoke: rescue_buddy, blocker_bush, quick_refill | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/stage-smoke-004.*` |  |
+| STAGE_SMOKE_005 | Stage 5 | recommended_smoke: buddy_soft_bomb_plus | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/stage-smoke-005.*` |  |
+| STAGE_SMOKE_008 | Stage 8 | recommended_smoke: combo_gauge, buddy_combo_peep | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/stage-smoke-008.*` |  |
+| STAGE_SMOKE_010 | Stage 10 | recommended_smoke: ftue_mastery_check | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/stage-smoke-010.*` |  |
+| STAGE_SMOKE_016 | Stage 16 | recommended_smoke: buddy_smart_hint | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/stage-smoke-016.*` |  |
+| STAGE_SMOKE_018 | Stage 18 | recommended_smoke: buddy_leap_clear | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/stage-smoke-018.*` |  |
+| STAGE_SMOKE_020 | Stage 20 | recommended_smoke: near_fail_rescue_buddy | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/stage-smoke-020.*` |  |
+| STAGE_SMOKE_024 | Stage 24 | recommended_smoke: buddy_calm_fever | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/stage-smoke-024.*` |  |
+| STAGE_SMOKE_025 | Stage 25 | recommended_smoke: buddy_coin_sniff, near miss continue | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/stage-smoke-025.*` |  |
+| STAGE_SMOKE_031 | Stage 31 | recommended_smoke: buddy_cascade_slide, combo_focus | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/stage-smoke-031.*` |  |
+| STAGE_SMOKE_041 | Stage 41 | recommended_smoke: buddy_sly_route | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/stage-smoke-041.*` |  |
+| STAGE_SMOKE_051 | Stage 51 | recommended_smoke: lion_unlock, buddy_brave_start | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/stage-smoke-051.*` |  |
+| STAGE_SMOKE_081 | Stage 81 | recommended_smoke: elephant_unlock, buddy_mighty_push | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/stage-smoke-081.*` |  |
+| STAGE_SMOKE_100 | Stage 100 | recommended_smoke: finale_mastery | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/stage-smoke-100.*` |  |
+
 ## Focused Device Gate Matrix
 
 | Scenario ID | Gate | Required scenario | Result | Evidence path | Notes |
@@ -75,13 +95,20 @@
 
 ## Rescue Buddy Stage Matrix
 
-| Stage | Buddy focus | Result | Portrait evidence | Landscape evidence | HUD readable | VFX overlap acceptable | Analytics events | Notes |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Stage 4 | quick_refill 0/3 -> 2/3 -> ready -> complete | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-004-portrait.*` | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-004-landscape.*` | Pending | Pending | buddy_skill_charge, buddy_skill_ready, buddy_skill_trigger |  |
-| Stage 8 | combo_peep normal and Fever blocked/effect_unavailable state | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-008-portrait.*` | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-008-landscape.*` | Pending | Pending | buddy_skill_charge, buddy_skill_blocked |  |
-| Stage 18 | leap_clear blocker assist and last-goal solo clear blocked | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-018-portrait.*` | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-018-landscape.*` | Pending | Pending | buddy_skill_trigger, buddy_skill_blocked |  |
-| Stage 81 | mighty_push repeated use and last-goal solo clear blocked | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-081-portrait.*` | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-081-landscape.*` | Pending | Pending | buddy_skill_trigger, buddy_skill_blocked |  |
-| Stages 4/5/8/16/18/20/24/25/31/41/51/81 | first-appearance Buddy smoke coverage | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-first-appearance.*` | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-first-appearance-landscape.*` | Pending | Pending | buddy_skill_charge, buddy_skill_ready, buddy_skill_trigger, buddy_skill_blocked |  |
+| Scenario ID | Stage | Buddy focus | Result | Portrait evidence | Landscape evidence | HUD readable | VFX overlap acceptable | Analytics events | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| BUDDY_STAGE_004 | Stage 4 | rabbit quick_refill 0/3 -> 2/3 -> ready -> complete | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-004-portrait.*` | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-004-landscape.*` | Pending | Pending | buddy_skill_charge, buddy_skill_ready, buddy_skill_trigger, buddy_skill_blocked |  |
+| BUDDY_STAGE_005 | Stage 5 | chick soft_bomb_plus target animal -> bomb upgrade -> max_uses block | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-005-portrait.*` | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-005-landscape.*` | Pending | Pending | buddy_skill_charge, buddy_skill_ready, buddy_skill_trigger, buddy_skill_blocked |  |
+| BUDDY_STAGE_008 | Stage 8 | chick combo_peep normal and Fever blocked/effect_unavailable state | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-008-portrait.*` | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-008-landscape.*` | Pending | Pending | buddy_skill_charge, buddy_skill_ready, buddy_skill_trigger, buddy_skill_blocked |  |
+| BUDDY_STAGE_016 | Stage 16 | cat smart_hint target-focused route highlight | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-016-portrait.*` | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-016-landscape.*` | Pending | Pending | buddy_skill_charge, buddy_skill_ready, buddy_skill_trigger |  |
+| BUDDY_STAGE_018 | Stage 18 | frog leap_clear blocker assist and last-goal solo clear blocked | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-018-portrait.*` | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-018-landscape.*` | Pending | Pending | buddy_skill_charge, buddy_skill_ready, buddy_skill_trigger, buddy_skill_blocked |  |
+| BUDDY_STAGE_020 | Stage 20 | dog loyal_fetch near-fail rescue before failure overlay | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-020-portrait.*` | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-020-landscape.*` | Pending | Pending | buddy_skill_trigger |  |
+| BUDDY_STAGE_024 | Stage 24 | panda calm_fever preserves combo gauge after Fever | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-024-portrait.*` | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-024-landscape.*` | Pending | Pending | buddy_skill_charge, buddy_skill_ready, buddy_skill_trigger |  |
+| BUDDY_STAGE_025 | Stage 25 | pig coin_sniff clear reward gold bonus | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-025-portrait.*` | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-025-landscape.*` | Pending | Pending | buddy_skill_trigger |  |
+| BUDDY_STAGE_031 | Stage 31 | penguin cascade_slide cascade score bonus with combo_focus | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-031-portrait.*` | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-031-landscape.*` | Pending | Pending | buddy_skill_charge, buddy_skill_ready, buddy_skill_trigger |  |
+| BUDDY_STAGE_041 | Stage 41 | fox sly_route near-fail route hint up to 2 uses | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-041-portrait.*` | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-041-landscape.*` | Pending | Pending | buddy_skill_trigger, buddy_skill_blocked |  |
+| BUDDY_STAGE_051 | Stage 51 | lion brave_start hard-stage opening route hint | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-051-portrait.*` | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-051-landscape.*` | Pending | Pending | buddy_skill_trigger |  |
+| BUDDY_STAGE_081 | Stage 81 | elephant mighty_push repeated use and last-goal solo clear blocked | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-081-portrait.*` | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-stage-081-landscape.*` | Pending | Pending | buddy_skill_trigger, buddy_skill_blocked |  |
 
 ## Monetization And Analytics Evidence
 

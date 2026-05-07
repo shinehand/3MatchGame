@@ -17,6 +17,7 @@ const FX_LAYER_SCENE_PATH: String = "res://scenes/fx_layer.tscn"
 const STAGE_CARD_SCENE_PATH: String = "res://scenes/stage_card.tscn"
 const BLOCK_TILE_SCENE_PATH: String = "res://scenes/block_tile.tscn"
 const GOAL_CHIP_SCENE_PATH: String = "res://scenes/goal_chip.tscn"
+const ALPHA_QA_TEMPLATE_PATH := "res://docs/qa/templates/alpha-lock-pass-manual-qa-template.md"
 const SESSION_VALIDATION_SAVE_PATH := "user://scene_validation_save_game.json"
 const SESSION_VALIDATION_SAVE_FILE_NAME := "scene_validation_save_game.json"
 const SESSION_VALIDATION_ANALYTICS_QUEUE_PATH := "user://scene_validation_analytics_gateway_queue.json"
@@ -35,6 +36,7 @@ const ANIMAL_TEXTURE_FALLBACKS := {
 }
 const ANIMAL_PROFILE_PATH := "res://data/animal_animation_profiles.json"
 const IMPLEMENTED_LIVE_EVENT_PLACEMENTS := ["home", "stage_select", "result_overlay", "collection"]
+const SPECIAL_COMBO_MANUAL_ROWS := ["row+column", "row+row", "column+column", "row+bomb", "column+bomb", "bomb+bomb"]
 
 var representative_stage_ids: Array[int] = [1, 11, 25, 50, 75, 100]
 var tutorial_stage_ids: Array[int] = [1, 11, 25, 45, 65, 85, 95]
@@ -3196,6 +3198,76 @@ func _validate_alpha_gate_data(errors: PackedStringArray) -> void:
 			errors.append("Alpha gate tutorial checkpoint stage %d is missing tutorial text." % stage_id)
 
 	_validate_rescue_buddy_stage_config(stage_by_id, errors)
+	_validate_alpha_manual_qa_template_coverage(stages, errors)
+
+
+func _validate_alpha_manual_qa_template_coverage(stages: Array, errors: PackedStringArray) -> void:
+	if not FileAccess.file_exists(ALPHA_QA_TEMPLATE_PATH):
+		errors.append("Alpha QA template missing at %s." % ALPHA_QA_TEMPLATE_PATH)
+		return
+	var template_text := FileAccess.get_file_as_string(ALPHA_QA_TEMPLATE_PATH)
+	if template_text.strip_edges().is_empty():
+		errors.append("Alpha QA template is empty at %s." % ALPHA_QA_TEMPLATE_PATH)
+		return
+
+	for stage_entry in stages:
+		if not (stage_entry is Dictionary):
+			continue
+		var stage: Dictionary = stage_entry
+		var stage_id := int(stage.get("id", 0))
+		if bool(stage.get("recommended_smoke", false)):
+			var smoke_id := "STAGE_SMOKE_%03d" % stage_id
+			_require_alpha_template_text(
+				template_text,
+				smoke_id,
+				"Alpha QA template missing stage-data-driven manual coverage: Stage %d recommended_smoke row %s." % [stage_id, smoke_id],
+				errors
+			)
+
+		var buddy_skill_id := String(stage.get("buddy_skill_id", "")).strip_edges()
+		if not buddy_skill_id.is_empty():
+			var buddy_id := "BUDDY_STAGE_%03d" % stage_id
+			_require_alpha_template_text(
+				template_text,
+				buddy_id,
+				"Alpha QA template missing stage-data-driven manual coverage: Stage %d / %s row %s." % [stage_id, buddy_skill_id, buddy_id],
+				errors
+			)
+			_require_alpha_template_text(
+				template_text,
+				buddy_skill_id,
+				"Alpha QA template missing stage-data-driven Buddy skill evidence: Stage %d / %s." % [stage_id, buddy_skill_id],
+				errors
+			)
+			var buddy_animal := String(stage.get("buddy_animal", "")).strip_edges()
+			if not buddy_animal.is_empty():
+				_require_alpha_template_text(
+					template_text,
+					buddy_animal,
+					"Alpha QA template missing stage-data-driven Buddy animal evidence: Stage %d / %s." % [stage_id, buddy_animal],
+					errors
+				)
+
+	for combo_row in SPECIAL_COMBO_MANUAL_ROWS:
+		_require_alpha_template_text(
+			template_text,
+			combo_row,
+			"Alpha QA template missing Stage 31 special combo evidence row: %s." % combo_row,
+			errors
+		)
+
+	for scenario_id in ["SPECIAL_COMBO_6", "MONETIZATION_GATEWAY_PENDING", "ANALYTICS_GATEWAY_LOCAL_BUFFER"]:
+		_require_alpha_template_text(
+			template_text,
+			scenario_id,
+			"Alpha QA template missing focused evidence scenario: %s." % scenario_id,
+			errors
+		)
+
+
+func _require_alpha_template_text(template_text: String, required_text: String, error_text: String, errors: PackedStringArray) -> void:
+	if not template_text.contains(required_text):
+		errors.append(error_text)
 
 
 func _validate_first_session_collection_unlock_flow(errors: PackedStringArray) -> void:
