@@ -919,6 +919,25 @@ func _validate_rescue_buddy_runtime_rules(node: Node, errors: PackedStringArray)
 	if int(combo_peep_params.get("stage_id", 0)) != 8 or String(combo_peep_params.get("animal_id", "")) != "chick" or String(combo_peep_params.get("effect_type", "")) != "combo_peep":
 		errors.append("%s combo_peep trigger analytics should identify Stage 8 chick combo_peep." % GAMEPLAY_SCENE_PATH)
 
+	node.call("_start_stage", 7)
+	node.set("board_data", _seed_plain_gameplay_board(node))
+	node.call("_activate_fever")
+	var combo_peep_blocked_before := _analytics_event_count("buddy_skill_blocked")
+	var combo_peep_ready_before := _analytics_event_count("buddy_skill_ready")
+	node.call("_charge_buddy_skill_for_combo", 2)
+	if int(node.get("buddy_charge_count")) != 0:
+		errors.append("%s combo_peep should not charge while Fever is already active, got %d." % [GAMEPLAY_SCENE_PATH, int(node.get("buddy_charge_count"))])
+	if bool(node.get("buddy_trigger_pending")):
+		errors.append("%s combo_peep should not become pending while Fever is active." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_ready") != combo_peep_ready_before:
+		errors.append("%s combo_peep should not emit ready while Fever is active." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_blocked") <= combo_peep_blocked_before:
+		errors.append("%s combo_peep should emit buddy_skill_blocked with fever_active while Fever is active." % GAMEPLAY_SCENE_PATH)
+	var combo_peep_blocked_event := _last_analytics_event_by_name("buddy_skill_blocked")
+	var combo_peep_blocked_params: Dictionary = Dictionary(combo_peep_blocked_event.get("params", {}))
+	if int(combo_peep_blocked_params.get("stage_id", 0)) != 8 or String(combo_peep_blocked_params.get("animal_id", "")) != "chick" or String(combo_peep_blocked_params.get("skill_id", "")) != "combo_peep" or String(combo_peep_blocked_params.get("reason", "")) != "fever_active":
+		errors.append("%s combo_peep fever guard analytics should identify Stage 8 fever_active." % GAMEPLAY_SCENE_PATH)
+
 	node.call("_start_stage", 15)
 	node.set("board_data", _seed_smart_hint_gameplay_board(node, "cat"))
 	_clear_tile_selection_states(node)

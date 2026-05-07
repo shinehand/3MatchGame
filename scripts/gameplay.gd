@@ -1551,6 +1551,9 @@ func _charge_buddy_skill_for_combo(combo: int) -> void:
 		return
 	if combo < 2:
 		return
+	if String(_current_stage().get("buddy_skill_id", "")) == "combo_peep" and _is_fever_active():
+		_track_buddy_analytics("buddy_skill_blocked", {"reason": "fever_active"})
+		return
 	_charge_buddy_skill(combo)
 
 

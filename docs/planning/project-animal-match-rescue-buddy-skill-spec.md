@@ -44,7 +44,7 @@ stage["buddy_max_uses"]
 | 토끼 | `quick_refill` | 목표 동물 매치 3회 | 리필 후 목표 동물 1개 추가 생성 시도 | active pool 안에서만 | Stage 4+ |
 | 병아리 | `soft_bomb_plus` | 목표 동물 매치 4회 | 목표 동물 1개를 Paw Bomb으로 강화 | 스테이지당 1회 | Stage 5+ |
 | 고양이 | `smart_hint` | 목표 동물 매치 3회 | 목표에 가까운 유효 수 1개 강조 | 보드 제거 없음 | Stage 16+ |
-| 병아리 | `combo_peep` | 콤보 2 이상 | 피버 게이지 소량 추가 | 피버 중 미발동 | Stage 8+ |
+| 병아리 | `combo_peep` | 콤보 2 이상 | 피버 게이지 소량 추가 | 피버 중 충전/발동하지 않고 `fever_active` 차단 기록 | Stage 8+ |
 | 개구리 | `leap_clear` | 목표 동물 매치 3회 | 남은 덤불 1개 추가 제거 | 덤불 없으면 미발동 | Stage 18+ |
 | 강아지 | `loyal_fetch` | 목표 1-2개 남은 Near Miss | 목표 동물 1개를 보드에 우선 생성 | 실패 판정 전 1회 | Stage 20+ |
 | 판다 | `calm_fever` | 피버 시작 | 피버 종료 후 Combo Gauge 2칸 보존 | 연속 중첩 없음 | Stage 24+ |
@@ -93,7 +93,7 @@ stage["buddy_max_uses"]
 | `buddy_skill_trigger` | 실제 발동 | `stage_id`, `animal_id`, `skill_id`, `effect_type`, `uses_left` |
 | `buddy_skill_blocked` | 조건 불충족 | `stage_id`, `animal_id`, `skill_id`, `reason` |
 
-자동 scene smoke는 Stage 4 `quick_refill`의 충전/준비/발동/차단 이벤트와 Stage 5 `soft_bomb_plus`, Stage 8 `combo_peep`, Stage 16 `smart_hint`, Stage 18 `leap_clear`, Stage 20 `loyal_fetch`, Stage 24 `calm_fever`, Stage 25 `coin_sniff`, Stage 31 `cascade_slide`, Stage 41 `sly_route`, Stage 51 `brave_start`, Stage 81 `mighty_push`의 실제 상태 변화와 발동 이벤트를 런타임 경로로 검증한다.
+자동 scene smoke는 Stage 4 `quick_refill`의 충전/준비/발동/차단 이벤트와 Stage 5 `soft_bomb_plus`, Stage 8 `combo_peep`의 정상 발동 및 피버 중 `fever_active` 차단, Stage 16 `smart_hint`, Stage 18 `leap_clear`, Stage 20 `loyal_fetch`, Stage 24 `calm_fever`, Stage 25 `coin_sniff`, Stage 31 `cascade_slide`, Stage 41 `sly_route`, Stage 51 `brave_start`, Stage 81 `mighty_push`의 실제 상태 변화와 발동 이벤트를 런타임 경로로 검증한다.
 
 ## 8. 구현 순서
 
