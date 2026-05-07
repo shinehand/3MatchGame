@@ -105,6 +105,13 @@ const VALID_BUDDY_CHARGE_RULES := [
 	"fever_start",
 	"stage_start",
 ]
+const BUDDY_REPEATABLE_MAX_USE_RULES := [
+	"match_goal_animal",
+	"clear_blocker",
+	"cascade_step",
+	"near_fail",
+	"combo_2_plus",
+]
 const BUDDY_SKILL_TUNING := {
 	"quick_refill": {"animal": "rabbit", "charge_rule": "match_goal_animal", "charges_required": 3, "max_uses": 1, "min_stage": 4},
 	"soft_bomb_plus": {"animal": "chick", "charge_rule": "match_goal_animal", "charges_required": 4, "max_uses": 1, "min_stage": 5},
@@ -333,10 +340,34 @@ static func _validate_buddy_config(stage: Dictionary, stage_id: int, errors: Pac
 			errors.append("stage %d buddy skill %s must use charge_rule %s, got %s" % [stage_id, buddy_skill_id, String(tuning.get("charge_rule", "")), buddy_charge_rule])
 		if charges_required != int(tuning.get("charges_required", 0)):
 			errors.append("stage %d buddy skill %s must require %d charges, got %d" % [stage_id, buddy_skill_id, int(tuning.get("charges_required", 0)), charges_required])
-		if max_uses != int(tuning.get("max_uses", 0)):
-			errors.append("stage %d buddy skill %s must allow %d max uses, got %d" % [stage_id, buddy_skill_id, int(tuning.get("max_uses", 0)), max_uses])
+		var min_max_uses := int(tuning.get("max_uses", 1))
+		var allowed_max_uses := _buddy_allowed_max_uses(stage, tuning)
+		if max_uses < min_max_uses or max_uses > allowed_max_uses:
+			var allowed_text := str(min_max_uses) if min_max_uses == allowed_max_uses else "%d-%d" % [min_max_uses, allowed_max_uses]
+			errors.append("stage %d buddy skill %s must allow %s max uses for this difficulty, got %d" % [stage_id, buddy_skill_id, allowed_text, max_uses])
 		if stage_id < int(tuning.get("min_stage", 1)):
 			errors.append("stage %d uses buddy skill %s before minimum stage %d" % [stage_id, buddy_skill_id, int(tuning.get("min_stage", 1))])
+
+
+static func _buddy_allowed_max_uses(stage: Dictionary, tuning: Dictionary) -> int:
+	var default_max_uses := int(tuning.get("max_uses", 1))
+	if not BUDDY_REPEATABLE_MAX_USE_RULES.has(String(tuning.get("charge_rule", ""))):
+		return default_max_uses
+	if not _is_hard_or_finale_stage(stage):
+		return default_max_uses
+	return 2
+
+
+static func _is_hard_or_finale_stage(stage: Dictionary) -> bool:
+	if String(stage.get("difficulty", "")).to_lower() == "hard":
+		return true
+	for tag_value in Array(stage.get("tags", [])):
+		if String(tag_value) == "finale":
+			return true
+	for tag_value in Array(stage.get("difficulty_tag", [])):
+		if String(tag_value) == "finale":
+			return true
+	return false
 
 
 static func _validate_mechanics_unlocks(stage_id: int, enabled_mechanics: Array, errors: PackedStringArray) -> void:

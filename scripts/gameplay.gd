@@ -137,6 +137,7 @@ var buddy_charge_count := 0
 var buddy_uses := 0
 var buddy_trigger_pending := false
 var buddy_cascade_bonus_pending := 0
+var buddy_charge_blocked_reasons: Dictionary = {}
 var stage_state := "playing"
 var collected_counts: Dictionary = {}
 var cleared_blockers := 0
@@ -282,6 +283,7 @@ func _start_stage(stage_index: int) -> void:
 	buddy_uses = 0
 	buddy_trigger_pending = false
 	buddy_cascade_bonus_pending = 0
+	buddy_charge_blocked_reasons.clear()
 	stage_selected_boosters = GameSession.get_selected_pre_boosters()
 	fever_analytics_open = false
 	fever_turns_spent_current = 0
@@ -1617,8 +1619,11 @@ func _has_active_buddy_skill() -> bool:
 
 
 func _charge_buddy_skill(amount: int) -> void:
-	if buddy_trigger_pending or buddy_uses >= int(_current_stage().get("buddy_max_uses", 0)):
-		_track_buddy_analytics("buddy_skill_blocked", {"reason": "already_ready_or_max_uses"})
+	if buddy_trigger_pending:
+		_track_buddy_charge_blocked_once("already_ready")
+		return
+	if buddy_uses >= int(_current_stage().get("buddy_max_uses", 0)):
+		_track_buddy_charge_blocked_once("max_uses")
 		return
 	buddy_charge_count += max(0, amount)
 	var charges_required: int = maxi(1, int(_current_stage().get("buddy_charges_required", 1)))
@@ -1628,6 +1633,13 @@ func _charge_buddy_skill(amount: int) -> void:
 	_track_buddy_analytics("buddy_skill_charge", {"charge_count": buddy_charge_count})
 	if buddy_trigger_pending:
 		_track_buddy_analytics("buddy_skill_ready", {"turn_index": _moves_spent_count()})
+
+
+func _track_buddy_charge_blocked_once(reason: String) -> void:
+	if bool(buddy_charge_blocked_reasons.get(reason, false)):
+		return
+	buddy_charge_blocked_reasons[reason] = true
+	_track_buddy_analytics("buddy_skill_blocked", {"reason": reason})
 
 
 func _trigger_buddy_skill() -> void:
@@ -1672,6 +1684,7 @@ func _trigger_buddy_skill() -> void:
 	buddy_trigger_pending = false
 	buddy_uses += 1
 	buddy_charge_count = 0
+	buddy_charge_blocked_reasons.clear()
 	_track_buddy_analytics("buddy_skill_trigger", {"effect_type": skill_id, "uses_left": maxi(0, max_uses - buddy_uses)})
 	_set_status(_buddy_trigger_status(skill_id))
 	_update_hud()

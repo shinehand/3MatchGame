@@ -861,6 +861,21 @@ func _validate_rescue_buddy_runtime_rules(node: Node, errors: PackedStringArray)
 	var quick_refill_ready_params: Dictionary = Dictionary(quick_refill_ready_event.get("params", {}))
 	if int(quick_refill_ready_params.get("stage_id", 0)) != 4 or String(quick_refill_ready_params.get("animal_id", "")) != "rabbit" or String(quick_refill_ready_params.get("skill_id", "")) != "quick_refill" or int(quick_refill_ready_params.get("turn_index", -1)) < 0:
 		errors.append("%s quick_refill ready analytics should identify Stage 4 rabbit quick_refill." % GAMEPLAY_SCENE_PATH)
+	var quick_refill_pending_charge_events := _analytics_event_count("buddy_skill_charge")
+	var quick_refill_pending_ready_events := _analytics_event_count("buddy_skill_ready")
+	var quick_refill_pending_blocked_events := _analytics_event_count("buddy_skill_blocked")
+	node.call("_charge_buddy_skill_for_match", "rabbit")
+	node.call("_charge_buddy_skill_for_match", "rabbit")
+	if _analytics_event_count("buddy_skill_charge") != quick_refill_pending_charge_events:
+		errors.append("%s quick_refill should not emit extra charge analytics while already ready." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_ready") != quick_refill_pending_ready_events:
+		errors.append("%s quick_refill should not emit duplicate ready analytics while already ready." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_blocked") != quick_refill_pending_blocked_events + 1:
+		errors.append("%s quick_refill should record one already_ready charge block while pending." % GAMEPLAY_SCENE_PATH)
+	var quick_refill_pending_blocked_event := _last_analytics_event_by_name("buddy_skill_blocked")
+	var quick_refill_pending_blocked_params: Dictionary = Dictionary(quick_refill_pending_blocked_event.get("params", {}))
+	if int(quick_refill_pending_blocked_params.get("stage_id", 0)) != 4 or String(quick_refill_pending_blocked_params.get("animal_id", "")) != "rabbit" or String(quick_refill_pending_blocked_params.get("skill_id", "")) != "quick_refill" or String(quick_refill_pending_blocked_params.get("reason", "")) != "already_ready":
+		errors.append("%s quick_refill pending charge block should identify already_ready." % GAMEPLAY_SCENE_PATH)
 
 	node.call("_trigger_buddy_skill")
 	if _analytics_event_count("buddy_skill_trigger") <= trigger_events_before:
@@ -897,6 +912,21 @@ func _validate_rescue_buddy_runtime_rules(node: Node, errors: PackedStringArray)
 	var soft_bomb_params: Dictionary = Dictionary(soft_bomb_event.get("params", {}))
 	if int(soft_bomb_params.get("stage_id", 0)) != 5 or String(soft_bomb_params.get("animal_id", "")) != "chick" or String(soft_bomb_params.get("effect_type", "")) != "soft_bomb_plus":
 		errors.append("%s soft_bomb_plus trigger analytics should identify Stage 5 chick soft_bomb_plus." % GAMEPLAY_SCENE_PATH)
+	var soft_bomb_post_use_charge_events := _analytics_event_count("buddy_skill_charge")
+	var soft_bomb_post_use_ready_events := _analytics_event_count("buddy_skill_ready")
+	var soft_bomb_post_use_blocked_events := _analytics_event_count("buddy_skill_blocked")
+	node.call("_charge_buddy_skill_for_match", "chick")
+	node.call("_charge_buddy_skill_for_match", "chick")
+	if _analytics_event_count("buddy_skill_charge") != soft_bomb_post_use_charge_events:
+		errors.append("%s soft_bomb_plus should not emit post-use charge analytics at max uses." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_ready") != soft_bomb_post_use_ready_events:
+		errors.append("%s soft_bomb_plus should not emit post-use ready analytics at max uses." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_blocked") != soft_bomb_post_use_blocked_events + 1:
+		errors.append("%s soft_bomb_plus should record one max_uses charge block after use." % GAMEPLAY_SCENE_PATH)
+	var soft_bomb_post_use_blocked_event := _last_analytics_event_by_name("buddy_skill_blocked")
+	var soft_bomb_post_use_blocked_params: Dictionary = Dictionary(soft_bomb_post_use_blocked_event.get("params", {}))
+	if int(soft_bomb_post_use_blocked_params.get("stage_id", 0)) != 5 or String(soft_bomb_post_use_blocked_params.get("animal_id", "")) != "chick" or String(soft_bomb_post_use_blocked_params.get("skill_id", "")) != "soft_bomb_plus" or String(soft_bomb_post_use_blocked_params.get("reason", "")) != "max_uses":
+		errors.append("%s soft_bomb_plus post-use charge block should identify max_uses." % GAMEPLAY_SCENE_PATH)
 
 	node.call("_start_stage", 7)
 	node.set("board_data", _seed_plain_gameplay_board(node))
@@ -918,6 +948,26 @@ func _validate_rescue_buddy_runtime_rules(node: Node, errors: PackedStringArray)
 	var combo_peep_params: Dictionary = Dictionary(combo_peep_event.get("params", {}))
 	if int(combo_peep_params.get("stage_id", 0)) != 8 or String(combo_peep_params.get("animal_id", "")) != "chick" or String(combo_peep_params.get("effect_type", "")) != "combo_peep":
 		errors.append("%s combo_peep trigger analytics should identify Stage 8 chick combo_peep." % GAMEPLAY_SCENE_PATH)
+	var combo_peep_post_use_charge_events := _analytics_event_count("buddy_skill_charge")
+	var combo_peep_post_use_ready_events := _analytics_event_count("buddy_skill_ready")
+	var combo_peep_post_use_trigger_events := _analytics_event_count("buddy_skill_trigger")
+	var combo_peep_post_use_blocked_events := _analytics_event_count("buddy_skill_blocked")
+	node.call("_charge_buddy_skill_for_combo", 2)
+	node.call("_charge_buddy_skill_for_combo", 2)
+	if int(node.get("buddy_uses")) != 1 or bool(node.get("buddy_trigger_pending")) or int(node.get("buddy_charge_count")) != 0:
+		errors.append("%s combo_peep post-use combo charge should leave uses/pending/charge stable." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_charge") != combo_peep_post_use_charge_events:
+		errors.append("%s combo_peep should not emit post-use charge analytics at max uses." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_ready") != combo_peep_post_use_ready_events:
+		errors.append("%s combo_peep should not emit post-use ready analytics at max uses." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_trigger") != combo_peep_post_use_trigger_events:
+		errors.append("%s combo_peep should not emit post-use trigger analytics at max uses." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_blocked") != combo_peep_post_use_blocked_events + 1:
+		errors.append("%s combo_peep should record one max_uses combo charge block after use." % GAMEPLAY_SCENE_PATH)
+	var combo_peep_post_use_blocked_event := _last_analytics_event_by_name("buddy_skill_blocked")
+	var combo_peep_post_use_blocked_params: Dictionary = Dictionary(combo_peep_post_use_blocked_event.get("params", {}))
+	if int(combo_peep_post_use_blocked_params.get("stage_id", 0)) != 8 or String(combo_peep_post_use_blocked_params.get("animal_id", "")) != "chick" or String(combo_peep_post_use_blocked_params.get("skill_id", "")) != "combo_peep" or String(combo_peep_post_use_blocked_params.get("reason", "")) != "max_uses" or int(combo_peep_post_use_blocked_params.get("uses_left", -1)) != 0 or int(combo_peep_post_use_blocked_params.get("charge_count", -1)) != 0:
+		errors.append("%s combo_peep post-use charge block should identify max_uses with no uses left." % GAMEPLAY_SCENE_PATH)
 
 	node.call("_start_stage", 7)
 	node.set("board_data", _seed_plain_gameplay_board(node))
@@ -1077,6 +1127,18 @@ func _validate_rescue_buddy_runtime_rules(node: Node, errors: PackedStringArray)
 	var sly_route_params: Dictionary = Dictionary(sly_route_event.get("params", {}))
 	if int(sly_route_params.get("stage_id", 0)) != 41 or String(sly_route_params.get("animal_id", "")) != "fox" or String(sly_route_params.get("effect_type", "")) != "sly_route":
 		errors.append("%s sly_route trigger analytics should identify Stage 41 fox sly_route." % GAMEPLAY_SCENE_PATH)
+	_clear_tile_selection_states(node)
+	_clear_expression_states(node.call("_active_visible_tiles"))
+	var sly_route_second_triggers_before := _analytics_event_count("buddy_skill_trigger")
+	node.call("_charge_buddy_skill_for_near_fail")
+	if int(node.get("buddy_uses")) != 2:
+		errors.append("%s hard-stage sly_route should allow a second tuned Buddy use." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_trigger") <= sly_route_second_triggers_before:
+		errors.append("%s hard-stage sly_route should emit a second trigger analytics event." % GAMEPLAY_SCENE_PATH)
+	var sly_route_second_event := _last_analytics_event_by_name("buddy_skill_trigger")
+	var sly_route_second_params: Dictionary = Dictionary(sly_route_second_event.get("params", {}))
+	if int(sly_route_second_params.get("stage_id", 0)) != 41 or String(sly_route_second_params.get("effect_type", "")) != "sly_route" or int(sly_route_second_params.get("uses_left", -1)) != 0:
+		errors.append("%s hard-stage sly_route second trigger should report uses_left 0." % GAMEPLAY_SCENE_PATH)
 
 	GameSession.set_selected_pre_boosters([])
 	var brave_start_triggers_before := _analytics_event_count("buddy_skill_trigger")
@@ -1124,6 +1186,47 @@ func _validate_rescue_buddy_runtime_rules(node: Node, errors: PackedStringArray)
 	var mighty_push_params: Dictionary = Dictionary(mighty_push_event.get("params", {}))
 	if int(mighty_push_params.get("stage_id", 0)) != 81 or String(mighty_push_params.get("animal_id", "")) != "elephant" or String(mighty_push_params.get("effect_type", "")) != "mighty_push":
 		errors.append("%s mighty_push trigger analytics should identify Stage 81 elephant mighty_push." % GAMEPLAY_SCENE_PATH)
+	mighty_obstacle_data = node.get("obstacle_data")
+	mighty_obstacle_data[4][4] = 1
+	node.set("obstacle_data", mighty_obstacle_data)
+	var mighty_push_second_triggers_before := _analytics_event_count("buddy_skill_trigger")
+	node.call("_charge_buddy_skill_for_clear_blocker", 1)
+	mighty_obstacle_data = node.get("obstacle_data")
+	if int(mighty_obstacle_data[4][4]) != 0:
+		errors.append("%s hard-stage mighty_push should clear a second deterministic blocker." % GAMEPLAY_SCENE_PATH)
+	if int(node.get("buddy_uses")) != 2:
+		errors.append("%s hard-stage mighty_push should allow a second tuned Buddy use." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_trigger") <= mighty_push_second_triggers_before:
+		errors.append("%s hard-stage mighty_push should emit a second trigger analytics event." % GAMEPLAY_SCENE_PATH)
+	var mighty_push_second_event := _last_analytics_event_by_name("buddy_skill_trigger")
+	var mighty_push_second_params: Dictionary = Dictionary(mighty_push_second_event.get("params", {}))
+	if int(mighty_push_second_params.get("stage_id", 0)) != 81 or String(mighty_push_second_params.get("effect_type", "")) != "mighty_push" or int(mighty_push_second_params.get("uses_left", -1)) != 0:
+		errors.append("%s hard-stage mighty_push second trigger should report uses_left 0." % GAMEPLAY_SCENE_PATH)
+	mighty_obstacle_data = node.get("obstacle_data")
+	mighty_obstacle_data[5][5] = 1
+	node.set("obstacle_data", mighty_obstacle_data)
+	var mighty_push_post_max_charge_events := _analytics_event_count("buddy_skill_charge")
+	var mighty_push_post_max_ready_events := _analytics_event_count("buddy_skill_ready")
+	var mighty_push_post_max_trigger_events := _analytics_event_count("buddy_skill_trigger")
+	var mighty_push_post_max_blocked_events := _analytics_event_count("buddy_skill_blocked")
+	var mighty_push_post_max_cleared_blockers := int(node.get("cleared_blockers"))
+	node.call("_charge_buddy_skill_for_clear_blocker", 1)
+	node.call("_charge_buddy_skill_for_clear_blocker", 1)
+	mighty_obstacle_data = node.get("obstacle_data")
+	if int(mighty_obstacle_data[5][5]) != 1 or int(node.get("cleared_blockers")) != mighty_push_post_max_cleared_blockers:
+		errors.append("%s mighty_push post-max clear_blocker charge should not clear another blocker." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_charge") != mighty_push_post_max_charge_events:
+		errors.append("%s mighty_push should not emit post-max charge analytics." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_ready") != mighty_push_post_max_ready_events:
+		errors.append("%s mighty_push should not emit post-max ready analytics." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_trigger") != mighty_push_post_max_trigger_events:
+		errors.append("%s mighty_push should not emit post-max trigger analytics." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_blocked") != mighty_push_post_max_blocked_events + 1:
+		errors.append("%s mighty_push should record one max_uses clear_blocker charge block after tuned uses." % GAMEPLAY_SCENE_PATH)
+	var mighty_push_post_max_blocked_event := _last_analytics_event_by_name("buddy_skill_blocked")
+	var mighty_push_post_max_blocked_params: Dictionary = Dictionary(mighty_push_post_max_blocked_event.get("params", {}))
+	if int(mighty_push_post_max_blocked_params.get("stage_id", 0)) != 81 or String(mighty_push_post_max_blocked_params.get("animal_id", "")) != "elephant" or String(mighty_push_post_max_blocked_params.get("skill_id", "")) != "mighty_push" or String(mighty_push_post_max_blocked_params.get("reason", "")) != "max_uses" or int(mighty_push_post_max_blocked_params.get("uses_left", -1)) != 0 or int(mighty_push_post_max_blocked_params.get("charge_count", -1)) != 0:
+		errors.append("%s mighty_push post-max charge block should identify max_uses with no uses left." % GAMEPLAY_SCENE_PATH)
 
 
 func _validate_rescue_buddy_hud_runtime(node: Node, errors: PackedStringArray) -> void:
@@ -2665,6 +2768,8 @@ func _validate_rescue_buddy_stage_config(stage_by_id: Dictionary, errors: Packed
 		errors.append("Stage 41 should normalize sly_route as its Rescue Buddy skill.")
 	if String(stage_forty_one.get("buddy_charge_rule", "")) != "near_fail":
 		errors.append("Stage 41 sly_route should use near_fail charge rule.")
+	if int(stage_forty_one.get("buddy_max_uses", 0)) != 2:
+		errors.append("Stage 41 hard near-fail Buddy should allow two uses for tuning.")
 
 	if not stage_by_id.has(51):
 		errors.append("Rescue Buddy smoke expected Stage 51 to exist.")
@@ -2676,6 +2781,8 @@ func _validate_rescue_buddy_stage_config(stage_by_id: Dictionary, errors: Packed
 		errors.append("Stage 51 should normalize brave_start as its Rescue Buddy skill.")
 	if String(stage_fifty_one.get("buddy_charge_rule", "")) != "stage_start":
 		errors.append("Stage 51 brave_start should use stage_start charge rule.")
+	if int(stage_fifty_one.get("buddy_max_uses", 0)) != 1:
+		errors.append("Stage 51 stage-start Buddy should remain one-shot even on hard stages.")
 
 	if not stage_by_id.has(81):
 		errors.append("Rescue Buddy smoke expected Stage 81 to exist.")
@@ -2687,6 +2794,8 @@ func _validate_rescue_buddy_stage_config(stage_by_id: Dictionary, errors: Packed
 		errors.append("Stage 81 should normalize mighty_push as its Rescue Buddy skill.")
 	if String(stage_eighty_one.get("buddy_charge_rule", "")) != "clear_blocker":
 		errors.append("Stage 81 mighty_push should use clear_blocker charge rule.")
+	if int(stage_eighty_one.get("buddy_max_uses", 0)) != 2:
+		errors.append("Stage 81 hard blocker Buddy should allow two uses for tuning.")
 
 
 func _validate_live_event_config(errors: PackedStringArray) -> void:

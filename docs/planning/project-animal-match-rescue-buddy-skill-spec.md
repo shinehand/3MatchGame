@@ -7,9 +7,9 @@
 
 - 한 스테이지에는 Rescue Buddy 1종만 활성화한다.
 - 발동은 자동으로 시작한다. 수동 버튼은 소프트 런칭 이후 판단한다.
-- 기본 발동 횟수는 1회, 하드/피날레는 최대 2회까지 허용한다.
+- 기본 발동 횟수는 1회다. 하드/피날레에서 반복 충전 가능한 스킬은 최대 2회까지 허용한다.
 - 스킬은 클리어 필수 조건이 아니라 실패 완화와 캐릭터 애착 강화 장치다.
-- 모든 스킬은 원격 설정 또는 stage JSON 수치로 조정 가능해야 한다.
+- 현재 소프트런칭 승인 수치는 stage JSON `buddy` 필드가 원본이며, 원격 설정 수치 조정은 후속 확장으로 둔다.
 
 ## 2. Stage 데이터 필드
 
@@ -79,6 +79,7 @@ stage["buddy_max_uses"]
 ## 6. QA 기준
 
 - 같은 스테이지에서 `max_uses`를 초과해 발동하지 않는다.
+- 이미 준비됐거나 사용 한도에 닿은 자동 충전 경로는 중복 `charge/ready`를 남기지 않고, 같은 차단 사유는 한 번만 기록한다.
 - 스킬이 없는 스테이지는 기존 플레이와 동일하다.
 - 스킬 발동으로 이동 수가 잘못 소모되지 않는다.
 - 보드에 없는 동물을 스킬이 생성하려고 하면 active pool 기준으로 fallback한다.
@@ -93,7 +94,7 @@ stage["buddy_max_uses"]
 | `buddy_skill_trigger` | 실제 발동 | `stage_id`, `animal_id`, `skill_id`, `effect_type`, `uses_left` |
 | `buddy_skill_blocked` | 조건 불충족 | `stage_id`, `animal_id`, `skill_id`, `reason` |
 
-자동 scene smoke는 Stage 4 `quick_refill`의 충전/준비/발동/차단 이벤트와 Stage 5 `soft_bomb_plus`, Stage 8 `combo_peep`의 정상 발동 및 피버 중 `fever_active` 차단, Stage 16 `smart_hint`, Stage 18 `leap_clear`, Stage 20 `loyal_fetch`, Stage 24 `calm_fever`, Stage 25 `coin_sniff`, Stage 31 `cascade_slide`, Stage 41 `sly_route`, Stage 51 `brave_start`, Stage 81 `mighty_push`의 실제 상태 변화와 발동 이벤트를 런타임 경로로 검증한다.
+자동 scene smoke는 Stage 4 `quick_refill`의 충전/준비/발동/차단 이벤트와 중복 차단 억제, Stage 5 `soft_bomb_plus`의 post-use 차단, Stage 8 `combo_peep`의 정상 발동 및 피버 중 `fever_active` 차단, Stage 16 `smart_hint`, Stage 18 `leap_clear`, Stage 20 `loyal_fetch`, Stage 24 `calm_fever`, Stage 25 `coin_sniff`, Stage 31 `cascade_slide`, Stage 41 `sly_route` 2회 튜닝, Stage 51 `brave_start`, Stage 81 `mighty_push` 2회 튜닝의 실제 상태 변화와 발동 이벤트를 런타임 경로로 검증한다.
 
 ## 8. 구현 순서
 

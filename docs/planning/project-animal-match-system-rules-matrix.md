@@ -61,7 +61,7 @@ QA 기준:
 | 항목 | MVP 규칙 |
 | --- | --- |
 | 활성 수 | 스테이지당 1종 |
-| 발동 방식 | 자동 1회 |
+| 발동 방식 | 자동 발동. 기본 1회, hard/finale의 반복 충전 스킬은 최대 2회 |
 | 데이터 | 원본 `buddy.animal/skill_id/charge_rule/charges_required/max_uses`, 런타임 `buddy_animal/buddy_skill_id/buddy_charge_rule/buddy_charges_required/buddy_max_uses` |
 | 금지 | 스킬 미보유로 일반 레벨 클리어 불가 |
 | QA | max use 초과 발동 금지 |

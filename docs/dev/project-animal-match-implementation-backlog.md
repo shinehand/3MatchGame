@@ -242,7 +242,7 @@
 
 ### PAM-DEV-053: Rescue Buddy 동물 스킬 시스템
 
-- 상태: 완료됨. StageCatalog/validator가 `buddy` 설정을 정규화·검증하고, Stage 4의 `rabbit/quick_refill` 자동 1회 스킬이 목표 동물 매치 충전 후 보드에 목표 동물 1개를 생성한다. Stage 5의 `chick/soft_bomb_plus`는 목표 동물을 폭발 특수 블록으로 강화하고, Stage 8의 `chick/combo_peep`은 콤보 2+에서 Combo Gauge를 추가 충전하되 Fever 중에는 충전/준비 없이 `fever_active` 차단을 기록한다. Stage 16의 `cat/smart_hint`는 목표에 가까운 유효 수를 강조하며, Stage 18의 `frog/leap_clear`는 남은 덤불 1개를 추가 제거한다. Stage 20의 `dog/loyal_fetch`는 실패 직전 Near Miss에서 목표 동물을 불러오고 이동 1회를 구한다. Stage 24의 `panda/calm_fever`는 Fever 시작을 감지해 Fever 종료 후 Combo Gauge 2칸을 보존한다. Stage 25의 `pig/coin_sniff`는 클리어 보상 골드를 5% 늘리고, Stage 31의 `penguin/cascade_slide`는 첫 연쇄 단계에서 해당 연쇄 점수 10% 보너스를 더한다. Stage 41의 `fox/sly_route`는 이동 수 3 이하 Near Fail에서 추천 경로를 표시한다. Stage 51의 `lion/brave_start`는 하드 스테이지 시작 시 추천 부스터 방향을 알려주되 무료 특수 블록이나 부스터를 지급하지 않는다. Stage 81의 `elephant/mighty_push`는 장애물 제거 흐름에서 남은 덤불 1개를 추가로 밀어낸다. 전용 HUD 충전 라벨/게이지와 scene smoke 검증이 추가됐다. scene smoke는 Stage 4 `quick_refill`의 `buddy_skill_charge/ready/trigger/blocked`, Stage 5 `soft_bomb_plus`, Stage 8 `combo_peep` 정상/피버 차단, Stage 16 `smart_hint`, Stage 18 `leap_clear`, Stage 20 `loyal_fetch`, Stage 24 `calm_fever`, Stage 25 `coin_sniff`, Stage 31 `cascade_slide`, Stage 41 `sly_route`, Stage 51 `brave_start`, Stage 81 `mighty_push`의 실제 상태 변화와 발동 분석 기록을 검증한다. stage data validator는 스킬별 동물/충전 규칙/충전량/최대 사용/최소 스테이지 튜닝 매트릭스를 강제하고, balance validator는 첫 등장 Buddy smoke stage의 `recommended_smoke`를 강제한다. 후속은 실제 기기 수동 플레이 QA와 수치/체감 튜닝으로 분리한다.
+- 상태: 완료됨. StageCatalog/validator가 `buddy` 설정을 정규화·검증하고, Stage 4의 `rabbit/quick_refill` 자동 1회 스킬이 목표 동물 매치 충전 후 보드에 목표 동물 1개를 생성한다. Stage 5의 `chick/soft_bomb_plus`는 목표 동물을 폭발 특수 블록으로 강화하고, Stage 8의 `chick/combo_peep`은 콤보 2+에서 Combo Gauge를 추가 충전하되 Fever 중에는 충전/준비 없이 `fever_active` 차단을 기록한다. Stage 16의 `cat/smart_hint`는 목표에 가까운 유효 수를 강조하며, Stage 18의 `frog/leap_clear`는 남은 덤불 1개를 추가 제거한다. Stage 20의 `dog/loyal_fetch`는 실패 직전 Near Miss에서 목표 동물을 불러오고 이동 1회를 구한다. Stage 24의 `panda/calm_fever`는 Fever 시작을 감지해 Fever 종료 후 Combo Gauge 2칸을 보존한다. Stage 25의 `pig/coin_sniff`는 클리어 보상 골드를 5% 늘리고, Stage 31의 `penguin/cascade_slide`는 첫 연쇄 단계에서 해당 연쇄 점수 10% 보너스를 더한다. Stage 41의 `fox/sly_route`는 이동 수 3 이하 Near Fail에서 추천 경로를 최대 2회 표시할 수 있다. Stage 51의 `lion/brave_start`는 하드 스테이지 시작 시 추천 부스터 방향을 알려주되 무료 특수 블록이나 부스터를 지급하지 않고 1회성으로 남는다. Stage 81의 `elephant/mighty_push`는 장애물 제거 흐름에서 남은 덤불 1개를 최대 2회 추가로 밀어낸다. 전용 HUD 충전 라벨/게이지와 scene smoke 검증이 추가됐다. scene smoke는 Stage 4 `quick_refill`의 `buddy_skill_charge/ready/trigger/blocked`와 중복 차단 억제, Stage 5 `soft_bomb_plus`의 post-use 차단, Stage 8 `combo_peep` 정상/피버 차단, Stage 16 `smart_hint`, Stage 18 `leap_clear`, Stage 20 `loyal_fetch`, Stage 24 `calm_fever`, Stage 25 `coin_sniff`, Stage 31 `cascade_slide`, Stage 41 `sly_route` 2회 튜닝, Stage 51 `brave_start`, Stage 81 `mighty_push` 2회 튜닝의 실제 상태 변화와 발동 분석 기록을 검증한다. stage data validator는 스킬별 동물/충전 규칙/충전량/최소 스테이지와 hard/finale 반복 충전 스킬의 최대 2회 사용 정책을 강제하고, balance validator는 첫 등장 Buddy smoke stage의 `recommended_smoke`를 강제한다. 후속은 실제 기기 수동 플레이 QA와 수치/체감 튜닝으로 분리한다.
 - 소유: Development Agent + Planning Agent
 - 대상 파일:
   - `scripts/gameplay.gd`
@@ -250,7 +250,7 @@
   - `data/stages/*.json`
 - 작업:
   - 스테이지별 `buddy_animal`, `skill_id`, `charges_required`, `max_uses`를 읽는다.
-  - MVP는 자동 1회 발동으로 제한한다.
+  - MVP는 자동 발동을 기본 1회로 제한하고, hard/finale의 반복 충전 스킬만 최대 2회까지 허용한다.
 - 완료 기준:
   - 스킬 없는 스테이지는 기존 플레이와 동일하고, 스킬 있는 스테이지는 최대 횟수를 초과하지 않는다.
 

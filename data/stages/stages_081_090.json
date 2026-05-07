@@ -145,7 +145,7 @@
       "skill_id": "mighty_push",
       "charge_rule": "clear_blocker",
       "charges_required": 1,
-      "max_uses": 1
+      "max_uses": 2
     }
   },
   {
