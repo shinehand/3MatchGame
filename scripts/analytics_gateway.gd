@@ -74,6 +74,7 @@ static func reload_queue_from_disk_for_testing() -> void:
 static func clear_persisted_queue_for_testing() -> void:
 	_queue_loaded = true
 	_dispatched_events.clear()
+	_save_queue()
 	_remove_queue_file()
 
 
@@ -175,4 +176,6 @@ static func _remove_queue_file() -> void:
 		return
 	var remove_error := queue_dir.remove(file_name)
 	if remove_error != OK:
-		push_warning("AnalyticsGateway: failed to remove testing queue file %s." % _queue_path)
+		# A locked user:// file can fail removal in headless validation; the queue was already
+		# overwritten to [] by clear_persisted_queue_for_testing, so keep the cleanup best-effort.
+		return
