@@ -4,6 +4,7 @@ const SOURCE_REWARDED_AD := "rewarded_ad"
 const SOURCE_IAP := "iap"
 const SOURCE_COINS := "coins"
 const RESULT_COMPLETED := "completed"
+const RESULT_PENDING := "pending"
 const DEFAULT_PLACEMENT := "fail_offer"
 const DEFAULT_REWARD_TYPE := "extra_moves"
 const DEFAULT_AD_NETWORK := "local_simulator"
@@ -40,7 +41,7 @@ static func request_continue(source: String, stage_id: int, fail_offer: Dictiona
 	if not queued_result.is_empty():
 		_merge_details(merged_details, Dictionary(queued_result.get("details", {})))
 	_merge_details(merged_details, details)
-	var result := String(details.get("result", queued_result.get("result", RESULT_COMPLETED))).strip_edges().to_lower()
+	var result := String(queued_result.get("result", details.get("result", RESULT_COMPLETED))).strip_edges().to_lower()
 	if result.is_empty():
 		result = RESULT_COMPLETED
 	var gateway_result := {

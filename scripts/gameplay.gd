@@ -176,6 +176,8 @@ var result_overlay_event_impressions_sent := {}
 var active_fail_offer: Dictionary = {}
 var active_fail_offer_shown_msec := 0
 var active_fail_offer_continue_granted := false
+var active_fail_offer_continue_pending := false
+var active_fail_offer_continue_pending_source := ""
 
 
 func _ready() -> void:
@@ -292,6 +294,8 @@ func _start_stage(stage_index: int) -> void:
 	fever_target_bonus_collected = 0
 	stage_state = "playing"
 	active_fail_offer_continue_granted = false
+	active_fail_offer_continue_pending = false
+	active_fail_offer_continue_pending_source = ""
 	cleared_blockers = 0
 	_last_moves_warning = -1
 	_last_worried_moves = -1
@@ -1875,7 +1879,8 @@ func _is_iap_restore_result(result: String) -> bool:
 
 
 func _is_continue_source_allowed(source: String) -> bool:
-	match source:
+	var normalized_source := _normalize_continue_source(source)
+	match normalized_source:
 		"rewarded_ad":
 			return bool(active_fail_offer.get("show_rewarded_ad", false))
 		"iap":
@@ -1885,24 +1890,53 @@ func _is_continue_source_allowed(source: String) -> bool:
 	return false
 
 
-func _resolve_fail_offer_continue_result(source: String, result: String, details: Dictionary = {}) -> bool:
+func _normalize_continue_source(source: String) -> String:
 	var normalized_source := source.strip_edges().to_lower()
+	if normalized_source == "rewarded":
+		return "rewarded_ad"
+	if normalized_source == "purchase":
+		return "iap"
+	if normalized_source == "coin":
+		return "coins"
+	return normalized_source
+
+
+func _resolve_fail_offer_continue_result(source: String, result: String, details: Dictionary = {}) -> bool:
+	var normalized_source := _normalize_continue_source(source)
 	var normalized_result := result.strip_edges().to_lower()
 	if overlay_action != "continue_stage" or active_fail_offer.is_empty():
 		return false
 	if not _is_continue_source_allowed(normalized_source):
 		_set_status("현재 실패 제안에서 사용할 수 없는 이어하기 방식입니다.")
 		return false
+	if normalized_result == MonetizationGateway.RESULT_PENDING:
+		if active_fail_offer_continue_pending:
+			_set_status("추가 이동 요청을 처리 중입니다.")
+			return false
+		if normalized_source == "iap":
+			_track_iap_purchase_start_analytics(details)
+		active_fail_offer_continue_pending = true
+		active_fail_offer_continue_pending_source = normalized_source
+		_set_status("추가 이동 요청을 처리 중입니다.")
+		return false
+	if active_fail_offer_continue_pending and not active_fail_offer_continue_pending_source.is_empty() and normalized_source != active_fail_offer_continue_pending_source:
+		_set_status("이미 다른 이어하기 요청을 처리 중입니다.")
+		return false
 
 	if normalized_source == "iap":
 		var iap_transaction_id := _continue_transaction_id("iap_continue", details)
 		if ["completed", "success"].has(normalized_result) and (active_fail_offer_continue_granted or GameSession.has_reward_transaction_granted(iap_transaction_id)):
 			_set_status("이미 처리된 추가 이동 보상입니다.")
+			active_fail_offer_continue_pending = false
+			active_fail_offer_continue_pending_source = ""
 			return false
-		_track_iap_purchase_start_analytics(details)
+		if not active_fail_offer_continue_pending or active_fail_offer_continue_pending_source != normalized_source:
+			_track_iap_purchase_start_analytics(details)
 		if _is_iap_restore_result(normalized_result):
 			_track_iap_purchase_restore_analytics(details)
 			_set_status("구매 복구가 완료되었지만 현재 실패 이어하기 보상은 지급하지 않았습니다.")
+			active_fail_offer_continue_pending = false
+			active_fail_offer_continue_pending_source = ""
 			return false
 
 	if normalized_result != "completed" and normalized_result != "success":
@@ -1914,9 +1948,13 @@ func _resolve_fail_offer_continue_result(source: String, result: String, details
 			else:
 				_track_iap_purchase_fail_analytics(details)
 		_set_status("추가 이동 지급이 완료되지 않았습니다. 재도전 또는 다른 선택지를 고를 수 있습니다.")
+		active_fail_offer_continue_pending = false
+		active_fail_offer_continue_pending_source = ""
 		return false
 
 	if active_fail_offer_continue_granted:
+		active_fail_offer_continue_pending = false
+		active_fail_offer_continue_pending_source = ""
 		return false
 
 	var moves_amount := _continue_moves_for_source(normalized_source)
@@ -1930,15 +1968,21 @@ func _resolve_fail_offer_continue_result(source: String, result: String, details
 	var transaction_id := _continue_transaction_id(grant_source, details)
 	if GameSession.has_reward_transaction_granted(transaction_id):
 		_set_status("이미 처리된 추가 이동 보상입니다.")
+		active_fail_offer_continue_pending = false
+		active_fail_offer_continue_pending_source = ""
 		return false
 
 	if normalized_source == "coins":
 		var cost_amount := int(details.get("cost_amount", FAIL_OFFER_COIN_CONTINUE_COST))
 		if not GameSession.spend_gold(cost_amount):
 			_set_status("코인이 부족해 추가 이동을 받을 수 없습니다.")
+			active_fail_offer_continue_pending = false
+			active_fail_offer_continue_pending_source = ""
 			return false
 	if not GameSession.mark_reward_transaction_granted(transaction_id):
 		_set_status("이미 처리된 추가 이동 보상입니다.")
+		active_fail_offer_continue_pending = false
+		active_fail_offer_continue_pending_source = ""
 		return false
 
 	if normalized_source == "rewarded_ad":
@@ -1947,6 +1991,8 @@ func _resolve_fail_offer_continue_result(source: String, result: String, details
 		_track_iap_purchase_complete_analytics(details, transaction_id)
 
 	active_fail_offer_continue_granted = true
+	active_fail_offer_continue_pending = false
+	active_fail_offer_continue_pending_source = ""
 	stage_state = "playing"
 	remaining_moves = maxi(remaining_moves, 0) + moves_amount
 	_track_extra_moves_grant_analytics(grant_source, moves_amount, transaction_id)
@@ -1957,6 +2003,9 @@ func _resolve_fail_offer_continue_result(source: String, result: String, details
 
 
 func _request_fail_offer_continue(source: String, details: Dictionary = {}) -> bool:
+	if active_fail_offer_continue_pending:
+		_set_status("추가 이동 요청을 처리 중입니다.")
+		return false
 	var gateway_result := MonetizationGateway.request_continue(source, _current_stage_id(), active_fail_offer, details)
 	return _resolve_fail_offer_continue_result(
 		String(gateway_result.get("source", source)),
@@ -2823,6 +2872,8 @@ func _check_stage_state() -> void:
 		active_fail_offer = fail_offer.duplicate(true)
 		active_fail_offer_shown_msec = Time.get_ticks_msec()
 		active_fail_offer_continue_granted = false
+		active_fail_offer_continue_pending = false
+		active_fail_offer_continue_pending_source = ""
 		_track_stage_fail_analytics(fail_offer)
 		_track_offer_impression_analytics(fail_offer)
 		_track_fail_offer_show_analytics(fail_offer, fail_count)
@@ -3297,6 +3348,8 @@ func _hide_overlay() -> void:
 	active_fail_offer = {}
 	active_fail_offer_shown_msec = 0
 	active_fail_offer_continue_granted = false
+	active_fail_offer_continue_pending = false
+	active_fail_offer_continue_pending_source = ""
 
 
 func _show_combo_banner(combo: int) -> void:
@@ -3336,6 +3389,9 @@ func _update_overlay_ribbon(action: String) -> void:
 func _on_overlay_primary_button_pressed() -> void:
 	Feedback.play_ui_tap()
 	var action: String = overlay_action
+	if action == "continue_stage" and active_fail_offer_continue_pending:
+		_set_status("추가 이동 요청을 처리 중입니다.")
+		return
 	_track_fail_offer_select_analytics(action, overlay_primary_button.text)
 	if action == "continue_stage":
 		_request_fail_offer_continue("rewarded_ad")

@@ -136,6 +136,6 @@ cat <<'EOF'
 - 같은 transaction_id의 보상형 광고/IAP continue 콜백이 반복되어도 추가 이동과 완료 로그가 중복 지급되지 않는지 확인
 - 코인 continue는 충분한 gold가 있을 때만 차감 후 5회 이동으로 재개되고, gold 부족 시 실패 상태가 유지되는지 확인
 - 실패 오퍼 선택과 닫기 행동이 `fail_offer_select`, `fail_offer_dismiss`로 기록되는지 확인
-- 실패 continue CTA가 provider-neutral monetization gateway를 거쳐 실패/성공 callback, request log, source 허용/거절 정책을 처리하는지 확인
+- 실패 continue CTA가 provider-neutral monetization gateway를 거쳐 실패/성공/pending callback, request log, source 허용/거절 정책을 처리하는지 확인
 - 실패 오퍼 노출, 광고/IAP 결과, 추가 이동 지급이 `fail_offer_show`, `ad_reward_complete`, `ad_reward_fail`, `iap_purchase_complete`, `iap_purchase_restore`, `iap_purchase_cancel`, `iap_purchase_fail`, `extra_moves_grant`로 기록되는지 확인
 EOF

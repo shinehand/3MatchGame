@@ -116,7 +116,7 @@ SDK 공급자 결정 전 분석 이벤트는 `AnalyticsGateway`의 `local_buffer
 - IAP 성공형 continue는 `iap_purchase_complete`와 `extra_moves_grant`가 같은 `transaction_id`를 공유한다.
 - IAP restore 결과는 현재 실패 이어하기 보상을 지급하지 않고 `iap_purchase_restore`만 기록한다.
 - 같은 `transaction_id`가 반복 수신되면 보상형 광고/IAP continue의 추가 이동과 완료 analytics를 다시 지급하지 않는다.
-- SDK 공급자 결정 전에는 `MonetizationGateway`가 rewarded/IAP/coin continue 결과를 provider-neutral callback 형태로 gameplay에 전달하고 request log에 source, stage, provider, result, request status를 남긴다. gameplay는 허용된 source와 `transaction_id` idempotency만 신뢰하며, gateway는 지원하지 않는 source를 `rejected_invalid_source`로 거절한다.
+- SDK 공급자 결정 전에는 `MonetizationGateway`가 rewarded/IAP/coin continue 결과를 provider-neutral callback 형태로 gameplay에 전달하고 request log에 source, stage, provider, result, request status를 남긴다. `pending`은 SDK 요청 시작 상태로 취급해 실패/완료/추가 이동 analytics를 발생시키지 않고, 결과 콜백 전 중복 CTA 요청을 막는다. gameplay는 허용된 source와 `transaction_id` idempotency만 신뢰하며, gateway는 지원하지 않는 source를 `rejected_invalid_source`로 거절한다.
 - stage clear로 같은 Rescue Book 카드가 이미 해금된 상태라면 `animal_unlock`을 중복 기록하지 않는다.
 - A/B 테스트 이벤트는 반드시 `variant_id`와 `remote_config_version`을 포함한다.
 

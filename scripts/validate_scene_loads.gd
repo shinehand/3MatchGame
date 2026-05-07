@@ -2263,6 +2263,97 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s IAP cancel/fail/restore should not emit iap_purchase_complete." % GAMEPLAY_SCENE_PATH)
 
 	MonetizationGateway.clear_request_log_for_testing()
+	MonetizationGateway.set_provider_id_for_testing("gateway_pending_provider")
+	MonetizationGateway.queue_continue_result_for_testing("rewarded_ad", MonetizationGateway.RESULT_PENDING, {"ad_network": "gateway_pending", "transaction_id": "gateway-pending-continue"})
+	var pending_extra_before := _analytics_event_count("extra_moves_grant")
+	var pending_ad_fail_before := _analytics_event_count("ad_reward_fail")
+	var pending_ad_complete_before := _analytics_event_count("ad_reward_complete")
+	var pending_iap_complete_before := _analytics_event_count("iap_purchase_complete")
+	var pending_offer_select_before := _analytics_event_count("fail_offer_select")
+	node.call("_on_overlay_primary_button_pressed")
+	if String(node.get("stage_state")) != "failed" or int(node.get("remaining_moves")) != failed_continue_moves:
+		errors.append("%s pending rewarded ad gateway request should preserve failed stage state and moves." % GAMEPLAY_SCENE_PATH)
+	if overlay == null or not overlay.visible or String(node.get("overlay_action")) != "continue_stage":
+		errors.append("%s pending rewarded ad gateway request should keep continue overlay visible." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("extra_moves_grant") != pending_extra_before or _analytics_event_count("ad_reward_fail") != pending_ad_fail_before or _analytics_event_count("ad_reward_complete") != pending_ad_complete_before:
+		errors.append("%s pending rewarded ad gateway request should not emit grant, failure, or completion analytics." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("fail_offer_select") != pending_offer_select_before + 1:
+		errors.append("%s pending rewarded ad first primary tap should emit one fail_offer_select analytics event." % GAMEPLAY_SCENE_PATH)
+	if not bool(node.get("active_fail_offer_continue_pending")) or String(node.get("active_fail_offer_continue_pending_source")) != "rewarded_ad":
+		errors.append("%s pending rewarded ad request should set pending source state." % GAMEPLAY_SCENE_PATH)
+	var pending_log := _last_monetization_request_log()
+	_validate_monetization_request_log(pending_log, "rewarded_ad", 25, "near_miss", MonetizationGateway.RESULT_PENDING, "resolved", "gateway_pending_provider", errors)
+	var pending_log_count := MonetizationGateway.get_request_log_for_testing().size()
+	node.call("_on_overlay_primary_button_pressed")
+	if MonetizationGateway.get_request_log_for_testing().size() != pending_log_count:
+		errors.append("%s pending rewarded ad gateway request should block duplicate primary CTA SDK requests." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("extra_moves_grant") != pending_extra_before or _analytics_event_count("ad_reward_fail") != pending_ad_fail_before or _analytics_event_count("ad_reward_complete") != pending_ad_complete_before:
+		errors.append("%s duplicate pending rewarded ad primary tap should not emit grant, failure, or completion analytics." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("fail_offer_select") != pending_offer_select_before + 1:
+		errors.append("%s duplicate pending rewarded ad primary tap should not emit another fail_offer_select analytics event." % GAMEPLAY_SCENE_PATH)
+	if bool(node.call("_resolve_fail_offer_continue_result", "purchase", "completed", {"transaction_id": "wrong-source-pending"})):
+		errors.append("%s pending rewarded ad should reject completed callbacks from a different continue source." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("iap_purchase_complete") != pending_iap_complete_before or _analytics_event_count("extra_moves_grant") != pending_extra_before:
+		errors.append("%s pending rewarded ad should not emit IAP completion or grant analytics for wrong-source callbacks." % GAMEPLAY_SCENE_PATH)
+	if not bool(node.get("active_fail_offer_continue_pending")) or String(node.get("active_fail_offer_continue_pending_source")) != "rewarded_ad":
+		errors.append("%s wrong-source pending callback should keep rewarded_ad pending state." % GAMEPLAY_SCENE_PATH)
+	var pending_failure_result := bool(node.call("_resolve_fail_offer_continue_result", "rewarded", "failed", {"ad_network": "gateway_pending", "error_code": "pending_failed"}))
+	if pending_failure_result:
+		errors.append("%s pending rewarded ad failure callback should not grant continue." % GAMEPLAY_SCENE_PATH)
+	if bool(node.get("active_fail_offer_continue_pending")) or not String(node.get("active_fail_offer_continue_pending_source")).is_empty():
+		errors.append("%s pending rewarded ad failure callback should clear pending state." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("ad_reward_fail") != pending_ad_fail_before + 1:
+		errors.append("%s pending rewarded ad failure callback should emit ad_reward_fail once." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("extra_moves_grant") != pending_extra_before or _analytics_event_count("ad_reward_complete") != pending_ad_complete_before:
+		errors.append("%s pending rewarded ad failure callback should not emit grant or completion analytics." % GAMEPLAY_SCENE_PATH)
+	if String(node.get("stage_state")) != "failed" or int(node.get("remaining_moves")) != failed_continue_moves or overlay == null or not overlay.visible:
+		errors.append("%s pending rewarded ad failure callback should preserve failed overlay state." % GAMEPLAY_SCENE_PATH)
+
+	MonetizationGateway.queue_continue_result_for_testing("rewarded_ad", MonetizationGateway.RESULT_PENDING, {"ad_network": "gateway_pending", "transaction_id": "gateway-pending-continue"})
+	node.call("_on_overlay_primary_button_pressed")
+	var pending_completion_result := bool(node.call("_resolve_fail_offer_continue_result", "rewarded_ad", "completed", {"ad_network": "gateway_pending", "transaction_id": "gateway-pending-continue"}))
+	if not pending_completion_result:
+		errors.append("%s pending rewarded ad callback should grant continue when completed." % GAMEPLAY_SCENE_PATH)
+	if String(node.get("stage_state")) != "playing" or int(node.get("remaining_moves")) != 3:
+		errors.append("%s pending rewarded ad completion should resume play with 3 moves." % GAMEPLAY_SCENE_PATH)
+	if bool(node.get("active_fail_offer_continue_pending")) or not String(node.get("active_fail_offer_continue_pending_source")).is_empty():
+		errors.append("%s pending rewarded ad completion should clear pending state." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("ad_reward_complete") <= pending_ad_complete_before or _analytics_event_count("extra_moves_grant") <= pending_extra_before:
+		errors.append("%s pending rewarded ad completion should emit completion and grant analytics." % GAMEPLAY_SCENE_PATH)
+
+	await _prepare_stage_25_near_miss_failure(node)
+	failed_continue_moves = int(node.get("remaining_moves"))
+	var iap_pending_start_before := _analytics_event_count("iap_purchase_start")
+	var iap_pending_complete_before := _analytics_event_count("iap_purchase_complete")
+	var iap_pending_fail_before := _analytics_event_count("iap_purchase_fail")
+	var iap_pending_cancel_before := _analytics_event_count("iap_purchase_cancel")
+	var iap_pending_restore_before := _analytics_event_count("iap_purchase_restore")
+	var iap_pending_extra_before := _analytics_event_count("extra_moves_grant")
+	if bool(node.call("_resolve_fail_offer_continue_result", "purchase", MonetizationGateway.RESULT_PENDING, {"product_id": "pending_pack", "price": 1.99, "currency": "USD", "transaction_id": "iap-pending-validation"})):
+		errors.append("%s pending IAP request should not grant continue before provider completion." % GAMEPLAY_SCENE_PATH)
+	if not bool(node.get("active_fail_offer_continue_pending")) or String(node.get("active_fail_offer_continue_pending_source")) != "iap":
+		errors.append("%s pending IAP request should set pending source state." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("iap_purchase_start") != iap_pending_start_before + 1:
+		errors.append("%s pending IAP request should emit exactly one iap_purchase_start." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("iap_purchase_complete") != iap_pending_complete_before or _analytics_event_count("iap_purchase_fail") != iap_pending_fail_before or _analytics_event_count("iap_purchase_cancel") != iap_pending_cancel_before or _analytics_event_count("iap_purchase_restore") != iap_pending_restore_before or _analytics_event_count("extra_moves_grant") != iap_pending_extra_before:
+		errors.append("%s pending IAP request should not emit final purchase or grant analytics." % GAMEPLAY_SCENE_PATH)
+	node.call("_resolve_fail_offer_continue_result", "iap", MonetizationGateway.RESULT_PENDING, {"product_id": "pending_pack", "price": 1.99, "currency": "USD", "transaction_id": "iap-pending-validation"})
+	if _analytics_event_count("iap_purchase_start") != iap_pending_start_before + 1:
+		errors.append("%s duplicate pending IAP callback should not emit another iap_purchase_start." % GAMEPLAY_SCENE_PATH)
+	var iap_pending_complete_result := bool(node.call("_resolve_fail_offer_continue_result", "iap", "completed", {"product_id": "pending_pack", "price": 1.99, "currency": "USD", "transaction_id": "iap-pending-validation"}))
+	if not iap_pending_complete_result:
+		errors.append("%s pending IAP completion callback should grant continue." % GAMEPLAY_SCENE_PATH)
+	if bool(node.get("active_fail_offer_continue_pending")) or not String(node.get("active_fail_offer_continue_pending_source")).is_empty():
+		errors.append("%s pending IAP completion callback should clear pending state." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("iap_purchase_start") != iap_pending_start_before + 1:
+		errors.append("%s pending IAP completion callback should not emit a duplicate purchase start." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("iap_purchase_complete") <= iap_pending_complete_before or _analytics_event_count("extra_moves_grant") <= iap_pending_extra_before:
+		errors.append("%s pending IAP completion callback should emit purchase complete and grant analytics." % GAMEPLAY_SCENE_PATH)
+
+	await _prepare_stage_25_near_miss_failure(node)
+	failed_continue_moves = int(node.get("remaining_moves"))
+
+	MonetizationGateway.clear_request_log_for_testing()
 	MonetizationGateway.set_provider_id_for_testing("gateway_validation_provider")
 	MonetizationGateway.queue_continue_result_for_testing("rewarded_ad", "failed", {"ad_network": "gateway_validation", "error_code": "gateway_load_failed"})
 	var gateway_fail_extra_before := _analytics_event_count("extra_moves_grant")
@@ -2508,6 +2599,20 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s coin continue insufficient funds should not emit extra_moves_grant." % GAMEPLAY_SCENE_PATH)
 
 	await _validate_failure_overlay_focus_hint_variants(node, errors)
+
+
+func _prepare_stage_25_near_miss_failure(node: Node) -> void:
+	node.call("_start_stage", 24)
+	GameSession.set_stage_fail_count_for_testing(25, 0)
+	var target_collect := Dictionary(node.call("_stage_collect_targets"))
+	var near_miss_counts := {}
+	for animal_id in target_collect.keys():
+		near_miss_counts[String(animal_id)] = int(target_collect[animal_id])
+	node.set("collected_counts", near_miss_counts)
+	node.set("cleared_blockers", maxi(0, int(node.call("_target_blockers")) - 1))
+	node.set("score", int(node.call("_target_score")))
+	node.set("remaining_moves", 0)
+	await node.call("_check_stage_state")
 
 
 func _validate_failure_overlay_focus_hint_variants(node: Node, errors: PackedStringArray) -> void:
