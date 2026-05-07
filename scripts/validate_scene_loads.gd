@@ -237,7 +237,7 @@ func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
 				_validate_live_event_impression_payload(params, live_events_by_id, errors)
 			"remote_config_exposure":
 				_validate_remote_config_exposure_payload(params, errors)
-	for required_event in ["rescue_book_open", "stage_start", "remote_config_exposure", "event_join", "event_progress", "event_reward_claim", "buddy_skill_charge", "buddy_skill_ready", "buddy_skill_trigger", "buddy_skill_blocked", "fail_offer_select", "fail_offer_dismiss"]:
+	for required_event in ["rescue_book_open", "stage_start", "remote_config_exposure", "event_join", "event_progress", "event_reward_claim", "buddy_skill_charge", "buddy_skill_ready", "buddy_skill_trigger", "buddy_skill_blocked", "fail_offer_show", "fail_offer_select", "fail_offer_dismiss", "extra_moves_grant"]:
 		if not seen_names.has(required_event):
 			errors.append("runtime analytics should emit %s during scene smoke." % required_event)
 	var active_current_live_events := false
@@ -1247,8 +1247,10 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	node.set("remaining_moves", 0)
 	var fail_events_before := _analytics_event_count("stage_fail")
 	var offer_events_before := _analytics_event_count("offer_impression")
+	var offer_show_events_before := _analytics_event_count("fail_offer_show")
 	var offer_select_events_before := _analytics_event_count("fail_offer_select")
 	var offer_dismiss_events_before := _analytics_event_count("fail_offer_dismiss")
+	var extra_moves_events_before := _analytics_event_count("extra_moves_grant")
 	await node.call("_check_stage_state")
 	if overlay == null or not overlay.visible:
 		errors.append("%s near-miss failure runtime smoke should show the result overlay." % GAMEPLAY_SCENE_PATH)
@@ -1266,6 +1268,8 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s near-miss failure runtime smoke should emit stage_fail analytics." % GAMEPLAY_SCENE_PATH)
 	if _analytics_event_count("offer_impression") <= offer_events_before:
 		errors.append("%s near-miss failure runtime smoke should emit offer_impression analytics." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("fail_offer_show") <= offer_show_events_before:
+		errors.append("%s near-miss failure runtime smoke should emit fail_offer_show analytics." % GAMEPLAY_SCENE_PATH)
 	var stage_fail_event := _last_analytics_event_by_name("stage_fail")
 	var stage_fail_params: Dictionary = Dictionary(stage_fail_event.get("params", {}))
 	if int(stage_fail_params.get("stage_id", 0)) != 25 or String(stage_fail_params.get("fail_type", "")) != "near_miss" or String(stage_fail_params.get("offer_type", "")) != "rewarded_continue":
@@ -1274,6 +1278,10 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	var offer_params: Dictionary = Dictionary(offer_event.get("params", {}))
 	if int(offer_params.get("stage_id", 0)) != 25 or String(offer_params.get("fail_type", "")) != "near_miss" or String(offer_params.get("primary_cta", "")) != "+3 이동 받고 계속" or not bool(offer_params.get("show_rewarded_ad", false)):
 		errors.append("%s offer_impression analytics should identify Stage 25 near_miss +3 CTA." % GAMEPLAY_SCENE_PATH)
+	var offer_show_event := _last_analytics_event_by_name("fail_offer_show")
+	var offer_show_params: Dictionary = Dictionary(offer_show_event.get("params", {}))
+	if int(offer_show_params.get("stage_id", 0)) != 25 or String(offer_show_params.get("fail_type", "")) != "near_miss" or int(offer_show_params.get("attempt_count", 0)) <= 0 or String(offer_show_params.get("offer_type", "")) != "rewarded_continue" or float(offer_show_params.get("progress_ratio", -1.0)) < 0.0:
+		errors.append("%s fail_offer_show analytics should identify Stage 25 near_miss rewarded offer exposure." % GAMEPLAY_SCENE_PATH)
 
 	node.call("_on_overlay_primary_button_pressed")
 	if String(node.get("stage_state")) != "playing" or int(node.get("remaining_moves")) != 3:
@@ -1286,6 +1294,12 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	var select_params: Dictionary = Dictionary(select_event.get("params", {}))
 	if int(select_params.get("stage_id", 0)) != 25 or String(select_params.get("fail_type", "")) != "near_miss" or String(select_params.get("offer_type", "")) != "rewarded_continue" or String(select_params.get("cost_type", "")) != "rewarded_ad" or int(select_params.get("cost_amount", -1)) != 1:
 		errors.append("%s fail_offer_select should identify Stage 25 rewarded continue selection." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("extra_moves_grant") <= extra_moves_events_before:
+		errors.append("%s continue_stage primary action should emit extra_moves_grant analytics." % GAMEPLAY_SCENE_PATH)
+	var extra_moves_event := _last_analytics_event_by_name("extra_moves_grant")
+	var extra_moves_params: Dictionary = Dictionary(extra_moves_event.get("params", {}))
+	if int(extra_moves_params.get("stage_id", 0)) != 25 or String(extra_moves_params.get("source", "")) != "fail_offer_continue" or int(extra_moves_params.get("moves_amount", 0)) != 3 or String(extra_moves_params.get("transaction_id", "")).is_empty():
+		errors.append("%s extra_moves_grant should identify Stage 25 +3 rewarded continue grant." % GAMEPLAY_SCENE_PATH)
 
 	node.call("_start_stage", 25)
 	target_collect = Dictionary(node.call("_stage_collect_targets"))

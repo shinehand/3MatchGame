@@ -163,6 +163,22 @@
     ]
   },
   {
+    "name": "fail_offer_show",
+    "required_params": [
+      "session_id",
+      "stage_id",
+      "fail_type",
+      "attempt_count",
+      "goals_remaining",
+      "progress_ratio",
+      "offer_type"
+    ],
+    "optional_params": [
+      "primary_cta",
+      "secondary_cta"
+    ]
+  },
+  {
     "name": "fail_offer_select",
     "required_params": [
       "session_id",
@@ -187,6 +203,19 @@
     ],
     "optional_params": [
       "button_label"
+    ]
+  },
+  {
+    "name": "extra_moves_grant",
+    "required_params": [
+      "session_id",
+      "stage_id",
+      "source",
+      "moves_amount",
+      "transaction_id"
+    ],
+    "optional_params": [
+      "offer_type"
     ]
   },
   {

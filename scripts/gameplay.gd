@@ -1688,6 +1688,16 @@ func _track_offer_impression_analytics(fail_offer: Dictionary) -> void:
 	GameSession.record_analytics_event("offer_impression", params)
 
 
+func _track_fail_offer_show_analytics(fail_offer: Dictionary, attempt_count: int) -> void:
+	var params := _analytics_stage_base()
+	params["fail_type"] = String(fail_offer.get("type", "general_shortfall"))
+	params["attempt_count"] = attempt_count
+	params["goals_remaining"] = _remaining_goals_payload()
+	params["progress_ratio"] = _goal_progress_ratio()
+	params["offer_type"] = _offer_type_for_fail_offer(fail_offer)
+	GameSession.record_analytics_event("fail_offer_show", params)
+
+
 func _track_fail_offer_select_analytics(action: String, button_label: String) -> void:
 	if active_fail_offer.is_empty() or not ["continue_stage", "restart_stage"].has(action):
 		return
@@ -1709,6 +1719,22 @@ func _track_fail_offer_dismiss_analytics(action: String, button_label: String) -
 	params["elapsed_ms"] = maxi(0, Time.get_ticks_msec() - active_fail_offer_shown_msec)
 	params["button_label"] = button_label
 	GameSession.record_analytics_event("fail_offer_dismiss", params)
+
+
+func _track_extra_moves_grant_analytics(source: String, moves_amount: int) -> void:
+	var params := _analytics_stage_base()
+	params["source"] = source
+	params["moves_amount"] = moves_amount
+	params["transaction_id"] = "%s-%d-%d" % [source, _current_stage_id(), Time.get_ticks_msec()]
+	GameSession.record_analytics_event("extra_moves_grant", params)
+
+
+func _offer_type_for_fail_offer(fail_offer: Dictionary) -> String:
+	if bool(fail_offer.get("show_rewarded_ad", false)):
+		return "rewarded_continue"
+	if bool(fail_offer.get("show_iap", false)):
+		return "booster_pack"
+	return "retry"
 
 
 func _offer_type_for_action(action: String) -> String:
@@ -1818,6 +1844,27 @@ func _remaining_goals_payload() -> Dictionary:
 	if blocker_remaining > 0:
 		remaining["blockers"] = blocker_remaining
 	return remaining
+
+
+func _goal_progress_ratio() -> float:
+	var total := 0
+	var remaining := 0
+	for animal_id in _stage_collect_targets().keys():
+		var target_count := int(_stage_collect_targets()[animal_id])
+		total += target_count
+		remaining += maxi(0, target_count - int(collected_counts.get(animal_id, 0)))
+	var target_score := _target_score()
+	if target_score > 0:
+		total += 3
+		if score < target_score:
+			remaining += 3
+	var target_blockers := _target_blockers()
+	if target_blockers > 0:
+		total += target_blockers
+		remaining += maxi(0, target_blockers - cleared_blockers)
+	if total <= 0:
+		return 0.0
+	return clampf(float(total - remaining) / float(total), 0.0, 1.0)
 
 
 func _track_buddy_analytics(event_name: String, extra_params: Dictionary = {}) -> void:
@@ -2497,6 +2544,7 @@ func _check_stage_state() -> void:
 		active_fail_offer_shown_msec = Time.get_ticks_msec()
 		_track_stage_fail_analytics(fail_offer)
 		_track_offer_impression_analytics(fail_offer)
+		_track_fail_offer_show_analytics(fail_offer, fail_count)
 		var failure_action := "continue_stage" if bool(fail_offer.get("show_rewarded_ad", false)) else "restart_stage"
 		_show_overlay(
 			"%s 재도전 필요" % _current_stage()["name"],
@@ -3025,6 +3073,7 @@ func _on_overlay_primary_button_pressed() -> void:
 		"continue_stage":
 			stage_state = "playing"
 			remaining_moves = maxi(remaining_moves, 0) + 3
+			_track_extra_moves_grant_analytics("fail_offer_continue", 3)
 			_set_status("추가 이동 3회를 받아 계속 진행합니다.")
 			_update_hud()
 

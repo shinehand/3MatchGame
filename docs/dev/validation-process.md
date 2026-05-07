@@ -69,7 +69,7 @@
 - Stage 1 클리어 판정 경로에서 결과 overlay가 표시되고, 보상/별/점수/다음 행동과 `다음 스테이지`/`홈으로` CTA를 보여 준다.
 - Stage 25 near-miss 실패 판정 경로에서 실패 overlay가 표시되고, 실패 유형, 남은 목표, 추천 부스터, `+3 이동 받고 계속`/`재도전` CTA를 보여 준다.
 - `+3 이동 받고 계속` primary CTA는 overlay를 닫고 `remaining_moves = 3`, `stage_state = playing`으로 실제 재개한다.
-- 실패 overlay 노출과 선택은 `stage_fail`, `offer_impression`, `fail_offer_select`, `fail_offer_dismiss` analytics에 near-miss 및 보상형 continue 정보를 기록한다.
+- 실패 overlay 노출, 선택, 추가 이동 지급은 `stage_fail`, `offer_impression`, `fail_offer_show`, `fail_offer_select`, `fail_offer_dismiss`, `extra_moves_grant` analytics에 near-miss 및 보상형 continue 정보를 기록한다.
 - `FailOfferPolicy`는 near miss, strategic miss, first fail, repeat fail, hard fail, Level 1-10 수익화 차단을 분리 검증한다.
 
 아래 항목은 no-device readiness로 승인하지 않는다. 실제 기기 또는 시뮬레이터에서 수동 확인해야 한다.
