@@ -23,13 +23,14 @@
 | DEC-014 | Rescue Book 첫 해금 동물은 rabbit 고정 | Locked | FTUE 표와 Level 4 첫 카드 해금 기준 확정 | UX |
 | DEC-015 | 우정 레벨 보상은 MVP에서 cosmetic 중심 | Accepted | 초반 pay-to-win 방지. booster/event XP는 소프트 런칭 이후 실험 | BM/UX |
 | DEC-016 | Near Miss 기준은 남은 목표 2개 이하 또는 목표 진행률 80% 이상 | Locked | `FailOfferPolicy` 기본값과 remote config `near_miss_goal_threshold`, `near_miss_progress_threshold`로 조정 가능 | UX/Balance/Tech |
+| DEC-017 | 분석 SDK 공급자 선택 전 이벤트 경계는 `AnalyticsGateway` `local_buffer` queued dispatch로 고정 | Accepted | 계약 위반 이벤트는 `rejected_contract`로 격리하고, Firebase/GameAnalytics/custom adapter는 provider-neutral gateway 뒤에 연결 | Tech/PM |
 
 ## 2. 아직 열려 있는 결정
 
 | ID | 질문 | 후보 | 결정 필요 시점 | 소유 |
 | --- | --- | --- | --- | --- |
 | OPEN-006 | 시즌 패스 해금 레벨 | 20 고정 또는 원격 설정 | PAM-DEV-080 전 | BM |
-| OPEN-007 | 분석 SDK 실제 공급자 | Firebase, GameAnalytics, custom adapter | Analytics 구현 전 | Tech/PM |
+| OPEN-007 | 분석 SDK 실제 공급자 | Firebase, GameAnalytics, custom adapter | SDK adapter 연결 전 | Tech/PM |
 | OPEN-008 | 최종 `lion`, `elephant` 전용 에셋 제작 시점 | MVP 전, 소프트 런칭 전, 이벤트 전 | PAM-DEV-011 후속 | Art/PM |
 | OPEN-009 | 13-18번 컬렉션 동물의 보드 투입 순서 | koala, hamster, deer, seal, sheep, turtle 중 이벤트 성과 기준 | 시즌 1 보드 확장 전 | Planning/Balance |
 
@@ -49,7 +50,7 @@
 
 ## 5. 다음 회의 안건
 
-1. `OPEN-007`: 분석 SDK 추상화 범위.
+1. `OPEN-007`: 분석 SDK 실제 공급자와 adapter 연결 범위.
 2. `OPEN-009`: 컬렉션 전용 동물의 보드 투입 우선순위.
 3. `OPEN-006`: 시즌 패스 해금 레벨 원격 설정 여부.
 4. `OPEN-008`: lion/elephant 전용 에셋 제작 시점.

@@ -5,6 +5,7 @@ const ANALYTICS_CONTRACT_PATH := "res://data/analytics_events.json"
 const MAX_ANALYTICS_EVENTS := 320
 const MAX_REWARD_TRANSACTION_IDS := 240
 const CollectionState = preload("res://scripts/collection_state.gd")
+const AnalyticsGateway = preload("res://scripts/analytics_gateway.gd")
 
 static var _loaded := false
 static var _save_path := SAVE_PATH
@@ -197,6 +198,7 @@ static func record_analytics_event(event_name: String, params: Dictionary) -> vo
 		events.pop_front()
 	_save_data["analytics_events"] = events
 	save_state()
+	AnalyticsGateway.dispatch_event(entry, missing_params.is_empty(), missing_params)
 
 
 static func get_analytics_events() -> Array:
@@ -208,6 +210,8 @@ static func clear_analytics_events() -> void:
 	load_state()
 	_save_data["analytics_events"] = []
 	save_state()
+	AnalyticsGateway.clear_dispatched_events_for_testing()
+	AnalyticsGateway.clear_rejected_events_for_testing()
 
 
 static func analytics_event_missing_required_params(event_name: String, params: Dictionary) -> PackedStringArray:

@@ -106,6 +106,7 @@ cat <<'EOF'
 - 첫 세션 Level 1-5 순차 클리어 후 Stage 6, `frog`/`koala`/`hamster` Rescue Book `NEW`, `animal_unlock` 기록이 유지되는지 확인
 - Rescue Book 카드에서 해금 동물의 토큰/우정 레벨/NEW 상태와 잠김 동물의 해금 스테이지 문구가 정상 표시되는지 확인
 - 라이브 이벤트 노출이 홈, 스테이지 선택, 결과 오버레이, 컬렉션에서 각각 `live_event_impression`으로 기록되는지 확인
+- 런타임 analytics가 `GameSession` 저장과 `AnalyticsGateway` local_buffer queued dispatch 양쪽에 남고, 계약 위반 이벤트는 provider queue 대신 rejected_contract로 격리되는지 확인
 - 앱 실행 후 보드 8x8 블록이 즉시 보이는지 확인
 - 모바일 세로 게임 화면에서 큰 스탯/목표 카드가 아니라 상단 게임 HUD와 목표 띠가 먼저 보이고, 보드가 화면 중심을 차지하는지 확인
 - 모바일 세로 게임 화면 하단에 아이콘형 부스터 도크가 있어 화면 아래가 비어 보이지 않는지 확인

@@ -5,6 +5,7 @@ const CollectionState = preload("res://scripts/collection_state.gd")
 const GameSession = preload("res://scripts/game_session.gd")
 const FailOfferPolicy = preload("res://scripts/fail_offer_policy.gd")
 const LiveEventService = preload("res://scripts/live_event_service.gd")
+const AnalyticsGateway = preload("res://scripts/analytics_gateway.gd")
 const MonetizationGateway = preload("res://scripts/monetization_gateway.gd")
 
 const LOADING_SCENE_PATH: String = "res://scenes/loading.tscn"
@@ -44,6 +45,7 @@ func _init() -> void:
 
 func _run() -> void:
 	GameSession.use_save_path_for_testing(SESSION_VALIDATION_SAVE_PATH)
+	AnalyticsGateway.reset_for_testing()
 	LiveEventService.reset_remote_config_exposures_for_testing()
 	_remove_validation_save()
 	var errors: PackedStringArray = PackedStringArray()
@@ -89,6 +91,7 @@ func _run() -> void:
 		await process_frame
 
 	_validate_runtime_analytics_events(errors)
+	_validate_analytics_gateway_contract_gate(errors)
 	if not errors.is_empty():
 		for error_text in errors:
 			push_error("Scene load validation error: %s" % error_text)
@@ -245,9 +248,13 @@ func _validate_control_in_viewport(candidate: Node, viewport_size: Vector2i, sce
 
 func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
 	var events := GameSession.get_analytics_events()
+	var gateway_events := AnalyticsGateway.get_dispatched_events_for_testing()
+	if gateway_events.size() < events.size():
+		errors.append("AnalyticsGateway should receive each saved analytics event, got %d dispatched for %d saved." % [gateway_events.size(), events.size()])
 	var seen_names := {}
 	var live_event_placements_seen := {}
 	var remote_config_keys_seen := {}
+	var validated_gateway_signatures := {}
 	var live_events_by_id := _live_events_by_id()
 	for event in events:
 		if not (event is Dictionary):
@@ -257,6 +264,7 @@ func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
 		var event_name := String(event_dict.get("name", ""))
 		var params := Dictionary(event_dict.get("params", {}))
 		seen_names[event_name] = true
+		_validate_analytics_gateway_dispatch_for_event(event_dict, events, gateway_events, validated_gateway_signatures, errors)
 		var missing_params := GameSession.analytics_event_missing_required_params(event_name, params)
 		if not missing_params.is_empty():
 			errors.append("runtime analytics event %s missing required params: %s" % [event_name, ", ".join(Array(missing_params))])
@@ -282,6 +290,180 @@ func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
 			active_current_live_events = true
 	if active_current_live_events and not seen_names.has("live_event_impression"):
 		errors.append("runtime analytics should emit live_event_impression when active live events are visible.")
+
+
+func _validate_analytics_gateway_dispatch_for_event(event_dict: Dictionary, saved_events: Array, gateway_events: Array, validated_signatures: Dictionary, errors: PackedStringArray) -> void:
+	var event_name := String(event_dict.get("name", ""))
+	var params := Dictionary(event_dict.get("params", {}))
+	var session_id := String(params.get("session_id", ""))
+	var event_timestamp := int(event_dict.get("timestamp", -1))
+	var signature_key := "%s|%d|%s" % [event_name, event_timestamp, JSON.stringify(params)]
+	if validated_signatures.has(signature_key):
+		return
+	validated_signatures[signature_key] = true
+
+	var matching_gateway_events: Array = []
+	for gateway_event_value in gateway_events:
+		if not (gateway_event_value is Dictionary):
+			continue
+		var gateway_event: Dictionary = gateway_event_value
+		var gateway_params: Dictionary = Dictionary(gateway_event.get("params", {}))
+		if String(gateway_event.get("name", "")) != event_name:
+			continue
+		if String(gateway_params.get("session_id", "")) != session_id:
+			continue
+		if int(gateway_event.get("timestamp", -2)) != event_timestamp:
+			continue
+		if gateway_params != params:
+			continue
+		matching_gateway_events.append(gateway_event)
+	var saved_signature_count := _analytics_event_signature_count(saved_events, event_name, event_timestamp, params)
+	if matching_gateway_events.is_empty():
+		errors.append("AnalyticsGateway should dispatch runtime analytics event %s for session %s." % [event_name, session_id])
+		return
+	if matching_gateway_events.size() != saved_signature_count:
+		errors.append("AnalyticsGateway should mirror runtime analytics event %s signature count, got %d queued for %d saved." % [event_name, matching_gateway_events.size(), saved_signature_count])
+	var gateway_event: Dictionary = matching_gateway_events[0]
+	if String(gateway_event.get("provider_id", "")) != AnalyticsGateway.DEFAULT_PROVIDER_ID:
+		errors.append("AnalyticsGateway dispatch for %s should use default provider id before SDK selection." % event_name)
+	if String(gateway_event.get("dispatch_status", "")) != "queued":
+		errors.append("AnalyticsGateway dispatch for %s should remain queued for provider adapter." % event_name)
+
+
+func _analytics_event_signature_count(events: Array, event_name: String, event_timestamp: int, params: Dictionary) -> int:
+	var count := 0
+	for event_value in events:
+		if not (event_value is Dictionary):
+			continue
+		var event_dict: Dictionary = event_value
+		if String(event_dict.get("name", "")) != event_name:
+			continue
+		if int(event_dict.get("timestamp", -2)) != event_timestamp:
+			continue
+		if Dictionary(event_dict.get("params", {})) != params:
+			continue
+		count += 1
+	return count
+
+
+func _validate_analytics_gateway_contract_gate(errors: PackedStringArray) -> void:
+	var saved_before := GameSession.get_analytics_events().size()
+	var dispatched_before := AnalyticsGateway.get_dispatched_events_for_testing().size()
+	var rejected_before := AnalyticsGateway.get_rejected_events_for_testing().size()
+
+	AnalyticsGateway.set_provider_id_for_testing("validation_sdk")
+	AnalyticsGateway.set_dispatch_enabled_for_testing(true)
+	GameSession.record_analytics_event("stage_start", {
+		"stage_id": 999,
+		"band": "validation",
+		"roster_group": "validation",
+		"moves": 1,
+	})
+	var saved_after_provider := GameSession.get_analytics_events()
+	var dispatched_after_provider := AnalyticsGateway.get_dispatched_events_for_testing()
+	if saved_after_provider.size() != saved_before + 1:
+		errors.append("AnalyticsGateway validation should keep local save when provider override is active.")
+	if dispatched_after_provider.size() != dispatched_before + 1:
+		errors.append("AnalyticsGateway validation provider override should queue exactly one event.")
+	elif not saved_after_provider.is_empty():
+		_validate_gateway_event_matches_saved_event(
+			Dictionary(saved_after_provider[saved_after_provider.size() - 1]),
+			Dictionary(dispatched_after_provider[dispatched_after_provider.size() - 1]),
+			"validation_sdk",
+			"queued",
+			"provider override",
+			errors
+		)
+	if AnalyticsGateway.get_rejected_events_for_testing().size() != rejected_before:
+		errors.append("AnalyticsGateway provider override should not reject a valid event.")
+
+	AnalyticsGateway.set_dispatch_enabled_for_testing(false)
+	GameSession.record_analytics_event("stage_start", {
+		"stage_id": 1000,
+		"band": "validation",
+		"roster_group": "validation",
+		"moves": 1,
+	})
+	var saved_after_disabled := GameSession.get_analytics_events()
+	var dispatched_after_disabled := AnalyticsGateway.get_dispatched_events_for_testing()
+	if saved_after_disabled.size() != saved_after_provider.size() + 1:
+		errors.append("AnalyticsGateway disabled dispatch should still preserve local analytics save.")
+	if dispatched_after_disabled.size() != dispatched_after_provider.size():
+		errors.append("AnalyticsGateway disabled dispatch should not queue provider events.")
+
+	AnalyticsGateway.set_dispatch_enabled_for_testing(true)
+	var rejected_before_invalid := AnalyticsGateway.get_rejected_events_for_testing().size()
+	var dispatched_before_invalid := AnalyticsGateway.get_dispatched_events_for_testing().size()
+	GameSession.record_analytics_event("stage_start", {"stage_id": 1001})
+	var saved_after_invalid := GameSession.get_analytics_events()
+	var rejected_after_invalid := AnalyticsGateway.get_rejected_events_for_testing()
+	if saved_after_invalid.size() != saved_after_disabled.size() + 1:
+		errors.append("AnalyticsGateway contract rejection should still preserve invalid local analytics save for debugging.")
+	if AnalyticsGateway.get_dispatched_events_for_testing().size() != dispatched_before_invalid:
+		errors.append("AnalyticsGateway contract rejection should not queue missing-param events.")
+	if rejected_after_invalid.size() != rejected_before_invalid + 1:
+		errors.append("AnalyticsGateway contract rejection should record missing-param rejection.")
+	elif not saved_after_invalid.is_empty():
+		var rejection_event := Dictionary(rejected_after_invalid[rejected_after_invalid.size() - 1])
+		_validate_gateway_event_matches_saved_event(
+			Dictionary(saved_after_invalid[saved_after_invalid.size() - 1]),
+			rejection_event,
+			"validation_sdk",
+			"rejected_contract",
+			"missing-param rejection",
+			errors
+		)
+		_validate_gateway_rejection_reasons(rejection_event, PackedStringArray(["band", "roster_group", "moves"]), "missing-param rejection", errors)
+
+	var rejected_before_unknown := AnalyticsGateway.get_rejected_events_for_testing().size()
+	var dispatched_before_unknown := AnalyticsGateway.get_dispatched_events_for_testing().size()
+	GameSession.record_analytics_event("__unknown_validation_event", {"foo": "bar"})
+	var saved_after_unknown := GameSession.get_analytics_events()
+	var rejected_after_unknown := AnalyticsGateway.get_rejected_events_for_testing()
+	if saved_after_unknown.size() != saved_after_invalid.size() + 1:
+		errors.append("AnalyticsGateway unknown-event rejection should still preserve local analytics save for debugging.")
+	if AnalyticsGateway.get_dispatched_events_for_testing().size() != dispatched_before_unknown:
+		errors.append("AnalyticsGateway contract rejection should not queue unknown events.")
+	if rejected_after_unknown.size() != rejected_before_unknown + 1:
+		errors.append("AnalyticsGateway contract rejection should record unknown-event rejection.")
+	elif not saved_after_unknown.is_empty():
+		var rejection_event := Dictionary(rejected_after_unknown[rejected_after_unknown.size() - 1])
+		_validate_gateway_event_matches_saved_event(
+			Dictionary(saved_after_unknown[saved_after_unknown.size() - 1]),
+			rejection_event,
+			"validation_sdk",
+			"rejected_contract",
+			"unknown-event rejection",
+			errors
+		)
+		_validate_gateway_rejection_reasons(rejection_event, PackedStringArray(["__unknown_event__"]), "unknown-event rejection", errors)
+
+	AnalyticsGateway.set_provider_id_for_testing(AnalyticsGateway.DEFAULT_PROVIDER_ID)
+	AnalyticsGateway.set_dispatch_enabled_for_testing(true)
+
+
+func _validate_gateway_event_matches_saved_event(saved_event: Dictionary, gateway_event: Dictionary, expected_provider_id: String, expected_status: String, context: String, errors: PackedStringArray) -> void:
+	var saved_name := String(saved_event.get("name", ""))
+	var gateway_name := String(gateway_event.get("name", ""))
+	if gateway_name != saved_name:
+		errors.append("AnalyticsGateway %s should preserve event name %s, got %s." % [context, saved_name, gateway_name])
+	if int(gateway_event.get("timestamp", -2)) != int(saved_event.get("timestamp", -1)):
+		errors.append("AnalyticsGateway %s should preserve event timestamp for %s." % [context, saved_name])
+	var saved_params := Dictionary(saved_event.get("params", {}))
+	var gateway_params := Dictionary(gateway_event.get("params", {}))
+	if gateway_params != saved_params:
+		errors.append("AnalyticsGateway %s should preserve params for %s." % [context, saved_name])
+	if String(gateway_event.get("provider_id", "")) != expected_provider_id:
+		errors.append("AnalyticsGateway %s should use provider %s for %s." % [context, expected_provider_id, saved_name])
+	if String(gateway_event.get("dispatch_status", "")) != expected_status:
+		errors.append("AnalyticsGateway %s should mark %s as %s." % [context, saved_name, expected_status])
+
+
+func _validate_gateway_rejection_reasons(gateway_event: Dictionary, expected_reasons: PackedStringArray, context: String, errors: PackedStringArray) -> void:
+	var reasons := Array(gateway_event.get("rejection_reasons", []))
+	for expected_reason in expected_reasons:
+		if not reasons.has(expected_reason):
+			errors.append("AnalyticsGateway %s should include rejection reason %s." % [context, expected_reason])
 
 
 func _last_analytics_event_by_name(event_name: String) -> Dictionary:
