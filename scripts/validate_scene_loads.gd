@@ -1145,13 +1145,27 @@ func _validate_special_combo_swap_runtime(node: Node, errors: PackedStringArray)
 			errors.append("%s should expose %s for special combo runtime smoke." % [GAMEPLAY_SCENE_PATH, method_name])
 			return
 
-	var from_cell := Vector2i(3, 3)
-	var to_cell := Vector2i(3, 4)
-	var obstacle_cell := Vector2i(2, 4)
+	var scenarios: Array = [
+		{"label": "row+column", "from_special": "row", "to_special": "col", "from_cell": Vector2i(3, 3), "to_cell": Vector2i(3, 4), "obstacle_cell": Vector2i(2, 4)},
+		{"label": "row+row", "from_special": "row", "to_special": "row", "from_cell": Vector2i(3, 3), "to_cell": Vector2i(3, 4), "obstacle_cell": Vector2i(3, 0)},
+		{"label": "column+column", "from_special": "col", "to_special": "col", "from_cell": Vector2i(3, 3), "to_cell": Vector2i(4, 3), "obstacle_cell": Vector2i(0, 3)},
+		{"label": "row+bomb", "from_special": "row", "to_special": "bomb", "from_cell": Vector2i(3, 3), "to_cell": Vector2i(3, 4), "obstacle_cell": Vector2i(2, 4)},
+		{"label": "column+bomb", "from_special": "col", "to_special": "bomb", "from_cell": Vector2i(3, 3), "to_cell": Vector2i(4, 3), "obstacle_cell": Vector2i(4, 4)},
+		{"label": "bomb+bomb", "from_special": "bomb", "to_special": "bomb", "from_cell": Vector2i(3, 3), "to_cell": Vector2i(3, 4), "obstacle_cell": Vector2i(2, 3)},
+	]
+	for scenario in scenarios:
+		await _run_special_combo_swap_runtime_scenario(node, Dictionary(scenario), errors)
+
+
+func _run_special_combo_swap_runtime_scenario(node: Node, scenario: Dictionary, errors: PackedStringArray) -> void:
+	var label := String(scenario.get("label", "special combo"))
+	var from_cell: Vector2i = scenario.get("from_cell", Vector2i.ZERO)
+	var to_cell: Vector2i = scenario.get("to_cell", Vector2i.ZERO)
+	var obstacle_cell: Vector2i = scenario.get("obstacle_cell", Vector2i.ZERO)
 	node.call("_start_stage", 30)
 	var board_data: Array = _seed_plain_gameplay_board(node)
-	board_data[from_cell.x][from_cell.y] = node.call("_make_piece", "rabbit", "row")
-	board_data[to_cell.x][to_cell.y] = node.call("_make_piece", "bear", "col")
+	board_data[from_cell.x][from_cell.y] = node.call("_make_piece", "rabbit", String(scenario.get("from_special", "")))
+	board_data[to_cell.x][to_cell.y] = node.call("_make_piece", "bear", String(scenario.get("to_special", "")))
 	node.set("board_data", board_data)
 	var obstacle_data: Array = node.get("obstacle_data")
 	obstacle_data[obstacle_cell.x][obstacle_cell.y] = 1
@@ -1162,16 +1176,16 @@ func _validate_special_combo_swap_runtime(node: Node, errors: PackedStringArray)
 	await node.call("_resolve_swap", from_cell, to_cell)
 
 	if bool(node.get("is_busy")):
-		errors.append("%s special combo runtime smoke should release is_busy after _resolve_swap." % GAMEPLAY_SCENE_PATH)
+		errors.append("%s %s runtime smoke should release is_busy after _resolve_swap." % [GAMEPLAY_SCENE_PATH, label])
 	if int(node.get("remaining_moves")) != moves_before - 1:
-		errors.append("%s special combo runtime smoke should consume exactly one move, got %d from %d." % [GAMEPLAY_SCENE_PATH, int(node.get("remaining_moves")), moves_before])
+		errors.append("%s %s runtime smoke should consume exactly one move, got %d from %d." % [GAMEPLAY_SCENE_PATH, label, int(node.get("remaining_moves")), moves_before])
 	if int(node.get("score")) <= score_before:
-		errors.append("%s special combo runtime smoke should increase score through _resolve_swap." % GAMEPLAY_SCENE_PATH)
+		errors.append("%s %s runtime smoke should increase score through _resolve_swap." % [GAMEPLAY_SCENE_PATH, label])
 	obstacle_data = node.get("obstacle_data")
 	if int(obstacle_data[obstacle_cell.x][obstacle_cell.y]) != 0:
-		errors.append("%s special combo runtime smoke should clear an obstacle on the combo path." % GAMEPLAY_SCENE_PATH)
+		errors.append("%s %s runtime smoke should clear an obstacle on the combo path." % [GAMEPLAY_SCENE_PATH, label])
 	if String(node.get("stage_state")) != "playing":
-		errors.append("%s special combo runtime smoke should leave Stage 31 in playing state, got %s." % [GAMEPLAY_SCENE_PATH, String(node.get("stage_state"))])
+		errors.append("%s %s runtime smoke should leave Stage 31 in playing state, got %s." % [GAMEPLAY_SCENE_PATH, label, String(node.get("stage_state"))])
 
 
 func _validate_start_booster_runtime_rules(node: Node, errors: PackedStringArray) -> void:
