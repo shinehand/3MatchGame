@@ -20,6 +20,7 @@
 - 핵심 씬 로드 스모크 체크 (`main`, `stage_select`, `gameplay`, 카드/타일/목표 칩)
 - 실제 홈 첫 화면의 `GameHomeLayer` CTA/하단 내비게이션과 설정 overlay 토글 확인
 - 게임플레이 보드 64칸 생성과 스테이지 선택 카드 100장 생성 확인
+- Mobile viewport matrix smoke: `1080x1920`, `720x1280`, `390x844`, `1920x1080`, `1280x720`, `844x390` 요청 window에서 실제 logical viewport 기준 레이아웃을 확인
 - Critical UI text stress: Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay에 장문 pseudo-localization title/body/CTA를 주입해 viewport/panel bounds와 CTA overlap을 확인
 - Godot 헤드리스 로드
 - 파일 직접 읽기 안티패턴 스캔
@@ -41,6 +42,7 @@
 - `match`: 제거 직전 우선순위가 가장 높고 `blink`, `smile`, `worried`가 덮지 못한다.
 - `worried`: 이동 수 3 이하 HUD 갱신 경로에서 목표 타일 일부에만 표시되고 동시에 4개 이하로 제한된다.
 - `fever`: 표정 자체는 Tween 기반이며 목표 UI, 특수 배지, 이동 수 HUD 판독성은 논리 앵커 smoke로 1차 확인한다.
+- Mobile viewport matrix는 Stage 4 세로 HUD의 `BoardFrame`, `HudGoalDock`, `HudBoosterDock`, `HudBuddyGauge`, `PortraitGoalSummary` bounds와 HUD/보드 겹침을 검사한다.
 
 아래 항목은 no-device readiness로 승인하지 않는다. 실제 기기 또는 시뮬레이터에서 portrait/landscape 물리 viewport를 확인해야 한다.
 
@@ -76,6 +78,7 @@
 - Stage Popup 닫기는 tween 이후 overlay를 숨기고 panel scale을 복구한다.
 - START 선택값 commit helper는 `GameSession.selected_stage_id`와 `GameSession.selected_pre_boosters`를 gameplay 전환 전에 저장한다.
 - Gameplay 시작 시 `GameSession.selected_pre_boosters`가 소비되고, 선택한 3종이 보드 특수 블록과 `stage_start`/`booster_used` analytics에 반영된다.
+- Mobile viewport matrix는 Stage 4 Stage Popup의 panel, title/goal/meta/reward/Buddy labels, START/close/booster buttons가 실제 logical viewport와 panel 안에 남는지 검사한다.
 - Stage 4 Stage Popup에 장문 title/goal/reward/Buddy/START 문구를 넣어도 panel 밖으로 넘치거나 Buddy 문구가 START CTA와 겹치지 않는다.
 
 아래 항목은 no-device readiness로 승인하지 않는다. 실제 기기 또는 시뮬레이터에서 수동 확인해야 한다.
@@ -108,6 +111,7 @@
 - Stage 1 FTUE 실패 판정 경로에서 실패 overlay는 `무료 재도전` CTA를 보여 주고 보상형 광고/IAP 문구를 노출하지 않는다.
 - Stage 25 near-miss 실패 판정 경로에서 실패 overlay가 표시되고, 실패 유형, 남은 목표, `놓친 핵심`, `다음 한 수`, 추천 부스터, `+3 이동 받고 계속`/`재도전` CTA를 보여 준다.
 - 실패 overlay helper smoke는 수집 동물 미달, 점수 미달, 덤불 미달의 `놓친 핵심`/`다음 한 수` 문구를 분리 검증한다.
+- Mobile viewport matrix는 Stage 25 실패 overlay panel/title/body/primary/secondary CTA bounds와 body-to-CTA overlap을 portrait/landscape 분기에서 검사한다.
 - Stage 25 실패 overlay에 장문 title/body와 continue/retry CTA를 넣어도 panel 밖으로 넘치거나 body가 primary CTA를 침범하지 않는다.
 - Stage 20 `loyal_fetch`는 `_check_stage_state()`의 실패 판정 경로에서 실패 overlay와 `stage_fail`/`fail_offer_show`를 띄우기 전에 구조 이동 1회를 지급하는지 검증한다.
 - `+3 이동 받고 계속` primary CTA는 overlay를 닫고 `remaining_moves = 3`, `stage_state = playing`으로 실제 재개한다.

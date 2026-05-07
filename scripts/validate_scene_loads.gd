@@ -40,6 +40,14 @@ const SPECIAL_COMBO_MANUAL_ROWS := ["row+column", "row+row", "column+column", "r
 const CRITICAL_TEXT_STRESS_TITLE := "[長文QA] Rescue Ready SuperLongLocalizationToken"
 const CRITICAL_TEXT_STRESS_BODY := "[長文QA] 구조 목표가 길어져도 버튼과 본문이 겹치지 않아야 합니다 SuperLongUnbrokenLocalizationToken"
 const CRITICAL_TEXT_STRESS_CTA := "START 구조 시작"
+const MOBILE_VIEWPORT_MATRIX := [
+	Vector2i(1080, 1920),
+	Vector2i(720, 1280),
+	Vector2i(390, 844),
+	Vector2i(1920, 1080),
+	Vector2i(1280, 720),
+	Vector2i(844, 390),
+]
 
 var representative_stage_ids: Array[int] = [1, 11, 25, 50, 75, 100]
 var tutorial_stage_ids: Array[int] = [1, 11, 25, 45, 65, 85, 95]
@@ -178,11 +186,26 @@ func _validate_viewport_resilience(scene_path: String, node: Node, errors: Packe
 	if not [MAIN_SCENE_PATH, STAGE_SELECT_SCENE_PATH, GAMEPLAY_SCENE_PATH, COLLECTION_SCENE_PATH].has(scene_path):
 		return
 
-	# The project uses Godot stretch/canvas_items with a 1080x1920 logical canvas.
-	# Headless validation should therefore inspect the logical safe area instead of
-	# forcing physical window sizes, which would bypass the runtime stretch contract.
+	var original_size := root.size
+	for viewport_size_target: Vector2i in MOBILE_VIEWPORT_MATRIX:
+		root.size = viewport_size_target
+		await _refresh_node_layout_for_viewport(node)
+		var viewport_size := Vector2i(root.get_visible_rect().size)
+		_validate_viewport_layout_for_scene(scene_path, node, viewport_size, errors)
+		await _validate_critical_runtime_viewport_state(scene_path, node, viewport_size, errors)
+	root.size = original_size
+	await _refresh_node_layout_for_viewport(node)
+
+
+func _refresh_node_layout_for_viewport(node: Node) -> void:
 	await process_frame
-	var viewport_size := Vector2i(root.get_visible_rect().size)
+	if node != null and node.has_method("_apply_responsive_layout"):
+		node.call("_apply_responsive_layout")
+	await process_frame
+	await process_frame
+
+
+func _validate_viewport_layout_for_scene(scene_path: String, node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
 	match scene_path:
 		MAIN_SCENE_PATH:
 			_validate_main_viewport_layout(node, viewport_size, errors)
@@ -192,6 +215,14 @@ func _validate_viewport_resilience(scene_path: String, node: Node, errors: Packe
 			_validate_gameplay_viewport_layout(node, viewport_size, errors)
 		COLLECTION_SCENE_PATH:
 			_validate_collection_viewport_layout(node, viewport_size, errors)
+
+
+func _validate_critical_runtime_viewport_state(scene_path: String, node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
+	match scene_path:
+		GAMEPLAY_SCENE_PATH:
+			await _validate_gameplay_mobile_viewport_matrix(node, viewport_size, errors)
+		STAGE_SELECT_SCENE_PATH:
+			await _validate_stage_popup_mobile_viewport_matrix(node, viewport_size, errors)
 
 
 func _validate_main_viewport_layout(node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
@@ -222,7 +253,46 @@ func _validate_stage_select_viewport_layout(node: Node, viewport_size: Vector2i,
 			errors.append("%s expected 10 visible world stage nodes at %s, got %d." % [STAGE_SELECT_SCENE_PATH, viewport_size, visible_world_nodes])
 
 
+func _validate_stage_popup_mobile_viewport_matrix(node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
+	if not node.has_method("_show_stage_popup"):
+		return
+	node.call("_show_stage_popup", 4)
+	await create_timer(0.22).timeout
+	await _refresh_node_layout_for_viewport(node)
+	var panel := node.get("stage_popup_panel") as Control
+	var title_label := node.get("stage_popup_title_label") as Control
+	var goal_label := node.get("stage_popup_goal_label") as Control
+	var meta_label := node.get("stage_popup_meta_label") as Control
+	var reward_label := node.get("stage_popup_reward_label") as Control
+	var buddy_label := node.get("stage_popup_buddy_label") as Control
+	var start_button := _find_button_with_text(node, "START")
+	var close_button := _find_button_with_text(node, "×")
+	_validate_control_in_viewport(panel, viewport_size, STAGE_SELECT_SCENE_PATH, "Stage 4 mobile matrix StagePopupPanel", errors)
+	for control_info in [
+		[title_label, "StagePopupTitle"],
+		[goal_label, "StagePopupGoal"],
+		[meta_label, "StagePopupMeta"],
+		[reward_label, "StagePopupReward"],
+		[buddy_label, "StagePopupBuddy"],
+		[start_button, "StagePopupStartButton"],
+		[close_button, "StagePopupCloseButton"],
+	]:
+		var control := control_info[0] as Control
+		var label := String(control_info[1])
+		_validate_control_in_viewport(control, viewport_size, STAGE_SELECT_SCENE_PATH, "Stage 4 mobile matrix %s" % label, errors)
+		if panel != null and control != null and control != panel:
+			_validate_control_inside_container(control, panel, STAGE_SELECT_SCENE_PATH, "Stage 4 mobile matrix %s" % label, errors)
+	_validate_no_vertical_overlap(buddy_label, start_button, STAGE_SELECT_SCENE_PATH, "Stage 4 mobile matrix Buddy to START", errors)
+	var booster_buttons: Dictionary = Dictionary(node.get("stage_popup_booster_buttons"))
+	for booster_id in ["rainbow_paw", "striped", "bomb"]:
+		var booster_button := booster_buttons.get(booster_id) as Control
+		_validate_control_in_viewport(booster_button, viewport_size, STAGE_SELECT_SCENE_PATH, "Stage 4 mobile matrix booster %s" % booster_id, errors)
+		if panel != null and booster_button != null:
+			_validate_control_inside_container(booster_button, panel, STAGE_SELECT_SCENE_PATH, "Stage 4 mobile matrix booster %s" % booster_id, errors)
+
+
 func _validate_gameplay_viewport_layout(node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
+	var portrait := viewport_size.y >= viewport_size.x
 	var board_frame := node.get_node_or_null("SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame") as Control
 	_validate_control_in_viewport(board_frame, viewport_size, GAMEPLAY_SCENE_PATH, "BoardFrame", errors)
 	if board_frame != null:
@@ -230,10 +300,68 @@ func _validate_gameplay_viewport_layout(node: Node, viewport_size: Vector2i, err
 		var min_expected_board_side: float = min(float(viewport_size.x), float(viewport_size.y)) * 0.46
 		if board_rect.size.x < min_expected_board_side or board_rect.size.y < min_expected_board_side:
 			errors.append("%s BoardFrame is too small at %s: %s, expected each side >= %.1f." % [GAMEPLAY_SCENE_PATH, viewport_size, board_rect.size, min_expected_board_side])
-	_validate_control_in_viewport(node.find_child("HudGoalDock", true, false), viewport_size, GAMEPLAY_SCENE_PATH, "HudGoalDock", errors)
-	_validate_control_in_viewport(node.find_child("HudBoosterDock", true, false), viewport_size, GAMEPLAY_SCENE_PATH, "HudBoosterDock", errors)
+	if portrait:
+		_validate_control_in_viewport(node.find_child("HudGoalDock", true, false), viewport_size, GAMEPLAY_SCENE_PATH, "HudGoalDock", errors)
+		_validate_control_in_viewport(node.find_child("HudBoosterDock", true, false), viewport_size, GAMEPLAY_SCENE_PATH, "HudBoosterDock", errors)
+	else:
+		_validate_control_in_viewport(node.find_child("StatsCard", true, false), viewport_size, GAMEPLAY_SCENE_PATH, "StatsCard landscape", errors)
+		_validate_control_in_viewport(node.find_child("GoalCard", true, false), viewport_size, GAMEPLAY_SCENE_PATH, "GoalCard landscape", errors)
 	if node.find_child("HudBuddyGauge", true, false) == null:
 		errors.append("%s missing responsive layout target HudBuddyGauge at %s." % [GAMEPLAY_SCENE_PATH, viewport_size])
+
+
+func _validate_gameplay_mobile_viewport_matrix(node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
+	if not node.has_method("_start_stage") or not node.has_method("_check_stage_state"):
+		return
+	var portrait := viewport_size.y >= viewport_size.x
+	if portrait:
+		node.call("_start_stage", 3)
+		await _refresh_node_layout_for_viewport(node)
+		_validate_gameplay_hud_clearance(node, viewport_size, "Stage 4 mobile matrix", errors)
+
+	_prepare_stage_25_near_miss_failure(node)
+	await node.call("_check_stage_state")
+	await _refresh_node_layout_for_viewport(node)
+	_validate_failure_overlay_viewport_clearance(node, viewport_size, "Stage 25 mobile matrix", errors)
+
+	node.call("_start_stage", 0)
+	await _refresh_node_layout_for_viewport(node)
+
+
+func _validate_gameplay_hud_clearance(node: Node, viewport_size: Vector2i, context: String, errors: PackedStringArray) -> void:
+	var board_frame := node.get_node_or_null("SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame") as Control
+	var goal_dock := node.find_child("HudGoalDock", true, false) as Control
+	var booster_dock := node.find_child("HudBoosterDock", true, false) as Control
+	var buddy_gauge := node.find_child("HudBuddyGauge", true, false) as Control
+	var portrait_summary := node.find_child("PortraitGoalSummary", true, false) as Control
+	for control_info in [[board_frame, "BoardFrame"], [goal_dock, "HudGoalDock"], [booster_dock, "HudBoosterDock"], [buddy_gauge, "HudBuddyGauge"]]:
+		var control := control_info[0] as Control
+		var label := String(control_info[1])
+		_validate_control_in_viewport(control, viewport_size, GAMEPLAY_SCENE_PATH, "%s %s" % [context, label], errors)
+	if portrait_summary != null and portrait_summary.is_visible_in_tree():
+		_validate_control_in_viewport(portrait_summary, viewport_size, GAMEPLAY_SCENE_PATH, "%s PortraitGoalSummary" % context, errors)
+	if goal_dock == null or booster_dock == null or board_frame == null:
+		return
+	if goal_dock.is_visible_in_tree() and board_frame.is_visible_in_tree() and goal_dock.get_global_rect().intersects(board_frame.get_global_rect()):
+		errors.append("%s %s should keep HudGoalDock clear of BoardFrame at %s." % [GAMEPLAY_SCENE_PATH, context, viewport_size])
+	if booster_dock.is_visible_in_tree() and board_frame.is_visible_in_tree() and booster_dock.get_global_rect().intersects(board_frame.get_global_rect()):
+		errors.append("%s %s should keep HudBoosterDock clear of BoardFrame at %s." % [GAMEPLAY_SCENE_PATH, context, viewport_size])
+
+
+func _validate_failure_overlay_viewport_clearance(node: Node, viewport_size: Vector2i, context: String, errors: PackedStringArray) -> void:
+	var panel := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel") as Control
+	var title := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayTitle") as Control
+	var body := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayBody") as Control
+	var primary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlayPrimaryButton") as Control
+	var secondary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlaySecondaryButton") as Control
+	for control_info in [[panel, "OverlayPanel"], [title, "OverlayTitle"], [body, "OverlayBody"], [primary, "OverlayPrimaryButton"], [secondary, "OverlaySecondaryButton"]]:
+		var control := control_info[0] as Control
+		var label := String(control_info[1])
+		_validate_control_in_viewport(control, viewport_size, GAMEPLAY_SCENE_PATH, "%s %s" % [context, label], errors)
+		if panel != null and control != null and control != panel:
+			_validate_control_inside_container(control, panel, GAMEPLAY_SCENE_PATH, "%s %s" % [context, label], errors)
+	_validate_no_vertical_overlap(body, primary, GAMEPLAY_SCENE_PATH, "%s OverlayBody to primary CTA" % context, errors)
+	_validate_no_vertical_overlap(body, secondary, GAMEPLAY_SCENE_PATH, "%s OverlayBody to secondary CTA" % context, errors)
 
 
 func _validate_collection_viewport_layout(node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
