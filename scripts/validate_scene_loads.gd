@@ -509,6 +509,8 @@ func _validate_analytics_gateway_contract_gate(errors: PackedStringArray) -> voi
 	if AnalyticsGateway.get_rejected_events_for_testing().size() != rejected_before_flush:
 		errors.append("AnalyticsGateway flush should not mutate rejected contract events.")
 	_validate_gateway_flush_order(queued_before_flush, flushed_events, errors)
+	_validate_analytics_gateway_corrupt_queue_tolerance(errors)
+	_validate_analytics_gateway_bounded_queue(errors)
 
 	AnalyticsGateway.set_provider_id_for_testing(AnalyticsGateway.DEFAULT_PROVIDER_ID)
 	AnalyticsGateway.set_dispatch_enabled_for_testing(true)
@@ -569,6 +571,55 @@ func _mutate_and_reject_gateway_flush_event(event: Dictionary) -> bool:
 	params["stage_id"] = -999
 	event["params"] = params
 	return false
+
+
+func _validate_analytics_gateway_corrupt_queue_tolerance(errors: PackedStringArray) -> void:
+	AnalyticsGateway.clear_persisted_queue_for_testing()
+	_write_validation_analytics_queue("{not valid json")
+	AnalyticsGateway.reload_queue_from_disk_for_testing()
+	if AnalyticsGateway.get_dispatched_events_for_testing().size() != 0:
+		errors.append("AnalyticsGateway should ignore corrupt local_buffer queue files without replaying stale events.")
+	AnalyticsGateway.clear_persisted_queue_for_testing()
+
+
+func _validate_analytics_gateway_bounded_queue(errors: PackedStringArray) -> void:
+	AnalyticsGateway.clear_persisted_queue_for_testing()
+	AnalyticsGateway.set_provider_id_for_testing("bounded_validation_sdk")
+	for index in range(AnalyticsGateway.MAX_DISPATCHED_EVENTS + 1):
+		var event_entry := {
+			"name": "stage_start",
+			"timestamp": 1700000000 + index,
+			"params": {
+				"session_id": "bounded_validation",
+				"stage_id": index,
+				"band": "validation",
+				"roster_group": "validation",
+				"moves": 1,
+			},
+		}
+		AnalyticsGateway.dispatch_event(event_entry)
+	AnalyticsGateway.reload_queue_from_disk_for_testing()
+	var bounded_events := AnalyticsGateway.get_dispatched_events_for_testing()
+	if bounded_events.size() != AnalyticsGateway.MAX_DISPATCHED_EVENTS:
+		errors.append("AnalyticsGateway persisted local_buffer queue should stay bounded at %d events." % AnalyticsGateway.MAX_DISPATCHED_EVENTS)
+	elif not bounded_events.is_empty():
+		var first_event := Dictionary(bounded_events[0])
+		var first_params := Dictionary(first_event.get("params", {}))
+		if int(first_params.get("stage_id", -1)) != 1:
+			errors.append("AnalyticsGateway bounded local_buffer queue should evict the oldest event first.")
+		var last_event := Dictionary(bounded_events[bounded_events.size() - 1])
+		var last_params := Dictionary(last_event.get("params", {}))
+		if int(last_params.get("stage_id", -1)) != AnalyticsGateway.MAX_DISPATCHED_EVENTS:
+			errors.append("AnalyticsGateway bounded local_buffer queue should preserve the newest event.")
+	AnalyticsGateway.clear_persisted_queue_for_testing()
+	AnalyticsGateway.set_provider_id_for_testing("validation_sdk")
+
+
+func _write_validation_analytics_queue(raw_json: String) -> void:
+	DirAccess.make_dir_recursive_absolute("user://")
+	var file := FileAccess.open(SESSION_VALIDATION_ANALYTICS_QUEUE_PATH, FileAccess.WRITE)
+	if file != null:
+		file.store_string(raw_json)
 
 
 func _analytics_values_equivalent(left, right) -> bool:

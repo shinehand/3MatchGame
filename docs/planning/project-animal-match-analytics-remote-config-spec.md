@@ -88,7 +88,7 @@
 
 혼합 보상은 `reward_type=mixed`로 기록하고, 선택 파라미터 `reward_breakdown`에 `gold`, `tokens`, `boosters` 구성 요소를 함께 남긴다.
 원격 설정 노출은 세션별 `variant_id + config_key` 기준으로 중복 기록을 막고, 선택 파라미터 `remote_config_version`, `source`를 함께 남길 수 있다.
-SDK 공급자 결정 전 분석 이벤트는 `AnalyticsGateway`의 `local_buffer` provider로 queued dispatch 상태를 남긴다. 이 local buffer는 `user://` JSON 큐로 보존되어 다음 세션 reload 후에도 순서를 유지하며, adapter가 `flush_queued_events`로 성공 전송한 항목은 pending queue에서 제거한다. 필수 파라미터가 빠졌거나 계약에 없는 이벤트는 로컬 디버그 저장에는 남기되 provider queue에는 싣지 않고 `rejected_contract`로 격리한다. 실제 Firebase/GameAnalytics/custom SDK는 이 gateway adapter 뒤에 연결한다.
+SDK 공급자 결정 전 분석 이벤트는 `AnalyticsGateway`의 `local_buffer` provider로 queued dispatch 상태를 남긴다. 이 local buffer는 `user://` JSON 큐로 보존되어 다음 세션 reload 후에도 순서를 유지하며, adapter가 `flush_queued_events`로 성공 전송한 항목은 pending queue에서 제거한다. 큐는 최대 320개로 제한하고 깨진 JSON 파일은 stale replay 없이 무시한다. 필수 파라미터가 빠졌거나 계약에 없는 이벤트는 로컬 디버그 저장에는 남기되 provider queue에는 싣지 않고 `rejected_contract`로 격리한다. 실제 Firebase/GameAnalytics/custom SDK는 이 gateway adapter 뒤에 연결한다.
 
 ## 3. 원격 설정 키
 
@@ -133,7 +133,7 @@ SDK 공급자 결정 전 분석 이벤트는 `AnalyticsGateway`의 `local_buffer
 ## 6. 구현 완료 기준
 
 - 필수 이벤트명과 파라미터를 `data/analytics_events.json` 또는 동등한 계약 파일에서 검증할 수 있다.
-- `GameSession`에 저장된 계약 통과 런타임 이벤트는 provider-neutral `AnalyticsGateway`로도 전달되며, SDK 선택 전에는 `local_buffer` queued dispatch, disk reload 보존, 순차 flush 후 pending queue 제거로 검증된다.
+- `GameSession`에 저장된 계약 통과 런타임 이벤트는 provider-neutral `AnalyticsGateway`로도 전달되며, SDK 선택 전에는 `local_buffer` queued dispatch, disk reload 보존, 순차 flush 후 pending queue 제거, corrupt queue tolerance, bounded queue eviction으로 검증된다.
 - 계약 위반 이벤트는 SDK provider queue로 전달되지 않고 `rejected_contract` 상태와 거절 사유를 남긴다.
 - 원격 설정 누락 시 기본값으로 안전하게 동작한다.
 - 디버그 빌드에서 이벤트 로그를 사람이 읽을 수 있다.

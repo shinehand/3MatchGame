@@ -140,7 +140,11 @@ static func _load_queue() -> void:
 	_dispatched_events.clear()
 	if not FileAccess.file_exists(_queue_path):
 		return
-	var parsed = JSON.parse_string(FileAccess.get_file_as_string(_queue_path))
+	var json := JSON.new()
+	var parse_error := json.parse(FileAccess.get_file_as_string(_queue_path))
+	if parse_error != OK:
+		return
+	var parsed = json.data
 	if not (parsed is Array):
 		return
 	for event_value in Array(parsed):
