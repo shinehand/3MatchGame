@@ -100,6 +100,7 @@
 - 4매치 특수 블록이 생성된다.
 - 5매치 특수 블록이 생성된다.
 - 자동 headless fixture가 row+column, row+row, column+column, row+bomb, column+bomb, bomb+bomb 6종 특수 조합을 중복 제거 없이 검증하고, Stage 31 실제 swap smoke가 6종 모두의 이동 수/점수/장애물/`is_busy` 복귀를 검증한다. `FxLayer` smoke는 특수 조합 전용 flash/ring/label VFX 생성도 확인한다.
+- `FxLayer` smoke는 매치 burst, 특수 생성, 특수 조합, 콤보 배너, 목표 완료, 이동 경고, 보너스 점수, 무지개 VFX를 동시에 호출한 뒤 child count 상한과 transient node cleanup을 확인한다.
 - Stage 31 실제 플레이에서 6종 특수 조합의 VFX 겹침, 낙하/리필 연결, 터치감을 수동 확인한다.
 - Stage 4/5/8/16/18/20/24/25/31/41/51/81 첫 등장 Rescue Buddy가 보드/게이지/장애물/점수/추천/구조 이동에 과한 지연 없이 반응한다.
 - 덤불 스테이지에서 장애물 오버레이와 목표 칩이 함께 보인다.

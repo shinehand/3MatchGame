@@ -73,6 +73,7 @@
 ## Gate 6. 성능
 
 - 일반 매치 파티클은 10개 이하, 특수 블록 파티클은 40개 이하를 기준으로 한다.
+- FxLayer scene smoke는 매치/특수 생성/특수 조합/무지개/목표/경고/점수 VFX 동시 호출 시 child count 상한과 cleanup을 검증한다.
 - idle expression은 atlas region 변경 또는 단일 Tween 위주로 처리한다.
 - 동물별 개별 Timer를 64개 타일 전체에 붙이지 않는다.
 - 저사양 기준에서 콤보 5단계 연출 중 체감 입력 지연이 없어야 한다.

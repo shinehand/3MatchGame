@@ -519,7 +519,7 @@ func _validate_fx_layer_scene(node: Node, errors: PackedStringArray) -> void:
 	for root_name in ["BoardFxRoot", "HudFxRoot", "ScreenFxRoot"]:
 		if node.get_node_or_null(root_name) == null:
 			errors.append("%s is missing %s." % [FX_LAYER_SCENE_PATH, root_name])
-	for method_name in ["play_match_burst_at", "play_special_created", "play_special_combo", "play_combo_banner", "play_rainbow_clear"]:
+	for method_name in ["play_match_burst_at", "play_special_created", "play_special_combo", "play_combo_banner", "play_goal_rescue", "play_last_moves_warning", "play_bonus_score", "play_rainbow_clear"]:
 		if not node.has_method(method_name):
 			errors.append("%s should expose %s for gameplay VFX calls." % [FX_LAYER_SCENE_PATH, method_name])
 
@@ -527,7 +527,20 @@ func _validate_fx_layer_scene(node: Node, errors: PackedStringArray) -> void:
 func _validate_fx_layer_runtime(node: Node, errors: PackedStringArray) -> void:
 	if not node.has_method("play_special_combo"):
 		return
+	var board_root := node.get_node_or_null("BoardFxRoot")
+	var hud_root := node.get_node_or_null("HudFxRoot")
+	var screen_root := node.get_node_or_null("ScreenFxRoot")
+	if board_root == null or hud_root == null or screen_root == null:
+		return
+
 	node.call("play_special_combo", Vector2(180, 180), Vector2(280, 180), "row", "col")
+	node.call("play_match_burst_at", Vector2(220, 260), 2)
+	node.call("play_special_created", Vector2(340, 220), "bomb")
+	node.call("play_combo_banner", 3)
+	node.call("play_goal_rescue", Vector2(500, 180), "목표 완료!")
+	node.call("play_last_moves_warning", 2)
+	node.call("play_bonus_score", Vector2(460, 300), 750)
+	node.call("play_rainbow_clear", [Vector2(160, 360), Vector2(220, 360), Vector2(280, 360), Vector2(340, 360), Vector2(400, 360)])
 	await process_frame
 	await create_timer(0.04).timeout
 	if node.find_child("SpecialComboFlash", true, false) == null:
@@ -536,7 +549,17 @@ func _validate_fx_layer_runtime(node: Node, errors: PackedStringArray) -> void:
 		errors.append("%s play_special_combo should spawn SpecialComboRing." % FX_LAYER_SCENE_PATH)
 	if node.find_child("SpecialComboLabel", true, false) == null:
 		errors.append("%s play_special_combo should spawn SpecialComboLabel." % FX_LAYER_SCENE_PATH)
-	await create_timer(0.36).timeout
+	if node.find_child("RainbowFlash", true, false) == null:
+		errors.append("%s play_rainbow_clear should spawn RainbowFlash." % FX_LAYER_SCENE_PATH)
+	if board_root.get_child_count() > 12:
+		errors.append("%s BoardFxRoot should keep simultaneous no-device VFX children <= 12, got %d." % [FX_LAYER_SCENE_PATH, board_root.get_child_count()])
+	if hud_root.get_child_count() > 4:
+		errors.append("%s HudFxRoot should keep simultaneous no-device VFX children <= 4, got %d." % [FX_LAYER_SCENE_PATH, hud_root.get_child_count()])
+	if screen_root.get_child_count() > 6:
+		errors.append("%s ScreenFxRoot should keep simultaneous no-device VFX children <= 6, got %d." % [FX_LAYER_SCENE_PATH, screen_root.get_child_count()])
+	await create_timer(1.1).timeout
+	if board_root.get_child_count() != 0 or hud_root.get_child_count() != 0 or screen_root.get_child_count() != 0:
+		errors.append("%s VFX smoke should clean up transient child nodes, got board=%d hud=%d screen=%d." % [FX_LAYER_SCENE_PATH, board_root.get_child_count(), hud_root.get_child_count(), screen_root.get_child_count()])
 
 
 func _validate_expression_animation_rules(node: Node, errors: PackedStringArray) -> void:
