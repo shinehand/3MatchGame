@@ -1233,6 +1233,12 @@ func _resolve_special_combo_swap(from_cell: Vector2i, to_cell: Vector2i) -> void
 	var clear_cells := _special_combo_clear_cells(from_cell, to_cell)
 	var cleared_obstacle_cells := _damage_obstacles(clear_cells)
 	_charge_buddy_skill_for_clear_blocker(cleared_obstacle_cells.size())
+	_play_fx_method("play_special_combo", [
+		_tile_global_center(from_cell),
+		_tile_global_center(to_cell),
+		_piece_special(board_data[from_cell.x][from_cell.y]),
+		_piece_special(board_data[to_cell.x][to_cell.y]),
+	])
 	current_combo = 1
 	_apply_match_rewards(clear_cells, 1)
 	score += cleared_obstacle_cells.size() * 150

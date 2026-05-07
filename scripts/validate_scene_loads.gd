@@ -11,6 +11,7 @@ const MAIN_SCENE_PATH: String = "res://scenes/main.tscn"
 const STAGE_SELECT_SCENE_PATH: String = "res://scenes/stage_select.tscn"
 const COLLECTION_SCENE_PATH: String = "res://scenes/collection_screen.tscn"
 const GAMEPLAY_SCENE_PATH: String = "res://scenes/gameplay.tscn"
+const FX_LAYER_SCENE_PATH: String = "res://scenes/fx_layer.tscn"
 const STAGE_CARD_SCENE_PATH: String = "res://scenes/stage_card.tscn"
 const BLOCK_TILE_SCENE_PATH: String = "res://scenes/block_tile.tscn"
 const GOAL_CHIP_SCENE_PATH: String = "res://scenes/goal_chip.tscn"
@@ -51,6 +52,7 @@ func _run() -> void:
 		STAGE_SELECT_SCENE_PATH,
 		COLLECTION_SCENE_PATH,
 		GAMEPLAY_SCENE_PATH,
+		FX_LAYER_SCENE_PATH,
 		STAGE_CARD_SCENE_PATH,
 		BLOCK_TILE_SCENE_PATH,
 		GOAL_CHIP_SCENE_PATH,
@@ -118,6 +120,8 @@ func _validate_scene_specifics(scene_path: String, node: Node) -> PackedStringAr
 			_validate_main_scene(node, errors)
 		GAMEPLAY_SCENE_PATH:
 			_validate_gameplay_scene(node, errors)
+		FX_LAYER_SCENE_PATH:
+			_validate_fx_layer_scene(node, errors)
 		STAGE_SELECT_SCENE_PATH:
 			_validate_stage_select_scene(node, errors)
 		COLLECTION_SCENE_PATH:
@@ -131,6 +135,8 @@ func _validate_scene_runtime_specifics(scene_path: String, node: Node, errors: P
 		GAMEPLAY_SCENE_PATH:
 			await _validate_special_combo_swap_runtime(node, errors)
 			await _validate_result_overlay_runtime(node, errors)
+		FX_LAYER_SCENE_PATH:
+			await _validate_fx_layer_runtime(node, errors)
 
 
 func _validate_viewport_resilience(scene_path: String, node: Node, errors: PackedStringArray) -> void:
@@ -505,6 +511,30 @@ func _validate_gameplay_scene(node: Node, errors: PackedStringArray) -> void:
 	_validate_expression_animation_rules(node, errors)
 	_validate_rescue_buddy_runtime_rules(node, errors)
 	_validate_start_booster_runtime_rules(node, errors)
+
+
+func _validate_fx_layer_scene(node: Node, errors: PackedStringArray) -> void:
+	for root_name in ["BoardFxRoot", "HudFxRoot", "ScreenFxRoot"]:
+		if node.get_node_or_null(root_name) == null:
+			errors.append("%s is missing %s." % [FX_LAYER_SCENE_PATH, root_name])
+	for method_name in ["play_match_burst_at", "play_special_created", "play_special_combo", "play_combo_banner", "play_rainbow_clear"]:
+		if not node.has_method(method_name):
+			errors.append("%s should expose %s for gameplay VFX calls." % [FX_LAYER_SCENE_PATH, method_name])
+
+
+func _validate_fx_layer_runtime(node: Node, errors: PackedStringArray) -> void:
+	if not node.has_method("play_special_combo"):
+		return
+	node.call("play_special_combo", Vector2(180, 180), Vector2(280, 180), "row", "col")
+	await process_frame
+	await create_timer(0.04).timeout
+	if node.find_child("SpecialComboFlash", true, false) == null:
+		errors.append("%s play_special_combo should spawn SpecialComboFlash." % FX_LAYER_SCENE_PATH)
+	if node.find_child("SpecialComboRing", true, false) == null:
+		errors.append("%s play_special_combo should spawn SpecialComboRing." % FX_LAYER_SCENE_PATH)
+	if node.find_child("SpecialComboLabel", true, false) == null:
+		errors.append("%s play_special_combo should spawn SpecialComboLabel." % FX_LAYER_SCENE_PATH)
+	await create_timer(0.36).timeout
 
 
 func _validate_expression_animation_rules(node: Node, errors: PackedStringArray) -> void:

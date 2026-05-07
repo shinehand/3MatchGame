@@ -53,6 +53,51 @@ func play_special_created(global_position: Vector2, special_type: String) -> voi
 	label.queue_free()
 
 
+func play_special_combo(from_position: Vector2, to_position: Vector2, from_special: String, to_special: String) -> void:
+	var center := (from_position + to_position) * 0.5
+	var direction := to_position - from_position
+	var length := maxf(direction.length(), 68.0)
+	var combo_color := _special_color(from_special).lerp(_special_color(to_special), 0.5)
+
+	var flash := ColorRect.new()
+	flash.name = "SpecialComboFlash"
+	flash.color = Color(combo_color.r, combo_color.g, combo_color.b, 0.64)
+	flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	flash.size = Vector2(length + 72.0, 18.0)
+	flash.pivot_offset = flash.size * 0.5
+	flash.global_position = center - flash.size * 0.5
+	flash.rotation = direction.angle()
+	board_fx_root.add_child(flash)
+
+	var ring := _spawn_texture(board_fx_root, GOAL_RING_TEXTURE, center, Vector2(182, 182))
+	ring.name = "SpecialComboRing"
+	ring.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	ring.scale = Vector2(0.5, 0.5)
+
+	var label := _spawn_label(board_fx_root, "특수 조합!", center + Vector2(0, -78), 30, Color(1.0, 0.96, 0.42, 1.0))
+	label.name = "SpecialComboLabel"
+	label.modulate.a = 0.0
+	label.scale = Vector2(0.78, 0.78)
+
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.set_trans(Tween.TRANS_BACK)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(flash, "color:a", 0.0, 0.28)
+	tween.tween_property(flash, "scale:y", 1.9, 0.18)
+	tween.tween_property(ring, "modulate", Color(combo_color.r, combo_color.g, combo_color.b, 0.92), 0.08)
+	tween.tween_property(ring, "scale", Vector2(1.14, 1.14), 0.24)
+	tween.tween_property(ring, "modulate:a", 0.0, 0.34).set_delay(0.08)
+	tween.tween_property(label, "modulate:a", 1.0, 0.08)
+	tween.tween_property(label, "scale", Vector2(1.0, 1.0), 0.14)
+	tween.tween_property(label, "position:y", label.position.y - 28.0, 0.32)
+	tween.tween_property(label, "modulate:a", 0.0, 0.2).set_delay(0.22)
+	await tween.finished
+	flash.queue_free()
+	ring.queue_free()
+	label.queue_free()
+
+
 func play_combo_banner(combo: int) -> void:
 	var viewport_size := get_viewport().get_visible_rect().size
 	var texture := COMBO_POP_TEXTURE if combo <= 1 else COMBO_GREAT_TEXTURE
