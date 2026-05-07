@@ -49,6 +49,7 @@ func _run() -> void:
 	AnalyticsGateway.use_queue_path_for_testing(SESSION_VALIDATION_ANALYTICS_QUEUE_PATH)
 	AnalyticsGateway.reset_for_testing()
 	AnalyticsGateway.clear_persisted_queue_for_testing()
+	MonetizationGateway.reset_for_testing()
 	LiveEventService.reset_remote_config_exposures_for_testing()
 	_remove_validation_save()
 	var errors: PackedStringArray = PackedStringArray()
@@ -682,6 +683,32 @@ func _analytics_event_params_by_name_and_key(event_name: String, key: String, va
 		if String(params.get(key, "")) == value:
 			return params
 	return {}
+
+
+func _last_monetization_request_log() -> Dictionary:
+	var logs := MonetizationGateway.get_request_log_for_testing()
+	if logs.is_empty():
+		return {}
+	var last_log = logs[logs.size() - 1]
+	return Dictionary(last_log) if last_log is Dictionary else {}
+
+
+func _validate_monetization_request_log(log_entry: Dictionary, expected_source: String, expected_stage_id: int, expected_fail_type: String, expected_result: String, expected_status: String, expected_provider_id: String, errors: PackedStringArray) -> void:
+	if log_entry.is_empty():
+		errors.append("MonetizationGateway should record provider-neutral request logs.")
+		return
+	if String(log_entry.get("source", "")) != expected_source:
+		errors.append("MonetizationGateway request log should preserve source %s." % expected_source)
+	if int(log_entry.get("stage_id", 0)) != expected_stage_id:
+		errors.append("MonetizationGateway request log should preserve stage_id %d." % expected_stage_id)
+	if String(log_entry.get("fail_type", "")) != expected_fail_type:
+		errors.append("MonetizationGateway request log should preserve fail_type %s." % expected_fail_type)
+	if String(log_entry.get("result", "")) != expected_result:
+		errors.append("MonetizationGateway request log should preserve result %s." % expected_result)
+	if String(log_entry.get("request_status", "")) != expected_status:
+		errors.append("MonetizationGateway request log should preserve request_status %s." % expected_status)
+	if String(log_entry.get("provider_id", "")) != expected_provider_id:
+		errors.append("MonetizationGateway request log should preserve provider_id %s." % expected_provider_id)
 
 
 func _live_events_by_id() -> Dictionary:
@@ -2170,6 +2197,16 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s fail_offer_show analytics should identify Stage 25 near_miss rewarded offer exposure." % GAMEPLAY_SCENE_PATH)
 
 	var invalid_source_extra_before := _analytics_event_count("extra_moves_grant")
+	MonetizationGateway.clear_request_log_for_testing()
+	var invalid_gateway_result := MonetizationGateway.request_continue("mystery_sdk", 25, Dictionary(node.get("active_fail_offer")), {"transaction_id": "invalid-source-gateway"})
+	if String(invalid_gateway_result.get("result", "")) != "failed" or String(invalid_gateway_result.get("request_status", "")) != "rejected_invalid_source":
+		errors.append("%s MonetizationGateway should reject invalid continue sources before provider dispatch." % GAMEPLAY_SCENE_PATH)
+	var invalid_gateway_log := _last_monetization_request_log()
+	if String(invalid_gateway_log.get("source", "")) != "mystery_sdk" or String(invalid_gateway_log.get("request_status", "")) != "rejected_invalid_source":
+		errors.append("%s MonetizationGateway should log rejected invalid continue source requests." % GAMEPLAY_SCENE_PATH)
+	var invalid_gateway_details := Dictionary(invalid_gateway_log.get("details", {}))
+	if String(invalid_gateway_details.get("error_code", "")) != "invalid_source":
+		errors.append("%s MonetizationGateway invalid source rejection should carry invalid_source error metadata." % GAMEPLAY_SCENE_PATH)
 	if bool(node.call("_resolve_fail_offer_continue_result", "mystery_sdk", "completed", {"transaction_id": "invalid-source-continue"})):
 		errors.append("%s invalid fail offer continue source should not grant extra moves." % GAMEPLAY_SCENE_PATH)
 	if String(node.get("stage_state")) != "failed" or int(node.get("remaining_moves")) != 0:
@@ -2225,6 +2262,8 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	if _analytics_event_count("iap_purchase_complete") != iap_complete_events_before:
 		errors.append("%s IAP cancel/fail/restore should not emit iap_purchase_complete." % GAMEPLAY_SCENE_PATH)
 
+	MonetizationGateway.clear_request_log_for_testing()
+	MonetizationGateway.set_provider_id_for_testing("gateway_validation_provider")
 	MonetizationGateway.queue_continue_result_for_testing("rewarded_ad", "failed", {"ad_network": "gateway_validation", "error_code": "gateway_load_failed"})
 	var gateway_fail_extra_before := _analytics_event_count("extra_moves_grant")
 	var gateway_fail_ad_fail_before := _analytics_event_count("ad_reward_fail")
@@ -2241,6 +2280,11 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	var gateway_fail_params: Dictionary = Dictionary(gateway_fail_event.get("params", {}))
 	if String(gateway_fail_params.get("ad_network", "")) != "gateway_validation" or String(gateway_fail_params.get("error_code", "")) != "gateway_load_failed":
 		errors.append("%s queued rewarded ad gateway failure should pass provider error details." % GAMEPLAY_SCENE_PATH)
+	var gateway_fail_log := _last_monetization_request_log()
+	_validate_monetization_request_log(gateway_fail_log, "rewarded_ad", 25, "near_miss", "failed", "resolved", "gateway_validation_provider", errors)
+	var gateway_fail_log_details := Dictionary(gateway_fail_log.get("details", {}))
+	if String(gateway_fail_log_details.get("error_code", "")) != "gateway_load_failed":
+		errors.append("%s MonetizationGateway failure request log should preserve provider error metadata." % GAMEPLAY_SCENE_PATH)
 
 	MonetizationGateway.queue_continue_result_for_testing("rewarded_ad", "completed", {"ad_network": "gateway_validation", "transaction_id": "gateway-validation-continue"})
 	node.call("_on_overlay_primary_button_pressed")
@@ -2268,6 +2312,11 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s ad_reward_complete should share transaction_id and move amount with extra_moves_grant." % GAMEPLAY_SCENE_PATH)
 	if String(ad_complete_params.get("transaction_id", "")) != "gateway-validation-continue" or String(ad_complete_params.get("ad_network", "")) != "gateway_validation":
 		errors.append("%s rewarded continue primary action should route through MonetizationGateway metadata." % GAMEPLAY_SCENE_PATH)
+	var gateway_success_log := _last_monetization_request_log()
+	_validate_monetization_request_log(gateway_success_log, "rewarded_ad", 25, "near_miss", "completed", "resolved", "gateway_validation_provider", errors)
+	var gateway_success_log_details := Dictionary(gateway_success_log.get("details", {}))
+	if String(gateway_success_log_details.get("transaction_id", "")) != "gateway-validation-continue":
+		errors.append("%s MonetizationGateway success request log should preserve provider transaction metadata." % GAMEPLAY_SCENE_PATH)
 	var extra_moves_after_primary := _analytics_event_count("extra_moves_grant")
 	var moves_after_primary := int(node.get("remaining_moves"))
 	if bool(node.call("_resolve_fail_offer_continue_result", "rewarded_ad", "completed")):
@@ -2991,7 +3040,8 @@ func _validate_stage_popup_runtime(node: Node, errors: PackedStringArray) -> voi
 		errors.append("%s Stage Popup START bridge should commit selected booster rainbow_paw, got %s." % [STAGE_SELECT_SCENE_PATH, str(committed_boosters)])
 
 	node.call("_on_stage_popup_close_pressed")
-	await create_timer(0.14).timeout
+	await create_timer(0.25).timeout
+	await process_frame
 	if overlay != null and overlay.visible:
 		errors.append("%s Stage Popup close should hide StagePopupOverlay after tween." % STAGE_SELECT_SCENE_PATH)
 	var panel := node.get("stage_popup_panel") as Control

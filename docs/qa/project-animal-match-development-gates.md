@@ -145,6 +145,7 @@
 - 광고 로드 실패/중단 시 wallet, 이동 수, 점수, 목표 진행이 잘못 소모되지 않는다.
 - 코인 continue는 충분한 gold가 있을 때만 차감하고, gold 부족 시 상태를 보존한다.
 - 구매 취소/실패/복구가 게임 상태를 꼬이게 하지 않는다. SDK 실연동 전 no-device smoke는 `iap_purchase_cancel`/`iap_purchase_fail`/`iap_purchase_restore` 상태 보존을 검증한다.
+- SDK 실연동 전 `MonetizationGateway`는 rewarded/IAP/coin continue 요청을 request log로 남기고, 지원하지 않는 source를 gateway 단계에서 `rejected_invalid_source`로 거절한다.
 - 같은 레벨 3회 실패 시 같은 IAP 팝업을 반복 강제하지 않는다.
 
 ## Gate 10. 라이브 운영/분석
