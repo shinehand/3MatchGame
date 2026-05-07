@@ -3708,7 +3708,7 @@ func _validate_alpha_manual_qa_template_coverage(stages: Array, errors: PackedSt
 			errors
 		)
 
-	for scenario_id in ["Mobile viewport matrix", "390x844", "844x390", "SPECIAL_COMBO_6", "MONETIZATION_GATEWAY_PENDING", "ANALYTICS_GATEWAY_LOCAL_BUFFER"]:
+	for scenario_id in ["Mobile viewport matrix", "390x844", "844x390", "Android debug APK export", "zsh scripts/export_android_debug.sh", "android-debug-export.txt", "SPECIAL_COMBO_6", "MONETIZATION_GATEWAY_PENDING", "ANALYTICS_GATEWAY_LOCAL_BUFFER"]:
 		_require_alpha_template_text(
 			template_text,
 			scenario_id,

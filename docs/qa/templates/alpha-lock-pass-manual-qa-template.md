@@ -18,6 +18,7 @@
 | Gameplay validation | `zsh scripts/validate_gameplay.sh` | Pending |  |
 | Mobile viewport matrix | `zsh scripts/validate_gameplay.sh` includes 1080x1920, 720x1280, 390x844, 1920x1080, 1280x720, 844x390 requested windows | Pending | Verifies logical viewport bounds for Home, Stage Select, Collection, Stage 4 HUD, Stage Popup, Stage 25 failure overlay |
 | Android debug environment | `zsh scripts/check_android_setup.sh` | Pending |  |
+| Android debug APK export | `zsh scripts/export_android_debug.sh` | Pending | Writes `output/alpha-lock-pass/YYYY-MM-DD/captures/android-debug-export.txt` and verifies APK signature |
 | Release preflight | `GODOT_RELEASE_KEYSTORE_PATH=/path/to/release.keystore zsh scripts/check_android_setup.sh --release` | Pending | Required for release candidates |
 | Install/run evidence | APK path + install result | Pending | Device required |
 
@@ -26,7 +27,7 @@
 | Evidence | Result | Evidence path | Notes |
 | --- | --- | --- | --- |
 | Build source commit | Pending |  | Must match Run Metadata |
-| APK/AAB path | Pending |  | Include debug/release label |
+| APK/AAB path | Pending | `build/android/puzzle-mobile-starter-debug.apk` | Include debug/release label and signature verify evidence |
 | Install result | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/install-log.txt` | Device required |
 | Device model and OS version | Pending |  | Include screen size if known |
 | Portrait screenshot | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/device-portrait.png` | Safe area/notch/home indicator visible |

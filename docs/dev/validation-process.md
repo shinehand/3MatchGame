@@ -9,7 +9,8 @@
 
 1. `./scripts/validate_gameplay.sh`
 2. Godot 에디터 또는 Android 기기에서 수동 플레이 1회
-3. 아래 체크리스트를 모두 통과하면 APK 재빌드
+3. `zsh scripts/export_android_debug.sh`
+4. 아래 체크리스트를 모두 통과하면 Android 기기 설치/실행 QA로 넘어간다
 
 `validate_gameplay.sh`는 아래를 순서대로 검사한다.
 
@@ -27,6 +28,8 @@
 - Alpha QA packet dry-run 및 템플릿 계약 검증. 대표 코스, Device Evidence Pack, Stage Data Smoke Coverage, Focused Device Gate Matrix, Stage 31 Special Combo Evidence, Rescue Buddy Stage Matrix, Failure Continue Gateway, Analytics Gateway Local Buffer가 빠지면 실패한다.
 - Scene smoke는 `StageCatalog`의 `recommended_smoke`/Buddy 스테이지를 Alpha QA 템플릿의 `STAGE_SMOKE_###`/`BUDDY_STAGE_###` 행과 대조해 stage data와 수동 QA packet이 어긋나면 실패한다.
 - 수동 스모크 체크리스트 출력
+
+`zsh scripts/export_android_debug.sh`는 Android debug export를 수행하고 `build/android/puzzle-mobile-starter-debug.apk`를 `apksigner`로 검증한 뒤 `output/alpha-lock-pass/YYYY-MM-DD/captures/android-debug-export.txt`에 commit, APK 경로, export 결과, signature verify 결과, ADB device 상태를 남긴다. 기기가 연결된 설치 검증은 `zsh scripts/export_android_debug.sh --install`로 실행하며, 연결 기기가 정확히 1대가 아니면 install evidence는 Blocked로 기록한다.
 
 검증 스크립트는 임시 `HOME`을 사용해 `user://save_game.json`을 격리한다. 따라서 자동 검증은 로컬 플레이 진행도, 튜토리얼 확인 여부, 사운드/햅틱 설정을 변경하지 않는다.
 
