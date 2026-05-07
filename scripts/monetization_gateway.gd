@@ -44,15 +44,21 @@ static func request_continue(source: String, stage_id: int, fail_offer: Dictiona
 	if not queued_result.is_empty():
 		_merge_details(merged_details, Dictionary(queued_result.get("details", {})))
 		_merge_details(merged_details, details)
-		result = _normalize_result(queued_result.get("result", details.get("result", RESULT_COMPLETED)), RESULT_COMPLETED)
+		var queued_result_value = queued_result.get("result", details.get("result", RESULT_COMPLETED))
+		result = _normalize_result(queued_result_value, RESULT_COMPLETED)
+		_preserve_provider_result(merged_details, queued_result_value, result)
 	elif _continue_adapter.is_valid():
 		var adapter_result := _request_continue_from_adapter(normalized_source, stage_id, fail_offer, merged_details, details)
 		_merge_details(merged_details, details)
 		_merge_details(merged_details, Dictionary(adapter_result.get("details", {})))
-		result = _normalize_result(adapter_result.get("result", RESULT_FAILED), RESULT_FAILED)
+		var adapter_result_value = adapter_result.get("result", RESULT_FAILED)
+		result = _normalize_result(adapter_result_value, RESULT_FAILED)
+		_preserve_provider_result(merged_details, adapter_result_value, result)
 	else:
 		_merge_details(merged_details, details)
-		result = _normalize_result(details.get("result", RESULT_COMPLETED), RESULT_COMPLETED)
+		var local_result_value = details.get("result", RESULT_COMPLETED)
+		result = _normalize_result(local_result_value, RESULT_COMPLETED)
+		_preserve_provider_result(merged_details, local_result_value, result)
 	var gateway_result := {
 		"source": normalized_source,
 		"result": result,
@@ -152,7 +158,30 @@ static func _normalize_adapter_response(adapter_response) -> Dictionary:
 
 static func _normalize_result(result_value, default_result: String) -> String:
 	var result := String(result_value).strip_edges().to_lower()
-	return default_result if result.is_empty() else result
+	if result.is_empty():
+		return _normalize_default_result(default_result)
+	match result:
+		RESULT_COMPLETED, "complete", "success", "succeeded", "ok", "granted", "rewarded", "purchased":
+			return RESULT_COMPLETED
+		RESULT_FAILED, "fail", "failure", "error", "errored", "timeout", "timed_out", "cancel", "cancelled", "canceled", "aborted", "denied", "rejected", "expired", "unavailable":
+			return RESULT_FAILED
+		RESULT_PENDING, "start", "started", "in_progress", "processing", "running", "queued", "requested", "loading", "deferred", "awaiting_callback":
+			return RESULT_PENDING
+	return RESULT_FAILED
+
+
+static func _preserve_provider_result(details: Dictionary, result_value, canonical_result: String) -> void:
+	var raw_result := String(result_value).strip_edges().to_lower()
+	if raw_result.is_empty() or raw_result == canonical_result or details.has("provider_result"):
+		return
+	details["provider_result"] = raw_result
+
+
+static func _normalize_default_result(default_result: String) -> String:
+	var normalized_default := default_result.strip_edges().to_lower()
+	if [RESULT_COMPLETED, RESULT_FAILED, RESULT_PENDING].has(normalized_default):
+		return normalized_default
+	return RESULT_FAILED
 
 
 static func _default_details(source: String, stage_id: int, fail_offer: Dictionary) -> Dictionary:

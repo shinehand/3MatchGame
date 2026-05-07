@@ -1208,6 +1208,70 @@ func _monetization_adapter_pending_response(request: Dictionary) -> Dictionary:
 	}
 
 
+func _monetization_adapter_success_alias_response(request: Dictionary) -> Dictionary:
+	monetization_adapter_requests.append(request.duplicate(true))
+	return {
+		"result": "success",
+		"details": {
+			"ad_network": "adapter_success_alias",
+			"transaction_id": "adapter-success-alias-validation",
+		},
+	}
+
+
+func _monetization_adapter_cancelled_alias_response(request: Dictionary) -> Dictionary:
+	monetization_adapter_requests.append(request.duplicate(true))
+	return {
+		"result": "cancelled",
+		"details": {
+			"ad_network": "adapter_cancelled_alias",
+			"error_code": "user_cancelled",
+			"transaction_id": "adapter-cancelled-alias-validation",
+		},
+	}
+
+
+func _monetization_adapter_in_progress_alias_response(request: Dictionary) -> Dictionary:
+	monetization_adapter_requests.append(request.duplicate(true))
+	return {
+		"result": "in_progress",
+		"details": {
+			"ad_network": "adapter_pending_alias",
+			"transaction_id": "adapter-in-progress-alias-validation",
+		},
+	}
+
+
+func _monetization_adapter_unknown_response(request: Dictionary) -> Dictionary:
+	monetization_adapter_requests.append(request.duplicate(true))
+	return {
+		"result": "sdk_weird_state",
+		"details": {
+			"ad_network": "adapter_unknown_alias",
+			"error_code": "sdk_weird_state",
+			"transaction_id": "adapter-unknown-alias-validation",
+		},
+	}
+
+
+func _validate_monetization_adapter_alias_result(fail_offer: Dictionary, provider_id: String, adapter: Callable, expected_result: String, expected_details: Dictionary, context: String, errors: PackedStringArray) -> void:
+	MonetizationGateway.reset_for_testing()
+	monetization_adapter_requests.clear()
+	MonetizationGateway.configure_continue_adapter(provider_id, adapter)
+	var gateway_result := MonetizationGateway.request_continue("rewarded_ad", 25, fail_offer, {"transaction_id": "%s-request-detail" % context})
+	if monetization_adapter_requests.size() != 1:
+		errors.append("MonetizationGateway %s should invoke the continue adapter exactly once." % context)
+	if String(gateway_result.get("result", "")) != expected_result:
+		errors.append("MonetizationGateway %s should canonicalize provider result to %s, got %s." % [context, expected_result, String(gateway_result.get("result", ""))])
+	var details := Dictionary(gateway_result.get("details", {}))
+	for key in expected_details.keys():
+		if not _analytics_values_equivalent(details.get(key), expected_details[key]):
+			errors.append("MonetizationGateway %s should preserve detail %s=%s." % [context, String(key), str(expected_details[key])])
+	var gateway_log := _last_monetization_request_log()
+	_validate_monetization_request_log(gateway_log, "rewarded_ad", 25, "near_miss", expected_result, "resolved", provider_id, errors)
+	MonetizationGateway.reset_for_testing()
+
+
 func _live_events_by_id() -> Dictionary:
 	var by_id := {}
 	for event in LiveEventService.load_events():
@@ -2830,6 +2894,11 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 			errors.append("%s MonetizationGateway continue adapter request should include normalized source, stage, and provider metadata." % GAMEPLAY_SCENE_PATH)
 		if String(adapter_request.get("fail_type", "")) != "near_miss" or String(adapter_request_details.get("transaction_id", "")) != "request-detail-transaction":
 			errors.append("%s MonetizationGateway continue adapter request should include fail offer and request details." % GAMEPLAY_SCENE_PATH)
+
+	_validate_monetization_adapter_alias_result(Dictionary(node.get("active_fail_offer")), "adapter_success_alias_provider", Callable(self, "_monetization_adapter_success_alias_response"), MonetizationGateway.RESULT_COMPLETED, {"transaction_id": "adapter-success-alias-validation", "ad_network": "adapter_success_alias", "provider_result": "success"}, "%s adapter success alias" % GAMEPLAY_SCENE_PATH, errors)
+	_validate_monetization_adapter_alias_result(Dictionary(node.get("active_fail_offer")), "adapter_cancelled_alias_provider", Callable(self, "_monetization_adapter_cancelled_alias_response"), MonetizationGateway.RESULT_FAILED, {"transaction_id": "adapter-cancelled-alias-validation", "error_code": "user_cancelled", "provider_result": "cancelled"}, "%s adapter cancelled alias" % GAMEPLAY_SCENE_PATH, errors)
+	_validate_monetization_adapter_alias_result(Dictionary(node.get("active_fail_offer")), "adapter_in_progress_alias_provider", Callable(self, "_monetization_adapter_in_progress_alias_response"), MonetizationGateway.RESULT_PENDING, {"transaction_id": "adapter-in-progress-alias-validation", "ad_network": "adapter_pending_alias", "provider_result": "in_progress"}, "%s adapter in_progress alias" % GAMEPLAY_SCENE_PATH, errors)
+	_validate_monetization_adapter_alias_result(Dictionary(node.get("active_fail_offer")), "adapter_unknown_alias_provider", Callable(self, "_monetization_adapter_unknown_response"), MonetizationGateway.RESULT_FAILED, {"transaction_id": "adapter-unknown-alias-validation", "error_code": "sdk_weird_state", "provider_result": "sdk_weird_state"}, "%s adapter unknown result" % GAMEPLAY_SCENE_PATH, errors)
 	MonetizationGateway.reset_for_testing()
 
 	var wallet_before_failed_continue := GameSession.get_wallet()
@@ -2879,6 +2948,26 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s IAP cancel/fail/restore should not emit extra_moves_grant." % GAMEPLAY_SCENE_PATH)
 	if _analytics_event_count("iap_purchase_complete") != iap_complete_events_before:
 		errors.append("%s IAP cancel/fail/restore should not emit iap_purchase_complete." % GAMEPLAY_SCENE_PATH)
+
+	await _prepare_stage_25_near_miss_failure(node)
+	failed_continue_moves = int(node.get("remaining_moves"))
+	var iap_provider_cancel_start_before := _analytics_event_count("iap_purchase_start")
+	var iap_provider_cancel_before := _analytics_event_count("iap_purchase_cancel")
+	var iap_provider_cancel_fail_before := _analytics_event_count("iap_purchase_fail")
+	var iap_provider_cancel_extra_before := _analytics_event_count("extra_moves_grant")
+	var iap_provider_cancel_result := bool(node.call("_resolve_fail_offer_continue_result", "iap", MonetizationGateway.RESULT_FAILED, {"provider_result": "cancelled", "product_id": "validation_pack", "price": 1.99, "currency": "USD", "transaction_id": "iap-provider-cancel-alias"}))
+	if iap_provider_cancel_result:
+		errors.append("%s canonical failed IAP with provider_result=cancelled should not grant continue." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("iap_purchase_start") != iap_provider_cancel_start_before + 1:
+		errors.append("%s canonical failed IAP cancel alias should emit one iap_purchase_start." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("iap_purchase_cancel") != iap_provider_cancel_before + 1:
+		errors.append("%s canonical failed IAP cancel alias should emit iap_purchase_cancel, not generic failure." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("iap_purchase_fail") != iap_provider_cancel_fail_before:
+		errors.append("%s canonical failed IAP cancel alias should not emit iap_purchase_fail." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("extra_moves_grant") != iap_provider_cancel_extra_before:
+		errors.append("%s canonical failed IAP cancel alias should not emit extra_moves_grant." % GAMEPLAY_SCENE_PATH)
+	if String(node.get("stage_state")) != "failed" or int(node.get("remaining_moves")) != failed_continue_moves or overlay == null or not overlay.visible:
+		errors.append("%s canonical failed IAP cancel alias should preserve failed overlay state." % GAMEPLAY_SCENE_PATH)
 
 	MonetizationGateway.reset_for_testing()
 	monetization_adapter_requests.clear()

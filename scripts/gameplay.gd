@@ -1906,6 +1906,7 @@ func _normalize_continue_source(source: String) -> String:
 func _resolve_fail_offer_continue_result(source: String, result: String, details: Dictionary = {}) -> bool:
 	var normalized_source := _normalize_continue_source(source)
 	var normalized_result := result.strip_edges().to_lower()
+	var provider_result := String(details.get("provider_result", normalized_result)).strip_edges().to_lower()
 	if overlay_action != "continue_stage" or active_fail_offer.is_empty():
 		return false
 	if not _is_continue_source_allowed(normalized_source):
@@ -1934,7 +1935,7 @@ func _resolve_fail_offer_continue_result(source: String, result: String, details
 			return false
 		if not active_fail_offer_continue_pending or active_fail_offer_continue_pending_source != normalized_source:
 			_track_iap_purchase_start_analytics(details)
-		if _is_iap_restore_result(normalized_result):
+		if _is_iap_restore_result(provider_result):
 			_track_iap_purchase_restore_analytics(details)
 			_set_status("구매 복구가 완료되었지만 현재 실패 이어하기 보상은 지급하지 않았습니다.")
 			active_fail_offer_continue_pending = false
@@ -1945,7 +1946,7 @@ func _resolve_fail_offer_continue_result(source: String, result: String, details
 		if normalized_source == "rewarded_ad":
 			_track_ad_reward_fail_analytics(details)
 		elif normalized_source == "iap":
-			if normalized_result == "cancelled" or normalized_result == "canceled":
+			if provider_result == "cancelled" or provider_result == "canceled":
 				_track_iap_purchase_cancel_analytics(details)
 			else:
 				_track_iap_purchase_fail_analytics(details)

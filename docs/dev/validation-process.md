@@ -152,6 +152,7 @@ zsh scripts/validate_gameplay.sh
 - 보상형 광고와 IAP continue는 같은 `transaction_id`가 새 실패 오퍼에서 다시 들어와도 추가 이동과 완료 analytics를 중복 지급하지 않는다.
 - 코인 continue는 충분한 gold가 있을 때만 gold를 차감하고 `coin_continue_moves`만큼 재개하며, gold 부족 시 상태를 보존한다.
 - 실패 overlay 노출, 선택, 광고/IAP 결과, 추가 이동 지급은 `stage_fail`, `offer_impression`, `fail_offer_show`, `fail_offer_select`, `fail_offer_dismiss`, `ad_reward_complete`, `ad_reward_fail`, `iap_purchase_start`, `iap_purchase_complete`, `iap_purchase_restore`, `iap_purchase_cancel`, `iap_purchase_fail`, `extra_moves_grant` analytics에 near-miss 및 continue 정보를 기록한다.
+- `MonetizationGateway` adapter result alias는 `success -> completed`, `cancelled/timeout/error/unknown -> failed`, `started/in_progress -> pending`으로 정규화되어 gameplay에는 `completed`, `failed`, `pending`만 전달된다. canonical 결과와 다른 원 provider 문자열은 `details.provider_result`로 보존해 IAP cancel/restore analytics 분기를 잃지 않는다.
 - `FailOfferPolicy`는 near miss, strategic miss, first fail, repeat fail, hard fail, Level 1-10 수익화 차단을 분리 검증한다.
 - `FailOfferPolicy`는 `near_miss_goal_threshold`와 `near_miss_progress_threshold` remote config 튜닝값을 반영한다.
 

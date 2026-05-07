@@ -151,6 +151,7 @@
 - 구매 취소/실패/복구가 게임 상태를 꼬이게 하지 않는다. SDK 실연동 전 no-device smoke는 `iap_purchase_cancel`/`iap_purchase_fail`/`iap_purchase_restore` 상태 보존을 검증한다.
 - SDK 실연동 전 `MonetizationGateway`는 rewarded/IAP/coin continue 요청을 request log로 남기고, 지원하지 않는 source를 adapter 호출 전 `rejected_invalid_source`로 거절한다.
 - SDK adapter hook은 queued validation 결과를 우선하고, supported source의 unqueued 요청만 provider Callable에 deep-copy payload로 전달한다.
+- SDK adapter result는 `completed`, `failed`, `pending` 셋으로만 gameplay에 전달되며, `success`, `cancelled`, `in_progress`, 알 수 없는 provider result alias는 scene smoke에서 canonical result로 검증한다. IAP cancel/restore처럼 분석 분기에 필요한 원문은 `details.provider_result`로 보존되어야 한다.
 - SDK 실연동 전 `pending` continue 결과는 실패/완료/추가 이동 analytics를 내지 않고 overlay를 유지하며, pending 중 primary CTA 재탭은 두 번째 provider 요청을 만들지 않는다.
 - 같은 레벨 3회 실패 시 같은 IAP 팝업을 반복 강제하지 않는다.
 
