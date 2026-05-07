@@ -134,6 +134,8 @@ func _validate_scene_runtime_specifics(scene_path: String, node: Node, errors: P
 	match scene_path:
 		MAIN_SCENE_PATH:
 			_validate_main_settings_runtime(node, errors)
+		COLLECTION_SCENE_PATH:
+			await _validate_collection_preview_motion_runtime(node, errors)
 		GAMEPLAY_SCENE_PATH:
 			await _validate_special_combo_swap_runtime(node, errors)
 			await _validate_result_overlay_runtime(node, errors)
@@ -1803,6 +1805,87 @@ func _validate_collection_card_label_state(node: Node, errors: PackedStringArray
 	var frog_text := _first_text_containing(refreshed_card_texts, "개구리")
 	if not frog_text.contains("Stage 4 해금"):
 		errors.append("%s AnimalCard_frog should show locked unlock-stage copy before Stage 4, got: %s." % [COLLECTION_SCENE_PATH, frog_text])
+	_validate_collection_card_input_runtime(node, grid, errors)
+
+
+func _validate_collection_card_input_runtime(node: Node, grid: Node, errors: PackedStringArray) -> void:
+	if not node.has_method("_on_animal_card_input"):
+		errors.append("%s should expose _on_animal_card_input for Rescue Book card input smoke." % COLLECTION_SCENE_PATH)
+		return
+	var animals := CollectionState.load_animal_definitions()
+	var rabbit_animal := {}
+	for animal in animals:
+		if animal is Dictionary and String(Dictionary(animal).get("id", "")) == "rabbit":
+			rabbit_animal = Dictionary(animal)
+			break
+	if rabbit_animal.is_empty():
+		errors.append("%s Rescue Book input smoke could not find rabbit animal definition." % COLLECTION_SCENE_PATH)
+		return
+
+	var state_animals: Dictionary = Dictionary(GameSession.get_rescue_book_state().get("animals", {}))
+	var rabbit_entry := Dictionary(state_animals.get("rabbit", {}))
+	var card_count_before_input_refresh := grid.get_child_count()
+	var press_event := InputEventMouseButton.new()
+	press_event.pressed = true
+	press_event.button_index = MOUSE_BUTTON_LEFT
+	node.call("_on_animal_card_input", press_event, rabbit_animal, rabbit_entry)
+	if String(node.get("selected_animal_id")) != "rabbit":
+		errors.append("%s Rescue Book card input should select rabbit, got %s." % [COLLECTION_SCENE_PATH, String(node.get("selected_animal_id"))])
+
+	var detail_label := node.find_child("DetailLabel", true, false) as Label
+	if detail_label == null or not detail_label.text.contains("토끼") or not detail_label.text.contains("Lv.3") or not detail_label.text.contains("토큰 40"):
+		errors.append("%s Rescue Book card input should refresh DetailLabel with selected rabbit state." % COLLECTION_SCENE_PATH)
+
+	var after_input_texts := _collection_card_label_texts_after(grid, card_count_before_input_refresh)
+	var rabbit_after_input_text := _first_text_containing(after_input_texts, "토끼")
+	if rabbit_after_input_text.contains("NEW"):
+		errors.append("%s AnimalCard_rabbit should clear NEW after card input, got: %s." % [COLLECTION_SCENE_PATH, rabbit_after_input_text])
+	var rabbit_state_after_input := Dictionary(Dictionary(GameSession.get_rescue_book_state().get("animals", {})).get("rabbit", {}))
+	if bool(rabbit_state_after_input.get("is_new", true)) or int(rabbit_state_after_input.get("tokens", 0)) != 40 or int(rabbit_state_after_input.get("friendship_level", 1)) < 3:
+		errors.append("%s Rescue Book card input should persist rabbit seen state without losing tokens or friendship level." % COLLECTION_SCENE_PATH)
+
+
+func _validate_collection_preview_motion_runtime(node: Node, errors: PackedStringArray) -> void:
+	for method_name in ["_sync_preview_motion", "_active_preview_count_for_testing", "_active_preview_ids_for_testing", "_preview_id_is_visible_for_testing"]:
+		if not node.has_method(method_name):
+			errors.append("%s should expose %s for Rescue Book preview motion smoke." % [COLLECTION_SCENE_PATH, method_name])
+			return
+
+	node.call("_sync_preview_motion")
+	await process_frame
+	var active_count := int(node.call("_active_preview_count_for_testing"))
+	if active_count <= 0:
+		errors.append("%s Rescue Book preview smoke should animate at least one visible unlocked card." % COLLECTION_SCENE_PATH)
+	elif active_count > 4:
+		errors.append("%s Rescue Book preview smoke should cap active preview tweens at 4, got %d." % [COLLECTION_SCENE_PATH, active_count])
+	_validate_active_collection_preview_visibility(node, errors)
+
+	var collection_scroll := node.find_child("CollectionScroll", true, false) as ScrollContainer
+	if collection_scroll != null:
+		var v_scroll_bar := collection_scroll.get_v_scroll_bar()
+		if v_scroll_bar != null and v_scroll_bar.max_value > v_scroll_bar.page:
+			v_scroll_bar.value = v_scroll_bar.max_value
+			await process_frame
+			await process_frame
+			_validate_active_collection_preview_visibility(node, errors)
+
+	(node as CanvasItem).visible = false
+	await process_frame
+	await process_frame
+	if int(node.call("_active_preview_count_for_testing")) != 0:
+		errors.append("%s Rescue Book preview smoke should stop all preview tweens when visibility changes to hidden." % COLLECTION_SCENE_PATH)
+	(node as CanvasItem).visible = true
+	await process_frame
+	await process_frame
+
+
+func _validate_active_collection_preview_visibility(node: Node, errors: PackedStringArray) -> void:
+	for animal_id_value in Array(node.call("_active_preview_ids_for_testing")):
+		var animal_id := String(animal_id_value)
+		if animal_id.is_empty():
+			continue
+		if not bool(node.call("_preview_id_is_visible_for_testing", animal_id)):
+			errors.append("%s Rescue Book preview tween should only run for visible cards, got offscreen %s." % [COLLECTION_SCENE_PATH, animal_id])
 
 
 func _collection_card_label_texts_after(grid: Node, start_index: int) -> Array[String]:

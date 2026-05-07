@@ -14,13 +14,17 @@ const ANIMAL_TEXTURE_FALLBACKS := {
 	"sheep": "bear",
 	"turtle": "frog",
 }
+const MAX_ACTIVE_PREVIEWS := 4
 
 var safe_margin: MarginContainer
+var collection_scroll: ScrollContainer
 var card_grid: GridContainer
 var summary_label: Label
 var detail_label: Label
 var preview_nodes: Dictionary = {}
 var _preview_tweens: Array[Tween] = []
+var _active_preview_ids: Array[String] = []
+var _preview_sync_queued := false
 var selected_animal_id := ""
 
 
@@ -31,6 +35,7 @@ func _ready() -> void:
 	_track_rescue_book_open_analytics()
 	_track_collection_event_impressions()
 	resized.connect(_apply_responsive_layout)
+	visibility_changed.connect(_queue_preview_motion_sync)
 	get_window().size_changed.connect(_apply_responsive_layout)
 	call_deferred("_apply_responsive_layout")
 
@@ -40,6 +45,8 @@ func _exit_tree() -> void:
 		if tween != null and tween.is_valid():
 			tween.kill()
 	_preview_tweens.clear()
+	preview_nodes.clear()
+	_active_preview_ids.clear()
 
 
 func _build_layout() -> void:
@@ -104,11 +111,11 @@ func _build_layout() -> void:
 	detail_label.add_theme_color_override("font_color", Color("416076"))
 	root.add_child(detail_label)
 
-	var scroll := ScrollContainer.new()
-	scroll.name = "CollectionScroll"
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	root.add_child(scroll)
+	collection_scroll = ScrollContainer.new()
+	collection_scroll.name = "CollectionScroll"
+	collection_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	collection_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	root.add_child(collection_scroll)
 
 	card_grid = GridContainer.new()
 	card_grid.name = "CollectionGrid"
@@ -116,7 +123,8 @@ func _build_layout() -> void:
 	card_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card_grid.add_theme_constant_override("h_separation", 12)
 	card_grid.add_theme_constant_override("v_separation", 12)
-	scroll.add_child(card_grid)
+	collection_scroll.add_child(card_grid)
+	collection_scroll.get_v_scroll_bar().value_changed.connect(_queue_preview_motion_sync)
 
 
 func _refresh_cards() -> void:
@@ -139,7 +147,7 @@ func _refresh_cards() -> void:
 
 	summary_label.text = "해금 %d / %d · 최고 Stage %d" % [unlocked_count, animals.size(), GameSession.get_highest_unlocked_stage_id()]
 	_update_detail_for_selected(animals, state_animals)
-	_start_preview_motion()
+	_sync_preview_motion()
 
 
 func _track_rescue_book_open_analytics() -> void:
@@ -312,17 +320,29 @@ func _event_type_label(event_type: String) -> String:
 	return "라이브 이벤트"
 
 
-func _start_preview_motion() -> void:
+func _sync_preview_motion() -> void:
+	_preview_sync_queued = false
 	for tween in _preview_tweens:
 		if tween != null and tween.is_valid():
 			tween.kill()
 	_preview_tweens.clear()
+	_active_preview_ids.clear()
+	for preview in preview_nodes.values():
+		if preview is TextureRect:
+			(preview as TextureRect).scale = Vector2.ONE
+	if not is_visible_in_tree():
+		return
 
 	var animated := 0
-	for preview in preview_nodes.values():
-		if animated >= 4:
+	for animal_id_value in preview_nodes.keys():
+		if animated >= MAX_ACTIVE_PREVIEWS:
 			break
+		var animal_id := String(animal_id_value)
+		var preview = preview_nodes[animal_id_value]
 		if not (preview is TextureRect):
+			continue
+		var preview_rect := Rect2((preview as TextureRect).global_position, (preview as TextureRect).size)
+		if not _preview_rect_is_visible(preview_rect):
 			continue
 		var tween := create_tween()
 		tween.set_loops()
@@ -331,7 +351,42 @@ func _start_preview_motion() -> void:
 		tween.tween_property(preview, "scale", Vector2(1.06, 1.06), 0.65)
 		tween.tween_property(preview, "scale", Vector2.ONE, 0.75)
 		_preview_tweens.append(tween)
+		_active_preview_ids.append(animal_id)
 		animated += 1
+
+
+func _preview_rect_is_visible(rect: Rect2) -> bool:
+	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+		return false
+	var viewport_rect := Rect2(Vector2.ZERO, get_viewport_rect().size)
+	var visible_rect := viewport_rect
+	if collection_scroll != null:
+		visible_rect = visible_rect.intersection(collection_scroll.get_global_rect())
+	return visible_rect.intersects(rect)
+
+
+func _queue_preview_motion_sync(_value: float = 0.0) -> void:
+	if _preview_sync_queued:
+		return
+	_preview_sync_queued = true
+	call_deferred("_sync_preview_motion")
+
+
+func _active_preview_count_for_testing() -> int:
+	return _preview_tweens.size()
+
+
+func _active_preview_ids_for_testing() -> Array:
+	return _active_preview_ids.duplicate()
+
+
+func _preview_id_is_visible_for_testing(animal_id: String) -> bool:
+	if not preview_nodes.has(animal_id):
+		return false
+	var preview = preview_nodes[animal_id]
+	if not (preview is TextureRect):
+		return false
+	return _preview_rect_is_visible(Rect2((preview as TextureRect).global_position, (preview as TextureRect).size))
 
 
 func _load_animal_texture(animal_id: String) -> Texture2D:
@@ -368,6 +423,7 @@ func _apply_responsive_layout() -> void:
 	MobileLayout.apply_safe_area(safe_margin, self, 18)
 	var viewport_size := get_viewport_rect().size
 	card_grid.columns = 2 if viewport_size.x < 720 else 3
+	_queue_preview_motion_sync()
 
 
 func _on_back_pressed() -> void:
