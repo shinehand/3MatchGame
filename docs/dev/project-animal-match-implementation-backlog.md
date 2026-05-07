@@ -358,7 +358,7 @@
 
 ### PAM-DEV-080: 라이브 이벤트 템플릿과 원격 설정 연결
 
-- 상태: 완료됨. `data/events/live_events.json` 템플릿과 `data/events/remote_config.json`을 `LiveEventService`에 연결해 이벤트 해금 레벨/노출 위치를 원격 설정값으로 검증·조회한다. 홈에는 `LiveEventStrip` 노출면을 두고, 홈/컬렉션 이벤트 노출은 `live_event_impression`으로 기록한다.
+- 상태: 완료됨. `data/events/live_events.json` 템플릿과 `data/events/remote_config.json`을 `LiveEventService`에 연결해 이벤트 해금 레벨/노출 위치를 원격 설정값으로 검증·조회한다. 홈/스테이지 선택에는 `LiveEventStrip` 노출면을 두고, 홈/스테이지 선택/결과 오버레이/컬렉션 이벤트 노출은 `live_event_impression`으로 기록한다.
 - 소유: Development Agent + Ops Agent
 - 대상 파일 후보:
   - 신규 `data/events/*.json`
@@ -369,7 +369,7 @@
 
 ### PAM-ANA-090: 분석 이벤트 계약 검증기 추가
 
-- 상태: 완료됨. `data/analytics_events.json`와 `scripts/validate_analytics_contract.gd`가 앱/스테이지/오퍼/이벤트/Fever/Buddy 필수 이벤트와 파라미터를 검증한다. `GameSession`은 런타임 이벤트 필수 파라미터 누락을 경고하고, scene smoke가 `stage_start`와 `rescue_book_open` 실제 기록을 검사한다.
+- 상태: 완료됨. `data/analytics_events.json`와 `scripts/validate_analytics_contract.gd`가 앱/스테이지/오퍼/이벤트/Fever/Buddy 필수 이벤트와 파라미터를 검증한다. `GameSession`은 런타임 이벤트 필수 파라미터 누락을 경고하고, scene smoke가 `stage_start`, `rescue_book_open`, 활성 live ops 노출의 `live_event_impression` 실제 기록과 placement/config 일치를 검사한다.
 - 소유: Technical Lead + QA Agent
 - 대상 파일 후보:
   - `docs/planning/project-animal-match-analytics-remote-config-spec.md`
@@ -423,4 +423,4 @@
 1. `PAM-QA-040` - 실제 기기/수동 플레이 표정·Buddy·특수조합 QA
 2. `PAM-DEV-051` - 특수 조합 수동 플레이 QA 및 밸런스 튜닝
 3. `PAM-DEV-053` 후속 - Rescue Buddy 수치 튜닝과 분석 이벤트 추가 커버리지
-4. `PAM-DEV-080` 후속 - 결과 오버레이와 스테이지 선택 화면의 라이브 이벤트 노출 UI 확장
+4. `PAM-DEV-080` 후속 - 이벤트 상세/참여/보상 수령 UI와 `event_join`, `event_progress`, `event_reward_claim` 기록 연결

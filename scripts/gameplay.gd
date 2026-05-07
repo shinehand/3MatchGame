@@ -6,6 +6,7 @@ const BLOCK_TILE_SCENE := preload("res://scenes/block_tile.tscn")
 const GOAL_CHIP_SCENE := preload("res://scenes/goal_chip.tscn")
 const StageCatalog = preload("res://scripts/stage_catalog.gd")
 const GameSession = preload("res://scripts/game_session.gd")
+const LiveEventService = preload("res://scripts/live_event_service.gd")
 const MobileLayout = preload("res://scripts/mobile_layout.gd")
 const FailOfferPolicy = preload("res://scripts/fail_offer_policy.gd")
 const OVERLAY_SUCCESS_TEXTURE = preload("res://assets/generated/polish/overlay_success_cat_clean.png")
@@ -57,6 +58,8 @@ const SPECIAL_PRIORITY := {
 const IDLE_EXPRESSION_MIN_DELAY := 2.8
 const IDLE_EXPRESSION_MAX_DELAY := 6.0
 const IDLE_EXPRESSION_MAX_ACTIVE := 4
+const RESULT_OVERLAY_PLACEMENT := "result_overlay"
+const RESULT_OVERLAY_ACTIONS := ["clear_stage", "all_clear", "restart_stage"]
 
 @onready var background_texture: TextureRect = $BackgroundTexture
 @onready var safe_margin: MarginContainer = $SafeMargin
@@ -166,6 +169,7 @@ var fever_analytics_open := false
 var fever_turns_spent_current := 0
 var fever_score_at_start := 0
 var fever_target_bonus_collected := 0
+var result_overlay_event_impressions_sent := {}
 
 
 func _ready() -> void:
@@ -1715,6 +1719,46 @@ func _analytics_stage_base() -> Dictionary:
 	}
 
 
+func _track_result_overlay_live_event_impression(action: String) -> void:
+	if not RESULT_OVERLAY_ACTIONS.has(action):
+		return
+	var event := _result_overlay_live_event()
+	if event.is_empty():
+		return
+	var event_id := String(event.get("id", ""))
+	if event_id.is_empty():
+		return
+	var impression_key := "%s:%s" % [RESULT_OVERLAY_PLACEMENT, event_id]
+	if result_overlay_event_impressions_sent.has(impression_key):
+		return
+	if _has_recorded_live_event_impression_in_session(event_id, RESULT_OVERLAY_PLACEMENT):
+		result_overlay_event_impressions_sent[impression_key] = true
+		return
+	result_overlay_event_impressions_sent[impression_key] = true
+	GameSession.record_analytics_event("live_event_impression", {
+		"session_id": GameSession.get_session_id(),
+		"event_id": event_id,
+		"event_type": String(event.get("type", "")),
+		"placement": RESULT_OVERLAY_PLACEMENT,
+		"unlock_stage": int(event.get("unlock_stage", 0)),
+		"enabled": bool(event.get("enabled", false)),
+	})
+
+
+func _has_recorded_live_event_impression_in_session(event_id: String, placement: String) -> bool:
+	var session_id := GameSession.get_session_id()
+	for entry_value in GameSession.get_analytics_events():
+		if not (entry_value is Dictionary):
+			continue
+		var entry := Dictionary(entry_value)
+		if String(entry.get("name", "")) != "live_event_impression":
+			continue
+		var params := Dictionary(entry.get("params", {}))
+		if String(params.get("session_id", "")) == session_id and String(params.get("event_id", "")) == event_id and String(params.get("placement", "")) == placement:
+			return true
+	return false
+
+
 func _remaining_goals_payload() -> Dictionary:
 	var remaining := {}
 	var collect_remaining := {}
@@ -2857,6 +2901,7 @@ func _show_overlay(title: String, body: String, action: String, primary_text: St
 	overlay_secondary_button.text = secondary_text
 	_update_overlay_mascot(title, action)
 	_update_overlay_ribbon(action)
+	_track_result_overlay_live_event_impression(action)
 	var tween := create_tween()
 	tween.tween_property(overlay, "modulate", Color(1, 1, 1, 1), 0.14)
 
@@ -3151,6 +3196,36 @@ func _format_star_rating(star_count: int) -> String:
 	return "%s  %d/3" % [stars, star_count]
 
 
+func _result_overlay_live_event() -> Dictionary:
+	var events := LiveEventService.active_events_for(GameSession.get_highest_unlocked_stage_id(), RESULT_OVERLAY_PLACEMENT)
+	if events.is_empty():
+		return {}
+	return Dictionary(events[0])
+
+
+func _result_overlay_live_event_line() -> String:
+	var event := _result_overlay_live_event()
+	if event.is_empty():
+		return ""
+	var title := String(event.get("title", "이벤트")).strip_edges()
+	if title.length() > 14:
+		title = "%s..." % title.substr(0, 14)
+	return "이벤트  %s · %s" % [title, _live_event_type_label(String(event.get("type", "")))]
+
+
+func _live_event_type_label(event_type: String) -> String:
+	match event_type:
+		"daily_reward":
+			return "오늘 보급"
+		"starter_missions":
+			return "스타터 미션"
+		"collection_event":
+			return "도감 이벤트"
+		"season_pass":
+			return "시즌 패스"
+	return "라이브 이벤트"
+
+
 func _build_clear_overlay_body(star_count: int, unlock_text: String, campaign_complete: bool) -> String:
 	var reward_gold := _stage_gold_reward(star_count)
 	var lines: Array[String] = [
@@ -3170,13 +3245,16 @@ func _build_clear_overlay_body(star_count: int, unlock_text: String, campaign_co
 		lines.append("다음  다음 스테이지 / 홈으로")
 		lines.append("")
 		lines.append("바로 다음 구조 작전으로 이어갈 수 있습니다.")
+	var live_event_line := _result_overlay_live_event_line()
+	if not live_event_line.is_empty():
+		lines.append(live_event_line)
 	return "\n".join(lines)
 
 
 func _build_failure_overlay_body(fail_offer: Dictionary = {}) -> String:
 	if fail_offer.is_empty():
 		fail_offer = _build_failure_offer()
-	return "\n".join([
+	var lines: Array[String] = [
 		"조금만 더!",
 		"실패 유형  %s" % String(fail_offer.get("type", "general_shortfall")),
 		"남은 목표  %s" % _build_goal_remaining_summary(),
@@ -3185,7 +3263,11 @@ func _build_failure_overlay_body(fail_offer: Dictionary = {}) -> String:
 		"다음  %s / %s" % [String(fail_offer.get("primary_cta", "재도전")), String(fail_offer.get("secondary_cta", "홈으로"))],
 		"",
 		"추천  %s" % FailOfferPolicy.format_offer_line(fail_offer),
-	])
+	]
+	var live_event_line := _result_overlay_live_event_line()
+	if not live_event_line.is_empty():
+		lines.append(live_event_line)
+	return "\n".join(lines)
 
 
 func _build_failure_offer(fail_count: int = -1) -> Dictionary:

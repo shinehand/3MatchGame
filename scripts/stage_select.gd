@@ -2,6 +2,7 @@ extends Control
 
 const StageCatalog = preload("res://scripts/stage_catalog.gd")
 const GameSession = preload("res://scripts/game_session.gd")
+const LiveEventService = preload("res://scripts/live_event_service.gd")
 const STAGE_CARD_SCENE = preload("res://scenes/stage_card.tscn")
 const MobileLayout = preload("res://scripts/mobile_layout.gd")
 const DEFAULT_BG = preload("res://assets/generated/candy/candy_world_bg.png")
@@ -136,6 +137,7 @@ var world_title_label: Label
 var world_subtitle_label: Label
 var world_status_label: Label
 var world_path_root: Control
+var world_event_strip: HBoxContainer
 var world_play_button: Button
 var world_selected_label: Label
 var world_node_buttons: Array[Button] = []
@@ -146,6 +148,7 @@ var stage_popup_goal_label: Label
 var stage_popup_meta_label: Label
 var stage_popup_reward_label: Label
 var stage_popup_booster_buttons: Dictionary = {}
+var stage_select_event_impressions_sent := {}
 
 
 func _ready() -> void:
@@ -394,6 +397,14 @@ func _build_stage_world_layer() -> void:
 	world_path_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	world_path_root.mouse_filter = Control.MOUSE_FILTER_PASS
 	stage_world_layer.add_child(world_path_root)
+
+	world_event_strip = HBoxContainer.new()
+	world_event_strip.name = "LiveEventStrip"
+	world_event_strip.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	world_event_strip.alignment = BoxContainer.ALIGNMENT_END
+	world_event_strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	world_event_strip.add_theme_constant_override("separation", 8)
+	stage_world_layer.add_child(world_event_strip)
 
 	var cta_panel := PanelContainer.new()
 	cta_panel.name = "WorldSelectedPanel"
@@ -712,8 +723,74 @@ func _refresh_stage_world_layer(stage_def: Dictionary, meta: Dictionary) -> void
 		_build_selected_stage_title(stage_def, meta),
 		_build_goal_summary(stage_def).trim_prefix("목표: "),
 	]
+	_refresh_stage_select_events()
 	_rebuild_world_decorations()
 	_rebuild_stage_world_nodes()
+
+
+func _refresh_stage_select_events() -> void:
+	if world_event_strip == null:
+		return
+	for child in world_event_strip.get_children():
+		child.queue_free()
+	var events := LiveEventService.active_events_for(GameSession.get_highest_unlocked_stage_id(), "stage_select")
+	world_event_strip.visible = not events.is_empty()
+	var max_visible_events := 1 if MobileLayout.is_portrait(self) else 2
+	for index in range(mini(events.size(), max_visible_events)):
+		var event := Dictionary(events[index])
+		world_event_strip.add_child(_make_stage_select_event_chip(event))
+		_track_stage_select_live_event_impression(event)
+
+
+func _make_stage_select_event_chip(event: Dictionary) -> PanelContainer:
+	var chip := PanelContainer.new()
+	chip.name = "LiveEventChip_%s" % String(event.get("id", "event"))
+	chip.custom_minimum_size = Vector2(218, 58)
+	chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	chip.add_theme_stylebox_override("panel", _rounded_style(Color(1.0, 0.97, 0.74, 0.90), Color("ff934f"), 22, 3))
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_top", 7)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_bottom", 7)
+	chip.add_child(margin)
+
+	var label := _make_world_label("%s\n%s" % [String(event.get("title", "이벤트")), _event_type_label(String(event.get("type", "")))], 16, Color("213a55"), HORIZONTAL_ALIGNMENT_CENTER)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	margin.add_child(label)
+	return chip
+
+
+func _event_type_label(event_type: String) -> String:
+	match event_type:
+		"daily_reward":
+			return "오늘 보급"
+		"starter_missions":
+			return "스타터 미션"
+		"collection_event":
+			return "도감 이벤트"
+		"season_pass":
+			return "시즌 패스"
+	return "라이브 이벤트"
+
+
+func _track_stage_select_live_event_impression(event: Dictionary) -> void:
+	var event_id := String(event.get("id", ""))
+	if event_id.is_empty():
+		return
+	var placement := "stage_select"
+	var impression_key := "%s:%s" % [placement, event_id]
+	if stage_select_event_impressions_sent.has(impression_key):
+		return
+	stage_select_event_impressions_sent[impression_key] = true
+	GameSession.record_analytics_event("live_event_impression", {
+		"session_id": GameSession.get_session_id(),
+		"event_id": event_id,
+		"event_type": String(event.get("type", "")),
+		"placement": placement,
+		"unlock_stage": int(event.get("unlock_stage", 0)),
+		"enabled": bool(event.get("enabled", false)),
+	})
 
 
 func _rebuild_world_decorations() -> void:
@@ -1358,6 +1435,7 @@ func _apply_responsive_layout() -> void:
 	if stage_popup_panel:
 		stage_popup_panel.custom_minimum_size = Vector2(700, 760) if portrait else Vector2(720, 720)
 	_layout_stage_world_layer(portrait)
+	_refresh_stage_select_events()
 	_layout_map_juice_layer(portrait)
 	header_panel.custom_minimum_size = Vector2.ZERO if portrait else Vector2(0, 170)
 	story_panel.custom_minimum_size = Vector2(0, 420) if portrait else Vector2(420, 0)
@@ -1376,6 +1454,13 @@ func _layout_stage_world_layer(portrait: bool) -> void:
 		world_selected_label.add_theme_font_size_override("font_size", 23 if portrait else 26)
 	if world_play_button:
 		world_play_button.custom_minimum_size = Vector2(196, 92) if portrait else Vector2(236, 98)
+	if world_event_strip:
+		var viewport_size := get_viewport_rect().size
+		var strip_width := minf(viewport_size.x - 48.0, 226.0 if portrait else 460.0)
+		world_event_strip.offset_left = -strip_width - (24.0 if portrait else 34.0)
+		world_event_strip.offset_top = 104.0 if portrait else 112.0
+		world_event_strip.offset_right = -24.0 if portrait else -34.0
+		world_event_strip.offset_bottom = 170.0 if portrait else 178.0
 	_rebuild_world_decorations()
 	_rebuild_stage_world_nodes()
 

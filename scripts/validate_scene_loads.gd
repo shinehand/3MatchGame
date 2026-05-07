@@ -26,6 +26,7 @@ const ANIMAL_TEXTURE_FALLBACKS := {
 	"turtle": "frog",
 }
 const ANIMAL_PROFILE_PATH := "res://data/animal_animation_profiles.json"
+const IMPLEMENTED_LIVE_EVENT_PLACEMENTS := ["home", "stage_select", "result_overlay", "collection"]
 
 var representative_stage_ids: Array[int] = [1, 11, 25, 50, 75, 100]
 var tutorial_stage_ids: Array[int] = [1, 11, 25, 45, 65, 85, 95]
@@ -189,6 +190,7 @@ func _validate_control_in_viewport(candidate: Node, viewport_size: Vector2i, sce
 func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
 	var events := GameSession.get_analytics_events()
 	var seen_names := {}
+	var live_events_by_id := _live_events_by_id()
 	for event in events:
 		if not (event is Dictionary):
 			errors.append("runtime analytics event should be a dictionary")
@@ -200,9 +202,49 @@ func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
 		var missing_params := GameSession.analytics_event_missing_required_params(event_name, params)
 		if not missing_params.is_empty():
 			errors.append("runtime analytics event %s missing required params: %s" % [event_name, ", ".join(Array(missing_params))])
+		if event_name == "live_event_impression":
+			_validate_live_event_impression_payload(params, live_events_by_id, errors)
 	for required_event in ["rescue_book_open", "stage_start"]:
 		if not seen_names.has(required_event):
 			errors.append("runtime analytics should emit %s during scene smoke." % required_event)
+	var active_current_live_events := false
+	for placement in ["home", "collection", "stage_select"]:
+		if not LiveEventService.active_events_for(GameSession.get_highest_unlocked_stage_id(), placement).is_empty():
+			active_current_live_events = true
+	if active_current_live_events and not seen_names.has("live_event_impression"):
+		errors.append("runtime analytics should emit live_event_impression when active live events are visible.")
+
+
+func _live_events_by_id() -> Dictionary:
+	var by_id := {}
+	for event in LiveEventService.load_events():
+		if not (event is Dictionary):
+			continue
+		var event_dict: Dictionary = event
+		var event_id := String(event_dict.get("id", ""))
+		if not event_id.is_empty():
+			by_id[event_id] = event_dict
+	return by_id
+
+
+func _validate_live_event_impression_payload(params: Dictionary, live_events_by_id: Dictionary, errors: PackedStringArray) -> void:
+	var event_id := String(params.get("event_id", ""))
+	var event_type := String(params.get("event_type", ""))
+	var placement := String(params.get("placement", ""))
+	if event_id.is_empty():
+		errors.append("live_event_impression should not have an empty event_id.")
+	if event_type.is_empty():
+		errors.append("live_event_impression should not have an empty event_type.")
+	if not IMPLEMENTED_LIVE_EVENT_PLACEMENTS.has(placement):
+		errors.append("live_event_impression has unsupported placement %s." % placement)
+	if not live_events_by_id.has(event_id):
+		errors.append("live_event_impression references unknown event_id %s." % event_id)
+		return
+	var config_event: Dictionary = live_events_by_id[event_id]
+	if String(config_event.get("type", "")) != event_type:
+		errors.append("live_event_impression %s type mismatch: %s vs %s." % [event_id, event_type, String(config_event.get("type", ""))])
+	if not Array(config_event.get("placements", [])).has(placement):
+		errors.append("live_event_impression %s placement %s is not in event config." % [event_id, placement])
 
 
 func _validate_loading_scene(node: Node, errors: PackedStringArray) -> void:
@@ -434,6 +476,9 @@ func _validate_stage_select_scene(node: Node, errors: PackedStringArray) -> void
 	if world_decor_root == null:
 		errors.append("%s is missing WorldDecorRoot candy-map dressing." % STAGE_SELECT_SCENE_PATH)
 
+	if node.get_node_or_null("StageWorldLayer/LiveEventStrip") == null:
+		errors.append("%s is missing LiveEventStrip for stage_select live ops surface checks." % STAGE_SELECT_SCENE_PATH)
+
 	var world_play_button := node.find_child("WorldPlayButton", true, false) as Button
 	if world_play_button == null:
 		errors.append("%s is missing the world-map action button." % STAGE_SELECT_SCENE_PATH)
@@ -617,12 +662,26 @@ func _validate_rescue_buddy_stage_config(stage_by_id: Dictionary, errors: Packed
 func _validate_live_event_config(errors: PackedStringArray) -> void:
 	for event_error in LiveEventService.validate_events():
 		errors.append(event_error)
-	var home_events := LiveEventService.active_events_for(9, "home")
-	if home_events.is_empty():
-		errors.append("LiveEventService should expose at least one home event by stage 9.")
-	var collection_events := LiveEventService.active_events_for(9, "collection")
-	if collection_events.is_empty():
-		errors.append("LiveEventService should expose collection event by stage 9.")
+	var smoke_stages_by_placement := {
+		"home": 9,
+		"collection": 9,
+		"stage_select": 3,
+		"result_overlay": 2,
+	}
+	for placement in smoke_stages_by_placement.keys():
+		var smoke_stage := int(smoke_stages_by_placement[placement])
+		if LiveEventService.active_events_for(smoke_stage, String(placement)).is_empty():
+			errors.append("LiveEventService should expose %s event by stage %d." % [String(placement), smoke_stage])
+	for event in LiveEventService.load_events():
+		if not (event is Dictionary):
+			continue
+		var event_dict: Dictionary = event
+		if not bool(event_dict.get("enabled", false)):
+			continue
+		for placement_value in Array(event_dict.get("placements", [])):
+			var placement := String(placement_value)
+			if not IMPLEMENTED_LIVE_EVENT_PLACEMENTS.has(placement):
+				errors.append("enabled live event %s uses placement %s without an implemented surface." % [String(event_dict.get("id", "")), placement])
 
 
 func _validate_fail_offer_policy(errors: PackedStringArray) -> void:
