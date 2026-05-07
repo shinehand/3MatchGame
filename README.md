@@ -52,6 +52,7 @@ Godot 4 기반 모바일 3매치 퍼즐 게임 프로젝트입니다.
 - 스테이지 밸런스 점검: `zsh scripts/validate_stage_balance.sh`
 - Android debug 환경 점검: `zsh scripts/check_android_setup.sh`
 - Android release 프리플라이트: `GODOT_RELEASE_KEYSTORE_PATH=/path/to/release.keystore zsh scripts/check_android_setup.sh --release`
+- Alpha 수동 QA 패킷 생성: `zsh scripts/create_alpha_qa_packet.sh`
 - 검증 문서: [validation-process.md](/Users/shinehandmac/Github/3MatchGame/docs/dev/validation-process.md)
 
 ## CLI 빌드

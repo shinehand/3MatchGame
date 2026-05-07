@@ -17,6 +17,8 @@
 
 ## 수동 대표 코스
 
+대표 코스 결과는 [Alpha Lock Pass Manual QA Template](templates/alpha-lock-pass-manual-qa-template.md)로 기록하고, 캡처 경로와 Pass/Fail/Blocked 판정을 남긴다.
+
 - 홈에서 `시작`, `스테이지 라인`, `설정`의 우선순위가 명확하다.
 - Stage 1에서 목표, 이동 수, 첫 행동이 10초 안에 이해된다.
 - Stage 11, 25에서 새 학습 지점이 진행을 방해하지 않고 방향을 제시한다.
