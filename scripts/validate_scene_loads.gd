@@ -499,31 +499,143 @@ func _validate_gameplay_scene(node: Node, errors: PackedStringArray) -> void:
 
 
 func _validate_expression_animation_rules(node: Node, errors: PackedStringArray) -> void:
-	if not node.has_method("_play_random_idle_blinks") or not node.has_method("_active_visible_tiles"):
-		errors.append("%s should expose idle expression scheduler helpers for QA smoke validation." % GAMEPLAY_SCENE_PATH)
-		return
+	for method_name in ["_play_random_idle_blinks", "_active_visible_tiles", "_select_cell", "_clear_selection", "_set_tile_expression", "_update_hud", "_stage_collect_targets", "_piece_animal"]:
+		if not node.has_method(method_name):
+			errors.append("%s should expose %s for expression QA smoke validation." % [GAMEPLAY_SCENE_PATH, method_name])
+			return
 
 	var candidates: Array = node.call("_active_visible_tiles")
 	if candidates.size() < 4:
 		errors.append("%s expression QA expected at least four active visible tiles, got %d." % [GAMEPLAY_SCENE_PATH, candidates.size()])
 		return
 
+	var previous_busy := bool(node.get("is_busy"))
+	var previous_stage_state := String(node.get("stage_state"))
+	var previous_remaining_moves := int(node.get("remaining_moves"))
+	var previous_moves_warning := int(node.get("_last_moves_warning"))
+	var previous_worried_moves := int(node.get("_last_worried_moves"))
+	var previous_collected_counts: Dictionary = Dictionary(node.get("collected_counts"))
+	var overlay := node.get_node_or_null("Overlay") as CanvasItem
+	var previous_overlay_visible := false
+	if overlay != null:
+		previous_overlay_visible = overlay.visible
+
+	node.set("stage_state", "playing")
+	node.set("is_busy", true)
+	_clear_expression_states(candidates)
 	node.call("_play_random_idle_blinks")
-	var active_idle_expressions := 0
-	for tile in candidates:
-		if tile != null and String(tile.get("expression_state")) == "blink":
-			active_idle_expressions += 1
+	if _count_tile_expression(candidates, "blink") > 0:
+		errors.append("%s idle expression smoke should not start blinks while is_busy is true." % GAMEPLAY_SCENE_PATH)
+	node.set("is_busy", false)
+
+	if overlay != null:
+		overlay.visible = true
+		_clear_expression_states(candidates)
+		node.call("_play_random_idle_blinks")
+		if _count_tile_expression(candidates, "blink") > 0:
+			errors.append("%s idle expression smoke should not start blinks while the result overlay is visible." % GAMEPLAY_SCENE_PATH)
+		overlay.visible = false
+
+	_clear_expression_states(candidates)
+	node.call("_play_random_idle_blinks")
+	var active_idle_expressions := _count_tile_expression(candidates, "blink")
 	if active_idle_expressions <= 0:
 		errors.append("%s idle expression smoke should start at least one blink." % GAMEPLAY_SCENE_PATH)
 	elif active_idle_expressions > 4:
 		errors.append("%s idle expression smoke should cap concurrent blink tiles at 4, got %d." % [GAMEPLAY_SCENE_PATH, active_idle_expressions])
 
-	var priority_tile = candidates[0]
-	if priority_tile != null and priority_tile.has_method("set_expression"):
-		priority_tile.set_expression("match", true)
-		priority_tile.set_expression("blink")
-		if String(priority_tile.get("expression_state")) != "match":
-			errors.append("%s match expression priority should not be overwritten by blink." % GAMEPLAY_SCENE_PATH)
+	var smile_tile = candidates[0]
+	var smile_cell := _cell_for_tile(node, smile_tile)
+	if smile_cell == Vector2i(-1, -1):
+		errors.append("%s expression QA could not map an active tile back to its board cell." % GAMEPLAY_SCENE_PATH)
+	else:
+		_clear_expression_states(candidates)
+		node.call("_select_cell", smile_cell)
+		if String(smile_tile.get("expression_state")) != "smile":
+			errors.append("%s tile selection expression smoke should route smile through _select_cell." % GAMEPLAY_SCENE_PATH)
+		node.call("_clear_selection")
+
+	var priority_tile = candidates[1]
+	var priority_cell := _cell_for_tile(node, priority_tile)
+	if priority_cell == Vector2i(-1, -1):
+		errors.append("%s expression QA could not map priority tile back to its board cell." % GAMEPLAY_SCENE_PATH)
+	else:
+		_clear_expression_states(candidates)
+		node.call("_set_tile_expression", priority_cell, "match", true)
+		for lower_priority_expression in ["blink", "smile", "worried"]:
+			priority_tile.set_expression(lower_priority_expression)
+			if String(priority_tile.get("expression_state")) != "match" or int(priority_tile.get("expression_priority")) != 3 or not bool(priority_tile.get("is_expression_locked")):
+				errors.append("%s match expression priority should not be overwritten by %s." % [GAMEPLAY_SCENE_PATH, lower_priority_expression])
+
+	_clear_expression_states(candidates)
+	node.set("stage_state", "playing")
+	var validation_collected_counts := Dictionary(previous_collected_counts)
+	for animal_id in Dictionary(node.call("_stage_collect_targets")).keys():
+		validation_collected_counts[String(animal_id)] = 0
+	node.set("collected_counts", validation_collected_counts)
+	node.set("remaining_moves", 3)
+	node.set("_last_worried_moves", -1)
+	node.call("_update_hud")
+	var worried_expressions := _count_tile_expression(candidates, "worried")
+	var worried_target_expressions := _count_worried_target_expressions(node, candidates)
+	if worried_expressions <= 0:
+		errors.append("%s low-move worried expression smoke should mark at least one goal tile." % GAMEPLAY_SCENE_PATH)
+	elif worried_expressions > 4:
+		errors.append("%s low-move worried expression smoke should cap worried tiles at 4, got %d." % [GAMEPLAY_SCENE_PATH, worried_expressions])
+	elif worried_target_expressions != worried_expressions:
+		errors.append("%s low-move worried expression smoke should only mark uncollected goal animals, got %d target worried tiles out of %d." % [GAMEPLAY_SCENE_PATH, worried_target_expressions, worried_expressions])
+
+	node.set("is_busy", previous_busy)
+	node.set("stage_state", previous_stage_state)
+	node.set("remaining_moves", previous_remaining_moves)
+	node.set("_last_moves_warning", previous_moves_warning)
+	node.set("_last_worried_moves", previous_worried_moves)
+	node.set("collected_counts", previous_collected_counts)
+	if overlay != null:
+		overlay.visible = previous_overlay_visible
+
+
+func _clear_expression_states(tiles: Array) -> void:
+	for tile in tiles:
+		if tile != null and tile.has_method("clear_expression"):
+			tile.clear_expression(false)
+
+
+func _count_tile_expression(tiles: Array, expression_id: String) -> int:
+	var count := 0
+	for tile in tiles:
+		if tile != null and String(tile.get("expression_state")) == expression_id:
+			count += 1
+	return count
+
+
+func _count_worried_target_expressions(node: Node, tiles: Array) -> int:
+	var target_animals: Dictionary = Dictionary(node.call("_stage_collect_targets"))
+	var board_data: Array = node.get("board_data")
+	var count := 0
+	for tile in tiles:
+		if tile == null or String(tile.get("expression_state")) != "worried":
+			continue
+		var cell := _cell_for_tile(node, tile)
+		if cell == Vector2i(-1, -1) or cell.x >= board_data.size():
+			continue
+		var row_data: Array = board_data[cell.x]
+		if cell.y >= row_data.size():
+			continue
+		var animal_id := String(node.call("_piece_animal", row_data[cell.y]))
+		if target_animals.has(animal_id):
+			count += 1
+	return count
+
+
+func _cell_for_tile(node: Node, target_tile) -> Vector2i:
+	var tile_rows: Array = node.get("tile_nodes")
+	for row in range(tile_rows.size()):
+		var row_tiles: Array = tile_rows[row]
+		for col in range(row_tiles.size()):
+			if row_tiles[col] == target_tile:
+				return Vector2i(row, col)
+	return Vector2i(-1, -1)
 
 
 func _validate_rescue_buddy_runtime_rules(node: Node, errors: PackedStringArray) -> void:

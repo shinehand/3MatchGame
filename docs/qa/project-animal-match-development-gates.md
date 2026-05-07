@@ -142,6 +142,9 @@ QA 결과: 승인 또는 반려
 확인 환경:
 검증 명령:
 주요 확인:
+No-device readiness:
+Device-blocked items:
+Evidence logs:
 반려 이슈:
 재확인 필요:
 ```

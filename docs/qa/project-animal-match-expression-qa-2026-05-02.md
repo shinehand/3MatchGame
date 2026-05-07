@@ -4,6 +4,8 @@
 
 승인 — 코드 검증 기준에서 PAM-DEV-030, PAM-DEV-031, PAM-DEV-032의 1차 구현은 통과했다.
 
+PAM-QA-040은 no-device readiness 통과 후 final device QA가 남아 있는 상태로 관리한다.
+
 ## 대상 작업 카드
 
 - PAM-DEV-030: BlockTile 표정 상태 API 추가

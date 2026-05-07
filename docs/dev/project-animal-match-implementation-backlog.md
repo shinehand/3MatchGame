@@ -153,16 +153,21 @@
 
 ### PAM-QA-040: 표정 애니메이션 QA 체크리스트 수행
 
-- 상태: 부분 자동화됨. Scene load smoke가 idle blink 시작, 동시 blink 4개 이하, `match` 표정 우선순위 유지, 논리 캔버스 기준 홈/월드맵/게임 HUD/도감 레이아웃 앵커를 검증한다. 남은 승인 조건은 실제 기기 또는 시뮬레이터에서 portrait/landscape 물리 viewport 수동 QA를 수행하고 결과를 문서화하는 것이다.
+- 상태: no-device readiness 자동화됨. Scene load smoke가 idle blink 시작, `is_busy` 중 idle blink 차단, 동시 blink 4개 이하, 선택 `smile`, low-move `worried` 4개 이하, `match` 표정 우선순위 유지, 논리 캔버스 기준 홈/월드맵/게임 HUD/도감 레이아웃 앵커를 검증한다. 남은 최종 승인 조건은 실제 기기 또는 시뮬레이터에서 portrait/landscape 물리 viewport 수동 QA를 수행하고 결과를 문서화하는 것이다.
 - 소유: QA Agent
 - 대상 파일:
   - `docs/qa/project-animal-match-development-gates.md`
+  - `docs/qa/project-animal-match-expression-qa-readiness-2026-05-08.md`
+  - `docs/dev/validation-process.md`
   - `scripts/validate_scene_loads.gd`
 - 작업:
-  - 8x8 보드에서 idle blink 동시 수가 4개 이하인지 확인한다. 자동 smoke로 1차 검증됨.
+  - 8x8 보드에서 idle blink 동시 수가 4개 이하인지 확인한다. 자동 smoke로 검증됨.
+  - `is_busy == true` 또는 overlay 표시 중 새 idle blink가 시작되지 않는지 확인한다. 자동 smoke로 검증됨.
+  - 선택 `smile`, low-move `worried`, 제거 직전 `match` 우선순위가 런타임 경로에서 유지되는지 확인한다. 자동 smoke로 검증됨.
   - 스와이프, 매치, 낙하, 리필, 특수 블록 중 표정 애니메이션이 상태를 꼬이게 하지 않는지 확인한다. 자동 smoke가 우선순위/특수 조합 일부를 검증하며, 수동 플레이 확인이 남아 있다.
   - 모바일 portrait/landscape에서 블록 얼굴이 잘리지 않는지 확인한다. 논리 캔버스 앵커는 자동 검증되며, 물리 viewport 확인이 남아 있다.
 - 완료 기준:
+  - no-device readiness 결과가 문서화된다.
   - 주요 플로우 승인 또는 반려 사유가 문서화된다.
   - 실제 기기 또는 시뮬레이터 portrait/landscape에서 보드 얼굴, HUD, 부스터 도크, 목표 칩, 표정/VFX 겹침 결과가 기록된다.
 

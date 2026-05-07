@@ -578,6 +578,8 @@ func _run_idle_expression_scheduler(run_id: int) -> void:
 
 
 func _play_random_idle_blinks() -> void:
+	if stage_state != "playing" or is_busy or (overlay != null and overlay.visible):
+		return
 	var candidates := _active_visible_tiles()
 	if candidates.is_empty():
 		return

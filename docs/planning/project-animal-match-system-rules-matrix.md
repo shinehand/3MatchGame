@@ -97,6 +97,8 @@
 - Stage 5: 첫 컬렉션 보상.
 - Stage 10: 초반 밴드 마감.
 - Stage 20: 점수/덤불/수집 복합.
-- 첫 hard stage: 실패 정책.
+- Stage 31: row/column/bomb 특수 조합과 cascade_slide Buddy smoke.
+- Stage 51: 후반 blocker 압박과 brave_start Buddy smoke.
 - Stage 81: elephant 해금/후반 동기.
 - Stage 100: 피날레, 결과, 메타 보상.
+- Rescue Buddy smoke: Stage 4/5/8/16/18/20/24/25/31/41/51/81 첫 등장 스킬을 validator 기준으로 확인한다.
