@@ -57,25 +57,29 @@ func play_special_combo(from_position: Vector2, to_position: Vector2, from_speci
 	var center := (from_position + to_position) * 0.5
 	var direction := to_position - from_position
 	var length := maxf(direction.length(), 68.0)
-	var combo_color := _special_color(from_special).lerp(_special_color(to_special), 0.5)
 	var combo_type := _special_combo_type(from_special, to_special)
+	var style := _special_combo_style(combo_type)
+	var combo_color: Color = style.get("combo_color", _special_color(from_special).lerp(_special_color(to_special), 0.5))
+	var accent_color: Color = style.get("accent_color", combo_color)
+	var label_color: Color = style.get("label_color", Color(1.0, 0.96, 0.42, 1.0))
+	var beams := _spawn_special_combo_beams(center, length, direction.angle(), combo_type, combo_color, accent_color)
 
-	var flash := ColorRect.new()
-	flash.name = "SpecialComboFlash"
-	flash.color = Color(combo_color.r, combo_color.g, combo_color.b, 0.64)
-	flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	flash.size = Vector2(length + 72.0, 18.0)
-	flash.pivot_offset = flash.size * 0.5
-	flash.global_position = center - flash.size * 0.5
-	flash.rotation = direction.angle()
-	board_fx_root.add_child(flash)
+	var ring_size: Vector2 = style.get("ring_size", Vector2(182, 182))
+	var ring_peak := float(style.get("ring_peak", 1.14))
 
-	var ring := _spawn_texture(board_fx_root, GOAL_RING_TEXTURE, center, Vector2(182, 182))
+	var ring := _spawn_texture(board_fx_root, GOAL_RING_TEXTURE, center, ring_size)
 	ring.name = "SpecialComboRing"
 	ring.modulate = Color(1.0, 1.0, 1.0, 0.0)
 	ring.scale = Vector2(0.5, 0.5)
 
-	var label := _spawn_label(board_fx_root, _special_combo_text(combo_type), center + Vector2(0, -78), 30, Color(1.0, 0.96, 0.42, 1.0))
+	var echo_ring: TextureRect = null
+	if bool(style.get("double_ring", false)):
+		echo_ring = _spawn_texture(board_fx_root, GOAL_RING_TEXTURE, center, ring_size + Vector2(36, 36))
+		echo_ring.name = "SpecialComboEchoRing"
+		echo_ring.modulate = Color(accent_color.r, accent_color.g, accent_color.b, 0.0)
+		echo_ring.scale = Vector2(0.38, 0.38)
+
+	var label := _spawn_label(board_fx_root, _special_combo_text(combo_type), center + Vector2(0, -78), int(style.get("label_size", 30)), label_color)
 	label.name = "SpecialComboLabel"
 	label.modulate.a = 0.0
 	label.scale = Vector2(0.78, 0.78)
@@ -84,18 +88,26 @@ func play_special_combo(from_position: Vector2, to_position: Vector2, from_speci
 	tween.set_parallel(true)
 	tween.set_trans(Tween.TRANS_BACK)
 	tween.set_ease(Tween.EASE_OUT)
-	tween.tween_property(flash, "color:a", 0.0, 0.28)
-	tween.tween_property(flash, "scale:y", 1.9, 0.18)
+	for beam in beams:
+		tween.tween_property(beam, "color:a", 0.0, 0.28)
+		tween.tween_property(beam, "scale:y", float(style.get("beam_peak_y", 1.9)), 0.18)
 	tween.tween_property(ring, "modulate", Color(combo_color.r, combo_color.g, combo_color.b, 0.92), 0.08)
-	tween.tween_property(ring, "scale", Vector2(1.14, 1.14), 0.24)
+	tween.tween_property(ring, "scale", Vector2(ring_peak, ring_peak), 0.24)
 	tween.tween_property(ring, "modulate:a", 0.0, 0.34).set_delay(0.08)
+	if echo_ring != null:
+		tween.tween_property(echo_ring, "modulate", Color(accent_color.r, accent_color.g, accent_color.b, 0.72), 0.1)
+		tween.tween_property(echo_ring, "scale", Vector2(1.05, 1.05), 0.28)
+		tween.tween_property(echo_ring, "modulate:a", 0.0, 0.32).set_delay(0.12)
 	tween.tween_property(label, "modulate:a", 1.0, 0.08)
 	tween.tween_property(label, "scale", Vector2(1.0, 1.0), 0.14)
 	tween.tween_property(label, "position:y", label.position.y - 28.0, 0.32)
 	tween.tween_property(label, "modulate:a", 0.0, 0.2).set_delay(0.22)
 	await tween.finished
-	flash.queue_free()
+	for beam in beams:
+		beam.queue_free()
 	ring.queue_free()
+	if echo_ring != null:
+		echo_ring.queue_free()
 	label.queue_free()
 
 
@@ -355,6 +367,48 @@ func _configure_root(root: Control) -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
+func _spawn_special_combo_beams(center: Vector2, base_length: float, swap_angle: float, combo_type: String, combo_color: Color, accent_color: Color) -> Array:
+	match combo_type:
+		"row_col":
+			return [
+				_spawn_special_combo_beam(center, base_length + 190.0, 20.0, 0.0, combo_color, "SpecialComboFlash"),
+				_spawn_special_combo_beam(center, base_length + 190.0, 20.0, PI * 0.5, accent_color, "SpecialComboBeam"),
+			]
+		"row_row":
+			return [_spawn_special_combo_beam(center, base_length + 240.0, 24.0, 0.0, combo_color, "SpecialComboFlash")]
+		"col_col":
+			return [_spawn_special_combo_beam(center, base_length + 240.0, 24.0, PI * 0.5, combo_color, "SpecialComboFlash")]
+		"row_bomb":
+			return [
+				_spawn_special_combo_beam(center, base_length + 220.0, 22.0, 0.0, combo_color, "SpecialComboFlash"),
+				_spawn_special_combo_beam(center, 118.0, 18.0, PI * 0.5, accent_color, "SpecialComboBeam"),
+			]
+		"col_bomb":
+			return [
+				_spawn_special_combo_beam(center, base_length + 220.0, 22.0, PI * 0.5, combo_color, "SpecialComboFlash"),
+				_spawn_special_combo_beam(center, 118.0, 18.0, 0.0, accent_color, "SpecialComboBeam"),
+			]
+		"bomb_bomb":
+			return [
+				_spawn_special_combo_beam(center, base_length + 170.0, 20.0, PI * 0.25, combo_color, "SpecialComboFlash"),
+				_spawn_special_combo_beam(center, base_length + 170.0, 20.0, -PI * 0.25, accent_color, "SpecialComboBeam"),
+			]
+	return [_spawn_special_combo_beam(center, base_length + 72.0, 18.0, swap_angle, combo_color, "SpecialComboFlash")]
+
+
+func _spawn_special_combo_beam(center: Vector2, length: float, thickness: float, rotation_radians: float, color: Color, node_name: String) -> ColorRect:
+	var beam := ColorRect.new()
+	beam.name = node_name
+	beam.color = Color(color.r, color.g, color.b, 0.64)
+	beam.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	beam.size = Vector2(length, thickness)
+	beam.pivot_offset = beam.size * 0.5
+	beam.global_position = center - beam.size * 0.5
+	beam.rotation = rotation_radians
+	board_fx_root.add_child(beam)
+	return beam
+
+
 func _special_text(special_type: String) -> String:
 	match special_type:
 		"row":
@@ -397,6 +451,69 @@ func _special_combo_type(from_special: String, to_special: String) -> String:
 	var pair := [from_special, to_special]
 	pair.sort()
 	return "%s_%s" % [String(pair[0]), String(pair[1])]
+
+
+func _special_combo_style(combo_type: String) -> Dictionary:
+	match combo_type:
+		"row_col":
+			return {
+				"combo_color": Color(0.34, 0.82, 1.0, 0.95),
+				"accent_color": Color(0.55, 0.96, 0.44, 0.95),
+				"label_color": Color(1.0, 0.96, 0.38, 1.0),
+				"ring_size": Vector2(198, 198),
+				"ring_peak": 1.18,
+				"beam_peak_y": 2.1,
+			}
+		"row_row":
+			return {
+				"combo_color": Color(0.34, 0.78, 1.0, 0.95),
+				"accent_color": Color(0.72, 0.9, 1.0, 0.95),
+				"label_color": Color(0.72, 0.92, 1.0, 1.0),
+				"ring_size": Vector2(178, 178),
+				"ring_peak": 1.08,
+				"beam_peak_y": 2.0,
+			}
+		"col_col":
+			return {
+				"combo_color": Color(0.50, 0.92, 0.42, 0.95),
+				"accent_color": Color(0.80, 1.0, 0.62, 0.95),
+				"label_color": Color(0.76, 1.0, 0.68, 1.0),
+				"ring_size": Vector2(178, 178),
+				"ring_peak": 1.08,
+				"beam_peak_y": 2.0,
+			}
+		"row_bomb":
+			return {
+				"combo_color": Color(0.38, 0.78, 1.0, 0.95),
+				"accent_color": Color(1.0, 0.54, 0.24, 0.95),
+				"label_color": Color(1.0, 0.74, 0.34, 1.0),
+				"ring_size": Vector2(212, 212),
+				"ring_peak": 1.16,
+				"beam_peak_y": 2.15,
+				"double_ring": true,
+			}
+		"col_bomb":
+			return {
+				"combo_color": Color(0.55, 0.94, 0.46, 0.95),
+				"accent_color": Color(1.0, 0.54, 0.24, 0.95),
+				"label_color": Color(1.0, 0.76, 0.34, 1.0),
+				"ring_size": Vector2(212, 212),
+				"ring_peak": 1.16,
+				"beam_peak_y": 2.15,
+				"double_ring": true,
+			}
+		"bomb_bomb":
+			return {
+				"combo_color": Color(1.0, 0.48, 0.22, 0.95),
+				"accent_color": Color(1.0, 0.86, 0.28, 0.95),
+				"label_color": Color(1.0, 0.90, 0.40, 1.0),
+				"ring_size": Vector2(228, 228),
+				"ring_peak": 1.22,
+				"beam_peak_y": 2.35,
+				"double_ring": true,
+				"label_size": 32,
+			}
+	return {}
 
 
 func _special_pair_matches(from_special: String, to_special: String, a: String, b: String) -> bool:

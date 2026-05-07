@@ -627,6 +627,8 @@ func _validate_fx_layer_runtime(node: Node, errors: PackedStringArray) -> void:
 	if board_root == null or hud_root == null or screen_root == null:
 		return
 
+	await _validate_fx_special_combo_variant_labels(node, board_root, errors)
+
 	node.call("play_special_combo", Vector2(180, 180), Vector2(280, 180), "row", "col")
 	node.call("play_match_burst_at", Vector2(220, 260), 2)
 	node.call("play_special_created", Vector2(340, 220), "bomb")
@@ -656,8 +658,8 @@ func _validate_fx_layer_runtime(node: Node, errors: PackedStringArray) -> void:
 		errors.append("%s play_blocker_clear_at should spawn BlockerClearLabel." % FX_LAYER_SCENE_PATH)
 	if node.find_child("RainbowFlash", true, false) == null:
 		errors.append("%s play_rainbow_clear should spawn RainbowFlash." % FX_LAYER_SCENE_PATH)
-	if board_root.get_child_count() > 12:
-		errors.append("%s BoardFxRoot should keep simultaneous no-device VFX children <= 12, got %d." % [FX_LAYER_SCENE_PATH, board_root.get_child_count()])
+	if board_root.get_child_count() > 14:
+		errors.append("%s BoardFxRoot should keep simultaneous no-device VFX children <= 14, got %d." % [FX_LAYER_SCENE_PATH, board_root.get_child_count()])
 	if hud_root.get_child_count() > 4:
 		errors.append("%s HudFxRoot should keep simultaneous no-device VFX children <= 4, got %d." % [FX_LAYER_SCENE_PATH, hud_root.get_child_count()])
 	if screen_root.get_child_count() > 6:
@@ -665,6 +667,34 @@ func _validate_fx_layer_runtime(node: Node, errors: PackedStringArray) -> void:
 	await create_timer(1.1).timeout
 	if board_root.get_child_count() != 0 or hud_root.get_child_count() != 0 or screen_root.get_child_count() != 0:
 		errors.append("%s VFX smoke should clean up transient child nodes, got board=%d hud=%d screen=%d." % [FX_LAYER_SCENE_PATH, board_root.get_child_count(), hud_root.get_child_count(), screen_root.get_child_count()])
+
+
+func _validate_fx_special_combo_variant_labels(node: Node, board_root: Node, errors: PackedStringArray) -> void:
+	var variants: Array = [
+		{"from": "row", "to": "col", "text": "크로스!", "echo": false},
+		{"from": "row", "to": "row", "text": "가로 러시!", "echo": false},
+		{"from": "col", "to": "col", "text": "세로 러시!", "echo": false},
+		{"from": "row", "to": "bomb", "text": "가로 폭탄!", "echo": true},
+		{"from": "col", "to": "bomb", "text": "세로 폭탄!", "echo": true},
+		{"from": "bomb", "to": "bomb", "text": "더블 폭탄!", "echo": true},
+	]
+	for index in range(variants.size()):
+		var variant: Dictionary = variants[index]
+		node.call("play_special_combo", Vector2(180, 180 + index * 8), Vector2(280, 180 + index * 8), String(variant.get("from", "")), String(variant.get("to", "")))
+		await process_frame
+		await create_timer(0.04).timeout
+		var special_combo_label := node.find_child("SpecialComboLabel", true, false) as Label
+		if special_combo_label == null or special_combo_label.text != String(variant.get("text", "")):
+			errors.append("%s play_special_combo should label %s+%s as %s, got %s." % [FX_LAYER_SCENE_PATH, String(variant.get("from", "")), String(variant.get("to", "")), String(variant.get("text", "")), special_combo_label.text if special_combo_label != null else "<missing>"])
+		if node.find_child("SpecialComboFlash", true, false) == null:
+			errors.append("%s play_special_combo should spawn a primary shaped flash for %s+%s." % [FX_LAYER_SCENE_PATH, String(variant.get("from", "")), String(variant.get("to", ""))])
+		if bool(variant.get("echo", false)) and node.find_child("SpecialComboEchoRing", true, false) == null:
+			errors.append("%s explosive special combos should spawn SpecialComboEchoRing for %s+%s." % [FX_LAYER_SCENE_PATH, String(variant.get("from", "")), String(variant.get("to", ""))])
+		if board_root.get_child_count() > 6:
+			errors.append("%s one play_special_combo call should keep BoardFxRoot children <= 6, got %d for %s+%s." % [FX_LAYER_SCENE_PATH, board_root.get_child_count(), String(variant.get("from", "")), String(variant.get("to", ""))])
+		await create_timer(0.58).timeout
+		if board_root.get_child_count() != 0:
+			errors.append("%s play_special_combo %s+%s should clean up all board VFX children, got %d." % [FX_LAYER_SCENE_PATH, String(variant.get("from", "")), String(variant.get("to", "")), board_root.get_child_count()])
 
 
 func _validate_expression_animation_rules(node: Node, errors: PackedStringArray) -> void:
