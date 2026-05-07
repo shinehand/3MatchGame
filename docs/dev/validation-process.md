@@ -102,6 +102,7 @@
 - Stage 1 FTUE 실패 판정 경로에서 실패 overlay는 `무료 재도전` CTA를 보여 주고 보상형 광고/IAP 문구를 노출하지 않는다.
 - Stage 25 near-miss 실패 판정 경로에서 실패 overlay가 표시되고, 실패 유형, 남은 목표, `놓친 핵심`, `다음 한 수`, 추천 부스터, `+3 이동 받고 계속`/`재도전` CTA를 보여 준다.
 - 실패 overlay helper smoke는 수집 동물 미달, 점수 미달, 덤불 미달의 `놓친 핵심`/`다음 한 수` 문구를 분리 검증한다.
+- Stage 20 `loyal_fetch`는 `_check_stage_state()`의 실패 판정 경로에서 실패 overlay와 `stage_fail`/`fail_offer_show`를 띄우기 전에 구조 이동 1회를 지급하는지 검증한다.
 - `+3 이동 받고 계속` primary CTA는 overlay를 닫고 `remaining_moves = 3`, `stage_state = playing`으로 실제 재개한다.
 - `재도전` secondary CTA는 같은 Stage 25를 새 이동 수/점수 0/장애물 0/overlay hidden 상태로 다시 시작한다.
 - 광고 실패/IAP 취소·실패는 overlay, 이동 수, 점수, 목표 진행, wallet을 보존하고 추가 이동을 지급하지 않는다.
@@ -121,6 +122,9 @@
 - 스테이지 노드를 누르면 바로 게임으로 가지 않고 Stage Popup이 뜬다.
 - Stage Popup에서 목표, 이동 수, 보상, 아이콘이 있는 시작 부스터 3종, START 버튼이 정상 표시된다.
 - Stage 4 같은 Buddy 스테이지에서는 Stage Popup의 Buddy 문구와 Gameplay HUD Buddy 문구가 같은 동물/스킬을 가리킨다.
+- 자동 scene smoke는 Stage 4 Rescue Buddy HUD가 숨김 없음, 0/3, 2/3, 출동, 완료 상태를 순서대로 표시하는지 확인한다.
+- 자동 scene smoke는 목표 동물 3매치 하나가 Buddy 차지 1회로만 집계되고, 단일 매치만으로 준비 상태가 되지 않는지 확인한다.
+- 자동 scene smoke는 Stage 18 `leap_clear`와 Stage 81 `mighty_push`가 마지막 덤불 목표를 Buddy 단독으로 완료하려 할 때 차단되는지 확인한다.
 - 부스터를 선택하고 START를 누르면 게임 시작 보드에 선택 부스터가 배치된다.
 - Rescue Book 카드에서 해금 동물의 토큰/우정 레벨/NEW 상태와 잠김 동물의 해금 스테이지 문구가 정상 표시되는지 확인한다.
 - 라이브 이벤트 노출이 홈, 스테이지 선택, 결과 오버레이, 컬렉션에서 각각 `live_event_impression`으로 기록되는지 확인한다.

@@ -800,10 +800,14 @@ func _cell_for_tile(node: Node, target_tile) -> Vector2i:
 
 
 func _validate_rescue_buddy_runtime_rules(node: Node, errors: PackedStringArray) -> void:
-	for method_name in ["_start_stage", "_charge_buddy_skill_for_match", "_charge_buddy_skill_for_combo", "_charge_buddy_skill_for_clear_blocker", "_charge_buddy_skill_for_cascade_step", "_charge_buddy_skill_for_near_fail", "_charge_buddy_skill_for_stage_clear", "_trigger_buddy_skill", "_try_loyal_fetch_before_failure", "_activate_fever", "_consume_fever_turn_after_player_move", "_stage_gold_reward", "_active_visible_tiles"]:
+	for method_name in ["_start_stage", "_update_hud", "_apply_match_rewards", "_charge_buddy_skill_for_match", "_charge_buddy_skill_for_combo", "_charge_buddy_skill_for_clear_blocker", "_charge_buddy_skill_for_cascade_step", "_charge_buddy_skill_for_near_fail", "_charge_buddy_skill_for_stage_clear", "_trigger_buddy_skill", "_try_loyal_fetch_before_failure", "_activate_fever", "_consume_fever_turn_after_player_move", "_stage_gold_reward", "_active_visible_tiles", "_is_stage_complete"]:
 		if not node.has_method(method_name):
 			errors.append("%s should expose %s for Rescue Buddy runtime smoke." % [GAMEPLAY_SCENE_PATH, method_name])
 			return
+
+	_validate_rescue_buddy_hud_runtime(node, errors)
+	_validate_rescue_buddy_match_charge_runtime(node, errors)
+	_validate_buddy_blocker_auto_complete_guard(node, errors)
 
 	node.call("_start_stage", 3)
 	node.set("board_data", _seed_plain_gameplay_board(node))
@@ -1072,6 +1076,133 @@ func _validate_rescue_buddy_runtime_rules(node: Node, errors: PackedStringArray)
 	var mighty_push_params: Dictionary = Dictionary(mighty_push_event.get("params", {}))
 	if int(mighty_push_params.get("stage_id", 0)) != 81 or String(mighty_push_params.get("animal_id", "")) != "elephant" or String(mighty_push_params.get("effect_type", "")) != "mighty_push":
 		errors.append("%s mighty_push trigger analytics should identify Stage 81 elephant mighty_push." % GAMEPLAY_SCENE_PATH)
+
+
+func _validate_rescue_buddy_hud_runtime(node: Node, errors: PackedStringArray) -> void:
+	var buddy_label := node.get("hud_buddy_label") as Label
+	var buddy_gauge := node.get("hud_buddy_gauge") as ProgressBar
+	if buddy_label == null or buddy_gauge == null:
+		errors.append("%s Rescue Buddy HUD smoke should access hud_buddy_label and hud_buddy_gauge." % GAMEPLAY_SCENE_PATH)
+		return
+
+	node.call("_start_stage", 0)
+	node.call("_update_hud")
+	if buddy_label.visible or buddy_gauge.visible:
+		errors.append("%s Rescue Buddy HUD should stay hidden on stages without a Buddy." % GAMEPLAY_SCENE_PATH)
+
+	node.call("_start_stage", 3)
+	node.call("_update_hud")
+	if not buddy_label.visible or not buddy_gauge.visible:
+		errors.append("%s Rescue Buddy HUD should be visible on Stage 4." % GAMEPLAY_SCENE_PATH)
+	if not buddy_label.text.contains("토끼") or not buddy_label.text.contains("0/3"):
+		errors.append("%s Rescue Buddy HUD should show Stage 4 rabbit 0/3 charge state, got %s." % [GAMEPLAY_SCENE_PATH, buddy_label.text])
+	if int(buddy_gauge.max_value) != 3 or int(buddy_gauge.value) != 0:
+		errors.append("%s Rescue Buddy gauge should start at 0/3 on Stage 4, got %d/%d." % [GAMEPLAY_SCENE_PATH, int(buddy_gauge.value), int(buddy_gauge.max_value)])
+
+	for _index in range(2):
+		node.call("_charge_buddy_skill_for_match", "rabbit")
+	node.call("_update_hud")
+	if not buddy_label.text.contains("2/3") or buddy_label.text.contains("출동"):
+		errors.append("%s Rescue Buddy HUD should show non-ready 2/3 charge before full charge, got %s." % [GAMEPLAY_SCENE_PATH, buddy_label.text])
+	if int(buddy_gauge.value) != 2:
+		errors.append("%s Rescue Buddy gauge should show 2 charges before ready, got %d." % [GAMEPLAY_SCENE_PATH, int(buddy_gauge.value)])
+
+	node.call("_charge_buddy_skill_for_match", "rabbit")
+	node.call("_update_hud")
+	if not buddy_label.text.contains("출동"):
+		errors.append("%s Rescue Buddy HUD should show 출동 when quick_refill is ready, got %s." % [GAMEPLAY_SCENE_PATH, buddy_label.text])
+	if int(buddy_gauge.value) != 3:
+		errors.append("%s Rescue Buddy gauge should fill at quick_refill ready, got %d." % [GAMEPLAY_SCENE_PATH, int(buddy_gauge.value)])
+
+	node.call("_trigger_buddy_skill")
+	if not buddy_label.text.contains("완료"):
+		errors.append("%s Rescue Buddy HUD should show 완료 after max-use trigger, got %s." % [GAMEPLAY_SCENE_PATH, buddy_label.text])
+	if int(buddy_gauge.value) != 3:
+		errors.append("%s Rescue Buddy gauge should remain filled after Buddy completes, got %d." % [GAMEPLAY_SCENE_PATH, int(buddy_gauge.value)])
+
+
+func _validate_rescue_buddy_match_charge_runtime(node: Node, errors: PackedStringArray) -> void:
+	node.call("_start_stage", 3)
+	var board_data: Array = _seed_plain_gameplay_board(node)
+	for cell in [Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2)]:
+		board_data[cell.x][cell.y] = node.call("_make_piece", "rabbit")
+	node.set("board_data", board_data)
+	var ready_events_before := _analytics_event_count("buddy_skill_ready")
+	node.call("_apply_match_rewards", [Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2)], 1)
+	if int(node.get("buddy_charge_count")) != 1:
+		errors.append("%s one goal-animal 3-match should count as one Buddy charge, got %d." % [GAMEPLAY_SCENE_PATH, int(node.get("buddy_charge_count"))])
+	if bool(node.get("buddy_trigger_pending")):
+		errors.append("%s one goal-animal 3-match should not make quick_refill ready by itself." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_ready") != ready_events_before:
+		errors.append("%s one goal-animal 3-match should not emit buddy_skill_ready before three match events." % GAMEPLAY_SCENE_PATH)
+
+
+func _validate_buddy_blocker_auto_complete_guard(node: Node, errors: PackedStringArray) -> void:
+	node.call("_start_stage", 17)
+	node.set("board_data", _seed_plain_gameplay_board(node))
+	_complete_current_stage_goals(node)
+	var leap_target_blockers := int(node.call("_target_blockers"))
+	node.set("cleared_blockers", leap_target_blockers - 1)
+	var leap_obstacle_data: Array = node.get("obstacle_data")
+	for row in range(8):
+		for col in range(8):
+			leap_obstacle_data[row][col] = 0
+	leap_obstacle_data[2][2] = 1
+	node.set("obstacle_data", leap_obstacle_data)
+	var leap_clear_triggers_before := _analytics_event_count("buddy_skill_trigger")
+	var leap_clear_blocked_before := _analytics_event_count("buddy_skill_blocked")
+	for _index in range(3):
+		node.call("_charge_buddy_skill_for_match", "frog")
+	node.call("_trigger_buddy_skill")
+	leap_obstacle_data = node.get("obstacle_data")
+	if int(leap_obstacle_data[2][2]) != 1:
+		errors.append("%s leap_clear should not clear the final blocker when it would complete the stage by itself." % GAMEPLAY_SCENE_PATH)
+	if int(node.get("cleared_blockers")) != leap_target_blockers - 1:
+		errors.append("%s leap_clear guard should preserve cleared_blockers at one short of target, got %d." % [GAMEPLAY_SCENE_PATH, int(node.get("cleared_blockers"))])
+	if int(node.get("buddy_uses")) != 0:
+		errors.append("%s leap_clear guard should not consume a Buddy use when blocked, got %d." % [GAMEPLAY_SCENE_PATH, int(node.get("buddy_uses"))])
+	if _analytics_event_count("buddy_skill_trigger") != leap_clear_triggers_before:
+		errors.append("%s leap_clear guard should not emit buddy_skill_trigger when blocking auto-complete." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_blocked") <= leap_clear_blocked_before:
+		errors.append("%s leap_clear guard should emit buddy_skill_blocked when blocking auto-complete." % GAMEPLAY_SCENE_PATH)
+	var leap_clear_blocked_event := _last_analytics_event_by_name("buddy_skill_blocked")
+	var leap_clear_blocked_params: Dictionary = Dictionary(leap_clear_blocked_event.get("params", {}))
+	if int(leap_clear_blocked_params.get("stage_id", 0)) != 18 or String(leap_clear_blocked_params.get("animal_id", "")) != "frog" or String(leap_clear_blocked_params.get("skill_id", "")) != "leap_clear" or String(leap_clear_blocked_params.get("reason", "")) != "effect_unavailable":
+		errors.append("%s leap_clear guard blocked analytics should identify Stage 18 effect_unavailable." % GAMEPLAY_SCENE_PATH)
+	if bool(node.call("_is_stage_complete")):
+		errors.append("%s leap_clear guard should leave Stage 18 incomplete until the player clears the final blocker." % GAMEPLAY_SCENE_PATH)
+
+	node.call("_start_stage", 80)
+	node.set("board_data", _seed_plain_gameplay_board(node))
+	_complete_current_stage_goals(node)
+	var mighty_target_blockers := int(node.call("_target_blockers"))
+	node.set("cleared_blockers", mighty_target_blockers - 1)
+	var mighty_obstacle_data: Array = node.get("obstacle_data")
+	for row in range(8):
+		for col in range(8):
+			mighty_obstacle_data[row][col] = 0
+	mighty_obstacle_data[3][3] = 1
+	node.set("obstacle_data", mighty_obstacle_data)
+	var mighty_push_triggers_before := _analytics_event_count("buddy_skill_trigger")
+	var mighty_push_blocked_before := _analytics_event_count("buddy_skill_blocked")
+	node.call("_charge_buddy_skill_for_clear_blocker", 1)
+	mighty_obstacle_data = node.get("obstacle_data")
+	if int(mighty_obstacle_data[3][3]) != 1:
+		errors.append("%s mighty_push should not clear the final blocker when it would complete the stage by itself." % GAMEPLAY_SCENE_PATH)
+	if int(node.get("cleared_blockers")) != mighty_target_blockers - 1:
+		errors.append("%s mighty_push guard should preserve cleared_blockers at one short of target, got %d." % [GAMEPLAY_SCENE_PATH, int(node.get("cleared_blockers"))])
+	if int(node.get("buddy_uses")) != 0:
+		errors.append("%s mighty_push guard should not consume a Buddy use when blocked, got %d." % [GAMEPLAY_SCENE_PATH, int(node.get("buddy_uses"))])
+	if _analytics_event_count("buddy_skill_trigger") != mighty_push_triggers_before:
+		errors.append("%s mighty_push guard should not emit buddy_skill_trigger when blocking auto-complete." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_blocked") <= mighty_push_blocked_before:
+		errors.append("%s mighty_push guard should emit buddy_skill_blocked when blocking auto-complete." % GAMEPLAY_SCENE_PATH)
+	var mighty_push_blocked_event := _last_analytics_event_by_name("buddy_skill_blocked")
+	var mighty_push_blocked_params: Dictionary = Dictionary(mighty_push_blocked_event.get("params", {}))
+	if int(mighty_push_blocked_params.get("stage_id", 0)) != 81 or String(mighty_push_blocked_params.get("animal_id", "")) != "elephant" or String(mighty_push_blocked_params.get("skill_id", "")) != "mighty_push" or String(mighty_push_blocked_params.get("reason", "")) != "effect_unavailable":
+		errors.append("%s mighty_push guard blocked analytics should identify Stage 81 effect_unavailable." % GAMEPLAY_SCENE_PATH)
+	if bool(node.call("_is_stage_complete")):
+		errors.append("%s mighty_push guard should leave Stage 81 incomplete until the player clears the final blocker." % GAMEPLAY_SCENE_PATH)
 
 
 func _validate_special_effect_rules(node: Node, errors: PackedStringArray) -> void:
@@ -1372,6 +1503,7 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 			return
 
 	_validate_failure_focus_hint_runtime(node, errors)
+	await _validate_loyal_fetch_failure_gate_runtime(node, errors)
 	node.call("_start_stage", 0)
 	_complete_current_stage_goals(node)
 	node.set("remaining_moves", 0)
@@ -1664,6 +1796,42 @@ func _validate_failure_overlay_focus_hint_variants(node: Node, errors: PackedStr
 		errors.append("%s score failure hint smoke should expose 홈으로 secondary CTA." % GAMEPLAY_SCENE_PATH)
 	if overlay_body == null or not overlay_body.text.contains("실패 유형  strategic_miss") or not overlay_body.text.contains("남은 목표  점수 300점") or not overlay_body.text.contains("놓친 핵심  점수 300점 더 획득") or not overlay_body.text.contains("다음 한 수  4매치 이상과 연쇄를 노려 점수 배수를 먼저 키우세요."):
 		errors.append("%s score failure overlay should show the missed score focus and retry hint." % GAMEPLAY_SCENE_PATH)
+
+
+func _validate_loyal_fetch_failure_gate_runtime(node: Node, errors: PackedStringArray) -> void:
+	node.call("_start_stage", 19)
+	node.set("board_data", _seed_plain_gameplay_board(node))
+	var collected_counts: Dictionary = Dictionary(node.get("collected_counts"))
+	collected_counts["bear"] = 9
+	collected_counts["rabbit"] = 4
+	node.set("collected_counts", collected_counts)
+	node.set("remaining_moves", 0)
+	var overlay := node.get_node_or_null("Overlay") as CanvasItem
+	if overlay != null:
+		overlay.visible = false
+	var stage_fail_events_before := _analytics_event_count("stage_fail")
+	var fail_offer_show_events_before := _analytics_event_count("fail_offer_show")
+	var loyal_fetch_events_before := _analytics_event_count("buddy_skill_trigger")
+
+	await node.call("_check_stage_state")
+	if String(node.get("stage_state")) != "playing":
+		errors.append("%s loyal_fetch failure gate should keep Stage 20 playing, got %s." % [GAMEPLAY_SCENE_PATH, String(node.get("stage_state"))])
+	if int(node.get("remaining_moves")) != 1:
+		errors.append("%s loyal_fetch failure gate should restore exactly one rescue move, got %d." % [GAMEPLAY_SCENE_PATH, int(node.get("remaining_moves"))])
+	if int(node.get("buddy_uses")) != 1:
+		errors.append("%s loyal_fetch failure gate should consume exactly one Buddy use, got %d." % [GAMEPLAY_SCENE_PATH, int(node.get("buddy_uses"))])
+	if overlay != null and overlay.visible:
+		errors.append("%s loyal_fetch failure gate should not show the failure overlay." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("stage_fail") != stage_fail_events_before:
+		errors.append("%s loyal_fetch failure gate should not emit stage_fail before rescue move." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("fail_offer_show") != fail_offer_show_events_before:
+		errors.append("%s loyal_fetch failure gate should not emit fail_offer_show before rescue move." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_trigger") <= loyal_fetch_events_before:
+		errors.append("%s loyal_fetch failure gate should emit buddy_skill_trigger through _check_stage_state." % GAMEPLAY_SCENE_PATH)
+	var loyal_fetch_event := _last_analytics_event_by_name("buddy_skill_trigger")
+	var loyal_fetch_params: Dictionary = Dictionary(loyal_fetch_event.get("params", {}))
+	if int(loyal_fetch_params.get("stage_id", 0)) != 20 or String(loyal_fetch_params.get("animal_id", "")) != "dog" or String(loyal_fetch_params.get("effect_type", "")) != "loyal_fetch" or String(loyal_fetch_params.get("trigger_source", "")) != "near_fail_rescue":
+		errors.append("%s loyal_fetch failure gate analytics should identify Stage 20 near_fail_rescue." % GAMEPLAY_SCENE_PATH)
 
 
 func _validate_failure_focus_hint_runtime(node: Node, errors: PackedStringArray) -> void:

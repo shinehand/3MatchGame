@@ -116,9 +116,12 @@
 ## Gate 8A. Rescue Buddy 분석
 
 - Buddy 충전, 준비, 발동, 차단은 `buddy_skill_charge`, `buddy_skill_ready`, `buddy_skill_trigger`, `buddy_skill_blocked`로 실제 런타임에서 기록된다.
+- Stage 4 `quick_refill`은 목표 동물 매치 이벤트 단위로 충전되고, 3칸 매치 하나만으로 ready가 되지 않는다.
 - Stage 4 `quick_refill`은 목표 동물 매치 충전 후 1회 발동하고, max use 이후 차단 이벤트를 남긴다.
+- Stage 4 Rescue Buddy HUD는 Buddy 없는 스테이지에서 숨고, 0/3, 2/3, 출동, 완료 상태를 자동 scene smoke에서 검증한다.
 - Stage 5 `soft_bomb_plus`, Stage 8 `combo_peep`, Stage 16 `smart_hint`, Stage 18 `leap_clear`, Stage 24 `calm_fever`, Stage 25 `coin_sniff`, Stage 31 `cascade_slide`, Stage 41 `sly_route`, Stage 51 `brave_start`, Stage 81 `mighty_push`는 scene smoke에서 실제 상태 변화와 `buddy_skill_trigger`를 검증한다.
-- Stage 20 `loyal_fetch`는 실패 직전 구조 이동을 줄 때 `buddy_skill_trigger`를 남기며 scene smoke에서 검증된다.
+- Stage 18 `leap_clear`와 Stage 81 `mighty_push`는 마지막 덤불 목표를 Buddy 단독으로 완료하려 할 때 발동하지 않고 `effect_unavailable` 차단 이벤트를 남긴다.
+- Stage 20 `loyal_fetch`는 실패 직전 구조 이동을 줄 때 `buddy_skill_trigger`를 남기며, `_check_stage_state()` 실패 판정 경로에서 실패 overlay와 `stage_fail`/`fail_offer_show`를 먼저 띄우지 않는다.
 - Stage 4/5/8/16/18/20/24/25/31/41/51/81 첫 등장 Buddy 스테이지는 `recommended_smoke`로 수동 QA 진입점을 유지한다.
 
 ## Gate 9. 실패/광고/IAP 공정성

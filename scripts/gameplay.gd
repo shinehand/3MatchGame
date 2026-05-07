@@ -1494,6 +1494,7 @@ func _refresh_tiles_from_events(fall_events: Array) -> void:
 func _apply_match_rewards(matches: Array, combo: int) -> void:
 	var score_multiplier := FEVER_SCORE_MULTIPLIER if _is_fever_active() else 1
 	var collect_increment := 1 + (FEVER_TARGET_BONUS if _is_fever_active() else 0)
+	var matched_goal_animal := ""
 	score += matches.size() * 100 * combo * score_multiplier
 
 	for cell in matches:
@@ -1502,7 +1503,10 @@ func _apply_match_rewards(matches: Array, combo: int) -> void:
 			collected_counts[animal_id] = int(collected_counts[animal_id]) + collect_increment
 			if _is_fever_active():
 				fever_target_bonus_collected += FEVER_TARGET_BONUS
-			_charge_buddy_skill_for_match(animal_id)
+			if matched_goal_animal.is_empty():
+				matched_goal_animal = animal_id
+	if not matched_goal_animal.is_empty():
+		_charge_buddy_skill_for_match(matched_goal_animal)
 
 
 func _charge_buddy_skill_for_stage_start() -> void:
@@ -2100,6 +2104,8 @@ func _apply_buddy_sly_route() -> bool:
 
 
 func _apply_buddy_leap_clear() -> bool:
+	if _would_buddy_blocker_clear_auto_complete():
+		return false
 	var blocker_cells: Array = []
 	for row in range(BOARD_ROWS):
 		for col in range(BOARD_COLS):
@@ -2115,6 +2121,19 @@ func _apply_buddy_leap_clear() -> bool:
 	_refresh_tile(cell.x, cell.y)
 	tile_nodes[cell.x][cell.y].play_obstacle_clear_effect()
 	_play_fx_method("play_match_burst_at", [_tile_global_center(cell), 2])
+	return true
+
+
+func _would_buddy_blocker_clear_auto_complete() -> bool:
+	var target_blockers := _target_blockers()
+	if target_blockers <= 0 or cleared_blockers < target_blockers - 1:
+		return false
+	for animal_id in _stage_collect_targets().keys():
+		if int(collected_counts.get(animal_id, 0)) < int(_stage_collect_targets()[animal_id]):
+			return false
+	var target_score := _target_score()
+	if target_score > 0 and score < target_score:
+		return false
 	return true
 
 
@@ -2160,6 +2179,8 @@ func _apply_buddy_brave_start() -> bool:
 
 
 func _apply_buddy_mighty_push() -> bool:
+	if _would_buddy_blocker_clear_auto_complete():
+		return false
 	var blocker_cells: Array = []
 	for row in range(BOARD_ROWS):
 		for col in range(BOARD_COLS):
