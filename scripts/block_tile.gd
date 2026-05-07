@@ -13,6 +13,14 @@ const SPECIAL_BADGE_TEXTURES := {
 }
 const INVALID_PUFF_TEXTURE := preload("res://assets/generated/chatgpt/fx_invalid_puff_chatgpt.png")
 const OBSTACLE_BURST_TEXTURE := preload("res://assets/generated/chatgpt/fx_blocker_leaf_burst_chatgpt.png")
+const EXPRESSION_PRIORITIES := {
+	"idle": 0,
+	"blink": 1,
+	"smile": 2,
+	"fever": 2,
+	"worried": 2,
+	"match": 3,
+}
 
 @onready var content: Control = $Content
 @onready var inactive_slot: ColorRect = $Content/InactiveSlot
@@ -34,6 +42,10 @@ var suppress_next_press := false
 var match_effect_texture: Texture2D
 var is_inactive := false
 var idle_tween: Tween
+var expression_state := "idle"
+var expression_tween: Tween
+var expression_priority := 0
+var is_expression_locked := false
 var slot_frame: PanelContainer
 var slot_highlight: PanelContainer
 
@@ -63,6 +75,7 @@ func set_match_effect_texture(texture: Texture2D) -> void:
 func set_inactive(inactive: bool) -> void:
 	is_inactive = inactive
 	_stop_idle_motion()
+	clear_expression(false)
 	if slot_frame:
 		slot_frame.visible = true
 		slot_frame.add_theme_stylebox_override("panel", _slot_style(Color(0.57, 0.74, 0.95, 0.36), Color(1, 1, 1, 0.26), 16, 2))
@@ -85,6 +98,7 @@ func set_inactive(inactive: bool) -> void:
 
 
 func set_tile(texture: Texture2D, new_animal_id: String, special_type: String = "") -> void:
+	clear_expression(false)
 	icon.texture = texture
 	icon.visible = texture != null
 	icon.scale = Vector2.ONE
@@ -119,6 +133,54 @@ func set_tile(texture: Texture2D, new_animal_id: String, special_type: String = 
 		call_deferred("_start_idle_motion")
 	else:
 		_stop_idle_motion()
+
+
+func set_expression(new_expression_id: String, force: bool = false) -> void:
+	if not is_inside_tree() or not can_play_idle_expression():
+		return
+	var next_expression := String(new_expression_id).strip_edges().to_lower()
+	if not EXPRESSION_PRIORITIES.has(next_expression):
+		next_expression = "idle"
+	var next_priority := int(EXPRESSION_PRIORITIES.get(next_expression, 0))
+	if not force and is_expression_locked and next_priority < expression_priority:
+		return
+	if next_expression == "idle":
+		clear_expression()
+		return
+
+	_stop_idle_motion()
+	_clear_expression_tween(false)
+	expression_state = next_expression
+	expression_priority = next_priority
+	is_expression_locked = next_priority >= 3
+	_update_visual_pivots()
+
+	match next_expression:
+		"blink":
+			_play_blink_expression()
+		"smile":
+			_play_smile_expression()
+		"match":
+			_play_match_expression()
+		"fever":
+			_play_fever_expression()
+		"worried":
+			_play_worried_expression()
+		_:
+			clear_expression()
+
+
+func clear_expression(restart_idle_motion: bool = true) -> void:
+	_clear_expression_tween(true)
+	expression_state = "idle"
+	expression_priority = 0
+	is_expression_locked = false
+	if restart_idle_motion and can_play_idle_expression():
+		_start_idle_motion()
+
+
+func can_play_idle_expression() -> bool:
+	return not is_inactive and icon != null and icon.visible and icon.texture != null
 
 
 func _build_candy_slot_frame() -> void:
@@ -171,6 +233,10 @@ func _slot_color(new_animal_id: String) -> Color:
 			return Color("91ddff")
 		"fox":
 			return Color("ff945f")
+		"lion":
+			return Color("f5c04d")
+		"elephant":
+			return Color("a9b7d6")
 		_:
 			return Color("ffffff")
 
@@ -393,6 +459,93 @@ func play_special_ready_effect() -> void:
 	tween.set_ease(Tween.EASE_OUT)
 	tween.tween_property(special_badge, "scale", Vector2.ONE, 0.16)
 	tween.tween_property(special_badge, "modulate", Color(1, 1, 1, 1), 0.16)
+
+
+func _clear_expression_tween(reset_visuals: bool) -> void:
+	if expression_tween != null and expression_tween.is_valid():
+		expression_tween.kill()
+	expression_tween = null
+	if reset_visuals and icon != null:
+		icon.scale = Vector2.ONE
+		icon.position = Vector2.ZERO
+		icon.modulate = Color(1, 1, 1, 1)
+		if content != null:
+			content.position = Vector2.ZERO
+			content.rotation = 0.0
+
+
+func _finish_expression() -> void:
+	expression_state = "idle"
+	expression_priority = 0
+	is_expression_locked = false
+	if icon != null:
+		icon.scale = Vector2.ONE
+		icon.position = Vector2.ZERO
+		icon.modulate = Color(1, 1, 1, 1)
+	if content != null:
+		content.position = Vector2.ZERO
+		content.rotation = 0.0
+	if can_play_idle_expression():
+		_start_idle_motion()
+
+
+func _play_blink_expression() -> void:
+	expression_tween = create_tween()
+	expression_tween.set_trans(Tween.TRANS_SINE)
+	expression_tween.set_ease(Tween.EASE_IN_OUT)
+	expression_tween.tween_property(icon, "scale", Vector2(1.03, 0.82), 0.07)
+	expression_tween.tween_property(icon, "scale", Vector2.ONE, 0.09)
+	expression_tween.finished.connect(_finish_expression)
+
+
+func _play_smile_expression() -> void:
+	expression_tween = create_tween()
+	expression_tween.set_parallel(true)
+	expression_tween.set_trans(Tween.TRANS_BACK)
+	expression_tween.set_ease(Tween.EASE_OUT)
+	expression_tween.tween_property(icon, "scale", Vector2(1.08, 1.08), 0.12)
+	expression_tween.tween_property(icon, "modulate", Color(1.12, 1.12, 1.06, 1), 0.1)
+	expression_tween.chain().tween_property(icon, "scale", Vector2.ONE, 0.16)
+	expression_tween.parallel().tween_property(icon, "modulate", Color(1, 1, 1, 1), 0.16)
+	expression_tween.finished.connect(_finish_expression)
+
+
+func _play_match_expression() -> void:
+	expression_tween = create_tween()
+	expression_tween.set_parallel(true)
+	expression_tween.set_trans(Tween.TRANS_BACK)
+	expression_tween.set_ease(Tween.EASE_OUT)
+	expression_tween.tween_property(icon, "scale", Vector2(1.13, 1.13), 0.08)
+	expression_tween.tween_property(icon, "modulate", Color(1.18, 1.14, 1.06, 1), 0.08)
+	expression_tween.chain().tween_property(icon, "scale", Vector2.ONE, 0.08)
+	expression_tween.parallel().tween_property(icon, "modulate", Color(1, 1, 1, 1), 0.08)
+	expression_tween.finished.connect(_finish_expression)
+
+
+func _play_fever_expression() -> void:
+	expression_tween = create_tween()
+	expression_tween.set_loops(3)
+	expression_tween.set_parallel(true)
+	expression_tween.set_trans(Tween.TRANS_SINE)
+	expression_tween.set_ease(Tween.EASE_IN_OUT)
+	expression_tween.tween_property(icon, "scale", Vector2(1.08, 1.08), 0.12)
+	expression_tween.tween_property(icon, "modulate", Color(1.2, 1.18, 1.02, 1), 0.12)
+	expression_tween.chain().tween_property(icon, "scale", Vector2.ONE, 0.12)
+	expression_tween.parallel().tween_property(icon, "modulate", Color(1, 1, 1, 1), 0.12)
+	expression_tween.finished.connect(_finish_expression)
+
+
+func _play_worried_expression() -> void:
+	expression_tween = create_tween()
+	expression_tween.set_trans(Tween.TRANS_SINE)
+	expression_tween.set_ease(Tween.EASE_IN_OUT)
+	expression_tween.tween_property(icon, "modulate", Color(0.86, 0.9, 1.0, 1), 0.08)
+	expression_tween.parallel().tween_property(content, "position:x", -2.0, 0.06)
+	expression_tween.tween_property(content, "position:x", 2.0, 0.08)
+	expression_tween.tween_property(content, "position:x", -1.0, 0.08)
+	expression_tween.tween_property(content, "position:x", 0.0, 0.06)
+	expression_tween.parallel().tween_property(icon, "modulate", Color(1, 1, 1, 1), 0.12)
+	expression_tween.finished.connect(_finish_expression)
 
 
 func _on_button_pressed() -> void:

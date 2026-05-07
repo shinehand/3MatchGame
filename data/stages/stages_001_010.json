@@ -3,187 +3,213 @@
     "id": 1,
     "name": "Stage 1",
     "band": "1-10",
+    "roster_group": "forest_early",
     "difficulty": "Easy",
     "theme_key": "meadow_1",
     "moves": 12,
     "board_mask": ["11111111", "11111111", "11111111", "11111111", "11111111", "11111111", "11111111", "11111111"],
-    "targets": { "collect": { "rabbit": 10 }, "score": 0, "blockers": 0 },
-    "spawn_profile": {
-      "pool": ["rabbit", "bear", "cat", "chick"],
-      "weights": { "rabbit": 5, "bear": 2, "cat": 2, "chick": 2 }
-    },
+    "targets": {"collect": {"rabbit": 10}, "score": 0, "blockers": 0},
+    "spawn_profile": {"pool": ["rabbit", "bear", "cat", "chick"], "weights": {"rabbit": 5, "bear": 2, "cat": 2, "chick": 2}},
     "blockers": [],
-    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
-    "tutorial": "토끼를 10개 모으세요. 가장 쉬운 난이도라 토끼가 더 자주 등장합니다."
+    "mechanics": {"enabled": ["basic_match"]},
+    "tags": ["recovery"],
+    "tutorial": "토끼를 10개 모으세요. 가장 쉬운 난이도라 토끼가 더 자주 등장합니다.",
+    "difficulty_tag": ["recovery"],
+    "teaches": ["basic_match", "collect_goal"],
+    "previews": [],
+    "recommended_smoke": true,
+    "forbidden_monetization": true
   },
   {
     "id": 2,
     "name": "Stage 2",
     "band": "1-10",
+    "roster_group": "forest_early",
     "difficulty": "Easy",
     "theme_key": "meadow_1",
     "moves": 12,
     "board_mask": ["11111111", "11111111", "11111111", "11111111", "11111111", "11111111", "11111111", "11111111"],
-    "targets": { "collect": { "rabbit": 8, "bear": 4 }, "score": 0, "blockers": 0 },
-    "spawn_profile": {
-      "pool": ["rabbit", "bear", "cat", "chick"],
-      "weights": { "rabbit": 4, "bear": 3, "cat": 2, "chick": 2 }
-    },
+    "targets": {"collect": {"rabbit": 8, "bear": 4}, "score": 0, "blockers": 0},
+    "spawn_profile": {"pool": ["rabbit", "bear", "cat", "chick"], "weights": {"rabbit": 4, "bear": 3, "cat": 2, "chick": 2}},
     "blockers": [],
-    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
-    "tutorial": "목표 칩을 보고 토끼와 곰을 같이 모아 보세요."
+    "mechanics": {"enabled": ["basic_match"]},
+    "tags": [],
+    "tutorial": "목표 칩을 보고 토끼와 곰을 같이 모아 보세요.",
+    "difficulty_tag": ["standard"],
+    "teaches": ["multi_collect_goal"],
+    "previews": [],
+    "recommended_smoke": false,
+    "forbidden_monetization": true
   },
   {
     "id": 3,
     "name": "Stage 3",
     "band": "1-10",
+    "roster_group": "forest_early",
     "difficulty": "Easy",
     "theme_key": "meadow_1",
     "moves": 12,
     "board_mask": ["11111111", "11111111", "11111111", "11111111", "11111111", "11111111", "11111111", "11111111"],
-    "targets": { "collect": { "rabbit": 8 }, "score": 800, "blockers": 0 },
-    "spawn_profile": {
-      "pool": ["rabbit", "bear", "cat", "chick"],
-      "weights": { "rabbit": 5, "bear": 2, "cat": 2, "chick": 2 }
-    },
+    "targets": {"collect": {"rabbit": 8}, "score": 800, "blockers": 0},
+    "spawn_profile": {"pool": ["rabbit", "bear", "cat", "chick"], "weights": {"rabbit": 5, "bear": 2, "cat": 2, "chick": 2}},
     "blockers": [],
-    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
-    "tutorial": "4개 매치를 만들어 줄 제거 특수 블록을 노려 보세요."
+    "mechanics": {"enabled": ["basic_match", "row_special", "col_special"]},
+    "tags": ["score_focus", "mixed_goal"],
+    "tutorial": "4개 매치를 만들어 줄 제거 특수 블록을 노려 보세요.",
+    "difficulty_tag": ["score_focus", "mixed_goal"],
+    "teaches": ["line_special"],
+    "previews": ["rescue_buddy"],
+    "recommended_smoke": false,
+    "forbidden_monetization": true
   },
   {
     "id": 4,
     "name": "Stage 4",
     "band": "1-10",
+    "roster_group": "forest_early",
     "difficulty": "Easy",
     "theme_key": "meadow_1",
     "moves": 13,
     "board_mask": ["00111100", "01111110", "11111111", "11111111", "11111111", "11111111", "01111110", "00111100"],
-    "targets": { "collect": { "rabbit": 6, "cat": 6 }, "score": 0, "blockers": 1 },
-    "spawn_profile": {
-      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
-      "weights": { "rabbit": 4, "bear": 2, "cat": 4, "chick": 2, "frog": 1 }
-    },
-    "blockers": [
-      { "kind": "bush", "row": 3, "col": 3, "hp": 1 }
-    ],
-    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
-    "tutorial": "두 목표를 같이 처리하면서 가운데 덤불도 정리해 보세요."
+    "targets": {"collect": {"rabbit": 6, "cat": 6}, "score": 0, "blockers": 1},
+    "spawn_profile": {"pool": ["rabbit", "bear", "cat", "chick", "frog"], "weights": {"rabbit": 4, "bear": 2, "cat": 4, "chick": 2, "frog": 1}},
+    "blockers": [{"kind": "bush", "row": 3, "col": 3, "hp": 1}],
+    "buddy": {"animal": "rabbit", "skill_id": "quick_refill", "charge_rule": "match_goal_animal", "charges_required": 3, "max_uses": 1},
+    "mechanics": {"enabled": ["basic_match", "row_special", "col_special"]},
+    "tags": ["blocker_focus", "mixed_goal"],
+    "tutorial": "두 목표를 같이 처리하면서 가운데 덤불도 정리해 보세요.",
+    "difficulty_tag": ["blocker_focus", "mixed_goal"],
+    "teaches": ["rescue_buddy", "blocker_bush"],
+    "previews": ["chick_buddy"],
+    "recommended_smoke": false,
+    "forbidden_monetization": true
   },
   {
     "id": 5,
     "name": "Stage 5",
     "band": "1-10",
+    "roster_group": "forest_early",
     "difficulty": "Easy",
     "theme_key": "meadow_1",
     "moves": 13,
     "board_mask": ["00111100", "01111110", "11111111", "11111111", "11111111", "11111111", "01111110", "00111100"],
-    "targets": { "collect": { "chick": 10 }, "score": 0, "blockers": 1 },
-    "spawn_profile": {
-      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
-      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 5, "frog": 1 }
-    },
-    "blockers": [
-      { "kind": "bush", "row": 4, "col": 4, "hp": 1 }
-    ],
-    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
-    "tutorial": "병아리 중심 스테이지입니다. 큰 매치를 노리며 가운데를 열어 보세요."
+    "targets": {"collect": {"chick": 10}, "score": 0, "blockers": 1},
+    "spawn_profile": {"pool": ["rabbit", "bear", "cat", "chick", "frog"], "weights": {"rabbit": 2, "bear": 2, "cat": 2, "chick": 5, "frog": 1}},
+    "blockers": [{"kind": "bush", "row": 4, "col": 4, "hp": 1}],
+    "buddy": {"animal": "chick", "skill_id": "soft_bomb_plus", "charge_rule": "match_goal_animal", "charges_required": 4, "max_uses": 1},
+    "mechanics": {"enabled": ["basic_match", "row_special", "col_special"]},
+    "tags": ["blocker_focus", "mixed_goal"],
+    "tutorial": "병아리 중심 스테이지입니다. 큰 매치를 노리며 가운데를 열어 보세요.",
+    "difficulty_tag": ["blocker_focus", "mixed_goal"],
+    "teaches": ["buddy_soft_bomb_plus"],
+    "previews": [],
+    "recommended_smoke": true,
+    "forbidden_monetization": true
   },
   {
     "id": 6,
     "name": "Stage 6",
     "band": "1-10",
+    "roster_group": "forest_early",
     "difficulty": "Easy",
     "theme_key": "meadow_1",
     "moves": 13,
     "board_mask": ["00111100", "01111110", "11111111", "01111110", "01111110", "11111111", "01111110", "00111100"],
-    "targets": { "collect": { "rabbit": 6, "frog": 4 }, "score": 0, "blockers": 1 },
-    "spawn_profile": {
-      "pool": ["rabbit", "bear", "cat", "chick", "frog"],
-      "weights": { "rabbit": 4, "bear": 2, "cat": 2, "chick": 2, "frog": 3 }
-    },
-    "blockers": [
-      { "kind": "bush", "row": 2, "col": 3, "hp": 1 }
-    ],
-    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special"] },
-    "tutorial": "좁아지는 모양에서 동선을 먼저 보고 스와이프하세요."
+    "targets": {"collect": {"rabbit": 6, "frog": 4}, "score": 0, "blockers": 1},
+    "spawn_profile": {"pool": ["rabbit", "bear", "cat", "chick", "frog"], "weights": {"rabbit": 4, "bear": 2, "cat": 2, "chick": 2, "frog": 3}},
+    "blockers": [{"kind": "bush", "row": 2, "col": 3, "hp": 1}],
+    "mechanics": {"enabled": ["basic_match", "row_special", "col_special"]},
+    "tags": ["recovery", "blocker_focus", "mixed_goal"],
+    "tutorial": "좁아지는 모양에서 동선을 먼저 보고 스와이프하세요.",
+    "difficulty_tag": ["recovery", "blocker_focus", "mixed_goal"],
+    "teaches": [],
+    "previews": ["dog", "rainbow_special"],
+    "recommended_smoke": false,
+    "forbidden_monetization": true
   },
   {
     "id": 7,
     "name": "Stage 7",
     "band": "1-10",
+    "roster_group": "forest_early",
     "difficulty": "Easy",
     "theme_key": "meadow_1",
     "moves": 13,
     "board_mask": ["00111100", "01111110", "11111111", "01111110", "01111110", "11111111", "01111110", "00111100"],
-    "targets": { "collect": { "rabbit": 6, "bear": 6 }, "score": 0, "blockers": 1 },
-    "spawn_profile": {
-      "pool": ["rabbit", "bear", "cat", "chick", "frog", "dog"],
-      "weights": { "rabbit": 4, "bear": 4, "cat": 2, "chick": 2, "frog": 1, "dog": 1 }
-    },
-    "blockers": [
-      { "kind": "bush", "row": 5, "col": 4, "hp": 1 }
-    ],
-    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special", "rainbow_special"] },
-    "tutorial": "강아지 블록이 합류합니다. 5개 일직선 매치를 만들면 무지개 구슬이 큰 도움을 줍니다."
+    "targets": {"collect": {"rabbit": 6, "bear": 6}, "score": 0, "blockers": 1},
+    "spawn_profile": {"pool": ["rabbit", "bear", "cat", "chick", "frog", "dog"], "weights": {"rabbit": 4, "bear": 4, "cat": 2, "chick": 2, "frog": 1, "dog": 1}},
+    "blockers": [{"kind": "bush", "row": 5, "col": 4, "hp": 1}],
+    "mechanics": {"enabled": ["basic_match", "row_special", "col_special", "bomb_special", "rainbow_special"]},
+    "tags": ["blocker_focus", "mixed_goal"],
+    "tutorial": "강아지 블록이 합류합니다. 5개 일직선 매치를 만들면 무지개 구슬이 큰 도움을 줍니다.",
+    "difficulty_tag": ["blocker_focus", "mixed_goal"],
+    "teaches": ["rainbow_special"],
+    "previews": ["combo_gauge"],
+    "recommended_smoke": false,
+    "forbidden_monetization": true
   },
   {
     "id": 8,
     "name": "Stage 8",
     "band": "1-10",
+    "roster_group": "forest_early",
     "difficulty": "Easy",
     "theme_key": "meadow_1",
     "moves": 13,
     "board_mask": ["00111100", "00111100", "11111111", "11111111", "11111111", "11111111", "00111100", "00111100"],
-    "targets": { "collect": { "chick": 8 }, "score": 900, "blockers": 2 },
-    "spawn_profile": {
-      "pool": ["rabbit", "bear", "cat", "chick", "frog", "dog", "panda"],
-      "weights": { "rabbit": 2, "bear": 2, "cat": 2, "chick": 6, "frog": 1, "dog": 1, "panda": 1 }
-    },
-    "blockers": [
-      { "kind": "bush", "row": 2, "col": 3, "hp": 1 },
-      { "kind": "bush", "row": 5, "col": 4, "hp": 1 }
-    ],
-    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special", "rainbow_special", "combo_gauge"] },
-    "tutorial": "판다 블록이 합류합니다. 점수와 수집을 같이 보며 Combo Gauge를 채워 보세요."
+    "targets": {"collect": {"chick": 8}, "score": 900, "blockers": 2},
+    "spawn_profile": {"pool": ["rabbit", "bear", "cat", "chick", "dog", "panda"], "weights": {"rabbit": 2, "bear": 2, "cat": 2, "chick": 6, "dog": 1, "panda": 1}},
+    "blockers": [{"kind": "bush", "row": 2, "col": 3, "hp": 1}, {"kind": "bush", "row": 5, "col": 4, "hp": 1}],
+    "buddy": {"animal": "chick", "skill_id": "combo_peep", "charge_rule": "combo_2_plus", "charges_required": 2, "max_uses": 1},
+    "mechanics": {"enabled": ["basic_match", "row_special", "col_special", "bomb_special", "rainbow_special", "combo_gauge"]},
+    "tags": ["score_focus", "blocker_focus", "mixed_goal"],
+    "tutorial": "판다 블록이 합류합니다. 점수와 수집을 같이 보며 Combo Gauge를 채워 보세요.",
+    "difficulty_tag": ["score_focus", "blocker_focus", "mixed_goal"],
+    "teaches": ["combo_gauge", "buddy_combo_peep"],
+    "previews": [],
+    "recommended_smoke": false,
+    "forbidden_monetization": true
   },
   {
     "id": 9,
     "name": "Stage 9",
     "band": "1-10",
+    "roster_group": "forest_early",
     "difficulty": "Easy",
     "theme_key": "meadow_1",
     "moves": 13,
     "board_mask": ["00111100", "00111100", "11111111", "11111111", "11111111", "11111111", "00111100", "00111100"],
-    "targets": { "collect": { "rabbit": 4 }, "score": 1000, "blockers": 2 },
-    "spawn_profile": {
-      "pool": ["rabbit", "bear", "cat", "chick", "frog", "dog", "panda", "pig"],
-      "weights": { "rabbit": 5, "bear": 2, "cat": 2, "chick": 2, "frog": 1, "dog": 1, "panda": 1, "pig": 1 }
-    },
-    "blockers": [
-      { "kind": "bush", "row": 3, "col": 2, "hp": 1 },
-      { "kind": "bush", "row": 4, "col": 5, "hp": 1 }
-    ],
-    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special", "rainbow_special", "combo_gauge"] },
-    "tutorial": "돼지 블록이 합류합니다. 특수 블록과 점수를 같이 챙기는 연습 구간입니다."
+    "targets": {"collect": {"rabbit": 4}, "score": 1000, "blockers": 2},
+    "spawn_profile": {"pool": ["rabbit", "bear", "cat", "chick", "panda", "pig"], "weights": {"rabbit": 5, "bear": 2, "cat": 2, "chick": 2, "panda": 1, "pig": 1}},
+    "blockers": [{"kind": "bush", "row": 3, "col": 2, "hp": 1}, {"kind": "bush", "row": 4, "col": 5, "hp": 1}],
+    "mechanics": {"enabled": ["basic_match", "row_special", "col_special", "bomb_special", "rainbow_special", "combo_gauge"]},
+    "tags": ["score_focus", "blocker_focus", "mixed_goal"],
+    "tutorial": "돼지 블록이 합류합니다. Combo Gauge와 특수 블록, 점수를 같이 챙기는 연습 구간입니다.",
+    "difficulty_tag": ["score_focus", "blocker_focus", "mixed_goal"],
+    "teaches": [],
+    "previews": [],
+    "recommended_smoke": false,
+    "forbidden_monetization": true
   },
   {
     "id": 10,
     "name": "Stage 10",
     "band": "1-10",
+    "roster_group": "forest_early",
     "difficulty": "Easy",
     "theme_key": "meadow_1",
     "moves": 13,
     "board_mask": ["01111110", "11111111", "11100111", "11000011", "11000011", "11100111", "11111111", "01111110"],
-    "targets": { "collect": { "rabbit": 7 }, "score": 1000, "blockers": 2 },
-    "spawn_profile": {
-      "pool": ["rabbit", "bear", "cat", "chick", "frog", "dog", "panda", "pig", "penguin", "fox"],
-      "weights": { "rabbit": 5, "bear": 2, "cat": 2, "chick": 2, "frog": 1, "dog": 1, "panda": 1, "pig": 1, "penguin": 1, "fox": 1 }
-    },
-    "blockers": [
-      { "kind": "bush", "row": 1, "col": 1, "hp": 1 },
-      { "kind": "bush", "row": 6, "col": 6, "hp": 1 }
-    ],
-    "mechanics": { "enabled": ["row_special", "col_special", "bomb_special", "rainbow_special", "combo_gauge"] },
-    "tutorial": "펭귄과 여우까지 합류한 초반 밴드 마감입니다. 보드 모양과 점수 목표를 같이 관리해 보세요."
+    "targets": {"collect": {"rabbit": 7}, "score": 1000, "blockers": 2},
+    "spawn_profile": {"pool": ["rabbit", "cat", "chick", "pig", "penguin", "fox"], "weights": {"rabbit": 5, "cat": 2, "chick": 2, "pig": 1, "penguin": 1, "fox": 1}},
+    "blockers": [{"kind": "bush", "row": 1, "col": 1, "hp": 1}, {"kind": "bush", "row": 6, "col": 6, "hp": 1}],
+    "mechanics": {"enabled": ["basic_match", "row_special", "col_special", "bomb_special", "rainbow_special", "combo_gauge"]},
+    "tags": ["score_focus", "blocker_focus", "mixed_goal"],
+    "tutorial": "펭귄과 여우까지 합류한 초반 밴드 마감입니다. Combo Gauge, 보드 모양, 점수 목표를 같이 관리해 보세요.",
+    "difficulty_tag": ["score_focus", "blocker_focus", "mixed_goal"],
+    "teaches": ["ftue_mastery_check"],
+    "previews": ["trap_trail"],
+    "recommended_smoke": true,
+    "forbidden_monetization": true
   }
 ]

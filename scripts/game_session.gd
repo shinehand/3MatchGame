@@ -1,6 +1,7 @@
 extends RefCounted
 
 const SAVE_PATH := "user://save_game.json"
+const CollectionState = preload("res://scripts/collection_state.gd")
 
 static var _loaded := false
 static var _save_data := {
@@ -9,10 +10,14 @@ static var _save_data := {
 	"cleared_stage_ids": [],
 	"best_score_by_stage_id": {},
 	"best_star_by_stage_id": {},
+	"fail_count_by_stage_id": {},
 	"sound_enabled": true,
 	"haptics_enabled": true,
 	"seen_tutorial_stage_ids": [],
 	"selected_pre_boosters": [],
+	"rescue_book": {},
+	"analytics_events": [],
+	"session_id": "",
 }
 
 
@@ -34,10 +39,20 @@ static func load_state() -> void:
 	_save_data["cleared_stage_ids"] = Array(parsed.get("cleared_stage_ids", []))
 	_save_data["best_score_by_stage_id"] = Dictionary(parsed.get("best_score_by_stage_id", {}))
 	_save_data["best_star_by_stage_id"] = Dictionary(parsed.get("best_star_by_stage_id", {}))
+	_save_data["fail_count_by_stage_id"] = Dictionary(parsed.get("fail_count_by_stage_id", {}))
 	_save_data["sound_enabled"] = bool(parsed.get("sound_enabled", true))
 	_save_data["haptics_enabled"] = bool(parsed.get("haptics_enabled", true))
 	_save_data["seen_tutorial_stage_ids"] = Array(parsed.get("seen_tutorial_stage_ids", []))
 	_save_data["selected_pre_boosters"] = Array(parsed.get("selected_pre_boosters", []))
+	_save_data["rescue_book"] = CollectionState.normalize_state(Dictionary(parsed.get("rescue_book", {})))
+	_save_data["analytics_events"] = Array(parsed.get("analytics_events", []))
+	_save_data["session_id"] = String(parsed.get("session_id", ""))
+	if String(_save_data["session_id"]).is_empty():
+		_save_data["session_id"] = _make_session_id()
+
+
+static func _make_session_id() -> String:
+	return "session-%d" % int(Time.get_unix_time_from_system())
 
 
 static func save_state() -> void:
@@ -47,6 +62,34 @@ static func save_state() -> void:
 		push_error("GameSession: failed to open save file.")
 		return
 	file.store_string(JSON.stringify(_save_data, "\t"))
+
+
+static func get_session_id() -> String:
+	load_state()
+	if String(_save_data.get("session_id", "")).is_empty():
+		_save_data["session_id"] = _make_session_id()
+		save_state()
+	return String(_save_data["session_id"])
+
+
+static func record_analytics_event(event_name: String, params: Dictionary) -> void:
+	load_state()
+	var events: Array = Array(_save_data.get("analytics_events", []))
+	var entry := {
+		"name": event_name,
+		"timestamp": Time.get_unix_time_from_system(),
+		"params": params.duplicate(true),
+	}
+	events.append(entry)
+	while events.size() > 100:
+		events.pop_front()
+	_save_data["analytics_events"] = events
+	save_state()
+
+
+static func get_analytics_events() -> Array:
+	load_state()
+	return Array(_save_data.get("analytics_events", [])).duplicate(true)
 
 
 static func get_highest_unlocked_stage_id() -> int:
@@ -93,7 +136,24 @@ static func record_stage_result(stage_id: int, final_score: int, star_count: int
 
 	_save_data["highest_unlocked_stage_id"] = max(int(_save_data["highest_unlocked_stage_id"]), stage_id + 1)
 	_save_data["last_selected_stage_id"] = stage_id
+	_save_data["rescue_book"] = CollectionState.unlock_by_stage(Dictionary(_save_data.get("rescue_book", {})), get_highest_unlocked_stage_id())
 	save_state()
+
+
+static func record_stage_failure(stage_id: int) -> int:
+	load_state()
+	var key := str(stage_id)
+	var fail_counts: Dictionary = _save_data.get("fail_count_by_stage_id", {})
+	var next_count := int(fail_counts.get(key, 0)) + 1
+	fail_counts[key] = next_count
+	_save_data["fail_count_by_stage_id"] = fail_counts
+	save_state()
+	return next_count
+
+
+static func get_stage_fail_count(stage_id: int) -> int:
+	load_state()
+	return int(Dictionary(_save_data.get("fail_count_by_stage_id", {})).get(str(stage_id), 0))
 
 
 static func get_best_score(stage_id: int) -> int:
@@ -178,3 +238,29 @@ static func consume_selected_pre_boosters() -> Array:
 	_save_data["selected_pre_boosters"] = []
 	save_state()
 	return boosters
+
+
+static func get_rescue_book_state() -> Dictionary:
+	load_state()
+	var state := CollectionState.normalize_state(Dictionary(_save_data.get("rescue_book", {})))
+	_save_data["rescue_book"] = state
+	return state.duplicate(true)
+
+
+static func add_rescue_book_tokens(animal_id: String, token_count: int) -> void:
+	load_state()
+	_save_data["rescue_book"] = CollectionState.add_tokens(Dictionary(_save_data.get("rescue_book", {})), animal_id, token_count)
+	save_state()
+
+
+static func mark_rescue_book_seen(animal_id: String) -> void:
+	load_state()
+	var state := CollectionState.normalize_state(Dictionary(_save_data.get("rescue_book", {})))
+	var animals: Dictionary = state.get("animals", {})
+	if animals.has(animal_id):
+		var entry: Dictionary = Dictionary(animals[animal_id])
+		entry["is_new"] = false
+		animals[animal_id] = entry
+		state["animals"] = animals
+		_save_data["rescue_book"] = state
+		save_state()

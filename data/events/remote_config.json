@@ -1,0 +1,12 @@
+{
+  "heart_spend_start_level": 11,
+  "rewarded_ad_start_level": 11,
+  "iap_offer_start_level": 16,
+  "interstitial_min_level": 16,
+  "season_pass_unlock_level": 21,
+  "daily_reward_unlock_level": 2,
+  "starter_missions_unlock_level": 3,
+  "collection_event_unlock_level": 9,
+  "rewarded_continue_moves": 3,
+  "coin_continue_moves": 5
+}

@@ -7,6 +7,7 @@ const GOAL_CHIP_SCENE := preload("res://scenes/goal_chip.tscn")
 const StageCatalog = preload("res://scripts/stage_catalog.gd")
 const GameSession = preload("res://scripts/game_session.gd")
 const MobileLayout = preload("res://scripts/mobile_layout.gd")
+const FailOfferPolicy = preload("res://scripts/fail_offer_policy.gd")
 const OVERLAY_SUCCESS_TEXTURE = preload("res://assets/generated/polish/overlay_success_cat_clean.png")
 const OVERLAY_FAIL_TEXTURE = preload("res://assets/generated/polish/overlay_fail_bear_clean.png")
 const OVERLAY_FINALE_TEXTURE = preload("res://assets/generated/polish/overlay_finale_rabbit_clean.png")
@@ -27,7 +28,7 @@ const SOFT_TUTORIAL_STAGE_HINTS := {
 	85: "최종권 압박",
 	95: "피날레 압박",
 }
-const ANIMAL_IDS := ["rabbit", "bear", "cat", "chick", "frog", "dog", "panda", "pig", "penguin", "fox"]
+const ANIMAL_IDS := ["rabbit", "bear", "cat", "chick", "frog", "dog", "panda", "pig", "penguin", "fox", "lion", "elephant"]
 const ANIMAL_NAMES := {
 	"rabbit": "토끼",
 	"bear": "곰",
@@ -39,8 +40,13 @@ const ANIMAL_NAMES := {
 	"pig": "돼지",
 	"penguin": "펭귄",
 	"fox": "여우",
+	"lion": "사자",
+	"elephant": "코끼리",
 }
 const COMBO_GAUGE_MAX := 6
+const FEVER_TURN_COUNT := 3
+const FEVER_SCORE_MULTIPLIER := 2
+const FEVER_TARGET_BONUS := 1
 const SPECIAL_PRIORITY := {
 	"": 0,
 	"row": 1,
@@ -48,6 +54,9 @@ const SPECIAL_PRIORITY := {
 	"bomb": 2,
 	"rainbow": 3,
 }
+const IDLE_EXPRESSION_MIN_DELAY := 2.8
+const IDLE_EXPRESSION_MAX_DELAY := 6.0
+const IDLE_EXPRESSION_MAX_ACTIVE := 4
 
 @onready var background_texture: TextureRect = $BackgroundTexture
 @onready var safe_margin: MarginContainer = $SafeMargin
@@ -118,6 +127,12 @@ var score := 0
 var current_combo := 1
 var combo_gauge_points := 0
 var combo_gauge_ready := false
+var fever_turns_remaining := 0
+var fever_ignore_current_move := false
+var buddy_charge_count := 0
+var buddy_uses := 0
+var buddy_trigger_pending := false
+var buddy_cascade_bonus_pending := 0
 var stage_state := "playing"
 var collected_counts: Dictionary = {}
 var cleared_blockers := 0
@@ -132,6 +147,8 @@ var hud_score_label: Label
 var hud_goal_label: Label
 var hud_combo_label: Label
 var hud_combo_gauge: ProgressBar
+var hud_buddy_label: Label
+var hud_buddy_gauge: ProgressBar
 var hud_home_button: Button
 var hud_retry_button: Button
 var hud_pause_button: Button
@@ -140,6 +157,8 @@ var gameplay_juice_layer: Control
 var stage_intro_label: Label
 var _prev_complete_set: Dictionary = {}
 var _last_moves_warning := -1
+var _last_worried_moves := -1
+var _idle_expression_run_id := 0
 var last_zoo_zoo_bonus_score := 0
 var last_zoo_zoo_moves_spent := 0
 
@@ -244,9 +263,16 @@ func _start_stage(stage_index: int) -> void:
 	current_combo = 1
 	combo_gauge_points = 0
 	combo_gauge_ready = false
+	fever_turns_remaining = 0
+	fever_ignore_current_move = false
+	buddy_charge_count = 0
+	buddy_uses = 0
+	buddy_trigger_pending = false
+	buddy_cascade_bonus_pending = 0
 	stage_state = "playing"
 	cleared_blockers = 0
 	_last_moves_warning = -1
+	_last_worried_moves = -1
 	last_zoo_zoo_bonus_score = 0
 	last_zoo_zoo_moves_spent = 0
 	_clear_selection()
@@ -264,7 +290,9 @@ func _start_stage(stage_index: int) -> void:
 	if start_booster_count > 0:
 		start_message += " 시작 부스터 %d개가 보드에 배치되었습니다." % start_booster_count
 	_set_status(start_message)
+	_charge_buddy_skill_for_stage_start()
 	_hide_overlay()
+	_restart_idle_expression_scheduler()
 	_apply_responsive_layout()
 	call_deferred("_play_stage_intro")
 
@@ -518,6 +546,98 @@ func _refresh_tile(row: int, col: int) -> void:
 	tile_nodes[row][col].set_obstacle(ui_textures.get("bush"), int(obstacle_data[row][col]))
 
 
+func _restart_idle_expression_scheduler() -> void:
+	_idle_expression_run_id += 1
+	call_deferred("_run_idle_expression_scheduler", _idle_expression_run_id)
+
+
+func _run_idle_expression_scheduler(run_id: int) -> void:
+	while run_id == _idle_expression_run_id and is_inside_tree():
+		var delay := rng.randf_range(IDLE_EXPRESSION_MIN_DELAY, IDLE_EXPRESSION_MAX_DELAY)
+		await get_tree().create_timer(delay).timeout
+		if run_id != _idle_expression_run_id or not is_inside_tree():
+			return
+		if stage_state != "playing" or is_busy or overlay.visible:
+			continue
+		_play_random_idle_blinks()
+
+
+func _play_random_idle_blinks() -> void:
+	var candidates := _active_visible_tiles()
+	if candidates.is_empty():
+		return
+	_shuffle_array_in_place(candidates)
+	var count := mini(candidates.size(), rng.randi_range(1, IDLE_EXPRESSION_MAX_ACTIVE))
+	for index in range(count):
+		candidates[index].set_expression("blink")
+
+
+func _active_visible_tiles() -> Array:
+	var candidates: Array = []
+	for row in range(BOARD_ROWS):
+		for col in range(BOARD_COLS):
+			if not _is_cell_active_xy(row, col):
+				continue
+			if String(board_data[row][col]).is_empty():
+				continue
+			var tile = tile_nodes[row][col]
+			if tile != null and tile.has_method("can_play_idle_expression") and tile.can_play_idle_expression():
+				candidates.append(tile)
+	return candidates
+
+
+func _set_tile_expression(cell: Vector2i, expression_id: String, force: bool = false) -> void:
+	if cell.x < 0 or cell.x >= tile_nodes.size():
+		return
+	if cell.y < 0 or cell.y >= tile_nodes[cell.x].size():
+		return
+	var tile = tile_nodes[cell.x][cell.y]
+	if tile != null and tile.has_method("set_expression"):
+		tile.set_expression(expression_id, force)
+
+
+func _play_worried_goal_expressions(max_count: int = IDLE_EXPRESSION_MAX_ACTIVE, force: bool = false) -> void:
+	var target_animals := {}
+	var targets: Dictionary = _stage_collect_targets()
+	for animal_id in targets.keys():
+		if int(collected_counts.get(animal_id, 0)) < int(targets[animal_id]):
+			target_animals[String(animal_id)] = true
+
+	var candidates: Array = []
+	for row in range(BOARD_ROWS):
+		for col in range(BOARD_COLS):
+			if not _is_cell_active_xy(row, col):
+				continue
+			var animal_id := _piece_animal(board_data[row][col])
+			if animal_id.is_empty():
+				continue
+			if not target_animals.is_empty() and not target_animals.has(animal_id):
+				continue
+			var tile = tile_nodes[row][col]
+			if tile != null and tile.has_method("can_play_idle_expression") and tile.can_play_idle_expression():
+				candidates.append(tile)
+
+	if candidates.is_empty():
+		candidates = _active_visible_tiles()
+	if candidates.is_empty():
+		return
+
+	_shuffle_array_in_place(candidates)
+	var count := mini(candidates.size(), max_count)
+	for index in range(count):
+		candidates[index].set_expression("worried", force)
+
+
+func _shuffle_array_in_place(items: Array) -> void:
+	if items.size() < 2:
+		return
+	for index in range(items.size() - 1, 0, -1):
+		var swap_index := rng.randi_range(0, index)
+		var current = items[index]
+		items[index] = items[swap_index]
+		items[swap_index] = current
+
+
 func _tile_global_center(cell: Vector2i) -> Vector2:
 	if cell.x < 0 or cell.x >= tile_nodes.size():
 		return get_viewport_rect().size * 0.5
@@ -656,6 +776,23 @@ func _build_gameplay_hud_layer() -> void:
 	hud_combo_gauge.add_theme_stylebox_override("background", _hud_style(Color(0.82, 0.92, 1.0, 0.86), Color(0.82, 0.92, 1.0, 0.0), 8, 0))
 	hud_combo_gauge.add_theme_stylebox_override("fill", _hud_style(Color("ff68a9"), Color("ff68a9"), 8, 0))
 	combo_row.add_child(hud_combo_gauge)
+
+	var buddy_row := HBoxContainer.new()
+	buddy_row.name = "HudBuddyRow"
+	buddy_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	buddy_row.add_theme_constant_override("separation", 10)
+	goal_column.add_child(buddy_row)
+
+	hud_buddy_label = _make_hud_label("Rescue Buddy 대기", 15, Color("4c6a7a"), HORIZONTAL_ALIGNMENT_CENTER)
+	buddy_row.add_child(hud_buddy_label)
+
+	hud_buddy_gauge = ProgressBar.new()
+	hud_buddy_gauge.name = "HudBuddyGauge"
+	hud_buddy_gauge.custom_minimum_size = Vector2(150, 12)
+	hud_buddy_gauge.show_percentage = false
+	hud_buddy_gauge.add_theme_stylebox_override("background", _hud_style(Color(0.90, 0.96, 1.0, 0.76), Color(0.90, 0.96, 1.0, 0.0), 7, 0))
+	hud_buddy_gauge.add_theme_stylebox_override("fill", _hud_style(Color("54d6a8"), Color("54d6a8"), 7, 0))
+	buddy_row.add_child(hud_buddy_gauge)
 
 	var booster_dock := PanelContainer.new()
 	booster_dock.name = "HudBoosterDock"
@@ -897,6 +1034,7 @@ func _select_cell(cell: Vector2i) -> void:
 	_clear_selection()
 	selected_cell = cell
 	tile_nodes[cell.x][cell.y].set_selected(true)
+	_set_tile_expression(cell, "smile")
 	var animal_id: String = _piece_animal(board_data[cell.x][cell.y])
 	if animal_id.is_empty():
 		return
@@ -927,10 +1065,26 @@ func _resolve_swap(from_cell: Vector2i, to_cell: Vector2i) -> void:
 	var rainbow_swap := _rainbow_swap_outcome(from_cell, to_cell)
 	if not rainbow_swap.is_empty():
 		Feedback.play_swap_valid()
+		_set_tile_expression(from_cell, "smile")
+		_set_tile_expression(to_cell, "smile")
 		remaining_moves -= 1
 		_update_hud()
 		await _resolve_rainbow_swap(Vector2i(rainbow_swap["rainbow_cell"]), String(rainbow_swap["target_animal"]))
 		_maybe_advance_tutorial(3)
+		_consume_fever_turn_after_player_move()
+		await _check_stage_state()
+		is_busy = false
+		return
+
+	if _is_special_combo_swap(from_cell, to_cell):
+		Feedback.play_swap_valid()
+		_set_tile_expression(from_cell, "fever")
+		_set_tile_expression(to_cell, "fever")
+		remaining_moves -= 1
+		_update_hud()
+		await _resolve_special_combo_swap(from_cell, to_cell)
+		_maybe_advance_tutorial(3)
+		_consume_fever_turn_after_player_move()
 		await _check_stage_state()
 		is_busy = false
 		return
@@ -949,10 +1103,13 @@ func _resolve_swap(from_cell: Vector2i, to_cell: Vector2i) -> void:
 		return
 
 	Feedback.play_swap_valid()
+	_set_tile_expression(from_cell, "smile")
+	_set_tile_expression(to_cell, "smile")
 	remaining_moves -= 1
 	_update_hud()
 	await _resolve_matches([from_cell, to_cell])
 	_maybe_advance_tutorial(3)
+	_consume_fever_turn_after_player_move()
 	await _check_stage_state()
 	is_busy = false
 
@@ -970,14 +1127,17 @@ func _resolve_matches(preferred_cells: Array) -> void:
 		var special_spawns: Dictionary = outcome["special_spawns"]
 		var clear_cells: Array = _expand_special_clears(base_cells, special_spawns)
 		var cleared_obstacle_cells: Array = _damage_obstacles(clear_cells)
+		_charge_buddy_skill_for_clear_blocker(cleared_obstacle_cells.size())
 		var removed_cells: Array = []
 		for cell in clear_cells:
 			if not special_spawns.has(cell):
 				removed_cells.append(cell)
 
 		current_combo = combo
+		var score_before_resolution := score
 		_apply_match_rewards(removed_cells, combo)
 		score += cleared_obstacle_cells.size() * 150 * combo
+		_charge_buddy_skill_for_cascade_step(combo, score - score_before_resolution)
 		_charge_combo_gauge(combo, special_spawns.size())
 		Feedback.play_match(combo, special_spawns.size(), cleared_obstacle_cells.size())
 		_update_hud()
@@ -987,6 +1147,7 @@ func _resolve_matches(preferred_cells: Array) -> void:
 
 		for cell in clear_cells:
 			tile_nodes[cell.x][cell.y].set_selected(true)
+			_set_tile_expression(cell, "match", true)
 			tile_nodes[cell.x][cell.y].play_match_effect()
 			_play_fx_method("play_match_burst_at", [_tile_global_center(cell), combo])
 
@@ -1019,6 +1180,9 @@ func _resolve_matches(preferred_cells: Array) -> void:
 		next_preferred.clear()
 		combo += 1
 
+	if buddy_trigger_pending:
+		_trigger_buddy_skill()
+
 	if combo_gauge_ready:
 		await _trigger_combo_gauge_reward()
 
@@ -1040,6 +1204,43 @@ func _rainbow_swap_outcome(from_cell: Vector2i, to_cell: Vector2i) -> Dictionary
 	return {}
 
 
+func _is_special_combo_swap(from_cell: Vector2i, to_cell: Vector2i) -> bool:
+	var from_special := _piece_special(board_data[from_cell.x][from_cell.y])
+	var to_special := _piece_special(board_data[to_cell.x][to_cell.y])
+	return not from_special.is_empty() and not to_special.is_empty()
+
+
+func _resolve_special_combo_swap(from_cell: Vector2i, to_cell: Vector2i) -> void:
+	var clear_cells := _special_combo_clear_cells(from_cell, to_cell)
+	var cleared_obstacle_cells := _damage_obstacles(clear_cells)
+	_charge_buddy_skill_for_clear_blocker(cleared_obstacle_cells.size())
+	current_combo = 1
+	_apply_match_rewards(clear_cells, 1)
+	score += cleared_obstacle_cells.size() * 150
+	Feedback.play_match(2, 2, cleared_obstacle_cells.size())
+	_update_hud()
+	_set_status("특수 블록 조합 발동: %d개 블록을 먼저 정리한 뒤 연쇄를 확인합니다." % clear_cells.size())
+	_shake_board(8.0, 0.22)
+
+	for cell in clear_cells:
+		_set_tile_expression(cell, "match", true)
+		tile_nodes[cell.x][cell.y].play_match_effect()
+		_play_fx_method("play_match_burst_at", [_tile_global_center(cell), 2])
+
+	await get_tree().create_timer(0.24).timeout
+
+	for cell in clear_cells:
+		board_data[cell.x][cell.y] = ""
+		_refresh_tile(cell.x, cell.y)
+
+	var fall_events: Array = _collapse_and_refill_board()
+	_refresh_tiles_from_events(fall_events)
+	_play_fall_events(fall_events)
+	await get_tree().create_timer(0.24).timeout
+
+	await _resolve_matches([])
+
+
 func _resolve_rainbow_swap(rainbow_cell: Vector2i, target_animal: String) -> void:
 	var clear_cells: Array = []
 	var seen := {}
@@ -1057,6 +1258,7 @@ func _resolve_rainbow_swap(rainbow_cell: Vector2i, target_animal: String) -> voi
 	current_combo = 1
 	_apply_match_rewards(clear_cells, 1)
 	var cleared_obstacle_cells: Array = _damage_obstacles(clear_cells)
+	_charge_buddy_skill_for_clear_blocker(cleared_obstacle_cells.size())
 	score += clear_cells.size() * 120 + cleared_obstacle_cells.size() * 150
 	Feedback.play_rainbow_clear()
 	_set_status("무지개 구슬 발동. %s 블록을 한꺼번에 제거합니다." % ANIMAL_NAMES.get(target_animal, target_animal))
@@ -1069,6 +1271,7 @@ func _resolve_rainbow_swap(rainbow_cell: Vector2i, target_animal: String) -> voi
 
 	for cell in clear_cells:
 		tile_nodes[cell.x][cell.y].set_selected(true)
+		_set_tile_expression(cell, "match", true)
 		tile_nodes[cell.x][cell.y].play_match_effect()
 
 	await get_tree().create_timer(0.26).timeout
@@ -1088,6 +1291,8 @@ func _resolve_rainbow_swap(rainbow_cell: Vector2i, target_animal: String) -> voi
 func _charge_combo_gauge(combo: int, special_spawn_count: int) -> void:
 	var charge := maxi(1, combo) + mini(special_spawn_count, 2)
 	combo_gauge_points = mini(COMBO_GAUGE_MAX, combo_gauge_points + charge)
+	if combo >= 2:
+		_charge_buddy_skill_for_combo(combo)
 	if combo_gauge_points >= COMBO_GAUGE_MAX:
 		combo_gauge_ready = true
 
@@ -1105,12 +1310,14 @@ func _trigger_combo_gauge_reward() -> void:
 		board_data[cell.x][cell.y] = _make_piece(animal_id, _random_combo_reward_special())
 		_refresh_tile(cell.x, cell.y)
 		tile_nodes[cell.x][cell.y].play_special_ready_effect()
+		_set_tile_expression(cell, "fever")
 		_play_fx_method("play_special_created", [_tile_global_center(cell), _piece_special(board_data[cell.x][cell.y])])
 
 	Feedback.play_combo_gauge_reward()
+	_activate_fever()
 	_play_fx_method("play_combo_banner", [COMBO_GAUGE_MAX])
 	_shake_board(7.0, 0.18)
-	_set_status("Combo Gauge 충전 완료. 무작위 블록 3개가 특수 블록으로 변했습니다.")
+	_set_status("Combo Gauge 충전 완료. 무작위 블록 3개가 특수 블록으로 변하고 Fever가 %d회 켜졌습니다." % fever_turns_remaining)
 	_update_hud()
 	await get_tree().create_timer(0.26).timeout
 
@@ -1256,12 +1463,495 @@ func _refresh_tiles_from_events(fall_events: Array) -> void:
 
 
 func _apply_match_rewards(matches: Array, combo: int) -> void:
-	score += matches.size() * 100 * combo
+	var score_multiplier := FEVER_SCORE_MULTIPLIER if _is_fever_active() else 1
+	var collect_increment := 1 + (FEVER_TARGET_BONUS if _is_fever_active() else 0)
+	score += matches.size() * 100 * combo * score_multiplier
 
 	for cell in matches:
 		var animal_id: String = _piece_animal(board_data[cell.x][cell.y])
 		if collected_counts.has(animal_id):
-			collected_counts[animal_id] = int(collected_counts[animal_id]) + 1
+			collected_counts[animal_id] = int(collected_counts[animal_id]) + collect_increment
+			_charge_buddy_skill_for_match(animal_id)
+
+
+func _charge_buddy_skill_for_stage_start() -> void:
+	if not _has_active_buddy_skill():
+		return
+	if String(_current_stage().get("buddy_charge_rule", "")) != "stage_start":
+		return
+	_charge_buddy_skill(1)
+	if buddy_trigger_pending:
+		_trigger_buddy_skill()
+
+
+func _charge_buddy_skill_for_match(animal_id: String) -> void:
+	if not _has_active_buddy_skill():
+		return
+	if String(_current_stage().get("buddy_charge_rule", "")) != "match_goal_animal":
+		return
+	if not collected_counts.has(animal_id):
+		return
+	_charge_buddy_skill(1)
+
+
+func _charge_buddy_skill_for_combo(combo: int) -> void:
+	if not _has_active_buddy_skill():
+		return
+	if String(_current_stage().get("buddy_charge_rule", "")) != "combo_2_plus":
+		return
+	_charge_buddy_skill(maxi(1, combo - 1))
+
+
+func _charge_buddy_skill_for_fever_start() -> void:
+	if not _has_active_buddy_skill():
+		return
+	if String(_current_stage().get("buddy_charge_rule", "")) != "fever_start":
+		return
+	_charge_buddy_skill(1)
+
+
+func _charge_buddy_skill_for_clear_blocker(cleared_count: int) -> void:
+	if cleared_count <= 0:
+		return
+	if not _has_active_buddy_skill():
+		return
+	if String(_current_stage().get("buddy_charge_rule", "")) != "clear_blocker":
+		return
+	_charge_buddy_skill(cleared_count)
+	if buddy_trigger_pending:
+		_trigger_buddy_skill()
+
+
+func _charge_buddy_skill_for_stage_clear() -> void:
+	if not _has_active_buddy_skill():
+		return
+	if String(_current_stage().get("buddy_charge_rule", "")) != "stage_clear":
+		return
+	_charge_buddy_skill(1)
+	if buddy_trigger_pending:
+		_trigger_buddy_skill()
+
+
+func _charge_buddy_skill_for_cascade_step(combo: int, score_gain: int) -> void:
+	if not _has_active_buddy_skill():
+		return
+	if String(_current_stage().get("buddy_charge_rule", "")) != "cascade_step":
+		return
+	if combo < 2 or score_gain <= 0:
+		return
+	buddy_cascade_bonus_pending = maxi(buddy_cascade_bonus_pending, int(ceil(float(score_gain) * 0.10)))
+	_charge_buddy_skill(1)
+
+
+func _charge_buddy_skill_for_near_fail() -> void:
+	if not _has_active_buddy_skill():
+		return
+	if String(_current_stage().get("buddy_charge_rule", "")) != "near_fail":
+		return
+	if String(_current_stage().get("buddy_skill_id", "")) != "sly_route":
+		return
+	if remaining_moves > 3:
+		return
+	_charge_buddy_skill(1)
+	if buddy_trigger_pending:
+		_trigger_buddy_skill()
+
+
+func _has_active_buddy_skill() -> bool:
+	return not String(_current_stage().get("buddy_animal", "")).is_empty() and not String(_current_stage().get("buddy_skill_id", "")).is_empty()
+
+
+func _charge_buddy_skill(amount: int) -> void:
+	if buddy_trigger_pending or buddy_uses >= int(_current_stage().get("buddy_max_uses", 0)):
+		_track_buddy_analytics("buddy_skill_blocked", {"reason": "already_ready_or_max_uses"})
+		return
+	buddy_charge_count += max(0, amount)
+	var charges_required: int = maxi(1, int(_current_stage().get("buddy_charges_required", 1)))
+	if buddy_charge_count >= charges_required:
+		buddy_charge_count = charges_required
+		buddy_trigger_pending = true
+	_track_buddy_analytics("buddy_skill_charge", {"charge_count": buddy_charge_count})
+	if buddy_trigger_pending:
+		_track_buddy_analytics("buddy_skill_ready", {"turn_index": _moves_spent_count()})
+
+
+func _trigger_buddy_skill() -> void:
+	var max_uses := int(_current_stage().get("buddy_max_uses", 0))
+	if buddy_uses >= max_uses:
+		_track_buddy_analytics("buddy_skill_blocked", {"reason": "max_uses"})
+		return
+	var skill_id := String(_current_stage().get("buddy_skill_id", ""))
+	var triggered := false
+	match skill_id:
+		"quick_refill":
+			triggered = _apply_buddy_quick_refill()
+		"soft_bomb_plus":
+			triggered = _apply_buddy_soft_bomb_plus()
+		"smart_hint":
+			triggered = _apply_buddy_smart_hint()
+		"sly_route":
+			triggered = _apply_buddy_sly_route()
+		"leap_clear":
+			triggered = _apply_buddy_leap_clear()
+		"combo_peep":
+			triggered = _apply_buddy_combo_peep()
+		"loyal_fetch":
+			triggered = _apply_buddy_loyal_fetch(false)
+		"calm_fever":
+			triggered = _apply_buddy_calm_fever()
+		"coin_sniff":
+			triggered = _apply_buddy_coin_sniff()
+		"cascade_slide":
+			triggered = _apply_buddy_cascade_slide()
+		"brave_start":
+			triggered = _apply_buddy_brave_start()
+		"mighty_push":
+			triggered = _apply_buddy_mighty_push()
+		_:
+			triggered = false
+	if not triggered:
+		buddy_trigger_pending = false
+		_track_buddy_analytics("buddy_skill_blocked", {"reason": "effect_unavailable"})
+		_update_hud()
+		return
+	buddy_trigger_pending = false
+	buddy_uses += 1
+	buddy_charge_count = 0
+	_track_buddy_analytics("buddy_skill_trigger", {"effect_type": skill_id, "uses_left": maxi(0, max_uses - buddy_uses)})
+	_set_status(_buddy_trigger_status(skill_id))
+	_update_hud()
+
+
+func _track_buddy_analytics(event_name: String, extra_params: Dictionary = {}) -> void:
+	if not _has_active_buddy_skill():
+		return
+	var params := {
+		"session_id": GameSession.get_session_id(),
+		"stage_id": _current_stage_id(),
+		"animal_id": String(_current_stage().get("buddy_animal", "")),
+		"skill_id": String(_current_stage().get("buddy_skill_id", "")),
+		"charge_rule": String(_current_stage().get("buddy_charge_rule", "")),
+		"charge_count": buddy_charge_count,
+		"charges_required": int(_current_stage().get("buddy_charges_required", 0)),
+		"turn_index": _moves_spent_count(),
+		"uses_left": maxi(0, int(_current_stage().get("buddy_max_uses", 0)) - buddy_uses),
+	}
+	for key in extra_params.keys():
+		params[key] = extra_params[key]
+	GameSession.record_analytics_event(event_name, params)
+
+
+func _moves_spent_count() -> int:
+	return maxi(0, int(_current_stage().get("moves", 0)) - remaining_moves)
+
+
+func _apply_buddy_quick_refill() -> bool:
+	var target_animal := String(_current_stage().get("buddy_animal", ""))
+	if target_animal.is_empty() or not _current_stage().get("animal_pool", []).has(target_animal):
+		return false
+	var candidates: Array = []
+	for row in range(BOARD_ROWS):
+		for col in range(BOARD_COLS):
+			if not _is_cell_active_xy(row, col):
+				continue
+			var piece := String(board_data[row][col])
+			if piece.is_empty() or _piece_animal(piece) == target_animal or not _piece_special(piece).is_empty():
+				continue
+			candidates.append(Vector2i(row, col))
+	if candidates.is_empty():
+		return false
+	var cell: Vector2i = candidates[rng.randi_range(0, candidates.size() - 1)]
+	board_data[cell.x][cell.y] = _make_piece(target_animal)
+	_refresh_tile(cell.x, cell.y)
+	_set_tile_expression(cell, "smile", true)
+	_play_fx_method("play_special_created", [_tile_global_center(cell), "buddy"])
+	return true
+
+
+func _apply_buddy_soft_bomb_plus() -> bool:
+	var target_animal := String(_current_stage().get("buddy_animal", ""))
+	var candidates: Array = []
+	for row in range(BOARD_ROWS):
+		for col in range(BOARD_COLS):
+			if not _is_cell_active_xy(row, col):
+				continue
+			var piece := String(board_data[row][col])
+			if piece.is_empty() or not _piece_special(piece).is_empty():
+				continue
+			if not target_animal.is_empty() and _piece_animal(piece) != target_animal:
+				continue
+			candidates.append(Vector2i(row, col))
+	if candidates.is_empty() and not target_animal.is_empty():
+		for row in range(BOARD_ROWS):
+			for col in range(BOARD_COLS):
+				if not _is_cell_active_xy(row, col):
+					continue
+				var piece := String(board_data[row][col])
+				if piece.is_empty() or not _piece_special(piece).is_empty():
+					continue
+				candidates.append(Vector2i(row, col))
+	if candidates.is_empty():
+		return false
+	var cell: Vector2i = candidates[rng.randi_range(0, candidates.size() - 1)]
+	var animal_id := _piece_animal(board_data[cell.x][cell.y])
+	board_data[cell.x][cell.y] = _make_piece(animal_id, "bomb")
+	_refresh_tile(cell.x, cell.y)
+	_set_tile_expression(cell, "fever", true)
+	tile_nodes[cell.x][cell.y].play_special_ready_effect()
+	_play_fx_method("play_special_created", [_tile_global_center(cell), "bomb"])
+	return true
+
+
+func _apply_buddy_smart_hint() -> bool:
+	var hint_move := _find_smart_hint_move()
+	if hint_move.is_empty():
+		return false
+	var from_cell: Vector2i = hint_move["from"]
+	var to_cell: Vector2i = hint_move["to"]
+	for cell in [from_cell, to_cell]:
+		tile_nodes[cell.x][cell.y].set_selected(true)
+		_set_tile_expression(cell, "smile", true)
+		_play_fx_method("play_match_burst_at", [_tile_global_center(cell), 1])
+	return true
+
+
+func _find_smart_hint_move() -> Dictionary:
+	var fallback := {}
+	var target_animals := {}
+	for animal_id in _stage_collect_targets().keys():
+		target_animals[String(animal_id)] = true
+	for row in range(BOARD_ROWS):
+		for col in range(BOARD_COLS):
+			var from_cell := Vector2i(row, col)
+			if not _is_cell_active(from_cell):
+				continue
+			for direction in [Vector2i.RIGHT, Vector2i.DOWN]:
+				var to_cell: Vector2i = from_cell + direction
+				if not _is_cell_active(to_cell):
+					continue
+				if not _swap_creates_match(from_cell, to_cell):
+					continue
+				var move := {"from": from_cell, "to": to_cell}
+				if fallback.is_empty():
+					fallback = move
+				var from_animal := _piece_animal(board_data[from_cell.x][from_cell.y])
+				var to_animal := _piece_animal(board_data[to_cell.x][to_cell.y])
+				if target_animals.has(from_animal) or target_animals.has(to_animal):
+					return move
+	return fallback
+
+
+func _apply_buddy_sly_route() -> bool:
+	return _apply_buddy_smart_hint()
+
+
+func _apply_buddy_leap_clear() -> bool:
+	var blocker_cells: Array = []
+	for row in range(BOARD_ROWS):
+		for col in range(BOARD_COLS):
+			if not _is_cell_active_xy(row, col):
+				continue
+			if int(obstacle_data[row][col]) > 0:
+				blocker_cells.append(Vector2i(row, col))
+	if blocker_cells.is_empty():
+		return false
+	var cell: Vector2i = blocker_cells[rng.randi_range(0, blocker_cells.size() - 1)]
+	obstacle_data[cell.x][cell.y] = 0
+	cleared_blockers += 1
+	_refresh_tile(cell.x, cell.y)
+	tile_nodes[cell.x][cell.y].play_obstacle_clear_effect()
+	_play_fx_method("play_match_burst_at", [_tile_global_center(cell), 2])
+	return true
+
+
+func _apply_buddy_combo_peep() -> bool:
+	if _is_fever_active():
+		return false
+	combo_gauge_points = mini(COMBO_GAUGE_MAX, combo_gauge_points + 2)
+	combo_gauge_ready = combo_gauge_points >= COMBO_GAUGE_MAX
+	_play_fever_goal_expressions()
+	return true
+
+
+func _apply_buddy_calm_fever() -> bool:
+	combo_gauge_points = mini(COMBO_GAUGE_MAX, combo_gauge_points + 2)
+	combo_gauge_ready = combo_gauge_points >= COMBO_GAUGE_MAX
+	_play_fever_goal_expressions()
+	return true
+
+
+func _apply_buddy_coin_sniff() -> bool:
+	if stage_state != "cleared":
+		return false
+	_play_fever_goal_expressions(2)
+	return true
+
+
+func _apply_buddy_cascade_slide() -> bool:
+	if buddy_cascade_bonus_pending <= 0:
+		return false
+	score += buddy_cascade_bonus_pending
+	buddy_cascade_bonus_pending = 0
+	_play_fever_goal_expressions(2)
+	_play_fx_method("play_combo_banner", [maxi(2, current_combo)])
+	return true
+
+
+func _apply_buddy_brave_start() -> bool:
+	if not ["Hard", "Finale"].has(String(_current_stage().get("difficulty", ""))):
+		return false
+	_play_fever_goal_expressions(2)
+	_play_fx_method("play_combo_banner", [2])
+	return true
+
+
+func _apply_buddy_mighty_push() -> bool:
+	var blocker_cells: Array = []
+	for row in range(BOARD_ROWS):
+		for col in range(BOARD_COLS):
+			if not _is_cell_active_xy(row, col):
+				continue
+			if int(obstacle_data[row][col]) > 0:
+				blocker_cells.append(Vector2i(row, col))
+	if blocker_cells.is_empty():
+		return false
+	var cell: Vector2i = blocker_cells[rng.randi_range(0, blocker_cells.size() - 1)]
+	obstacle_data[cell.x][cell.y] = 0
+	cleared_blockers += 1
+	_refresh_tile(cell.x, cell.y)
+	tile_nodes[cell.x][cell.y].play_obstacle_clear_effect()
+	_play_fx_method("play_match_burst_at", [_tile_global_center(cell), 2])
+	return true
+
+
+func _try_loyal_fetch_before_failure() -> bool:
+	if not _has_active_buddy_skill() or String(_current_stage().get("buddy_skill_id", "")) != "loyal_fetch":
+		return false
+	if buddy_uses >= int(_current_stage().get("buddy_max_uses", 0)):
+		return false
+	if _remaining_collect_goal_count() > 2:
+		return false
+	if not _apply_buddy_loyal_fetch(true):
+		return false
+	buddy_trigger_pending = false
+	buddy_uses += 1
+	buddy_charge_count = 0
+	remaining_moves = 1
+	_set_status(_buddy_trigger_status("loyal_fetch"))
+	return true
+
+
+func _apply_buddy_loyal_fetch(grant_rescue_move: bool) -> bool:
+	var target_animal := _most_needed_collect_animal()
+	if target_animal.is_empty():
+		return false
+	var candidates: Array = []
+	for row in range(BOARD_ROWS):
+		for col in range(BOARD_COLS):
+			if not _is_cell_active_xy(row, col):
+				continue
+			var piece := String(board_data[row][col])
+			if piece.is_empty() or _piece_animal(piece) == target_animal or not _piece_special(piece).is_empty():
+				continue
+			candidates.append(Vector2i(row, col))
+	if candidates.is_empty():
+		return false
+	var cell: Vector2i = candidates[rng.randi_range(0, candidates.size() - 1)]
+	board_data[cell.x][cell.y] = _make_piece(target_animal)
+	_refresh_tile(cell.x, cell.y)
+	_set_tile_expression(cell, "smile", true)
+	_play_fx_method("play_special_created", [_tile_global_center(cell), "buddy"])
+	if grant_rescue_move:
+		_play_worried_goal_expressions(IDLE_EXPRESSION_MAX_ACTIVE, true)
+	return true
+
+
+func _remaining_collect_goal_count() -> int:
+	var remaining := 0
+	for animal_id in _stage_collect_targets().keys():
+		remaining += maxi(0, int(_stage_collect_targets()[animal_id]) - int(collected_counts.get(animal_id, 0)))
+	return remaining
+
+
+func _most_needed_collect_animal() -> String:
+	var best_animal := ""
+	var best_remaining := 0
+	for animal_id in _stage_collect_targets().keys():
+		var remaining := maxi(0, int(_stage_collect_targets()[animal_id]) - int(collected_counts.get(animal_id, 0)))
+		if remaining > best_remaining:
+			best_remaining = remaining
+			best_animal = String(animal_id)
+	return best_animal
+
+
+func _buddy_trigger_status(skill_id: String) -> String:
+	match skill_id:
+		"soft_bomb_plus":
+			return "Rescue Buddy %s 스킬 발동: 목표 동물을 폭발 특수 블록으로 강화했습니다." % _buddy_animal_name()
+		"smart_hint":
+			return "Rescue Buddy %s 스킬 발동: 목표에 가까운 추천 수를 표시했습니다." % _buddy_animal_name()
+		"sly_route":
+			return "Rescue Buddy %s 스킬 발동: 이동 수가 적은 상황에서 추천 경로를 표시했습니다." % _buddy_animal_name()
+		"leap_clear":
+			return "Rescue Buddy %s 스킬 발동: 남은 덤불 1개를 추가로 걷어냈습니다." % _buddy_animal_name()
+		"combo_peep":
+			return "Rescue Buddy %s 스킬 발동: Combo Gauge를 추가 충전했습니다." % _buddy_animal_name()
+		"loyal_fetch":
+			return "Rescue Buddy %s 스킬 발동: 실패 직전 목표 동물을 불러오고 이동 1회를 구했습니다." % _buddy_animal_name()
+		"calm_fever":
+			return "Rescue Buddy %s 스킬 발동: Fever 종료 후 Combo Gauge를 보존했습니다." % _buddy_animal_name()
+		"coin_sniff":
+			return "Rescue Buddy %s 스킬 발동: 클리어 보상 골드를 5% 늘렸습니다." % _buddy_animal_name()
+		"cascade_slide":
+			return "Rescue Buddy %s 스킬 발동: 연쇄 점수 보너스를 더했습니다." % _buddy_animal_name()
+		"brave_start":
+			return "Rescue Buddy %s 스킬 발동: 하드 시작 추천은 폭탄 또는 줄무늬 부스터입니다." % _buddy_animal_name()
+		"mighty_push":
+			return "Rescue Buddy %s 스킬 발동: 남은 덤불 1개를 추가로 밀어냈습니다." % _buddy_animal_name()
+	return "Rescue Buddy %s 스킬 발동: 목표 동물 1개를 보드에 불러왔습니다." % _buddy_animal_name()
+
+
+func _buddy_animal_name() -> String:
+	var animal_id := String(_current_stage().get("buddy_animal", ""))
+	return String(ANIMAL_NAMES.get(animal_id, animal_id))
+
+
+func _is_fever_active() -> bool:
+	return fever_turns_remaining > 0
+
+
+func _activate_fever() -> void:
+	fever_turns_remaining = FEVER_TURN_COUNT
+	fever_ignore_current_move = true
+	_charge_buddy_skill_for_fever_start()
+	_play_fever_goal_expressions()
+
+
+func _consume_fever_turn_after_player_move() -> void:
+	if not _is_fever_active():
+		return
+	if fever_ignore_current_move:
+		fever_ignore_current_move = false
+		return
+	fever_turns_remaining = maxi(0, fever_turns_remaining - 1)
+	if fever_turns_remaining == 0:
+		if buddy_trigger_pending and String(_current_stage().get("buddy_skill_id", "")) == "calm_fever":
+			_trigger_buddy_skill()
+		else:
+			_set_status("Fever가 종료되었습니다. 다음 콤보 게이지를 다시 충전하세요.")
+
+
+func _play_fever_goal_expressions(max_count: int = IDLE_EXPRESSION_MAX_ACTIVE) -> void:
+	var target_animals := _stage_collect_targets().keys()
+	var cells: Array = []
+	for row in range(BOARD_ROWS):
+		for col in range(BOARD_COLS):
+			var animal_id := _piece_animal(board_data[row][col])
+			if target_animals.has(animal_id):
+				cells.append(Vector2i(row, col))
+	cells.shuffle()
+	for index in range(mini(max_count, cells.size())):
+		_set_tile_expression(cells[index], "fever")
 
 
 func _find_matches() -> Array:
@@ -1365,32 +2055,7 @@ func _find_run_intersection(row_run: Array, col_run: Array) -> Vector2i:
 
 
 func _expand_special_clears(base_cells: Array, special_spawns: Dictionary) -> Array:
-	var clear_set := {}
-	var queue: Array = base_cells.duplicate()
-	var processed := {}
-
-	for cell in base_cells:
-		clear_set[cell] = true
-
-	while not queue.is_empty():
-		var cell: Vector2i = queue.pop_front()
-		if processed.has(cell):
-			continue
-		processed[cell] = true
-
-		if special_spawns.has(cell):
-			continue
-
-		var special_type: String = _piece_special(board_data[cell.x][cell.y])
-		if special_type.is_empty():
-			continue
-
-		for extra_cell in _special_clear_cells(cell, special_type):
-			if not clear_set.has(extra_cell):
-				clear_set[extra_cell] = true
-				queue.append(extra_cell)
-
-	return clear_set.keys()
+	return _special_queue_clear_cells(base_cells, special_spawns)
 
 
 func _damage_obstacles(clear_cells: Array) -> Array:
@@ -1445,6 +2110,41 @@ func _special_clear_cells(cell: Vector2i, special_type: String) -> Array:
 						cells.append(next_cell)
 
 	return cells
+
+
+func _special_combo_clear_cells(from_cell: Vector2i, to_cell: Vector2i) -> Array:
+	return _special_queue_clear_cells([from_cell, to_cell], {})
+
+
+func _special_queue_clear_cells(seed_cells: Array, blocked_special_cells: Dictionary) -> Array:
+	var clear_set := {}
+	var queue: Array = seed_cells.duplicate()
+	var processed_specials := {}
+
+	for cell in queue:
+		clear_set[cell] = true
+
+	while not queue.is_empty():
+		var cell: Vector2i = queue.pop_front()
+		if processed_specials.has(cell):
+			continue
+		processed_specials[cell] = true
+
+		if blocked_special_cells.has(cell):
+			continue
+
+		var special_type := _piece_special(board_data[cell.x][cell.y])
+		if special_type.is_empty():
+			continue
+
+		for clear_cell in _special_clear_cells(cell, special_type):
+			if not clear_set.has(clear_cell):
+				clear_set[clear_cell] = true
+			var chained_special := _piece_special(board_data[clear_cell.x][clear_cell.y])
+			if not chained_special.is_empty() and not processed_specials.has(clear_cell) and not blocked_special_cells.has(clear_cell):
+				queue.append(clear_cell)
+
+	return clear_set.keys()
 
 
 func _special_from_run(run_length: int, orientation: String) -> String:
@@ -1548,6 +2248,7 @@ func _on_quit_button_pressed() -> void:
 
 
 func _check_stage_state() -> void:
+	_charge_buddy_skill_for_near_fail()
 	if _is_stage_complete():
 		var star_count := _stage_star_rating()
 		if remaining_moves > 0:
@@ -1555,6 +2256,7 @@ func _check_stage_state() -> void:
 			await _run_zoo_zoo_time()
 		stage_state = "cleared"
 		Feedback.play_stage_clear()
+		_charge_buddy_skill_for_stage_clear()
 		_play_fx_method("play_star_reveal", [star_count])
 		var prev_best := GameSession.get_best_stars(_current_stage_id())
 		GameSession.record_stage_result(_current_stage_id(), score, star_count)
@@ -1566,10 +2268,23 @@ func _check_stage_state() -> void:
 			_set_status("%s 클리어. 홈으로 돌아가거나 다음 스테이지로 이어서 진행할 수 있습니다." % _current_stage()["name"])
 			_show_overlay("%s 구조 완료" % _current_stage()["name"], _build_clear_overlay_body(star_count, unlock_text, false), "clear_stage", "다음 스테이지", "홈으로", true)
 	elif remaining_moves <= 0:
+		if _try_loyal_fetch_before_failure():
+			_update_hud()
+			return
 		stage_state = "failed"
+		var fail_count := GameSession.record_stage_failure(_current_stage_id())
 		Feedback.play_stage_fail()
+		_play_worried_goal_expressions(IDLE_EXPRESSION_MAX_ACTIVE, true)
 		_set_status("이동 수를 모두 사용했습니다. 재시작으로 다시 도전하세요.")
-		_show_overlay("%s 재도전 필요" % _current_stage()["name"], _build_failure_overlay_body(), "restart_stage", "재도전", "홈으로", true)
+		var fail_offer := _build_failure_offer(fail_count)
+		_show_overlay(
+			"%s 재도전 필요" % _current_stage()["name"],
+			_build_failure_overlay_body(fail_offer),
+			"restart_stage",
+			String(fail_offer.get("primary_cta", "재도전")),
+			String(fail_offer.get("secondary_cta", "홈으로")),
+			true
+		)
 	_update_hud()
 
 
@@ -1594,6 +2309,7 @@ func _run_zoo_zoo_time() -> void:
 		board_data[cell.x][cell.y] = _make_piece(animal_id, special_type)
 		_refresh_tile(cell.x, cell.y)
 		tile_nodes[cell.x][cell.y].play_special_ready_effect()
+		_set_tile_expression(cell, "fever")
 		_play_fx_method("play_special_created", [_tile_global_center(cell), special_type])
 		await get_tree().create_timer(0.16).timeout
 
@@ -1610,6 +2326,7 @@ func _run_zoo_zoo_time() -> void:
 
 		for clear_cell in clear_cells:
 			tile_nodes[clear_cell.x][clear_cell.y].set_selected(true)
+			_set_tile_expression(clear_cell, "match", true)
 			tile_nodes[clear_cell.x][clear_cell.y].play_match_effect()
 			_play_fx_method("play_match_burst_at", [_tile_global_center(clear_cell), 2])
 		await get_tree().create_timer(0.18).timeout
@@ -1657,12 +2374,15 @@ func _update_hud() -> void:
 		moves_value.text = "남은 이동 %d" % remaining_moves
 		moves_value.add_theme_color_override("font_color", moves_color)
 		score_value.text = "점수 %d" % score
-	combo_value.text = "Combo Gauge  %d / %d" % [combo_gauge_points, COMBO_GAUGE_MAX]
+	combo_value.text = "Combo Gauge  %d / %d%s%s" % [combo_gauge_points, COMBO_GAUGE_MAX, _fever_hud_suffix(), _buddy_hud_suffix()]
 	combo_gauge.max_value = COMBO_GAUGE_MAX
 	combo_gauge.value = combo_gauge_points
 	if stage_state == "playing" and remaining_moves <= 5 and remaining_moves > 0 and remaining_moves != _last_moves_warning:
 		_last_moves_warning = remaining_moves
 		_play_fx_method("play_last_moves_warning", [remaining_moves])
+	if stage_state == "playing" and remaining_moves <= 3 and remaining_moves > 0 and remaining_moves != _last_worried_moves:
+		_last_worried_moves = remaining_moves
+		_play_worried_goal_expressions()
 	_refresh_goal_chips()
 	if MobileLayout.is_portrait(self) and stage_state == "playing":
 		next_stage_button.disabled = false
@@ -1689,12 +2409,52 @@ func _update_gameplay_hud() -> void:
 			remaining_text = "구조 완료"
 		hud_goal_label.text = "목표  %s   ·   남은 구조  %s" % [_build_goal_result_summary(), remaining_text]
 	if hud_combo_label:
-		hud_combo_label.text = "콤보 %d/%d" % [combo_gauge_points, COMBO_GAUGE_MAX]
+		hud_combo_label.text = "콤보 %d/%d%s%s" % [combo_gauge_points, COMBO_GAUGE_MAX, _fever_hud_suffix(), _buddy_hud_suffix()]
 	if hud_combo_gauge:
 		hud_combo_gauge.max_value = COMBO_GAUGE_MAX
 		hud_combo_gauge.value = combo_gauge_points
+	_update_buddy_hud()
 	if hud_pause_button:
 		hud_pause_button.disabled = stage_state != "playing"
+
+
+func _fever_hud_suffix() -> String:
+	if not _is_fever_active():
+		return ""
+	return " · Fever %d" % fever_turns_remaining
+
+
+func _buddy_hud_suffix() -> String:
+	if not _has_active_buddy_skill():
+		return ""
+	var max_uses := int(_current_stage().get("buddy_max_uses", 0))
+	if buddy_uses >= max_uses:
+		return " · Buddy 완료"
+	var charges_required: int = maxi(1, int(_current_stage().get("buddy_charges_required", 1)))
+	return " · Buddy %d/%d" % [min(buddy_charge_count, charges_required), charges_required]
+
+
+func _update_buddy_hud() -> void:
+	if hud_buddy_label == null or hud_buddy_gauge == null:
+		return
+	var has_buddy := _has_active_buddy_skill()
+	hud_buddy_label.visible = has_buddy
+	hud_buddy_gauge.visible = has_buddy
+	if not has_buddy:
+		return
+
+	var max_uses := int(_current_stage().get("buddy_max_uses", 0))
+	var charges_required: int = maxi(1, int(_current_stage().get("buddy_charges_required", 1)))
+	hud_buddy_gauge.max_value = charges_required
+	hud_buddy_gauge.value = min(buddy_charge_count, charges_required)
+	if buddy_uses >= max_uses:
+		hud_buddy_label.text = "Rescue Buddy  %s 완료" % _buddy_animal_name()
+		hud_buddy_gauge.value = charges_required
+		return
+	if buddy_trigger_pending:
+		hud_buddy_label.text = "Rescue Buddy  %s 출동!" % _buddy_animal_name()
+		return
+	hud_buddy_label.text = "Rescue Buddy  %s %d/%d" % [_buddy_animal_name(), min(buddy_charge_count, charges_required), charges_required]
 
 
 func _moves_warning_color() -> Color:
@@ -2058,8 +2818,19 @@ func _on_overlay_secondary_button_pressed() -> void:
 
 
 func _load_animal_textures() -> void:
+	var fallback_textures := {
+		"lion": "fox",
+		"elephant": "panda",
+	}
 	for animal_id in ANIMAL_IDS:
-		animal_textures[animal_id] = _load_texture_from_png("res://assets/generated/candy/%s_candy_block.png" % animal_id)
+		var texture := _load_texture_from_png("res://assets/generated/candy/%s_candy_block.png" % animal_id, false)
+		if texture == null and fallback_textures.has(animal_id):
+			var fallback_id: String = fallback_textures[animal_id]
+			texture = animal_textures.get(fallback_id)
+			if texture == null:
+				texture = _load_texture_from_png("res://assets/generated/candy/%s_candy_block.png" % fallback_id)
+			push_warning("Animal texture %s missing; using %s fallback." % [animal_id, fallback_id])
+		animal_textures[animal_id] = texture
 
 
 func _load_ui_textures() -> void:
@@ -2079,11 +2850,12 @@ func _load_ui_textures() -> void:
 	background_texture.texture = ui_textures["background"]
 
 
-func _load_texture_from_png(resource_path: String) -> Texture2D:
+func _load_texture_from_png(resource_path: String, warn_on_missing: bool = true) -> Texture2D:
 	var texture := load(resource_path)
 	if texture is Texture2D:
 		return texture
-	push_warning("Texture load failed: %s" % resource_path)
+	if warn_on_missing:
+		push_warning("Texture load failed: %s" % resource_path)
 	return null
 
 
@@ -2275,16 +3047,30 @@ func _build_clear_overlay_body(star_count: int, unlock_text: String, campaign_co
 	return "\n".join(lines)
 
 
-func _build_failure_overlay_body() -> String:
+func _build_failure_overlay_body(fail_offer: Dictionary = {}) -> String:
+	if fail_offer.is_empty():
+		fail_offer = _build_failure_offer()
 	return "\n".join([
 		"조금만 더!",
+		"실패 유형  %s" % String(fail_offer.get("type", "general_shortfall")),
 		"남은 목표  %s" % _build_goal_remaining_summary(),
 		"현재 진행  %s" % _build_goal_result_summary(),
 		"점수  %d" % score,
-		"다음  재도전 / 홈으로",
+		"다음  %s / %s" % [String(fail_offer.get("primary_cta", "재도전")), String(fail_offer.get("secondary_cta", "홈으로"))],
 		"",
-		"추천  %s" % _build_failure_hint(),
+		"추천  %s" % FailOfferPolicy.format_offer_line(fail_offer),
 	])
+
+
+func _build_failure_offer(fail_count: int = -1) -> Dictionary:
+	if fail_count < 0:
+		fail_count = GameSession.get_stage_fail_count(_current_stage_id())
+	return FailOfferPolicy.build_offer(_current_stage(), {
+		"score": score,
+		"cleared_blockers": cleared_blockers,
+		"collected_counts": collected_counts,
+		"fail_count": fail_count,
+	})
 
 
 func _stage_gold_reward(star_count: int) -> int:
@@ -2292,7 +3078,10 @@ func _stage_gold_reward(star_count: int) -> int:
 	var difficulty_bonus := 10 if difficulty == "Easy" else 18
 	if difficulty == "Hard":
 		difficulty_bonus = 30
-	return 40 + _current_stage_id() * 2 + difficulty_bonus + star_count * 25
+	var base_reward := 40 + _current_stage_id() * 2 + difficulty_bonus + star_count * 25
+	if String(_current_stage().get("buddy_skill_id", "")) == "coin_sniff" and buddy_uses > 0:
+		return int(ceil(float(base_reward) * 1.05))
+	return base_reward
 
 
 func _build_unlock_text(star_count: int, prev_best: int) -> String:

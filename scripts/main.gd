@@ -94,22 +94,7 @@ func _on_ranking_button_pressed() -> void:
 	Feedback.play_ui_tap()
 	stage_overlay.visible = false
 	settings_overlay.visible = false
-	if home_status_label:
-		home_status_label.text = "랭킹  최고 해금 Lv.%d · 클리어 %d · 별 %d · 최고 점수 Lv.%d %d" % [
-			GameSession.get_highest_unlocked_stage_id(),
-			GameSession.get_cleared_count(),
-			GameSession.get_total_stars(),
-			_best_score_stage_id(),
-			_best_score_value(),
-		]
-	info_card.visible = true
-	info_label.text = "로컬 랭킹\n최고 해금 Stage %d · 클리어 %d · 누적 별 %d\n최고 점수 Stage %d: %d" % [
-		GameSession.get_highest_unlocked_stage_id(),
-		GameSession.get_cleared_count(),
-		GameSession.get_total_stars(),
-		_best_score_stage_id(),
-		_best_score_value(),
-	]
+	get_tree().change_scene_to_file("res://scenes/collection_screen.tscn")
 
 
 func _on_stage_overlay_close_button_pressed() -> void:
@@ -160,7 +145,7 @@ func _update_home_status() -> void:
 	var unlocked: int = min(GameSession.get_highest_unlocked_stage_id(), stage_defs.size())
 	play_button.text = "PLAY"
 	stage_button.text = "맵"
-	ranking_button.text = "랭킹"
+	ranking_button.text = "도감"
 	if home_play_button:
 		home_play_button.text = "PLAY"
 	info_card.visible = false
@@ -359,7 +344,7 @@ func _build_game_home_layer() -> void:
 	var map_button := _make_home_icon_button("맵")
 	map_button.pressed.connect(_on_stage_button_pressed)
 	home_nav_row.add_child(map_button)
-	var ranking_nav_button := _make_home_icon_button("랭킹")
+	var ranking_nav_button := _make_home_icon_button("도감")
 	ranking_nav_button.pressed.connect(_on_ranking_button_pressed)
 	home_nav_row.add_child(ranking_nav_button)
 	var settings_nav_button := _make_home_icon_button("설정")

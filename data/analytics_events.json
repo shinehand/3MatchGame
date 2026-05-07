@@ -1,0 +1,192 @@
+[
+  {
+    "name": "app_launch",
+    "required_params": [
+      "session_id",
+      "app_version",
+      "platform"
+    ],
+    "optional_params": [
+      "locale",
+      "install_age_days"
+    ]
+  },
+  {
+    "name": "stage_start",
+    "required_params": [
+      "session_id",
+      "stage_id",
+      "band",
+      "roster_group",
+      "moves"
+    ],
+    "optional_params": [
+      "selected_boosters",
+      "difficulty"
+    ]
+  },
+  {
+    "name": "stage_complete",
+    "required_params": [
+      "session_id",
+      "stage_id",
+      "score",
+      "stars",
+      "moves_left"
+    ],
+    "optional_params": [
+      "zoo_zoo_time_bonus",
+      "clear_time_sec"
+    ]
+  },
+  {
+    "name": "stage_fail",
+    "required_params": [
+      "session_id",
+      "stage_id",
+      "fail_type",
+      "score",
+      "remaining_goals"
+    ],
+    "optional_params": [
+      "offer_type",
+      "booster_suggestion"
+    ]
+  },
+  {
+    "name": "booster_used",
+    "required_params": [
+      "session_id",
+      "stage_id",
+      "booster_id",
+      "source"
+    ],
+    "optional_params": [
+      "move_index",
+      "combo_count"
+    ]
+  },
+  {
+    "name": "rescue_book_open",
+    "required_params": [
+      "session_id",
+      "highest_unlocked_stage",
+      "unlocked_animal_count"
+    ],
+    "optional_params": [
+      "entry_point"
+    ]
+  },
+  {
+    "name": "live_event_impression",
+    "required_params": [
+      "session_id",
+      "event_id",
+      "event_type",
+      "placement"
+    ],
+    "optional_params": [
+      "unlock_stage",
+      "enabled"
+    ]
+  },
+  {
+    "name": "offer_impression",
+    "required_params": [
+      "session_id",
+      "stage_id",
+      "fail_type",
+      "primary_cta",
+      "show_rewarded_ad",
+      "show_iap"
+    ],
+    "optional_params": [
+      "secondary_cta",
+      "booster_suggestion"
+    ]
+  },
+  {
+    "name": "combo_fever_start",
+    "required_params": [
+      "session_id",
+      "stage_id",
+      "turns_remaining",
+      "score_multiplier",
+      "target_bonus"
+    ],
+    "optional_params": [
+      "combo_gauge_value",
+      "trigger_source"
+    ]
+  },
+  {
+    "name": "combo_fever_end",
+    "required_params": [
+      "session_id",
+      "stage_id",
+      "turns_spent"
+    ],
+    "optional_params": [
+      "score_gained",
+      "targets_bonus_collected"
+    ]
+  },
+  {
+    "name": "buddy_skill_charge",
+    "required_params": [
+      "session_id",
+      "stage_id",
+      "animal_id",
+      "skill_id",
+      "charge_rule",
+      "charge_count"
+    ],
+    "optional_params": [
+      "charges_required",
+      "move_index"
+    ]
+  },
+  {
+    "name": "buddy_skill_ready",
+    "required_params": [
+      "session_id",
+      "stage_id",
+      "animal_id",
+      "skill_id",
+      "turn_index"
+    ],
+    "optional_params": [
+      "charge_rule",
+      "charges_required"
+    ]
+  },
+  {
+    "name": "buddy_skill_trigger",
+    "required_params": [
+      "session_id",
+      "stage_id",
+      "animal_id",
+      "skill_id",
+      "effect_type",
+      "uses_left"
+    ],
+    "optional_params": [
+      "charge_count",
+      "target_cell"
+    ]
+  },
+  {
+    "name": "buddy_skill_blocked",
+    "required_params": [
+      "session_id",
+      "stage_id",
+      "animal_id",
+      "skill_id",
+      "reason"
+    ],
+    "optional_params": [
+      "charge_rule",
+      "uses_left"
+    ]
+  }
+]

@@ -13,6 +13,18 @@ const STAGE_FILES := [
 	"res://data/stages/stages_081_090.json",
 	"res://data/stages/stages_091_100.json",
 ]
+const ROSTER_GROUP_BY_BAND := {
+	"1-10": "forest_early",
+	"11-20": "trap_trail",
+	"21-30": "camp_outer",
+	"31-40": "rescue_route",
+	"41-50": "river_crossing",
+	"51-60": "camp_inner",
+	"61-70": "deep_jungle",
+	"71-80": "escape_prep",
+	"81-90": "elephant_route",
+	"91-100": "final_rescue",
+}
 
 
 static func get_stages() -> Array:
@@ -60,6 +72,11 @@ static func _normalize_stage(raw_stage: Dictionary) -> Dictionary:
 	var spawn_profile: Dictionary = raw_stage.get("spawn_profile", {})
 	var blockers_input: Array = raw_stage.get("blockers", [])
 	var blockers: Array = []
+	var buddy: Dictionary = raw_stage.get("buddy", {})
+	var band := String(raw_stage.get("band", ""))
+	var roster_group := String(raw_stage.get("roster_group", ""))
+	if roster_group.is_empty():
+		roster_group = _default_roster_group_for_band(band)
 
 	for blocker in blockers_input:
 		if blocker is Dictionary:
@@ -73,7 +90,8 @@ static func _normalize_stage(raw_stage: Dictionary) -> Dictionary:
 	return {
 		"id": int(raw_stage.get("id", 0)),
 		"name": String(raw_stage.get("name", "")),
-		"band": String(raw_stage.get("band", "")),
+		"band": band,
+		"roster_group": roster_group,
 		"difficulty": String(raw_stage.get("difficulty", "Easy")),
 		"theme_key": String(raw_stage.get("theme_key", "meadow_1")),
 		"moves": int(raw_stage.get("moves", 0)),
@@ -84,10 +102,24 @@ static func _normalize_stage(raw_stage: Dictionary) -> Dictionary:
 		"animal_pool": Array(spawn_profile.get("pool", [])),
 		"spawn_weights": Dictionary(spawn_profile.get("weights", {})),
 		"blockers": blockers,
+		"buddy_animal": String(buddy.get("animal", "")),
+		"buddy_skill_id": String(buddy.get("skill_id", "")),
+		"buddy_charge_rule": String(buddy.get("charge_rule", "")),
+		"buddy_charges_required": int(buddy.get("charges_required", 0)),
+		"buddy_max_uses": int(buddy.get("max_uses", 0)),
 		"tutorial": String(raw_stage.get("tutorial", "")),
 		"mechanics": Dictionary(raw_stage.get("mechanics", {})),
 		"tags": Array(raw_stage.get("tags", [])),
+		"difficulty_tag": Array(raw_stage.get("difficulty_tag", raw_stage.get("tags", []))),
+		"teaches": Array(raw_stage.get("teaches", [])),
+		"previews": Array(raw_stage.get("previews", [])),
+		"recommended_smoke": bool(raw_stage.get("recommended_smoke", false)),
+		"forbidden_monetization": bool(raw_stage.get("forbidden_monetization", false)),
 	}
+
+
+static func _default_roster_group_for_band(band: String) -> String:
+	return String(ROSTER_GROUP_BY_BAND.get(band, "ungrouped"))
 
 
 static func _fallback_stages() -> Array:
@@ -95,7 +127,10 @@ static func _fallback_stages() -> Array:
 		{
 			"id": 1,
 			"name": "Stage 1",
+			"band": "1-10",
+			"roster_group": "forest_early",
 			"difficulty": "Easy",
+			"theme_key": "meadow_1",
 			"moves": 12,
 			"target_collect": {"rabbit": 10},
 			"target_score": 0,
@@ -113,12 +148,22 @@ static func _fallback_stages() -> Array:
 			"animal_pool": ["rabbit", "bear", "cat", "chick"],
 			"spawn_weights": {"rabbit": 5, "bear": 2, "cat": 2, "chick": 2},
 			"blockers": [],
+			"buddy_animal": "",
+			"buddy_skill_id": "",
+			"buddy_charge_rule": "",
+			"buddy_charges_required": 0,
+			"buddy_max_uses": 0,
+			"mechanics": {"enabled": ["basic_match"]},
+			"tags": ["tutorial", "collect_focus"],
 			"tutorial": "토끼를 10개 모으세요. 가장 쉬운 난이도라 토끼가 더 자주 등장합니다.",
 		},
 		{
 			"id": 2,
 			"name": "Stage 2",
+			"band": "1-10",
+			"roster_group": "forest_early",
 			"difficulty": "Easy",
+			"theme_key": "meadow_1",
 			"moves": 13,
 			"target_collect": {"chick": 10, "rabbit": 6},
 			"target_score": 0,
@@ -136,6 +181,13 @@ static func _fallback_stages() -> Array:
 			"animal_pool": ["rabbit", "bear", "cat", "chick", "frog"],
 			"spawn_weights": {"rabbit": 4, "bear": 2, "cat": 2, "chick": 4, "frog": 1},
 			"blockers": [],
+			"buddy_animal": "",
+			"buddy_skill_id": "",
+			"buddy_charge_rule": "",
+			"buddy_charges_required": 0,
+			"buddy_max_uses": 0,
+			"mechanics": {"enabled": ["basic_match"]},
+			"tags": ["tutorial", "collect_focus"],
 			"tutorial": "두 가지 목표를 같이 확인하세요. 목표 칩을 보며 필요한 동물을 먼저 모으는 연습 구간입니다.",
 		},
 	]

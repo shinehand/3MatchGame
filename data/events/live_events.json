@@ -1,0 +1,43 @@
+[
+  {
+    "id": "daily_reward_v1",
+    "type": "daily_reward",
+    "title": "매일 구조 보급",
+    "enabled": true,
+    "unlock_stage": 2,
+    "placements": ["home", "result_overlay"],
+    "reward": { "gold": 100, "booster": "rainbow_paw", "booster_count": 1 }
+  },
+  {
+    "id": "starter_missions_v1",
+    "type": "starter_missions",
+    "title": "신입 구조대 미션",
+    "enabled": true,
+    "unlock_stage": 3,
+    "placements": ["home", "stage_select"],
+    "missions": [
+      { "id": "clear_3_stages", "target": 3, "reward_gold": 150 },
+      { "id": "make_10_specials", "target": 10, "reward_booster": "striped", "reward_booster_count": 1 }
+    ]
+  },
+  {
+    "id": "rescue_book_weekend_v1",
+    "type": "collection_event",
+    "title": "주말 구조 도감",
+    "enabled": true,
+    "unlock_stage": 9,
+    "placements": ["home", "collection"],
+    "featured_animals": ["panda", "pig", "penguin", "fox"],
+    "reward": { "tokens": 20, "gold": 200 }
+  },
+  {
+    "id": "season_pass_alpha_v1",
+    "type": "season_pass",
+    "title": "정글 구조 패스",
+    "enabled": false,
+    "unlock_stage": 21,
+    "placements": ["home"],
+    "free_track_rewards": ["gold", "booster"],
+    "premium_track_rewards": ["cosmetic", "booster", "gold"]
+  }
+]

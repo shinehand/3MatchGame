@@ -2,7 +2,107 @@ extends RefCounted
 
 const BOARD_ROWS := 8
 const BOARD_COLS := 8
-const VALID_ANIMALS := ["rabbit", "bear", "cat", "chick", "frog", "dog", "panda", "pig", "penguin", "fox"]
+const VALID_ANIMALS := ["rabbit", "bear", "cat", "chick", "frog", "dog", "panda", "pig", "penguin", "fox", "lion", "elephant"]
+const VALID_ROSTER_GROUPS := [
+	"forest_early",
+	"trap_trail",
+	"camp_outer",
+	"rescue_route",
+	"river_crossing",
+	"camp_inner",
+	"deep_jungle",
+	"escape_prep",
+	"elephant_route",
+	"final_rescue",
+]
+const ANIMAL_UNLOCK_STAGE := {
+	"lion": 51,
+	"elephant": 81,
+}
+const VALID_STAGE_TAGS := [
+	"recovery",
+	"score_focus",
+	"blocker_focus",
+	"mixed_goal",
+	"finale",
+	"master",
+]
+const VALID_DIFFICULTY_TAGS := [
+	"standard",
+	"recovery",
+	"score_focus",
+	"blocker_focus",
+	"mixed_goal",
+	"finale",
+	"master",
+]
+const VALID_LEARNING_KEYS := [
+	"basic_match",
+	"collect_goal",
+	"multi_collect_goal",
+	"line_special",
+	"rescue_buddy",
+	"blocker_bush",
+	"buddy_soft_bomb_plus",
+	"rainbow_special",
+	"combo_gauge",
+	"buddy_combo_peep",
+	"ftue_mastery_check",
+	"buddy_smart_hint",
+	"buddy_leap_clear",
+	"near_fail_rescue_buddy",
+	"buddy_calm_fever",
+	"buddy_coin_sniff",
+	"buddy_cascade_slide",
+	"buddy_sly_route",
+	"buddy_brave_start",
+	"buddy_mighty_push",
+	"lion_unlock",
+	"elephant_unlock",
+	"finale_mastery",
+]
+const VALID_PREVIEW_KEYS := [
+	"rescue_buddy",
+	"chick_buddy",
+	"dog",
+	"rainbow_special",
+	"combo_gauge",
+	"cascade_slide",
+	"sly_route",
+	"brave_start",
+	"mighty_push",
+	"trap_trail",
+	"camp_outer",
+	"lion",
+	"elephant",
+	"final_rescue",
+]
+const VALID_BUDDY_SKILLS := [
+	"quick_refill",
+	"soft_bomb_plus",
+	"smart_hint",
+	"combo_peep",
+	"leap_clear",
+	"loyal_fetch",
+	"calm_fever",
+	"coin_sniff",
+	"cascade_slide",
+	"sly_route",
+	"brave_start",
+	"mighty_push",
+]
+const VALID_BUDDY_CHARGE_RULES := [
+	"match_goal_animal",
+	"create_special",
+	"trigger_special",
+	"clear_blocker",
+	"cascade_step",
+	"near_fail",
+	"stage_clear",
+	"combo_2_plus",
+	"fever_start",
+	"stage_start",
+]
 
 
 static func validate_stages(stages: Array) -> PackedStringArray:
@@ -30,6 +130,17 @@ static func validate_stages(stages: Array) -> PackedStringArray:
 		var stage_name := String(stage.get("name", ""))
 		if stage_name.is_empty():
 			errors.append("stage %d has empty name" % stage_id)
+
+		var roster_group := String(stage.get("roster_group", ""))
+		if not VALID_ROSTER_GROUPS.has(roster_group):
+			errors.append("stage %d has invalid roster_group %s" % [stage_id, roster_group])
+
+		var stage_tags: Array = stage.get("tags", [])
+		for tag_value in stage_tags:
+			var tag := String(tag_value)
+			if not VALID_STAGE_TAGS.has(tag):
+				errors.append("stage %d has unknown tag %s" % [stage_id, tag])
+		_validate_progression_metadata(stage, stage_id, stage_tags, errors)
 
 		var moves := int(stage.get("moves", 0))
 		if moves <= 0:
@@ -71,18 +182,39 @@ static func validate_stages(stages: Array) -> PackedStringArray:
 		if target_blockers < 0:
 			errors.append("stage %d has negative target_blockers" % stage_id)
 
+		var mechanics: Dictionary = stage.get("mechanics", {})
+		var enabled_mechanics: Array = mechanics.get("enabled", [])
+		_validate_mechanics_unlocks(stage_id, enabled_mechanics, errors)
+		_validate_tutorial_text_alignment(stage_id, String(stage.get("tutorial", "")), enabled_mechanics, errors)
+
 		var animal_pool: Array = stage.get("animal_pool", [])
 		if animal_pool.is_empty():
-			errors.append("stage %d has empty animal_pool" % stage_id)
+			errors.append("stage %d has empty animal_pool (source spawn_profile.pool)" % stage_id)
+		var min_pool_size := 4
+		var max_pool_size := 6
+		if animal_pool.size() < min_pool_size or animal_pool.size() > max_pool_size:
+			errors.append("stage %d animal_pool size %d must be %d-%d (source spawn_profile.pool)" % [stage_id, animal_pool.size(), min_pool_size, max_pool_size])
 		for animal_id in animal_pool:
 			if not VALID_ANIMALS.has(String(animal_id)):
-				errors.append("stage %d has unknown animal_pool entry %s" % [stage_id, String(animal_id)])
+				errors.append("stage %d has unknown animal_pool entry %s (source spawn_profile.pool)" % [stage_id, String(animal_id)])
 
 		var spawn_weights: Dictionary = stage.get("spawn_weights", {})
 		for animal_id in animal_pool:
-			var weight := int(spawn_weights.get(animal_id, 0))
+			var animal_key := String(animal_id)
+			var weight := int(spawn_weights.get(animal_key, 0))
 			if weight <= 0:
-				errors.append("stage %d has invalid spawn weight for %s" % [stage_id, String(animal_id)])
+				errors.append("stage %d has invalid spawn weight for %s (source spawn_profile.weights)" % [stage_id, animal_key])
+			var unlock_stage := int(ANIMAL_UNLOCK_STAGE.get(animal_key, 1))
+			if stage_id < unlock_stage:
+				errors.append("stage %d uses %s before unlock stage %d" % [stage_id, animal_key, unlock_stage])
+		for weighted_animal_id in spawn_weights.keys():
+			if not animal_pool.has(String(weighted_animal_id)):
+				errors.append("stage %d spawn weight %s is outside animal_pool (source spawn_profile.weights)" % [stage_id, String(weighted_animal_id)])
+		for animal_id in collect_targets.keys():
+			if not animal_pool.has(String(animal_id)):
+				errors.append("stage %d collect target %s must be included in animal_pool (source spawn_profile.pool)" % [stage_id, String(animal_id)])
+
+		_validate_buddy_config(stage, stage_id, errors)
 
 		var blockers: Array = stage.get("blockers", [])
 		for blocker in blockers:
@@ -105,6 +237,97 @@ static func validate_stages(stages: Array) -> PackedStringArray:
 			errors.append("missing stage id %d in loaded stage range" % expected_id)
 
 	return errors
+
+
+static func _validate_progression_metadata(stage: Dictionary, stage_id: int, stage_tags: Array, errors: PackedStringArray) -> void:
+	var difficulty_tags: Array = stage.get("difficulty_tag", [])
+	if stage_id <= 10 and difficulty_tags.is_empty():
+		errors.append("stage %d must define difficulty_tag for FTUE/content-bible alignment" % stage_id)
+	for tag_value in difficulty_tags:
+		var tag := String(tag_value)
+		if not VALID_DIFFICULTY_TAGS.has(tag):
+			errors.append("stage %d has unknown difficulty_tag %s" % [stage_id, tag])
+		if tag != "standard" and not stage_tags.has(tag):
+			errors.append("stage %d difficulty_tag %s must mirror a gameplay tag or use standard" % [stage_id, tag])
+
+	for teach_value in Array(stage.get("teaches", [])):
+		var teach_key := String(teach_value)
+		if not VALID_LEARNING_KEYS.has(teach_key):
+			errors.append("stage %d has unknown teaches key %s" % [stage_id, teach_key])
+	for preview_value in Array(stage.get("previews", [])):
+		var preview_key := String(preview_value)
+		if not VALID_PREVIEW_KEYS.has(preview_key):
+			errors.append("stage %d has unknown previews key %s" % [stage_id, preview_key])
+
+	if stage_id <= 10 and not bool(stage.get("forbidden_monetization", false)):
+		errors.append("stage %d must set forbidden_monetization for Level 1-10" % stage_id)
+	if stage_id == 1 and not Array(stage.get("teaches", [])).has("basic_match"):
+		errors.append("stage 1 must teach basic_match")
+	if stage_id == 3 and not Array(stage.get("teaches", [])).has("line_special"):
+		errors.append("stage 3 must teach line_special")
+	if stage_id == 7 and not Array(stage.get("teaches", [])).has("rainbow_special"):
+		errors.append("stage 7 must teach rainbow_special")
+	if stage_id == 8 and not Array(stage.get("teaches", [])).has("combo_gauge"):
+		errors.append("stage 8 must teach combo_gauge")
+
+
+static func _validate_tutorial_text_alignment(stage_id: int, tutorial_text: String, enabled_mechanics: Array, errors: PackedStringArray) -> void:
+	var text := tutorial_text.strip_edges()
+	if stage_id <= 10 and text.is_empty():
+		errors.append("stage %d tutorial text is required for FTUE alignment" % stage_id)
+	if stage_id <= 2:
+		for advanced_keyword in ["특수", "무지개", "Combo", "콤보"]:
+			if text.contains(advanced_keyword):
+				errors.append("stage %d tutorial mentions %s before mechanic unlock" % [stage_id, advanced_keyword])
+	if stage_id == 3 and not (text.contains("4개") or text.contains("줄 제거")):
+		errors.append("stage 3 tutorial should introduce 4-match line special")
+	if stage_id == 7 and enabled_mechanics.has("rainbow_special") and not text.contains("무지개"):
+		errors.append("stage 7 tutorial should introduce rainbow special")
+	if stage_id >= 8 and stage_id <= 10 and enabled_mechanics.has("combo_gauge") and not (text.contains("Combo") or text.contains("콤보")):
+		errors.append("stage %d tutorial should mention Combo Gauge after unlock" % stage_id)
+
+
+static func _validate_buddy_config(stage: Dictionary, stage_id: int, errors: PackedStringArray) -> void:
+	var buddy_animal := String(stage.get("buddy_animal", ""))
+	var buddy_skill_id := String(stage.get("buddy_skill_id", ""))
+	var buddy_charge_rule := String(stage.get("buddy_charge_rule", ""))
+	var charges_required := int(stage.get("buddy_charges_required", 0))
+	var max_uses := int(stage.get("buddy_max_uses", 0))
+
+	if buddy_animal.is_empty() and buddy_skill_id.is_empty() and buddy_charge_rule.is_empty() and charges_required == 0 and max_uses == 0:
+		return
+	if not VALID_ANIMALS.has(buddy_animal):
+		errors.append("stage %d has invalid buddy_animal %s" % [stage_id, buddy_animal])
+	if not VALID_BUDDY_SKILLS.has(buddy_skill_id):
+		errors.append("stage %d has invalid buddy_skill_id %s" % [stage_id, buddy_skill_id])
+	if not VALID_BUDDY_CHARGE_RULES.has(buddy_charge_rule):
+		errors.append("stage %d has invalid buddy_charge_rule %s" % [stage_id, buddy_charge_rule])
+	if charges_required <= 0:
+		errors.append("stage %d buddy_charges_required must be positive" % stage_id)
+	if max_uses <= 0 or max_uses > 2:
+		errors.append("stage %d buddy_max_uses must be 1-2" % stage_id)
+	var unlock_stage := int(ANIMAL_UNLOCK_STAGE.get(buddy_animal, 1))
+	if stage_id < unlock_stage:
+		errors.append("stage %d uses buddy %s before unlock stage %d" % [stage_id, buddy_animal, unlock_stage])
+
+
+static func _validate_mechanics_unlocks(stage_id: int, enabled_mechanics: Array, errors: PackedStringArray) -> void:
+	if stage_id <= 2:
+		for locked_mechanic in ["row_special", "col_special", "bomb_special", "rainbow_special", "combo_gauge"]:
+			if enabled_mechanics.has(locked_mechanic):
+				errors.append("stage %d enables %s before tutorial unlock" % [stage_id, locked_mechanic])
+	elif stage_id < 7:
+		for line_mechanic in ["row_special", "col_special"]:
+			if not enabled_mechanics.has(line_mechanic):
+				errors.append("stage %d must include %s after line-special tutorial unlock" % [stage_id, line_mechanic])
+		for locked_mechanic in ["rainbow_special", "combo_gauge"]:
+			if enabled_mechanics.has(locked_mechanic):
+				errors.append("stage %d enables %s before tutorial unlock" % [stage_id, locked_mechanic])
+	elif stage_id <= 10:
+		if not enabled_mechanics.has("rainbow_special"):
+			errors.append("stage %d must include rainbow_special after stage 7 unlock" % stage_id)
+		if stage_id >= 8 and not enabled_mechanics.has("combo_gauge"):
+			errors.append("stage %d must include combo_gauge after stage 8 unlock" % stage_id)
 
 
 static func _mask_cell_is_active(board_mask: Array, row: int, col: int) -> bool:

@@ -1,14 +1,30 @@
 extends SceneTree
 
 const StageCatalog = preload("res://scripts/stage_catalog.gd")
+const CollectionState = preload("res://scripts/collection_state.gd")
+const FailOfferPolicy = preload("res://scripts/fail_offer_policy.gd")
+const LiveEventService = preload("res://scripts/live_event_service.gd")
 
 const LOADING_SCENE_PATH: String = "res://scenes/loading.tscn"
 const MAIN_SCENE_PATH: String = "res://scenes/main.tscn"
 const STAGE_SELECT_SCENE_PATH: String = "res://scenes/stage_select.tscn"
+const COLLECTION_SCENE_PATH: String = "res://scenes/collection_screen.tscn"
 const GAMEPLAY_SCENE_PATH: String = "res://scenes/gameplay.tscn"
 const STAGE_CARD_SCENE_PATH: String = "res://scenes/stage_card.tscn"
 const BLOCK_TILE_SCENE_PATH: String = "res://scenes/block_tile.tscn"
 const GOAL_CHIP_SCENE_PATH: String = "res://scenes/goal_chip.tscn"
+const ANIMAL_IDS := ["rabbit", "bear", "cat", "chick", "frog", "dog", "panda", "pig", "penguin", "fox", "lion", "elephant"]
+const ANIMAL_TEXTURE_FALLBACKS := {
+	"lion": "fox",
+	"elephant": "panda",
+	"koala": "panda",
+	"hamster": "pig",
+	"deer": "fox",
+	"seal": "penguin",
+	"sheep": "bear",
+	"turtle": "frog",
+}
+const ANIMAL_PROFILE_PATH := "res://data/animal_animation_profiles.json"
 
 var representative_stage_ids: Array[int] = [1, 11, 25, 50, 75, 100]
 var tutorial_stage_ids: Array[int] = [1, 11, 25, 45, 65, 85, 95]
@@ -25,6 +41,7 @@ func _run() -> void:
 		LOADING_SCENE_PATH,
 		MAIN_SCENE_PATH,
 		STAGE_SELECT_SCENE_PATH,
+		COLLECTION_SCENE_PATH,
 		GAMEPLAY_SCENE_PATH,
 		STAGE_CARD_SCENE_PATH,
 		BLOCK_TILE_SCENE_PATH,
@@ -47,6 +64,7 @@ func _run() -> void:
 		await process_frame
 		for scene_error in _validate_scene_specifics(scene_path, node):
 			errors.append(scene_error)
+		await _validate_viewport_resilience(scene_path, node, errors)
 		await create_timer(0.2).timeout
 		if is_instance_valid(node):
 			node.queue_free()
@@ -75,8 +93,94 @@ func _validate_scene_specifics(scene_path: String, node: Node) -> PackedStringAr
 			_validate_gameplay_scene(node, errors)
 		STAGE_SELECT_SCENE_PATH:
 			_validate_stage_select_scene(node, errors)
+		COLLECTION_SCENE_PATH:
+			_validate_collection_scene(node, errors)
 
 	return errors
+
+
+func _validate_viewport_resilience(scene_path: String, node: Node, errors: PackedStringArray) -> void:
+	if not [MAIN_SCENE_PATH, STAGE_SELECT_SCENE_PATH, GAMEPLAY_SCENE_PATH, COLLECTION_SCENE_PATH].has(scene_path):
+		return
+
+	# The project uses Godot stretch/canvas_items with a 1080x1920 logical canvas.
+	# Headless validation should therefore inspect the logical safe area instead of
+	# forcing physical window sizes, which would bypass the runtime stretch contract.
+	await process_frame
+	var viewport_size := Vector2i(root.get_visible_rect().size)
+	match scene_path:
+		MAIN_SCENE_PATH:
+			_validate_main_viewport_layout(node, viewport_size, errors)
+		STAGE_SELECT_SCENE_PATH:
+			_validate_stage_select_viewport_layout(node, viewport_size, errors)
+		GAMEPLAY_SCENE_PATH:
+			_validate_gameplay_viewport_layout(node, viewport_size, errors)
+		COLLECTION_SCENE_PATH:
+			_validate_collection_viewport_layout(node, viewport_size, errors)
+
+
+func _validate_main_viewport_layout(node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
+	var game_home_layer := node.get_node_or_null("GameHomeLayer") as CanvasItem
+	if game_home_layer != null and not game_home_layer.visible:
+		errors.append("%s GameHomeLayer should remain visible at %s." % [MAIN_SCENE_PATH, viewport_size])
+	_validate_control_in_viewport(node.find_child("PlayButton", true, false), viewport_size, MAIN_SCENE_PATH, "PlayButton", errors)
+	_validate_control_in_viewport(node.find_child("StageButton", true, false), viewport_size, MAIN_SCENE_PATH, "StageButton", errors)
+
+
+func _validate_stage_select_viewport_layout(node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
+	var stage_world_layer := node.get_node_or_null("StageWorldLayer") as CanvasItem
+	if stage_world_layer != null and not stage_world_layer.visible:
+		errors.append("%s StageWorldLayer should remain visible at %s." % [STAGE_SELECT_SCENE_PATH, viewport_size])
+	_validate_control_in_viewport(node.find_child("WorldPlayButton", true, false), viewport_size, STAGE_SELECT_SCENE_PATH, "WorldPlayButton", errors)
+	var world_path_root := node.get_node_or_null("StageWorldLayer/WorldMapPathRoot")
+	if world_path_root != null:
+		var visible_world_nodes := 0
+		for world_node in world_path_root.find_children("WorldStageNode*", "Button", true, false):
+			var world_control := world_node as Control
+			if world_control != null and world_control.visible:
+				visible_world_nodes += 1
+				_validate_control_in_viewport(world_control, viewport_size, STAGE_SELECT_SCENE_PATH, String(world_control.name), errors)
+		if visible_world_nodes != 10:
+			errors.append("%s expected 10 visible world stage nodes at %s, got %d." % [STAGE_SELECT_SCENE_PATH, viewport_size, visible_world_nodes])
+
+
+func _validate_gameplay_viewport_layout(node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
+	var board_frame := node.get_node_or_null("SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame") as Control
+	_validate_control_in_viewport(board_frame, viewport_size, GAMEPLAY_SCENE_PATH, "BoardFrame", errors)
+	if board_frame != null:
+		var board_rect := board_frame.get_global_rect()
+		var min_expected_board_side: float = min(float(viewport_size.x), float(viewport_size.y)) * 0.46
+		if board_rect.size.x < min_expected_board_side or board_rect.size.y < min_expected_board_side:
+			errors.append("%s BoardFrame is too small at %s: %s, expected each side >= %.1f." % [GAMEPLAY_SCENE_PATH, viewport_size, board_rect.size, min_expected_board_side])
+	_validate_control_in_viewport(node.find_child("HudGoalDock", true, false), viewport_size, GAMEPLAY_SCENE_PATH, "HudGoalDock", errors)
+	_validate_control_in_viewport(node.find_child("HudBoosterDock", true, false), viewport_size, GAMEPLAY_SCENE_PATH, "HudBoosterDock", errors)
+	if node.find_child("HudBuddyGauge", true, false) == null:
+		errors.append("%s missing responsive layout target HudBuddyGauge at %s." % [GAMEPLAY_SCENE_PATH, viewport_size])
+
+
+func _validate_collection_viewport_layout(node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
+	_validate_control_in_viewport(node.find_child("SummaryLabel", true, false), viewport_size, COLLECTION_SCENE_PATH, "SummaryLabel", errors)
+	var collection_grid := node.find_child("CollectionGrid", true, false) as GridContainer
+	if collection_grid == null:
+		errors.append("%s missing responsive layout target CollectionGrid at %s." % [COLLECTION_SCENE_PATH, viewport_size])
+
+
+func _validate_control_in_viewport(candidate: Node, viewport_size: Vector2i, scene_path: String, label: String, errors: PackedStringArray) -> void:
+	if not (candidate is Control):
+		errors.append("%s missing responsive layout target %s at %s." % [scene_path, label, viewport_size])
+		return
+	var control := candidate as Control
+	if not control.visible:
+		errors.append("%s %s should be visible at %s." % [scene_path, label, viewport_size])
+		return
+	var rect := control.get_global_rect()
+	var viewport_rect := Rect2(Vector2.ZERO, Vector2(viewport_size))
+	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+		errors.append("%s %s has empty layout rect at %s." % [scene_path, label, viewport_size])
+		return
+	var relaxed_rect := viewport_rect.grow(8.0)
+	if not relaxed_rect.encloses(rect):
+		errors.append("%s %s is clipped at %s: %s outside %s." % [scene_path, label, viewport_size, rect, viewport_rect])
 
 
 func _validate_loading_scene(node: Node, errors: PackedStringArray) -> void:
@@ -156,6 +260,117 @@ func _validate_gameplay_scene(node: Node, errors: PackedStringArray) -> void:
 		errors.append("%s GameplayHudLayer is missing the goal dock." % GAMEPLAY_SCENE_PATH)
 	elif node.find_child("HudBoosterDock", true, false) == null:
 		errors.append("%s GameplayHudLayer is missing the bottom booster dock." % GAMEPLAY_SCENE_PATH)
+	elif node.find_child("HudBuddyGauge", true, false) == null:
+		errors.append("%s GameplayHudLayer is missing the Rescue Buddy charge gauge." % GAMEPLAY_SCENE_PATH)
+
+	_validate_special_effect_rules(node, errors)
+	_validate_expression_animation_rules(node, errors)
+
+
+func _validate_expression_animation_rules(node: Node, errors: PackedStringArray) -> void:
+	if not node.has_method("_play_random_idle_blinks") or not node.has_method("_active_visible_tiles"):
+		errors.append("%s should expose idle expression scheduler helpers for QA smoke validation." % GAMEPLAY_SCENE_PATH)
+		return
+
+	var candidates: Array = node.call("_active_visible_tiles")
+	if candidates.size() < 4:
+		errors.append("%s expression QA expected at least four active visible tiles, got %d." % [GAMEPLAY_SCENE_PATH, candidates.size()])
+		return
+
+	node.call("_play_random_idle_blinks")
+	var active_idle_expressions := 0
+	for tile in candidates:
+		if tile != null and String(tile.get("expression_state")) == "blink":
+			active_idle_expressions += 1
+	if active_idle_expressions <= 0:
+		errors.append("%s idle expression smoke should start at least one blink." % GAMEPLAY_SCENE_PATH)
+	elif active_idle_expressions > 4:
+		errors.append("%s idle expression smoke should cap concurrent blink tiles at 4, got %d." % [GAMEPLAY_SCENE_PATH, active_idle_expressions])
+
+	var priority_tile = candidates[0]
+	if priority_tile != null and priority_tile.has_method("set_expression"):
+		priority_tile.set_expression("match", true)
+		priority_tile.set_expression("blink")
+		if String(priority_tile.get("expression_state")) != "match":
+			errors.append("%s match expression priority should not be overwritten by blink." % GAMEPLAY_SCENE_PATH)
+
+
+func _validate_special_effect_rules(node: Node, errors: PackedStringArray) -> void:
+	var from_cell := Vector2i(3, 3)
+	var to_cell := Vector2i(3, 4)
+	var board_data: Array = node.get("board_data")
+	if board_data.size() < 8:
+		errors.append("%s special combo smoke could not inspect board data." % GAMEPLAY_SCENE_PATH)
+		return
+
+	board_data[from_cell.x][from_cell.y] = node.call("_make_piece", "rabbit", "row")
+	board_data[to_cell.x][to_cell.y] = node.call("_make_piece", "bear", "col")
+	node.set("board_data", board_data)
+
+	if not bool(node.call("_is_special_combo_swap", from_cell, to_cell)):
+		errors.append("%s should treat adjacent non-rainbow special blocks as a valid special combo swap." % GAMEPLAY_SCENE_PATH)
+
+	var clear_cells: Array = node.call("_special_combo_clear_cells", from_cell, to_cell)
+	if clear_cells.size() != 15:
+		errors.append("%s row+column special combo should clear 15 unique cells, got %d." % [GAMEPLAY_SCENE_PATH, clear_cells.size()])
+	if not clear_cells.has(from_cell) or not clear_cells.has(to_cell):
+		errors.append("%s special combo clear set should include both swapped special blocks." % GAMEPLAY_SCENE_PATH)
+
+	var chained_bomb_cell := Vector2i(3, 6)
+	board_data[chained_bomb_cell.x][chained_bomb_cell.y] = node.call("_make_piece", "pig", "bomb")
+	node.set("board_data", board_data)
+	var chained_clear_cells: Array = node.call("_special_combo_clear_cells", from_cell, to_cell)
+	if chained_clear_cells.size() != 21:
+		errors.append("%s row+column special combo should trigger chained bomb effects once, got %d cells." % [GAMEPLAY_SCENE_PATH, chained_clear_cells.size()])
+	if not chained_clear_cells.has(Vector2i(2, 5)) or not chained_clear_cells.has(Vector2i(4, 7)):
+		errors.append("%s chained bomb should add its 3x3 splash to the special combo queue." % GAMEPLAY_SCENE_PATH)
+
+	var adjacent_obstacle_cell := Vector2i(2, 4)
+	var obstacle_data: Array = node.get("obstacle_data")
+	obstacle_data[adjacent_obstacle_cell.x][adjacent_obstacle_cell.y] = 1
+	node.set("obstacle_data", obstacle_data)
+	var damaged_obstacles: Array = node.call("_damage_obstacles", chained_clear_cells)
+	if not damaged_obstacles.has(adjacent_obstacle_cell):
+		errors.append("%s special combo queue should damage obstacles adjacent to cleared cells." % GAMEPLAY_SCENE_PATH)
+	obstacle_data = node.get("obstacle_data")
+	if int(obstacle_data[adjacent_obstacle_cell.x][adjacent_obstacle_cell.y]) != 0:
+		errors.append("%s special combo obstacle damage should clear the tested obstacle cell." % GAMEPLAY_SCENE_PATH)
+
+	var rainbow_cell := Vector2i(4, 3)
+	var rainbow_target_cell := Vector2i(4, 4)
+	board_data = node.get("board_data")
+	board_data[rainbow_cell.x][rainbow_cell.y] = node.call("_make_piece", "rabbit", "rainbow")
+	board_data[rainbow_target_cell.x][rainbow_target_cell.y] = node.call("_make_piece", "fox", "row")
+	node.set("board_data", board_data)
+	var rainbow_outcome: Dictionary = node.call("_rainbow_swap_outcome", rainbow_cell, rainbow_target_cell)
+	if rainbow_outcome.is_empty():
+		errors.append("%s rainbow+special swap should route through the rainbow resolution path first." % GAMEPLAY_SCENE_PATH)
+	elif String(rainbow_outcome.get("target_animal", "")) != "fox":
+		errors.append("%s rainbow+special swap should target the non-rainbow animal, got %s." % [GAMEPLAY_SCENE_PATH, String(rainbow_outcome.get("target_animal", ""))])
+
+
+func _validate_collection_scene(node: Node, errors: PackedStringArray) -> void:
+	var animals := CollectionState.load_animal_definitions()
+	var collection_ids: Array[String] = []
+	for animal in animals:
+		if animal is Dictionary and bool(Dictionary(animal).get("collection_enabled", false)):
+			collection_ids.append(String(Dictionary(animal).get("id", "")))
+
+	var grid := node.find_child("CollectionGrid", true, false) as GridContainer
+	if grid == null:
+		errors.append("%s is missing CollectionGrid." % COLLECTION_SCENE_PATH)
+	elif grid.get_child_count() != collection_ids.size():
+		errors.append("%s expected %d animal cards, got %d." % [COLLECTION_SCENE_PATH, collection_ids.size(), grid.get_child_count()])
+
+	var summary := node.find_child("SummaryLabel", true, false) as Label
+	if summary == null:
+		errors.append("%s is missing SummaryLabel." % COLLECTION_SCENE_PATH)
+	elif not summary.text.contains("해금"):
+		errors.append("%s SummaryLabel should show unlock progress." % COLLECTION_SCENE_PATH)
+
+	for animal_id in collection_ids:
+		if node.find_child("AnimalCard_%s" % animal_id, true, false) == null:
+			errors.append("%s missing AnimalCard_%s." % [COLLECTION_SCENE_PATH, animal_id])
 
 
 func _validate_stage_select_scene(node: Node, errors: PackedStringArray) -> void:
@@ -213,6 +428,11 @@ func _validate_stage_select_scene(node: Node, errors: PackedStringArray) -> void
 
 
 func _validate_alpha_gate_data(errors: PackedStringArray) -> void:
+	_validate_animal_texture_manifest(errors)
+	_validate_rescue_book_model(errors)
+	_validate_fail_offer_policy(errors)
+	_validate_live_event_config(errors)
+
 	var stages: Array = StageCatalog.get_stages()
 	if stages.size() < 100:
 		errors.append("Alpha gate expected 100 stages, got %d." % stages.size())
@@ -235,3 +455,243 @@ func _validate_alpha_gate_data(errors: PackedStringArray) -> void:
 		var tutorial_text := String(Dictionary(stage_by_id[stage_id]).get("tutorial", "")).strip_edges()
 		if tutorial_text.is_empty():
 			errors.append("Alpha gate tutorial checkpoint stage %d is missing tutorial text." % stage_id)
+
+	_validate_rescue_buddy_stage_config(stage_by_id, errors)
+
+
+func _validate_rescue_buddy_stage_config(stage_by_id: Dictionary, errors: PackedStringArray) -> void:
+	if not stage_by_id.has(4):
+		errors.append("Rescue Buddy smoke expected Stage 4 to exist.")
+		return
+	var stage_four: Dictionary = Dictionary(stage_by_id[4])
+	if String(stage_four.get("buddy_animal", "")) != "rabbit":
+		errors.append("Stage 4 should normalize rabbit as its Rescue Buddy animal.")
+	if String(stage_four.get("buddy_skill_id", "")) != "quick_refill":
+		errors.append("Stage 4 should normalize quick_refill as its Rescue Buddy skill.")
+	if String(stage_four.get("buddy_charge_rule", "")) != "match_goal_animal":
+		errors.append("Stage 4 should charge Rescue Buddy from goal animal matches.")
+	if int(stage_four.get("buddy_charges_required", 0)) != 3:
+		errors.append("Stage 4 Rescue Buddy should require exactly 3 charges for MVP tuning.")
+	if int(stage_four.get("buddy_max_uses", 0)) != 1:
+		errors.append("Stage 4 Rescue Buddy should be capped at one use.")
+
+	if not stage_by_id.has(5):
+		errors.append("Rescue Buddy smoke expected Stage 5 to exist.")
+		return
+	var stage_five: Dictionary = Dictionary(stage_by_id[5])
+	if String(stage_five.get("buddy_animal", "")) != "chick":
+		errors.append("Stage 5 should normalize chick as its Rescue Buddy animal.")
+	if String(stage_five.get("buddy_skill_id", "")) != "soft_bomb_plus":
+		errors.append("Stage 5 should normalize soft_bomb_plus as its Rescue Buddy skill.")
+	if int(stage_five.get("buddy_charges_required", 0)) != 4:
+		errors.append("Stage 5 Rescue Buddy should require 4 charges for soft bomb tuning.")
+
+	if not stage_by_id.has(8):
+		errors.append("Rescue Buddy smoke expected Stage 8 to exist.")
+		return
+	var stage_eight: Dictionary = Dictionary(stage_by_id[8])
+	if String(stage_eight.get("buddy_skill_id", "")) != "combo_peep":
+		errors.append("Stage 8 should normalize combo_peep as its Rescue Buddy skill.")
+	if String(stage_eight.get("buddy_charge_rule", "")) != "combo_2_plus":
+		errors.append("Stage 8 combo_peep should charge from combo_2_plus.")
+
+	if not stage_by_id.has(16):
+		errors.append("Rescue Buddy smoke expected Stage 16 to exist.")
+		return
+	var stage_sixteen: Dictionary = Dictionary(stage_by_id[16])
+	if String(stage_sixteen.get("buddy_animal", "")) != "cat":
+		errors.append("Stage 16 should normalize cat as its Rescue Buddy animal.")
+	if String(stage_sixteen.get("buddy_skill_id", "")) != "smart_hint":
+		errors.append("Stage 16 should normalize smart_hint as its Rescue Buddy skill.")
+	if int(stage_sixteen.get("buddy_charges_required", 0)) != 3:
+		errors.append("Stage 16 Rescue Buddy should require 3 charges for smart hint tuning.")
+
+	if not stage_by_id.has(18):
+		errors.append("Rescue Buddy smoke expected Stage 18 to exist.")
+		return
+	var stage_eighteen: Dictionary = Dictionary(stage_by_id[18])
+	if String(stage_eighteen.get("buddy_animal", "")) != "frog":
+		errors.append("Stage 18 should normalize frog as its Rescue Buddy animal.")
+	if String(stage_eighteen.get("buddy_skill_id", "")) != "leap_clear":
+		errors.append("Stage 18 should normalize leap_clear as its Rescue Buddy skill.")
+	if int(stage_eighteen.get("buddy_charges_required", 0)) != 3:
+		errors.append("Stage 18 Rescue Buddy should require 3 charges for leap clear tuning.")
+
+	if not stage_by_id.has(20):
+		errors.append("Rescue Buddy smoke expected Stage 20 to exist.")
+		return
+	var stage_twenty: Dictionary = Dictionary(stage_by_id[20])
+	if String(stage_twenty.get("buddy_animal", "")) != "dog":
+		errors.append("Stage 20 should normalize dog as its Rescue Buddy animal.")
+	if String(stage_twenty.get("buddy_skill_id", "")) != "loyal_fetch":
+		errors.append("Stage 20 should normalize loyal_fetch as its Rescue Buddy skill.")
+	if String(stage_twenty.get("buddy_charge_rule", "")) != "near_fail":
+		errors.append("Stage 20 loyal_fetch should use near_fail charge rule.")
+
+	if not stage_by_id.has(24):
+		errors.append("Rescue Buddy smoke expected Stage 24 to exist.")
+		return
+	var stage_twenty_four: Dictionary = Dictionary(stage_by_id[24])
+	if String(stage_twenty_four.get("buddy_animal", "")) != "panda":
+		errors.append("Stage 24 should normalize panda as its Rescue Buddy animal.")
+	if String(stage_twenty_four.get("buddy_skill_id", "")) != "calm_fever":
+		errors.append("Stage 24 should normalize calm_fever as its Rescue Buddy skill.")
+	if String(stage_twenty_four.get("buddy_charge_rule", "")) != "fever_start":
+		errors.append("Stage 24 calm_fever should use fever_start charge rule.")
+
+	if not stage_by_id.has(31):
+		errors.append("Rescue Buddy smoke expected Stage 31 to exist.")
+		return
+	var stage_thirty_one: Dictionary = Dictionary(stage_by_id[31])
+	if String(stage_thirty_one.get("buddy_animal", "")) != "penguin":
+		errors.append("Stage 31 should normalize penguin as its Rescue Buddy animal.")
+	if String(stage_thirty_one.get("buddy_skill_id", "")) != "cascade_slide":
+		errors.append("Stage 31 should normalize cascade_slide as its Rescue Buddy skill.")
+	if String(stage_thirty_one.get("buddy_charge_rule", "")) != "cascade_step":
+		errors.append("Stage 31 cascade_slide should use cascade_step charge rule.")
+
+	if not stage_by_id.has(41):
+		errors.append("Rescue Buddy smoke expected Stage 41 to exist.")
+		return
+	var stage_forty_one: Dictionary = Dictionary(stage_by_id[41])
+	if String(stage_forty_one.get("buddy_animal", "")) != "fox":
+		errors.append("Stage 41 should normalize fox as its Rescue Buddy animal.")
+	if String(stage_forty_one.get("buddy_skill_id", "")) != "sly_route":
+		errors.append("Stage 41 should normalize sly_route as its Rescue Buddy skill.")
+	if String(stage_forty_one.get("buddy_charge_rule", "")) != "near_fail":
+		errors.append("Stage 41 sly_route should use near_fail charge rule.")
+
+	if not stage_by_id.has(51):
+		errors.append("Rescue Buddy smoke expected Stage 51 to exist.")
+		return
+	var stage_fifty_one: Dictionary = Dictionary(stage_by_id[51])
+	if String(stage_fifty_one.get("buddy_animal", "")) != "lion":
+		errors.append("Stage 51 should normalize lion as its Rescue Buddy animal.")
+	if String(stage_fifty_one.get("buddy_skill_id", "")) != "brave_start":
+		errors.append("Stage 51 should normalize brave_start as its Rescue Buddy skill.")
+	if String(stage_fifty_one.get("buddy_charge_rule", "")) != "stage_start":
+		errors.append("Stage 51 brave_start should use stage_start charge rule.")
+
+	if not stage_by_id.has(81):
+		errors.append("Rescue Buddy smoke expected Stage 81 to exist.")
+		return
+	var stage_eighty_one: Dictionary = Dictionary(stage_by_id[81])
+	if String(stage_eighty_one.get("buddy_animal", "")) != "elephant":
+		errors.append("Stage 81 should normalize elephant as its Rescue Buddy animal.")
+	if String(stage_eighty_one.get("buddy_skill_id", "")) != "mighty_push":
+		errors.append("Stage 81 should normalize mighty_push as its Rescue Buddy skill.")
+	if String(stage_eighty_one.get("buddy_charge_rule", "")) != "clear_blocker":
+		errors.append("Stage 81 mighty_push should use clear_blocker charge rule.")
+
+
+func _validate_live_event_config(errors: PackedStringArray) -> void:
+	for event_error in LiveEventService.validate_events():
+		errors.append(event_error)
+	var home_events := LiveEventService.active_events_for(9, "home")
+	if home_events.is_empty():
+		errors.append("LiveEventService should expose at least one home event by stage 9.")
+	var collection_events := LiveEventService.active_events_for(9, "collection")
+	if collection_events.is_empty():
+		errors.append("LiveEventService should expose collection event by stage 9.")
+
+
+func _validate_fail_offer_policy(errors: PackedStringArray) -> void:
+	var near_miss_offer := FailOfferPolicy.build_offer({"id": 25, "target_collect": {"rabbit": 10}}, {"collected_counts": {"rabbit": 9}, "fail_count": 1})
+	if near_miss_offer.get("type") != FailOfferPolicy.TYPE_NEAR_MISS:
+		errors.append("FailOfferPolicy should classify 1-2 remaining goals as near_miss.")
+	if not bool(near_miss_offer.get("show_rewarded_ad", false)) or not bool(near_miss_offer.get("show_iap", false)):
+		errors.append("FailOfferPolicy should enable ad/iap offers for eligible midgame near miss failure.")
+
+	var repeat_offer := FailOfferPolicy.build_offer({"id": 25, "target_blockers": 4}, {"cleared_blockers": 1, "score": 0, "fail_count": 2})
+	if repeat_offer.get("type") != FailOfferPolicy.TYPE_REPEAT_FAIL:
+		errors.append("FailOfferPolicy should classify repeated failures before strategic shortfall.")
+
+	var early_offer := FailOfferPolicy.build_offer({"id": 3, "target_score": 1000}, {"score": 300, "fail_count": 1})
+	if bool(early_offer.get("show_rewarded_ad", false)) or bool(early_offer.get("show_iap", false)):
+		errors.append("FailOfferPolicy should suppress monetization offers in early tutorial stages.")
+
+
+func _validate_rescue_book_model(errors: PackedStringArray) -> void:
+	var animals := CollectionState.load_animal_definitions()
+	if animals.size() != 18:
+		errors.append("Rescue Book expected 18 launch animal definitions, got %d." % animals.size())
+	var seen_ids := {}
+	var board_ids: Array[String] = []
+	for animal in animals:
+		if not (animal is Dictionary):
+			errors.append("Rescue Book animal definition must be a dictionary.")
+			continue
+		var animal_dict: Dictionary = animal
+		var animal_id := String(animal_dict.get("id", ""))
+		if seen_ids.has(animal_id):
+			errors.append("Rescue Book has duplicate animal id %s." % animal_id)
+		seen_ids[animal_id] = true
+		if int(animal_dict.get("unlock_stage", 0)) <= 0:
+			errors.append("Rescue Book animal %s has invalid unlock_stage." % animal_id)
+		if bool(animal_dict.get("board_enabled", false)):
+			board_ids.append(animal_id)
+		if not bool(animal_dict.get("collection_enabled", false)):
+			errors.append("Rescue Book animal %s must be collection_enabled." % animal_id)
+		if String(animal_dict.get("animation_profile", "")).is_empty():
+			errors.append("Rescue Book animal %s missing animation_profile." % animal_id)
+
+	if board_ids.size() != ANIMAL_IDS.size():
+		errors.append("Board roster expected %d board_enabled animals, got %d." % [ANIMAL_IDS.size(), board_ids.size()])
+	for animal_id in ANIMAL_IDS:
+		if not board_ids.has(animal_id):
+			errors.append("Board roster missing board_enabled animal %s." % animal_id)
+
+	_validate_animation_profiles(animals, errors)
+
+	var default_state := CollectionState.make_default_state()
+	var state_animals: Dictionary = Dictionary(default_state.get("animals", {}))
+	for animal_id in seen_ids.keys():
+		if not state_animals.has(animal_id):
+			errors.append("Rescue Book default state missing %s." % animal_id)
+
+	var rabbit_token_state := CollectionState.add_tokens(default_state, "rabbit", 40)
+	var rabbit_entry: Dictionary = Dictionary(Dictionary(rabbit_token_state.get("animals", {})).get("rabbit", {}))
+	if int(rabbit_entry.get("tokens", 0)) != 40:
+		errors.append("Rescue Book token grant should persist token balance.")
+	if int(rabbit_entry.get("friendship_level", 1)) < 3:
+		errors.append("Rescue Book friendship level should advance from token balance.")
+
+
+func _validate_animation_profiles(animals: Array, errors: PackedStringArray) -> void:
+	if not FileAccess.file_exists(ANIMAL_PROFILE_PATH):
+		errors.append("missing %s" % ANIMAL_PROFILE_PATH)
+		return
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(ANIMAL_PROFILE_PATH))
+	if not (parsed is Array):
+		errors.append("animal animation profiles must be an array")
+		return
+	var profiles_by_id := {}
+	for profile in Array(parsed):
+		if not (profile is Dictionary):
+			errors.append("animal animation profile entry must be a dictionary")
+			continue
+		var profile_dict: Dictionary = profile
+		var profile_id := String(profile_dict.get("profile_id", ""))
+		profiles_by_id[profile_id] = profile_dict
+		if int(profile_dict.get("max_frame_count", 0)) > 13:
+			errors.append("animation profile %s exceeds 13 frame MVP limit" % profile_id)
+		var states: Dictionary = Dictionary(profile_dict.get("states", {}))
+		for expression_id in ["idle", "blink", "smile", "match", "fever", "worried"]:
+			if not states.has(expression_id):
+				errors.append("animation profile %s missing %s" % [profile_id, expression_id])
+
+	for animal in animals:
+		if not (animal is Dictionary):
+			continue
+		var animal_dict: Dictionary = animal
+		var profile_id := String(animal_dict.get("animation_profile", ""))
+		if not profiles_by_id.has(profile_id):
+			errors.append("animal %s references missing animation profile %s" % [String(animal_dict.get("id", "")), profile_id])
+
+
+func _validate_animal_texture_manifest(errors: PackedStringArray) -> void:
+	for animal_id in ANIMAL_IDS:
+		var texture_path := "res://assets/generated/candy/%s_candy_block.png" % animal_id
+		var texture := load(texture_path)
+		if not (texture is Texture2D):
+			errors.append("Animal direct texture did not load as Texture2D: %s." % texture_path)

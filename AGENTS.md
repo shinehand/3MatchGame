@@ -2,6 +2,28 @@
 
 이 저장소는 특정 프로젝트에 종속되지 않는 `범용 멀티 에이전트 팀 운영 구조`를 기본값으로 사용한다. 어떤 제품이든 `PM팀`, `기획팀`, `아트팀`, `개발팀`, `QA팀`으로 시작할 수 있고, 각 팀은 `팀장 에이전트`와 여러 `서브 에이전트`로 구성한다.
 
+## Project Animal Match 개발 진입점
+
+이 저장소에서 실제 개발을 진행하는 에이전트는 먼저 아래 문서를 읽고 작업 범위를 확정한다.
+
+1. [Agent Start Here](/Users/shinehandmac/Github/3MatchGame/docs/project-animal-match-agent-start-here.md)
+2. [Agent Output Index](/Users/shinehandmac/Github/3MatchGame/docs/project-animal-match-agent-output-index.md)
+3. [Planning Council Synthesis](/Users/shinehandmac/Github/3MatchGame/docs/planning/project-animal-match-planning-council-synthesis.md)
+4. [Planning Upgrade Report](/Users/shinehandmac/Github/3MatchGame/docs/planning/project-animal-match-planning-upgrade-report-2026-05-02.md)
+5. [Decision Register](/Users/shinehandmac/Github/3MatchGame/docs/planning/project-animal-match-decision-register.md)
+6. [System Rules Matrix](/Users/shinehandmac/Github/3MatchGame/docs/planning/project-animal-match-system-rules-matrix.md)
+7. [FTUE & Rescue Book Spec](/Users/shinehandmac/Github/3MatchGame/docs/planning/project-animal-match-ftue-rescue-book-spec.md)
+8. [Analytics & Remote Config Spec](/Users/shinehandmac/Github/3MatchGame/docs/planning/project-animal-match-analytics-remote-config-spec.md)
+9. [Rescue Buddy Skill Spec](/Users/shinehandmac/Github/3MatchGame/docs/planning/project-animal-match-rescue-buddy-skill-spec.md)
+10. [Animal Roster & Animation Matrix](/Users/shinehandmac/Github/3MatchGame/docs/planning/project-animal-match-animal-roster-animation-matrix.md)
+11. [Level Progression Content Bible](/Users/shinehandmac/Github/3MatchGame/docs/planning/project-animal-match-level-progression-content-bible.md)
+12. [Implementation Backlog](/Users/shinehandmac/Github/3MatchGame/docs/dev/project-animal-match-implementation-backlog.md)
+13. [Animal Expression System](/Users/shinehandmac/Github/3MatchGame/docs/dev/project-animal-match-animal-expression-system.md)
+14. [Development Gates](/Users/shinehandmac/Github/3MatchGame/docs/qa/project-animal-match-development-gates.md)
+15. [Planning Handoff Briefs](/Users/shinehandmac/Github/3MatchGame/.codex/tasks/project-animal-match-planning-handoff-briefs-2026-05-02.md)
+
+개발 에이전트는 `Implementation Backlog`의 작업 카드 하나를 선택하고, 카드에 적힌 대상 파일과 검증 명령을 따른다. 신규 규칙이 생기면 기획, 기술, QA 문서를 함께 갱신한다.
+
 ## 팀 구조
 
 - `PM Team`
@@ -60,10 +82,10 @@
 ## 시작점
 
 - 새 기능 시작: `.codex/templates/task-brief.md` 복사 후 작성
-- 팀 구조 정의: [team-structure.md](/Users/shinehandmac/Documents/puzzle/.codex/teams/team-structure.md)
-- 모델 정책 정의: [model-policy.md](/Users/shinehandmac/Documents/puzzle/.codex/teams/model-policy.md)
-- PM팀 정의: [pm-team.md](/Users/shinehandmac/Documents/puzzle/.codex/teams/pm-team.md)
-- 기획팀 정의: [planning-team.md](/Users/shinehandmac/Documents/puzzle/.codex/teams/planning-team.md)
-- 아트팀 정의: [art-team.md](/Users/shinehandmac/Documents/puzzle/.codex/teams/art-team.md)
-- 개발팀 정의: [development-team.md](/Users/shinehandmac/Documents/puzzle/.codex/teams/development-team.md)
-- QA팀 정의: [qa-team.md](/Users/shinehandmac/Documents/puzzle/.codex/teams/qa-team.md)
+- 팀 구조 정의: [team-structure.md](/Users/shinehandmac/Github/3MatchGame/.codex/teams/team-structure.md)
+- 모델 정책 정의: [model-policy.md](/Users/shinehandmac/Github/3MatchGame/.codex/teams/model-policy.md)
+- PM팀 정의: [pm-team.md](/Users/shinehandmac/Github/3MatchGame/.codex/teams/pm-team.md)
+- 기획팀 정의: [planning-team.md](/Users/shinehandmac/Github/3MatchGame/.codex/teams/planning-team.md)
+- 아트팀 정의: [art-team.md](/Users/shinehandmac/Github/3MatchGame/.codex/teams/art-team.md)
+- 개발팀 정의: [development-team.md](/Users/shinehandmac/Github/3MatchGame/.codex/teams/development-team.md)
+- QA팀 정의: [qa-team.md](/Users/shinehandmac/Github/3MatchGame/.codex/teams/qa-team.md)

@@ -2,6 +2,8 @@ extends SceneTree
 
 const StageCatalog = preload("res://scripts/stage_catalog.gd")
 
+const REQUIRED_SMOKE_STAGES := [1, 5, 10, 20, 51, 81, 100]
+
 const BAND_RULES := {
 	"1-10": {"min_id": 1, "max_id": 10, "moves_min": 12, "moves_max": 13, "blockers_min": 0, "blockers_max": 2},
 	"11-20": {"min_id": 11, "max_id": 20, "moves_min": 13, "moves_max": 14, "blockers_min": 1, "blockers_max": 4},
@@ -24,7 +26,12 @@ func _init() -> void:
 		return
 
 	var errors := PackedStringArray()
+	var warnings := PackedStringArray()
 	var band_summaries: Array[String] = []
+
+	_validate_difficulty_tag_streaks(stages, warnings)
+	_validate_roster_rotation(stages, warnings)
+	_validate_recommended_smoke_coverage(stages, errors)
 
 	for band_name in BAND_RULES.keys():
 		var rule: Dictionary = BAND_RULES[band_name]
@@ -39,6 +46,7 @@ func _init() -> void:
 		var max_blockers := -1
 		var min_active_cells := 999
 		var max_active_cells := -1
+		var tag_counts := {}
 
 		for stage in band_stages:
 			var stage_id := int(stage.get("id", 0))
@@ -66,12 +74,16 @@ func _init() -> void:
 				])
 
 			var active_cells := _count_active_cells(Array(stage.get("board_mask", [])))
+			for tag_value in Array(stage.get("tags", [])):
+				var tag := String(tag_value)
+				tag_counts[tag] = int(tag_counts.get(tag, 0)) + 1
 			min_moves = mini(min_moves, moves)
 			max_moves = maxi(max_moves, moves)
 			min_blockers = mini(min_blockers, blocker_count)
 			max_blockers = maxi(max_blockers, blocker_count)
 			min_active_cells = mini(min_active_cells, active_cells)
 			max_active_cells = maxi(max_active_cells, active_cells)
+		_validate_band_tag_wave(band_name, tag_counts, errors, warnings)
 		band_summaries.append(
 			"%s: moves %d-%d, blockers %d-%d, active_cells %d-%d" % [
 				band_name,
@@ -91,9 +103,110 @@ func _init() -> void:
 		return
 
 	print("Stage balance validation passed.")
+	for warning_text in warnings:
+		push_warning("Stage balance validation warning: %s" % warning_text)
 	for summary in band_summaries:
 		print(summary)
 	quit()
+
+
+func _validate_band_tag_wave(band_name: String, tag_counts: Dictionary, errors: PackedStringArray, warnings: PackedStringArray) -> void:
+	if int(tag_counts.get("recovery", 0)) <= 0:
+		errors.append("%s band must include at least one recovery stage" % band_name)
+	if int(tag_counts.get("blocker_focus", 0)) <= 0:
+		errors.append("%s band must include blocker_focus stages" % band_name)
+	if int(tag_counts.get("score_focus", 0)) <= 0:
+		warnings.append("%s band has no score_focus stages" % band_name)
+	if band_name == "91-100" and int(tag_counts.get("finale", 0)) <= 0:
+		errors.append("91-100 band must include finale tags")
+	if band_name != "91-100" and int(tag_counts.get("finale", 0)) > 0:
+		errors.append("%s band should not use finale tags before final band" % band_name)
+
+
+func _validate_difficulty_tag_streaks(stages: Array, warnings: PackedStringArray) -> void:
+	var sorted_stages := stages.duplicate()
+	sorted_stages.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a.get("id", 0)) < int(b.get("id", 0)))
+
+	var streak_start := -1
+	var streak_count := 0
+	for stage in sorted_stages:
+		var stage_id := int(stage.get("id", 0))
+		var tags: Array = stage.get("tags", [])
+		var is_pressure_stage := String(stage.get("difficulty", "")) == "Hard" or tags.has("master") or tags.has("finale")
+		var is_recovery := tags.has("recovery")
+		if is_pressure_stage and not is_recovery:
+			if streak_count == 0:
+				streak_start = stage_id
+			streak_count += 1
+		elif streak_count > 0:
+			if streak_count >= 4:
+				warnings.append("pressure stage streak %d-%d has %d stages without recovery" % [streak_start, stage_id - 1, streak_count])
+			streak_count = 0
+			streak_start = -1
+
+	if streak_count >= 4:
+		var last_stage_id := int(Dictionary(sorted_stages.back()).get("id", 0))
+		warnings.append("pressure stage streak %d-%d has %d stages without recovery" % [streak_start, last_stage_id, streak_count])
+
+
+func _validate_recommended_smoke_coverage(stages: Array, errors: PackedStringArray) -> void:
+	var stages_by_id := {}
+	for stage in stages:
+		stages_by_id[int(stage.get("id", 0))] = stage
+	for stage_id in REQUIRED_SMOKE_STAGES:
+		if not stages_by_id.has(stage_id):
+			errors.append("required smoke stage %d is missing" % stage_id)
+			continue
+		var stage: Dictionary = stages_by_id[stage_id]
+		if not bool(stage.get("recommended_smoke", false)):
+			errors.append("stage %d must set recommended_smoke for QA smoke coverage" % stage_id)
+
+
+func _validate_roster_rotation(stages: Array, warnings: PackedStringArray) -> void:
+	var sorted_stages := stages.duplicate()
+	sorted_stages.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a.get("id", 0)) < int(b.get("id", 0)))
+
+	var pool_counts_by_band := {}
+	var post_unlock_presence := {
+		"lion": {"unlock": 51, "count": 0},
+		"elephant": {"unlock": 81, "count": 0},
+	}
+
+	for stage in sorted_stages:
+		var stage_id := int(stage.get("id", 0))
+		var band := String(stage.get("band", ""))
+		var pool: Array = stage.get("animal_pool", [])
+		var pool_key := _animal_pool_key(pool)
+		if not pool_counts_by_band.has(band):
+			pool_counts_by_band[band] = {}
+		var band_counts: Dictionary = pool_counts_by_band[band]
+		band_counts[pool_key] = int(band_counts.get(pool_key, 0)) + 1
+
+		for animal_id in post_unlock_presence.keys():
+			var presence: Dictionary = post_unlock_presence[animal_id]
+			if stage_id >= int(presence["unlock"]) and pool.has(animal_id):
+				presence["count"] = int(presence["count"]) + 1
+
+	for band in pool_counts_by_band.keys():
+		var band_counts: Dictionary = pool_counts_by_band[band]
+		for pool_key in band_counts.keys():
+			var repeat_count := int(band_counts[pool_key])
+			if repeat_count >= 4:
+				warnings.append("%s band repeats animal pool [%s] %d times; rotate pools before this becomes stale" % [band, pool_key, repeat_count])
+
+	for animal_id in post_unlock_presence.keys():
+		var presence: Dictionary = post_unlock_presence[animal_id]
+		var count := int(presence["count"])
+		if count < 3:
+			warnings.append("%s appears only %d times after unlock stage %d; increase roster rotation coverage" % [animal_id, count, int(presence["unlock"])])
+
+
+func _animal_pool_key(pool: Array) -> String:
+	var ids: Array[String] = []
+	for animal_id in pool:
+		ids.append(String(animal_id))
+	ids.sort()
+	return ",".join(ids)
 
 
 func _filter_band_stages(stages: Array, band_name: String) -> Array:

@@ -1,0 +1,920 @@
+[
+  {
+    "profile_id": "rabbit_v1",
+    "animal_id": "rabbit",
+    "max_frame_count": 13,
+    "states": {
+      "idle": {
+        "frames": [
+          "normal"
+        ],
+        "loop": true
+      },
+      "blink": {
+        "frames": [
+          "blink_01",
+          "blink_02",
+          "blink_03"
+        ],
+        "duration": 0.16
+      },
+      "smile": {
+        "frames": [
+          "smile_01",
+          "smile_02"
+        ],
+        "duration": 0.24
+      },
+      "match": {
+        "frames": [
+          "match_01",
+          "match_02",
+          "match_03"
+        ],
+        "duration": 0.18
+      },
+      "fever": {
+        "frames": [
+          "fever_01",
+          "fever_02"
+        ],
+        "duration": 0.5,
+        "loop": true
+      },
+      "worried": {
+        "frames": [
+          "worried_01",
+          "worried_02"
+        ],
+        "duration": 0.6
+      }
+    }
+  },
+  {
+    "profile_id": "bear_v1",
+    "animal_id": "bear",
+    "max_frame_count": 13,
+    "states": {
+      "idle": {
+        "frames": [
+          "normal"
+        ],
+        "loop": true
+      },
+      "blink": {
+        "frames": [
+          "blink_01",
+          "blink_02",
+          "blink_03"
+        ],
+        "duration": 0.16
+      },
+      "smile": {
+        "frames": [
+          "smile_01",
+          "smile_02"
+        ],
+        "duration": 0.24
+      },
+      "match": {
+        "frames": [
+          "match_01",
+          "match_02",
+          "match_03"
+        ],
+        "duration": 0.18
+      },
+      "fever": {
+        "frames": [
+          "fever_01",
+          "fever_02"
+        ],
+        "duration": 0.5,
+        "loop": true
+      },
+      "worried": {
+        "frames": [
+          "worried_01",
+          "worried_02"
+        ],
+        "duration": 0.6
+      }
+    }
+  },
+  {
+    "profile_id": "cat_v1",
+    "animal_id": "cat",
+    "max_frame_count": 13,
+    "states": {
+      "idle": {
+        "frames": [
+          "normal"
+        ],
+        "loop": true
+      },
+      "blink": {
+        "frames": [
+          "blink_01",
+          "blink_02",
+          "blink_03"
+        ],
+        "duration": 0.16
+      },
+      "smile": {
+        "frames": [
+          "smile_01",
+          "smile_02"
+        ],
+        "duration": 0.24
+      },
+      "match": {
+        "frames": [
+          "match_01",
+          "match_02",
+          "match_03"
+        ],
+        "duration": 0.18
+      },
+      "fever": {
+        "frames": [
+          "fever_01",
+          "fever_02"
+        ],
+        "duration": 0.5,
+        "loop": true
+      },
+      "worried": {
+        "frames": [
+          "worried_01",
+          "worried_02"
+        ],
+        "duration": 0.6
+      }
+    }
+  },
+  {
+    "profile_id": "chick_v1",
+    "animal_id": "chick",
+    "max_frame_count": 13,
+    "states": {
+      "idle": {
+        "frames": [
+          "normal"
+        ],
+        "loop": true
+      },
+      "blink": {
+        "frames": [
+          "blink_01",
+          "blink_02",
+          "blink_03"
+        ],
+        "duration": 0.16
+      },
+      "smile": {
+        "frames": [
+          "smile_01",
+          "smile_02"
+        ],
+        "duration": 0.24
+      },
+      "match": {
+        "frames": [
+          "match_01",
+          "match_02",
+          "match_03"
+        ],
+        "duration": 0.18
+      },
+      "fever": {
+        "frames": [
+          "fever_01",
+          "fever_02"
+        ],
+        "duration": 0.5,
+        "loop": true
+      },
+      "worried": {
+        "frames": [
+          "worried_01",
+          "worried_02"
+        ],
+        "duration": 0.6
+      }
+    }
+  },
+  {
+    "profile_id": "frog_v1",
+    "animal_id": "frog",
+    "max_frame_count": 13,
+    "states": {
+      "idle": {
+        "frames": [
+          "normal"
+        ],
+        "loop": true
+      },
+      "blink": {
+        "frames": [
+          "blink_01",
+          "blink_02",
+          "blink_03"
+        ],
+        "duration": 0.16
+      },
+      "smile": {
+        "frames": [
+          "smile_01",
+          "smile_02"
+        ],
+        "duration": 0.24
+      },
+      "match": {
+        "frames": [
+          "match_01",
+          "match_02",
+          "match_03"
+        ],
+        "duration": 0.18
+      },
+      "fever": {
+        "frames": [
+          "fever_01",
+          "fever_02"
+        ],
+        "duration": 0.5,
+        "loop": true
+      },
+      "worried": {
+        "frames": [
+          "worried_01",
+          "worried_02"
+        ],
+        "duration": 0.6
+      }
+    }
+  },
+  {
+    "profile_id": "dog_v1",
+    "animal_id": "dog",
+    "max_frame_count": 13,
+    "states": {
+      "idle": {
+        "frames": [
+          "normal"
+        ],
+        "loop": true
+      },
+      "blink": {
+        "frames": [
+          "blink_01",
+          "blink_02",
+          "blink_03"
+        ],
+        "duration": 0.16
+      },
+      "smile": {
+        "frames": [
+          "smile_01",
+          "smile_02"
+        ],
+        "duration": 0.24
+      },
+      "match": {
+        "frames": [
+          "match_01",
+          "match_02",
+          "match_03"
+        ],
+        "duration": 0.18
+      },
+      "fever": {
+        "frames": [
+          "fever_01",
+          "fever_02"
+        ],
+        "duration": 0.5,
+        "loop": true
+      },
+      "worried": {
+        "frames": [
+          "worried_01",
+          "worried_02"
+        ],
+        "duration": 0.6
+      }
+    }
+  },
+  {
+    "profile_id": "panda_v1",
+    "animal_id": "panda",
+    "max_frame_count": 13,
+    "states": {
+      "idle": {
+        "frames": [
+          "normal"
+        ],
+        "loop": true
+      },
+      "blink": {
+        "frames": [
+          "blink_01",
+          "blink_02",
+          "blink_03"
+        ],
+        "duration": 0.16
+      },
+      "smile": {
+        "frames": [
+          "smile_01",
+          "smile_02"
+        ],
+        "duration": 0.24
+      },
+      "match": {
+        "frames": [
+          "match_01",
+          "match_02",
+          "match_03"
+        ],
+        "duration": 0.18
+      },
+      "fever": {
+        "frames": [
+          "fever_01",
+          "fever_02"
+        ],
+        "duration": 0.5,
+        "loop": true
+      },
+      "worried": {
+        "frames": [
+          "worried_01",
+          "worried_02"
+        ],
+        "duration": 0.6
+      }
+    }
+  },
+  {
+    "profile_id": "pig_v1",
+    "animal_id": "pig",
+    "max_frame_count": 13,
+    "states": {
+      "idle": {
+        "frames": [
+          "normal"
+        ],
+        "loop": true
+      },
+      "blink": {
+        "frames": [
+          "blink_01",
+          "blink_02",
+          "blink_03"
+        ],
+        "duration": 0.16
+      },
+      "smile": {
+        "frames": [
+          "smile_01",
+          "smile_02"
+        ],
+        "duration": 0.24
+      },
+      "match": {
+        "frames": [
+          "match_01",
+          "match_02",
+          "match_03"
+        ],
+        "duration": 0.18
+      },
+      "fever": {
+        "frames": [
+          "fever_01",
+          "fever_02"
+        ],
+        "duration": 0.5,
+        "loop": true
+      },
+      "worried": {
+        "frames": [
+          "worried_01",
+          "worried_02"
+        ],
+        "duration": 0.6
+      }
+    }
+  },
+  {
+    "profile_id": "penguin_v1",
+    "animal_id": "penguin",
+    "max_frame_count": 13,
+    "states": {
+      "idle": {
+        "frames": [
+          "normal"
+        ],
+        "loop": true
+      },
+      "blink": {
+        "frames": [
+          "blink_01",
+          "blink_02",
+          "blink_03"
+        ],
+        "duration": 0.16
+      },
+      "smile": {
+        "frames": [
+          "smile_01",
+          "smile_02"
+        ],
+        "duration": 0.24
+      },
+      "match": {
+        "frames": [
+          "match_01",
+          "match_02",
+          "match_03"
+        ],
+        "duration": 0.18
+      },
+      "fever": {
+        "frames": [
+          "fever_01",
+          "fever_02"
+        ],
+        "duration": 0.5,
+        "loop": true
+      },
+      "worried": {
+        "frames": [
+          "worried_01",
+          "worried_02"
+        ],
+        "duration": 0.6
+      }
+    }
+  },
+  {
+    "profile_id": "fox_v1",
+    "animal_id": "fox",
+    "max_frame_count": 13,
+    "states": {
+      "idle": {
+        "frames": [
+          "normal"
+        ],
+        "loop": true
+      },
+      "blink": {
+        "frames": [
+          "blink_01",
+          "blink_02",
+          "blink_03"
+        ],
+        "duration": 0.16
+      },
+      "smile": {
+        "frames": [
+          "smile_01",
+          "smile_02"
+        ],
+        "duration": 0.24
+      },
+      "match": {
+        "frames": [
+          "match_01",
+          "match_02",
+          "match_03"
+        ],
+        "duration": 0.18
+      },
+      "fever": {
+        "frames": [
+          "fever_01",
+          "fever_02"
+        ],
+        "duration": 0.5,
+        "loop": true
+      },
+      "worried": {
+        "frames": [
+          "worried_01",
+          "worried_02"
+        ],
+        "duration": 0.6
+      }
+    }
+  },
+  {
+    "profile_id": "lion_v1",
+    "animal_id": "lion",
+    "max_frame_count": 13,
+    "states": {
+      "idle": {
+        "frames": [
+          "normal"
+        ],
+        "loop": true
+      },
+      "blink": {
+        "frames": [
+          "blink_01",
+          "blink_02",
+          "blink_03"
+        ],
+        "duration": 0.16
+      },
+      "smile": {
+        "frames": [
+          "smile_01",
+          "smile_02"
+        ],
+        "duration": 0.24
+      },
+      "match": {
+        "frames": [
+          "match_01",
+          "match_02",
+          "match_03"
+        ],
+        "duration": 0.18
+      },
+      "fever": {
+        "frames": [
+          "fever_01",
+          "fever_02"
+        ],
+        "duration": 0.5,
+        "loop": true
+      },
+      "worried": {
+        "frames": [
+          "worried_01",
+          "worried_02"
+        ],
+        "duration": 0.6
+      }
+    }
+  },
+  {
+    "profile_id": "elephant_v1",
+    "animal_id": "elephant",
+    "max_frame_count": 13,
+    "states": {
+      "idle": {
+        "frames": [
+          "normal"
+        ],
+        "loop": true
+      },
+      "blink": {
+        "frames": [
+          "blink_01",
+          "blink_02",
+          "blink_03"
+        ],
+        "duration": 0.16
+      },
+      "smile": {
+        "frames": [
+          "smile_01",
+          "smile_02"
+        ],
+        "duration": 0.24
+      },
+      "match": {
+        "frames": [
+          "match_01",
+          "match_02",
+          "match_03"
+        ],
+        "duration": 0.18
+      },
+      "fever": {
+        "frames": [
+          "fever_01",
+          "fever_02"
+        ],
+        "duration": 0.5,
+        "loop": true
+      },
+      "worried": {
+        "frames": [
+          "worried_01",
+          "worried_02"
+        ],
+        "duration": 0.6
+      }
+    }
+  },
+  {
+    "profile_id": "koala_v1",
+    "animal_id": "koala",
+    "max_frame_count": 13,
+    "states": {
+      "idle": {
+        "frames": [
+          "normal"
+        ],
+        "loop": true
+      },
+      "blink": {
+        "frames": [
+          "blink_01",
+          "blink_02",
+          "blink_03"
+        ],
+        "duration": 0.16
+      },
+      "smile": {
+        "frames": [
+          "smile_01",
+          "smile_02"
+        ],
+        "duration": 0.24
+      },
+      "match": {
+        "frames": [
+          "match_01",
+          "match_02",
+          "match_03"
+        ],
+        "duration": 0.18
+      },
+      "fever": {
+        "frames": [
+          "fever_01",
+          "fever_02"
+        ],
+        "duration": 0.5,
+        "loop": true
+      },
+      "worried": {
+        "frames": [
+          "worried_01",
+          "worried_02"
+        ],
+        "duration": 0.6
+      }
+    }
+  },
+  {
+    "profile_id": "hamster_v1",
+    "animal_id": "hamster",
+    "max_frame_count": 13,
+    "states": {
+      "idle": {
+        "frames": [
+          "normal"
+        ],
+        "loop": true
+      },
+      "blink": {
+        "frames": [
+          "blink_01",
+          "blink_02",
+          "blink_03"
+        ],
+        "duration": 0.16
+      },
+      "smile": {
+        "frames": [
+          "smile_01",
+          "smile_02"
+        ],
+        "duration": 0.24
+      },
+      "match": {
+        "frames": [
+          "match_01",
+          "match_02",
+          "match_03"
+        ],
+        "duration": 0.18
+      },
+      "fever": {
+        "frames": [
+          "fever_01",
+          "fever_02"
+        ],
+        "duration": 0.5,
+        "loop": true
+      },
+      "worried": {
+        "frames": [
+          "worried_01",
+          "worried_02"
+        ],
+        "duration": 0.6
+      }
+    }
+  },
+  {
+    "profile_id": "deer_v1",
+    "animal_id": "deer",
+    "max_frame_count": 13,
+    "states": {
+      "idle": {
+        "frames": [
+          "normal"
+        ],
+        "loop": true
+      },
+      "blink": {
+        "frames": [
+          "blink_01",
+          "blink_02",
+          "blink_03"
+        ],
+        "duration": 0.16
+      },
+      "smile": {
+        "frames": [
+          "smile_01",
+          "smile_02"
+        ],
+        "duration": 0.24
+      },
+      "match": {
+        "frames": [
+          "match_01",
+          "match_02",
+          "match_03"
+        ],
+        "duration": 0.18
+      },
+      "fever": {
+        "frames": [
+          "fever_01",
+          "fever_02"
+        ],
+        "duration": 0.5,
+        "loop": true
+      },
+      "worried": {
+        "frames": [
+          "worried_01",
+          "worried_02"
+        ],
+        "duration": 0.6
+      }
+    }
+  },
+  {
+    "profile_id": "seal_v1",
+    "animal_id": "seal",
+    "max_frame_count": 13,
+    "states": {
+      "idle": {
+        "frames": [
+          "normal"
+        ],
+        "loop": true
+      },
+      "blink": {
+        "frames": [
+          "blink_01",
+          "blink_02",
+          "blink_03"
+        ],
+        "duration": 0.16
+      },
+      "smile": {
+        "frames": [
+          "smile_01",
+          "smile_02"
+        ],
+        "duration": 0.24
+      },
+      "match": {
+        "frames": [
+          "match_01",
+          "match_02",
+          "match_03"
+        ],
+        "duration": 0.18
+      },
+      "fever": {
+        "frames": [
+          "fever_01",
+          "fever_02"
+        ],
+        "duration": 0.5,
+        "loop": true
+      },
+      "worried": {
+        "frames": [
+          "worried_01",
+          "worried_02"
+        ],
+        "duration": 0.6
+      }
+    }
+  },
+  {
+    "profile_id": "sheep_v1",
+    "animal_id": "sheep",
+    "max_frame_count": 13,
+    "states": {
+      "idle": {
+        "frames": [
+          "normal"
+        ],
+        "loop": true
+      },
+      "blink": {
+        "frames": [
+          "blink_01",
+          "blink_02",
+          "blink_03"
+        ],
+        "duration": 0.16
+      },
+      "smile": {
+        "frames": [
+          "smile_01",
+          "smile_02"
+        ],
+        "duration": 0.24
+      },
+      "match": {
+        "frames": [
+          "match_01",
+          "match_02",
+          "match_03"
+        ],
+        "duration": 0.18
+      },
+      "fever": {
+        "frames": [
+          "fever_01",
+          "fever_02"
+        ],
+        "duration": 0.5,
+        "loop": true
+      },
+      "worried": {
+        "frames": [
+          "worried_01",
+          "worried_02"
+        ],
+        "duration": 0.6
+      }
+    }
+  },
+  {
+    "profile_id": "turtle_v1",
+    "animal_id": "turtle",
+    "max_frame_count": 13,
+    "states": {
+      "idle": {
+        "frames": [
+          "normal"
+        ],
+        "loop": true
+      },
+      "blink": {
+        "frames": [
+          "blink_01",
+          "blink_02",
+          "blink_03"
+        ],
+        "duration": 0.16
+      },
+      "smile": {
+        "frames": [
+          "smile_01",
+          "smile_02"
+        ],
+        "duration": 0.24
+      },
+      "match": {
+        "frames": [
+          "match_01",
+          "match_02",
+          "match_03"
+        ],
+        "duration": 0.18
+      },
+      "fever": {
+        "frames": [
+          "fever_01",
+          "fever_02"
+        ],
+        "duration": 0.5,
+        "loop": true
+      },
+      "worried": {
+        "frames": [
+          "worried_01",
+          "worried_02"
+        ],
+        "duration": 0.6
+      }
+    }
+  }
+]

@@ -1,0 +1,194 @@
+[
+  {
+    "id": "rabbit",
+    "display_name": "토끼",
+    "unlock_stage": 1,
+    "roster_tier": "mvp_runtime",
+    "board_enabled": true,
+    "collection_enabled": true,
+    "animation_profile": "rabbit_v1",
+    "default_cosmetic": "none",
+    "buddy_skill_id": "rabbit_line_rescue"
+  },
+  {
+    "id": "bear",
+    "display_name": "곰",
+    "unlock_stage": 1,
+    "roster_tier": "mvp_runtime",
+    "board_enabled": true,
+    "collection_enabled": true,
+    "animation_profile": "bear_v1",
+    "default_cosmetic": "none",
+    "buddy_skill_id": "bear_guard_paw"
+  },
+  {
+    "id": "cat",
+    "display_name": "고양이",
+    "unlock_stage": 1,
+    "roster_tier": "mvp_runtime",
+    "board_enabled": true,
+    "collection_enabled": true,
+    "animation_profile": "cat_v1",
+    "default_cosmetic": "none",
+    "buddy_skill_id": "cat_hint_line"
+  },
+  {
+    "id": "chick",
+    "display_name": "병아리",
+    "unlock_stage": 1,
+    "roster_tier": "mvp_runtime",
+    "board_enabled": true,
+    "collection_enabled": true,
+    "animation_profile": "chick_v1",
+    "default_cosmetic": "none",
+    "buddy_skill_id": "chick_small_burst"
+  },
+  {
+    "id": "frog",
+    "display_name": "개구리",
+    "unlock_stage": 4,
+    "roster_tier": "mvp_runtime",
+    "board_enabled": true,
+    "collection_enabled": true,
+    "animation_profile": "frog_v1",
+    "default_cosmetic": "none",
+    "buddy_skill_id": "frog_jump_shuffle"
+  },
+  {
+    "id": "dog",
+    "display_name": "강아지",
+    "unlock_stage": 7,
+    "roster_tier": "mvp_runtime",
+    "board_enabled": true,
+    "collection_enabled": true,
+    "animation_profile": "dog_v1",
+    "default_cosmetic": "none",
+    "buddy_skill_id": "dog_target_fetch"
+  },
+  {
+    "id": "panda",
+    "display_name": "판다",
+    "unlock_stage": 8,
+    "roster_tier": "mvp_runtime",
+    "board_enabled": true,
+    "collection_enabled": true,
+    "animation_profile": "panda_v1",
+    "default_cosmetic": "none",
+    "buddy_skill_id": "panda_shield"
+  },
+  {
+    "id": "pig",
+    "display_name": "돼지",
+    "unlock_stage": 9,
+    "roster_tier": "mvp_runtime",
+    "board_enabled": true,
+    "collection_enabled": true,
+    "animation_profile": "pig_v1",
+    "default_cosmetic": "none",
+    "buddy_skill_id": "pig_coin_bonus"
+  },
+  {
+    "id": "penguin",
+    "display_name": "펭귄",
+    "unlock_stage": 10,
+    "roster_tier": "mvp_runtime",
+    "board_enabled": true,
+    "collection_enabled": true,
+    "animation_profile": "penguin_v1",
+    "default_cosmetic": "none",
+    "buddy_skill_id": "penguin_ice_line"
+  },
+  {
+    "id": "fox",
+    "display_name": "여우",
+    "unlock_stage": 10,
+    "roster_tier": "mvp_runtime",
+    "board_enabled": true,
+    "collection_enabled": true,
+    "animation_profile": "fox_v1",
+    "default_cosmetic": "none",
+    "buddy_skill_id": "fox_combo_fire"
+  },
+  {
+    "id": "lion",
+    "display_name": "사자",
+    "unlock_stage": 51,
+    "roster_tier": "mvp_runtime",
+    "board_enabled": true,
+    "collection_enabled": true,
+    "animation_profile": "lion_v1",
+    "default_cosmetic": "none",
+    "buddy_skill_id": "lion_fever_charge"
+  },
+  {
+    "id": "elephant",
+    "display_name": "코끼리",
+    "unlock_stage": 81,
+    "roster_tier": "mvp_runtime",
+    "board_enabled": true,
+    "collection_enabled": true,
+    "animation_profile": "elephant_v1",
+    "default_cosmetic": "none",
+    "buddy_skill_id": "elephant_blocker_sweep"
+  },
+  {
+    "id": "koala",
+    "display_name": "코알라",
+    "unlock_stage": 5,
+    "roster_tier": "launch_collection",
+    "board_enabled": false,
+    "collection_enabled": true,
+    "animation_profile": "koala_v1",
+    "default_cosmetic": "none"
+  },
+  {
+    "id": "hamster",
+    "display_name": "햄스터",
+    "unlock_stage": 6,
+    "roster_tier": "launch_collection",
+    "board_enabled": false,
+    "collection_enabled": true,
+    "animation_profile": "hamster_v1",
+    "default_cosmetic": "none"
+  },
+  {
+    "id": "deer",
+    "display_name": "사슴",
+    "unlock_stage": 12,
+    "roster_tier": "launch_collection",
+    "board_enabled": false,
+    "collection_enabled": true,
+    "animation_profile": "deer_v1",
+    "default_cosmetic": "none"
+  },
+  {
+    "id": "seal",
+    "display_name": "물범",
+    "unlock_stage": 16,
+    "roster_tier": "launch_collection",
+    "board_enabled": false,
+    "collection_enabled": true,
+    "animation_profile": "seal_v1",
+    "default_cosmetic": "none"
+  },
+  {
+    "id": "sheep",
+    "display_name": "양",
+    "unlock_stage": 18,
+    "roster_tier": "launch_collection",
+    "board_enabled": false,
+    "collection_enabled": true,
+    "animation_profile": "sheep_v1",
+    "default_cosmetic": "none"
+  },
+  {
+    "id": "turtle",
+    "display_name": "거북",
+    "unlock_stage": 20,
+    "roster_tier": "launch_collection",
+    "board_enabled": false,
+    "collection_enabled": true,
+    "animation_profile": "turtle_v1",
+    "default_cosmetic": "none"
+  }
+]
