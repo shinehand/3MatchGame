@@ -7,6 +7,7 @@ const REQUIRED_EVENTS := {
 	"stage_complete": ["session_id", "stage_id", "score", "stars", "moves_left"],
 	"stage_fail": ["session_id", "stage_id", "fail_type", "score", "remaining_goals"],
 	"booster_used": ["session_id", "stage_id", "booster_id", "source"],
+	"special_combo_trigger": ["session_id", "stage_id", "combo_type", "from_special", "to_special", "cleared_count", "obstacles_cleared"],
 	"rescue_book_open": ["session_id", "highest_unlocked_stage", "unlocked_animal_count"],
 	"animal_unlock": ["session_id", "animal_id", "source", "stage_id", "token_balance"],
 	"live_event_impression": ["session_id", "event_id", "event_type", "placement"],

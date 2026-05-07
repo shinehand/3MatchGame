@@ -121,6 +121,7 @@ cat <<'EOF'
 - L/T자 매치 후 폭발 특수 블록이 생기는지 확인
 - Stage 31 smoke에서 row+column, row+row, column+column, row+bomb, column+bomb, bomb+bomb 6종 조합이 실제 swap 경로에서 중복 제거 없이 한 번씩 처리되는지 확인
 - 특수+특수 조합 시작 시 일반 매치 pop과 구분되는 짧은 flash/ring/label 전용 VFX가 보이는지 확인
+- 특수+특수 조합 6종이 `special_combo_trigger` analytics에 타입/제거 수/장애물 수를 남기는지 확인
 - Combo Gauge가 차면 일반 블록 3개가 특수 블록으로 변환되는지 확인
 - Stage 4/5/8/16/18/20/24/25/31/41/51/81 첫 등장 Rescue Buddy가 보드/게이지/장애물/점수/추천/구조 이동에 과한 지연 없이 반응하는지 확인
 - 덤불 스테이지에서 덤불 목표 칩, 보드 오버레이, 덤불 제거 전용 사운드/진동/VFX가 함께 보이는지 확인

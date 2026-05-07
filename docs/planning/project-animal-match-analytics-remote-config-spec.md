@@ -42,8 +42,10 @@
 | `level_fail` | 실패 | `stage_id`, `moves_used`, `goals_remaining`, `fail_type`, `progress_ratio` |
 | `level_quit` | 중도 이탈 | `stage_id`, `moves_left`, `goals_remaining`, `attempt_count` |
 | `retry_start` | 재도전 | `stage_id`, `attempt_count`, `source`, `heart_spent` |
+| `special_combo_trigger` | 특수+특수 조합 발동 | `stage_id`, `combo_type`, `from_special`, `to_special`, `cleared_count`, `obstacles_cleared` |
 
 현재 Godot 런타임 계약은 `level_start`의 구현 이벤트명으로 `stage_start`를 사용한다. `stage_start`는 `session_id`, `stage_id`, `band`, `roster_group`, `moves`를 필수로 기록하고, `selected_boosters`, `start_boosters_applied`, `difficulty`를 선택 파라미터로 기록한다. 시작 부스터 사용은 `booster_used`에 `source = pre_stage`로 별도 기록한다.
+특수+특수 조합은 `special_combo_trigger`로 Stage 31 smoke의 6종 타입(`row_col`, `row_row`, `col_col`, `row_bomb`, `col_bomb`, `bomb_bomb`)과 제거/장애물 수치를 기록한다.
 
 ### 2.3 Collection
 

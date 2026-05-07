@@ -31,7 +31,7 @@
 - `vfx_line_runner_vertical`: 열 방향으로 빠르게 지나가는 발자국 trail
 - `vfx_paw_bomb`: 중심에서 둥근 발바닥 shockwave 확장
 - `vfx_rainbow_herd`: 선택 동물 색상의 리본이 보드 전체를 훑음
-- `vfx_special_combo`: 두 특수 블록 연결 시 짧은 흰색 flash와 확대 ring
+- `vfx_special_combo`: 두 특수 블록 연결 시 짧은 흰색 flash와 확대 ring, 조합별 짧은 라벨(`크로스!`, `가로 러시!`, `세로 러시!`, `가로 폭탄!`, `세로 폭탄!`, `더블 폭탄!`)
 
 ### 3.3 Fever
 

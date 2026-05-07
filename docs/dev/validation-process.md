@@ -141,6 +141,7 @@
 - 4매치 특수 블록이 생성된다.
 - 5매치 특수 블록이 생성된다.
 - 자동 headless fixture가 row+column, row+row, column+column, row+bomb, column+bomb, bomb+bomb 6종 특수 조합을 중복 제거 없이 검증하고, Stage 31 실제 swap smoke가 6종 모두의 이동 수/점수/장애물/`is_busy` 복귀를 검증한다. `FxLayer` smoke는 특수 조합 전용 flash/ring/label VFX 생성도 확인한다.
+- Stage 31 실제 swap smoke는 6종 특수 조합의 `special_combo_trigger` analytics가 조합 타입, from/to 특수, 제거 수, 장애물 제거 수를 남기는지도 확인한다.
 - Stage 31 실제 swap smoke는 6종 특수 조합이 일반 매치 사운드가 아니라 `special_combo` 전용 피드백과 강한 햅틱 요청을 남기는지도 확인한다.
 - `FxLayer` smoke는 매치 burst, 특수 생성, 특수 조합, 콤보 배너, 목표 완료, 덤불 제거, 이동 경고, 보너스 점수, 무지개 VFX를 동시에 호출한 뒤 child count 상한과 transient node cleanup을 확인한다.
 - Stage 31 실제 플레이에서 6종 특수 조합의 VFX 겹침, 낙하/리필 연결, 터치감을 수동 확인한다.

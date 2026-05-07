@@ -68,6 +68,21 @@
     ]
   },
   {
+    "name": "special_combo_trigger",
+    "required_params": [
+      "session_id",
+      "stage_id",
+      "combo_type",
+      "from_special",
+      "to_special",
+      "cleared_count",
+      "obstacles_cleared"
+    ],
+    "optional_params": [
+      "moves_left"
+    ]
+  },
+  {
     "name": "rescue_book_open",
     "required_params": [
       "session_id",

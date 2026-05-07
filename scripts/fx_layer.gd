@@ -58,6 +58,7 @@ func play_special_combo(from_position: Vector2, to_position: Vector2, from_speci
 	var direction := to_position - from_position
 	var length := maxf(direction.length(), 68.0)
 	var combo_color := _special_color(from_special).lerp(_special_color(to_special), 0.5)
+	var combo_type := _special_combo_type(from_special, to_special)
 
 	var flash := ColorRect.new()
 	flash.name = "SpecialComboFlash"
@@ -74,7 +75,7 @@ func play_special_combo(from_position: Vector2, to_position: Vector2, from_speci
 	ring.modulate = Color(1.0, 1.0, 1.0, 0.0)
 	ring.scale = Vector2(0.5, 0.5)
 
-	var label := _spawn_label(board_fx_root, "특수 조합!", center + Vector2(0, -78), 30, Color(1.0, 0.96, 0.42, 1.0))
+	var label := _spawn_label(board_fx_root, _special_combo_text(combo_type), center + Vector2(0, -78), 30, Color(1.0, 0.96, 0.42, 1.0))
 	label.name = "SpecialComboLabel"
 	label.modulate.a = 0.0
 	label.scale = Vector2(0.78, 0.78)
@@ -378,3 +379,42 @@ func _special_color(special_type: String) -> Color:
 		"rainbow":
 			return Color(1.0, 0.9, 0.25, 0.95)
 	return Color(1.0, 1.0, 1.0, 0.95)
+
+
+func _special_combo_type(from_special: String, to_special: String) -> String:
+	if _special_pair_matches(from_special, to_special, "row", "col"):
+		return "row_col"
+	if _special_pair_matches(from_special, to_special, "row", "bomb"):
+		return "row_bomb"
+	if _special_pair_matches(from_special, to_special, "col", "bomb"):
+		return "col_bomb"
+	if from_special == "row" and to_special == "row":
+		return "row_row"
+	if from_special == "col" and to_special == "col":
+		return "col_col"
+	if from_special == "bomb" and to_special == "bomb":
+		return "bomb_bomb"
+	var pair := [from_special, to_special]
+	pair.sort()
+	return "%s_%s" % [String(pair[0]), String(pair[1])]
+
+
+func _special_pair_matches(from_special: String, to_special: String, a: String, b: String) -> bool:
+	return (from_special == a and to_special == b) or (from_special == b and to_special == a)
+
+
+func _special_combo_text(combo_type: String) -> String:
+	match combo_type:
+		"row_col":
+			return "크로스!"
+		"row_row":
+			return "가로 러시!"
+		"col_col":
+			return "세로 러시!"
+		"row_bomb":
+			return "가로 폭탄!"
+		"col_bomb":
+			return "세로 폭탄!"
+		"bomb_bomb":
+			return "더블 폭탄!"
+	return "특수 조합!"

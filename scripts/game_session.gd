@@ -2,7 +2,7 @@ extends RefCounted
 
 const SAVE_PATH := "user://save_game.json"
 const ANALYTICS_CONTRACT_PATH := "res://data/analytics_events.json"
-const MAX_ANALYTICS_EVENTS := 200
+const MAX_ANALYTICS_EVENTS := 320
 const MAX_REWARD_TRANSACTION_IDS := 240
 const CollectionState = preload("res://scripts/collection_state.gd")
 

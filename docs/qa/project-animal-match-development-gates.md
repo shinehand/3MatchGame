@@ -63,6 +63,7 @@
 - Stage 31 특수 조합 6종은 실제 `_resolve_swap` runtime smoke에서 이동 수 1회 소모, 점수 증가, 장애물 제거, `is_busy` 복귀를 검증한다.
 - 특수+특수 발동 시작점은 `FxLayer.play_special_combo` 전용 flash/ring/label VFX로 일반 매치 burst와 구분된다.
 - 특수+특수 발동은 `Feedback.play_special_combo` 전용 SFX/haptic 경로를 사용해 일반 매치 피드백과 구분된다.
+- 특수+특수 발동은 조합 타입별 VFX 라벨과 `special_combo_trigger` analytics로 6종 타입/제거 수/장애물 수를 기록한다.
 - 덤불/장애물 제거는 전용 VFX와 SFX/haptic 경로를 가져 일반 매치 피드백과 구분된다.
 - rainbow+special은 특수+특수 큐보다 rainbow resolution 경로를 우선한다.
 

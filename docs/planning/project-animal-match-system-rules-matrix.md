@@ -90,7 +90,7 @@ QA 기준:
 
 | 시스템 | 필수 이벤트 |
 | --- | --- |
-| App/Stage | `app_launch`, `stage_start`, `stage_complete`, `stage_fail`, `booster_used` |
+| App/Stage | `app_launch`, `stage_start`, `stage_complete`, `stage_fail`, `booster_used`, `special_combo_trigger` |
 | Fever | `combo_fever_start`, `combo_fever_end` |
 | Rescue Buddy | `buddy_skill_charge`, `buddy_skill_ready`, `buddy_skill_trigger`, `buddy_skill_blocked` |
 | Collection | `rescue_book_open`, `animal_unlock` now; `animal_token_gain`, `animal_friendship_level_up` planned with reward implementation |

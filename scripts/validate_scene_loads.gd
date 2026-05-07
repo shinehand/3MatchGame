@@ -266,7 +266,7 @@ func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
 			"remote_config_exposure":
 				_validate_remote_config_exposure_payload(params, errors)
 				remote_config_keys_seen[String(params.get("config_key", ""))] = true
-	for required_event in ["rescue_book_open", "animal_unlock", "stage_start", "remote_config_exposure", "event_join", "event_progress", "event_reward_claim", "buddy_skill_charge", "buddy_skill_ready", "buddy_skill_trigger", "buddy_skill_blocked", "fail_offer_show", "fail_offer_select", "fail_offer_dismiss", "ad_reward_complete", "ad_reward_fail", "iap_purchase_start", "iap_purchase_complete", "iap_purchase_restore", "iap_purchase_cancel", "iap_purchase_fail", "extra_moves_grant"]:
+	for required_event in ["rescue_book_open", "animal_unlock", "stage_start", "special_combo_trigger", "remote_config_exposure", "event_join", "event_progress", "event_reward_claim", "buddy_skill_charge", "buddy_skill_ready", "buddy_skill_trigger", "buddy_skill_blocked", "fail_offer_show", "fail_offer_select", "fail_offer_dismiss", "ad_reward_complete", "ad_reward_fail", "iap_purchase_start", "iap_purchase_complete", "iap_purchase_restore", "iap_purchase_cancel", "iap_purchase_fail", "extra_moves_grant"]:
 		if not seen_names.has(required_event):
 			errors.append("runtime analytics should emit %s during scene smoke." % required_event)
 	for placement in IMPLEMENTED_LIVE_EVENT_PLACEMENTS:
@@ -298,6 +298,21 @@ func _analytics_event_count(event_name: String) -> int:
 		if event is Dictionary and String(Dictionary(event).get("name", "")) == event_name:
 			count += 1
 	return count
+
+
+func _analytics_event_params_by_name_and_key(event_name: String, key: String, value: String) -> Dictionary:
+	var events := GameSession.get_analytics_events()
+	for index in range(events.size() - 1, -1, -1):
+		var event = events[index]
+		if not (event is Dictionary):
+			continue
+		var event_dict: Dictionary = event
+		if String(event_dict.get("name", "")) != event_name:
+			continue
+		var params: Dictionary = Dictionary(event_dict.get("params", {}))
+		if String(params.get(key, "")) == value:
+			return params
+	return {}
 
 
 func _live_events_by_id() -> Dictionary:
@@ -629,6 +644,10 @@ func _validate_fx_layer_runtime(node: Node, errors: PackedStringArray) -> void:
 		errors.append("%s play_special_combo should spawn SpecialComboRing." % FX_LAYER_SCENE_PATH)
 	if node.find_child("SpecialComboLabel", true, false) == null:
 		errors.append("%s play_special_combo should spawn SpecialComboLabel." % FX_LAYER_SCENE_PATH)
+	else:
+		var special_combo_label := node.find_child("SpecialComboLabel", true, false) as Label
+		if special_combo_label == null or special_combo_label.text != "크로스!":
+			errors.append("%s play_special_combo should label row+column as 크로스!, got %s." % [FX_LAYER_SCENE_PATH, special_combo_label.text if special_combo_label != null else "<missing>"])
 	if node.find_child("GoalRescueLabel", true, false) == null:
 		errors.append("%s play_goal_rescue should spawn GoalRescueLabel." % FX_LAYER_SCENE_PATH)
 	if node.find_child("BlockerClearRing", true, false) == null:
@@ -1386,12 +1405,12 @@ func _validate_special_combo_swap_runtime(node: Node, errors: PackedStringArray)
 			return
 
 	var scenarios: Array = [
-		{"label": "row+column", "from_special": "row", "to_special": "col", "from_cell": Vector2i(3, 3), "to_cell": Vector2i(3, 4), "obstacle_cell": Vector2i(2, 4)},
-		{"label": "row+row", "from_special": "row", "to_special": "row", "from_cell": Vector2i(3, 3), "to_cell": Vector2i(3, 4), "obstacle_cell": Vector2i(3, 0)},
-		{"label": "column+column", "from_special": "col", "to_special": "col", "from_cell": Vector2i(3, 3), "to_cell": Vector2i(4, 3), "obstacle_cell": Vector2i(0, 3)},
-		{"label": "row+bomb", "from_special": "row", "to_special": "bomb", "from_cell": Vector2i(3, 3), "to_cell": Vector2i(3, 4), "obstacle_cell": Vector2i(2, 4)},
-		{"label": "column+bomb", "from_special": "col", "to_special": "bomb", "from_cell": Vector2i(3, 3), "to_cell": Vector2i(4, 3), "obstacle_cell": Vector2i(4, 4)},
-		{"label": "bomb+bomb", "from_special": "bomb", "to_special": "bomb", "from_cell": Vector2i(3, 3), "to_cell": Vector2i(3, 4), "obstacle_cell": Vector2i(2, 3)},
+		{"label": "row+column", "combo_type": "row_col", "cleared_count": 15, "from_special": "row", "to_special": "col", "from_cell": Vector2i(3, 3), "to_cell": Vector2i(3, 4), "obstacle_cell": Vector2i(2, 4)},
+		{"label": "row+row", "combo_type": "row_row", "cleared_count": 8, "from_special": "row", "to_special": "row", "from_cell": Vector2i(3, 3), "to_cell": Vector2i(3, 4), "obstacle_cell": Vector2i(3, 0)},
+		{"label": "column+column", "combo_type": "col_col", "cleared_count": 8, "from_special": "col", "to_special": "col", "from_cell": Vector2i(3, 3), "to_cell": Vector2i(4, 3), "obstacle_cell": Vector2i(0, 3)},
+		{"label": "row+bomb", "combo_type": "row_bomb", "cleared_count": 14, "from_special": "row", "to_special": "bomb", "from_cell": Vector2i(3, 3), "to_cell": Vector2i(3, 4), "obstacle_cell": Vector2i(2, 4)},
+		{"label": "column+bomb", "combo_type": "col_bomb", "cleared_count": 14, "from_special": "col", "to_special": "bomb", "from_cell": Vector2i(3, 3), "to_cell": Vector2i(4, 3), "obstacle_cell": Vector2i(4, 4)},
+		{"label": "bomb+bomb", "combo_type": "bomb_bomb", "cleared_count": 12, "from_special": "bomb", "to_special": "bomb", "from_cell": Vector2i(3, 3), "to_cell": Vector2i(3, 4), "obstacle_cell": Vector2i(2, 3)},
 	]
 	for scenario in scenarios:
 		await _run_special_combo_swap_runtime_scenario(node, Dictionary(scenario), errors)
@@ -1413,6 +1432,7 @@ func _run_special_combo_swap_runtime_scenario(node: Node, scenario: Dictionary, 
 
 	var moves_before := int(node.get("remaining_moves"))
 	var score_before := int(node.get("score"))
+	var special_combo_events_before := _analytics_event_count("special_combo_trigger")
 	var feedback := root.get_node_or_null("Feedback")
 	if feedback != null and feedback.has_method("clear_feedback_history_for_testing"):
 		feedback.set("sound_enabled", true)
@@ -1443,6 +1463,21 @@ func _run_special_combo_swap_runtime_scenario(node: Node, scenario: Dictionary, 
 			errors.append("%s %s runtime smoke should request a strong special combo haptic." % [GAMEPLAY_SCENE_PATH, label])
 	if String(node.get("stage_state")) != "playing":
 		errors.append("%s %s runtime smoke should leave Stage 31 in playing state, got %s." % [GAMEPLAY_SCENE_PATH, label, String(node.get("stage_state"))])
+	if _analytics_event_count("special_combo_trigger") <= special_combo_events_before:
+		errors.append("%s %s runtime smoke should emit special_combo_trigger analytics." % [GAMEPLAY_SCENE_PATH, label])
+	var special_combo_params := _analytics_event_params_by_name_and_key("special_combo_trigger", "combo_type", String(scenario.get("combo_type", "")))
+	if special_combo_params.is_empty():
+		errors.append("%s %s runtime smoke should find special_combo_trigger payload for combo_type %s." % [GAMEPLAY_SCENE_PATH, label, String(scenario.get("combo_type", ""))])
+	if int(special_combo_params.get("stage_id", 0)) != 31:
+		errors.append("%s %s special_combo_trigger should identify Stage 31." % [GAMEPLAY_SCENE_PATH, label])
+	if String(special_combo_params.get("combo_type", "")) != String(scenario.get("combo_type", "")):
+		errors.append("%s %s special_combo_trigger should record combo_type %s, got %s." % [GAMEPLAY_SCENE_PATH, label, String(scenario.get("combo_type", "")), String(special_combo_params.get("combo_type", ""))])
+	if String(special_combo_params.get("from_special", "")) != String(scenario.get("from_special", "")) or String(special_combo_params.get("to_special", "")) != String(scenario.get("to_special", "")):
+		errors.append("%s %s special_combo_trigger should preserve from/to special ids." % [GAMEPLAY_SCENE_PATH, label])
+	if int(special_combo_params.get("cleared_count", 0)) != int(scenario.get("cleared_count", 0)):
+		errors.append("%s %s special_combo_trigger should record cleared_count %d, got %d." % [GAMEPLAY_SCENE_PATH, label, int(scenario.get("cleared_count", 0)), int(special_combo_params.get("cleared_count", 0))])
+	if int(special_combo_params.get("obstacles_cleared", 0)) != 1:
+		errors.append("%s %s special_combo_trigger should record one obstacle cleared, got %d." % [GAMEPLAY_SCENE_PATH, label, int(special_combo_params.get("obstacles_cleared", 0))])
 
 
 func _validate_start_booster_runtime_rules(node: Node, errors: PackedStringArray) -> void:

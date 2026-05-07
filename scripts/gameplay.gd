@@ -1073,6 +1073,8 @@ func _resolve_swap(from_cell: Vector2i, to_cell: Vector2i) -> void:
 	is_busy = true
 	_clear_selection()
 	var travel_offset: Vector2 = tile_nodes[to_cell.x][to_cell.y].position - tile_nodes[from_cell.x][from_cell.y].position
+	var original_from_special := _piece_special(board_data[from_cell.x][from_cell.y])
+	var original_to_special := _piece_special(board_data[to_cell.x][to_cell.y])
 
 	tile_nodes[from_cell.x][from_cell.y].play_drag_commit_feedback(travel_offset)
 	tile_nodes[to_cell.x][to_cell.y].play_drag_commit_feedback(-travel_offset)
@@ -1104,7 +1106,7 @@ func _resolve_swap(from_cell: Vector2i, to_cell: Vector2i) -> void:
 		_set_tile_expression(to_cell, "fever")
 		remaining_moves -= 1
 		_update_hud()
-		await _resolve_special_combo_swap(from_cell, to_cell)
+		await _resolve_special_combo_swap(from_cell, to_cell, original_from_special, original_to_special)
 		_maybe_advance_tutorial(3)
 		_consume_fever_turn_after_player_move()
 		await _check_stage_state()
@@ -1232,22 +1234,24 @@ func _is_special_combo_swap(from_cell: Vector2i, to_cell: Vector2i) -> bool:
 	return not from_special.is_empty() and not to_special.is_empty()
 
 
-func _resolve_special_combo_swap(from_cell: Vector2i, to_cell: Vector2i) -> void:
+func _resolve_special_combo_swap(from_cell: Vector2i, to_cell: Vector2i, from_special: String, to_special: String) -> void:
+	var combo_type := _special_combo_type(from_special, to_special)
 	var clear_cells := _special_combo_clear_cells(from_cell, to_cell)
 	var cleared_obstacle_cells := _damage_obstacles(clear_cells)
 	_charge_buddy_skill_for_clear_blocker(cleared_obstacle_cells.size())
 	_play_fx_method("play_special_combo", [
 		_tile_global_center(from_cell),
 		_tile_global_center(to_cell),
-		_piece_special(board_data[from_cell.x][from_cell.y]),
-		_piece_special(board_data[to_cell.x][to_cell.y]),
+		from_special,
+		to_special,
 	])
+	_record_special_combo_trigger(combo_type, from_special, to_special, clear_cells.size(), cleared_obstacle_cells.size())
 	current_combo = 1
 	_apply_match_rewards(clear_cells, 1)
 	score += cleared_obstacle_cells.size() * 150
 	Feedback.play_special_combo(cleared_obstacle_cells.size())
 	_update_hud()
-	_set_status("특수 블록 조합 발동: %d개 블록을 먼저 정리한 뒤 연쇄를 확인합니다." % clear_cells.size())
+	_set_status("%s 발동: %d개 블록을 먼저 정리한 뒤 연쇄를 확인합니다." % [_special_combo_label(combo_type), clear_cells.size()])
 	_shake_board(8.0, 0.22)
 
 	for cell in clear_cells:
@@ -1267,6 +1271,17 @@ func _resolve_special_combo_swap(from_cell: Vector2i, to_cell: Vector2i) -> void
 	await get_tree().create_timer(0.24).timeout
 
 	await _resolve_matches([])
+
+
+func _record_special_combo_trigger(combo_type: String, from_special: String, to_special: String, cleared_count: int, obstacles_cleared: int) -> void:
+	GameSession.record_analytics_event("special_combo_trigger", {
+		"stage_id": _current_stage_id(),
+		"combo_type": combo_type,
+		"from_special": from_special,
+		"to_special": to_special,
+		"cleared_count": cleared_count,
+		"obstacles_cleared": obstacles_cleared,
+	})
 
 
 func _resolve_rainbow_swap(rainbow_cell: Vector2i, target_animal: String) -> void:
@@ -2627,6 +2642,45 @@ func _special_label(special_type: String) -> String:
 		"rainbow":
 			return "무지개 구슬"
 	return "일반"
+
+
+func _special_combo_type(from_special: String, to_special: String) -> String:
+	if _special_pair_matches(from_special, to_special, "row", "col"):
+		return "row_col"
+	if _special_pair_matches(from_special, to_special, "row", "bomb"):
+		return "row_bomb"
+	if _special_pair_matches(from_special, to_special, "col", "bomb"):
+		return "col_bomb"
+	if from_special == "row" and to_special == "row":
+		return "row_row"
+	if from_special == "col" and to_special == "col":
+		return "col_col"
+	if from_special == "bomb" and to_special == "bomb":
+		return "bomb_bomb"
+	var pair := [from_special, to_special]
+	pair.sort()
+	return "%s_%s" % [String(pair[0]), String(pair[1])]
+
+
+func _special_pair_matches(from_special: String, to_special: String, a: String, b: String) -> bool:
+	return (from_special == a and to_special == b) or (from_special == b and to_special == a)
+
+
+func _special_combo_label(combo_type: String) -> String:
+	match combo_type:
+		"row_col":
+			return "크로스 특수 조합"
+		"row_row":
+			return "가로 라인 러시"
+		"col_col":
+			return "세로 라인 러시"
+		"row_bomb":
+			return "가로 폭탄 조합"
+		"col_bomb":
+			return "세로 폭탄 조합"
+		"bomb_bomb":
+			return "더블 폭탄 조합"
+	return "특수 블록 조합"
 
 
 func _swap_cells(a: Vector2i, b: Vector2i) -> void:
