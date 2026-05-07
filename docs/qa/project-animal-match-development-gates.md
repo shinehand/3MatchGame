@@ -85,6 +85,15 @@
 - Level 5 이내 첫 컬렉션 카드 또는 스타터 미션 보상을 경험한다.
 - 한국어/영어/일본어 pseudo-localization에서 목표 칩과 버튼 텍스트가 겹치지 않는다.
 
+## Gate 7A. Stage Popup / 시작 부스터
+
+- 스테이지 노드를 누르면 gameplay로 바로 전환되지 않고 Stage Popup이 먼저 열린다.
+- Stage Popup은 목표, 이동 수, 난이도/테마, 보상, 시작 부스터 3종, `START` 버튼을 보여 준다.
+- 시작 부스터 3종은 아이콘과 선택 상태를 가지며, 선택 결과가 `GameSession.selected_pre_boosters`에 저장된다.
+- Gameplay 시작 시 선택 부스터는 한 번만 소비되고 보드에는 `rainbow`, `row/col`, `bomb` 특수 블록이 각각 배치된다.
+- `stage_start`는 `selected_boosters`와 `start_boosters_applied`를 기록하고, 각 시작 부스터는 `booster_used`의 `source = pre_stage`로 기록된다.
+- Stage Popup 열기/닫기 애니메이션과 모바일 터치감은 실제 기기 또는 시뮬레이터에서 최종 확인한다.
+
 ## Gate 8. Rescue Book/메타 루프
 
 - Rescue Book에 MVP 12종 동물이 모두 표시되고 잠김/해금 상태가 구분된다.

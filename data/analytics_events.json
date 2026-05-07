@@ -22,6 +22,7 @@
     ],
     "optional_params": [
       "selected_boosters",
+      "start_boosters_applied",
       "difficulty"
     ]
   },

@@ -503,6 +503,7 @@ func _validate_gameplay_scene(node: Node, errors: PackedStringArray) -> void:
 	_validate_special_effect_rules(node, errors)
 	_validate_expression_animation_rules(node, errors)
 	_validate_rescue_buddy_runtime_rules(node, errors)
+	_validate_start_booster_runtime_rules(node, errors)
 
 
 func _validate_expression_animation_rules(node: Node, errors: PackedStringArray) -> void:
@@ -1140,6 +1141,67 @@ func _validate_special_combo_swap_runtime(node: Node, errors: PackedStringArray)
 		errors.append("%s special combo runtime smoke should leave Stage 31 in playing state, got %s." % [GAMEPLAY_SCENE_PATH, String(node.get("stage_state"))])
 
 
+func _validate_start_booster_runtime_rules(node: Node, errors: PackedStringArray) -> void:
+	for method_name in ["_start_stage"]:
+		if not node.has_method(method_name):
+			errors.append("%s should expose %s for start booster runtime smoke." % [GAMEPLAY_SCENE_PATH, method_name])
+			return
+
+	var selected_boosters := ["rainbow_paw", "striped", "bomb"]
+	var booster_events_before := _analytics_event_count("booster_used")
+	GameSession.set_selected_pre_boosters(selected_boosters)
+	node.call("_start_stage", 0)
+
+	var stage_boosters: Array = node.get("stage_selected_boosters")
+	for booster_id in selected_boosters:
+		if not stage_boosters.has(booster_id):
+			errors.append("%s start booster smoke should preserve selected booster %s on stage_start state." % [GAMEPLAY_SCENE_PATH, booster_id])
+
+	if not GameSession.get_selected_pre_boosters().is_empty():
+		errors.append("%s start booster smoke should consume selected_pre_boosters after _start_stage." % GAMEPLAY_SCENE_PATH)
+
+	var rainbow_count := _count_board_special(node, "rainbow")
+	var striped_count := _count_board_special(node, "row") + _count_board_special(node, "col")
+	var bomb_count := _count_board_special(node, "bomb")
+	if rainbow_count != 1:
+		errors.append("%s start booster smoke should place one rainbow special, got %d." % [GAMEPLAY_SCENE_PATH, rainbow_count])
+	if striped_count != 1:
+		errors.append("%s start booster smoke should place one striped row/column special, got %d." % [GAMEPLAY_SCENE_PATH, striped_count])
+	if bomb_count != 1:
+		errors.append("%s start booster smoke should place one bomb special, got %d." % [GAMEPLAY_SCENE_PATH, bomb_count])
+	if String(node.get("stage_state")) != "playing":
+		errors.append("%s start booster smoke should keep Stage 1 in playing state, got %s." % [GAMEPLAY_SCENE_PATH, String(node.get("stage_state"))])
+
+	var stage_start_event := _last_analytics_event_by_name("stage_start")
+	var stage_start_params: Dictionary = Dictionary(stage_start_event.get("params", {}))
+	if int(stage_start_params.get("stage_id", 0)) != 1:
+		errors.append("%s start booster smoke should emit stage_start for Stage 1." % GAMEPLAY_SCENE_PATH)
+	var analytics_boosters: Array = Array(stage_start_params.get("selected_boosters", []))
+	for booster_id in selected_boosters:
+		if not analytics_boosters.has(booster_id):
+			errors.append("%s stage_start analytics should include selected booster %s." % [GAMEPLAY_SCENE_PATH, booster_id])
+	if int(stage_start_params.get("start_boosters_applied", -1)) != selected_boosters.size():
+		errors.append("%s stage_start analytics should report %d applied start boosters, got %d." % [GAMEPLAY_SCENE_PATH, selected_boosters.size(), int(stage_start_params.get("start_boosters_applied", -1))])
+	if _analytics_event_count("booster_used") - booster_events_before != selected_boosters.size():
+		errors.append("%s start booster smoke should emit one booster_used event per selected booster." % GAMEPLAY_SCENE_PATH)
+
+	var seen_pre_stage_boosters := {}
+	for event in GameSession.get_analytics_events():
+		if not (event is Dictionary):
+			continue
+		var event_dict: Dictionary = event
+		if String(event_dict.get("name", "")) != "booster_used":
+			continue
+		var params: Dictionary = Dictionary(event_dict.get("params", {}))
+		if int(params.get("stage_id", 0)) == 1 and String(params.get("source", "")) == "pre_stage":
+			seen_pre_stage_boosters[String(params.get("booster_id", ""))] = true
+	for booster_id in selected_boosters:
+		if not seen_pre_stage_boosters.has(booster_id):
+			errors.append("%s booster_used analytics should include %s from pre_stage." % [GAMEPLAY_SCENE_PATH, booster_id])
+
+	GameSession.set_selected_pre_boosters([])
+
+
 func _seed_plain_gameplay_board(node: Node) -> Array:
 	var animals := ["rabbit", "bear", "cat", "chick", "frog"]
 	var board_data: Array = node.get("board_data")
@@ -1279,10 +1341,91 @@ func _validate_stage_select_scene(node: Node, errors: PackedStringArray) -> void
 		errors.append("%s is missing StagePopupOverlay." % STAGE_SELECT_SCENE_PATH)
 	elif stage_popup.visible:
 		errors.append("%s StagePopupOverlay should start hidden until a stage node is pressed." % STAGE_SELECT_SCENE_PATH)
+	else:
+		_validate_stage_popup_flow(node, errors)
 
 	var map_juice_layer := node.get_node_or_null("StageMapJuiceLayer") as CanvasItem
 	if map_juice_layer == null:
 		errors.append("%s is missing StageMapJuiceLayer ambient mascots." % STAGE_SELECT_SCENE_PATH)
+
+
+func _validate_stage_popup_flow(node: Node, errors: PackedStringArray) -> void:
+	for method_name in ["_show_stage_popup", "_on_booster_button_pressed"]:
+		if not node.has_method(method_name):
+			errors.append("%s should expose %s for Stage Popup smoke." % [STAGE_SELECT_SCENE_PATH, method_name])
+			return
+
+	GameSession.set_selected_stage_id(1)
+	GameSession.set_selected_pre_boosters([])
+	var first_stage_node := node.find_child("WorldStageNode1", true, false) as Button
+	if first_stage_node == null:
+		for candidate in node.find_children("WorldStageNode*", "Button", true, false):
+			var candidate_button := candidate as Button
+			if candidate_button != null and not candidate_button.disabled:
+				first_stage_node = candidate_button
+				break
+	if first_stage_node == null:
+		errors.append("%s Stage Popup smoke could not find an unlocked WorldStageNode button." % STAGE_SELECT_SCENE_PATH)
+		return
+	first_stage_node.emit_signal("pressed")
+
+	var overlay := node.get_node_or_null("StagePopupOverlay") as CanvasItem
+	if overlay == null or not overlay.visible:
+		errors.append("%s Stage Popup smoke should make StagePopupOverlay visible after pressing a WorldStageNode." % STAGE_SELECT_SCENE_PATH)
+	node.call("_show_stage_popup", 1)
+
+	var title_label := node.get("stage_popup_title_label") as Label
+	if title_label == null or not title_label.text.contains("Level 1"):
+		errors.append("%s Stage Popup title should identify Level 1." % STAGE_SELECT_SCENE_PATH)
+	var goal_label := node.get("stage_popup_goal_label") as Label
+	if goal_label == null or not goal_label.text.contains("목표"):
+		errors.append("%s Stage Popup should show goal text." % STAGE_SELECT_SCENE_PATH)
+	var meta_label := node.get("stage_popup_meta_label") as Label
+	if meta_label == null or not meta_label.text.contains("이동"):
+		errors.append("%s Stage Popup should show move/meta text." % STAGE_SELECT_SCENE_PATH)
+	var reward_label := node.get("stage_popup_reward_label") as Label
+	if reward_label == null or not reward_label.text.contains("보상"):
+		errors.append("%s Stage Popup should show reward text." % STAGE_SELECT_SCENE_PATH)
+
+	var panel := node.get("stage_popup_panel") as PanelContainer
+	var start_button := _find_button_with_text(panel, "START")
+	if start_button == null:
+		errors.append("%s Stage Popup should expose a START button." % STAGE_SELECT_SCENE_PATH)
+
+	var booster_buttons: Dictionary = Dictionary(node.get("stage_popup_booster_buttons"))
+	for booster_id in ["rainbow_paw", "striped", "bomb"]:
+		if not booster_buttons.has(booster_id):
+			errors.append("%s Stage Popup should expose booster button %s." % [STAGE_SELECT_SCENE_PATH, booster_id])
+			continue
+		var booster_button := booster_buttons[booster_id] as Button
+		if booster_button == null:
+			errors.append("%s Stage Popup booster %s should be a Button." % [STAGE_SELECT_SCENE_PATH, booster_id])
+			continue
+		if booster_button.icon == null:
+			errors.append("%s Stage Popup booster %s should include an icon." % [STAGE_SELECT_SCENE_PATH, booster_id])
+		if booster_button.text.is_empty():
+			errors.append("%s Stage Popup booster %s should expose selection text." % [STAGE_SELECT_SCENE_PATH, booster_id])
+
+	var rainbow_button := booster_buttons.get("rainbow_paw") as Button
+	if rainbow_button != null:
+		rainbow_button.emit_signal("pressed")
+		var selected_pre_boosters: Array = node.get("selected_pre_boosters")
+		if not selected_pre_boosters.has("rainbow_paw"):
+			errors.append("%s Stage Popup should mirror selected booster into selected_pre_boosters." % STAGE_SELECT_SCENE_PATH)
+		if not rainbow_button.button_pressed:
+			errors.append("%s Stage Popup selected booster button should stay pressed." % STAGE_SELECT_SCENE_PATH)
+
+	GameSession.set_selected_pre_boosters([])
+
+
+func _find_button_with_text(parent: Node, text: String) -> Button:
+	if parent == null:
+		return null
+	for candidate in parent.find_children("*", "Button", true, false):
+		var button := candidate as Button
+		if button != null and button.text == text:
+			return button
+	return null
 
 
 func _validate_alpha_gate_data(errors: PackedStringArray) -> void:

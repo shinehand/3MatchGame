@@ -43,6 +43,8 @@
 | `level_quit` | 중도 이탈 | `stage_id`, `moves_left`, `goals_remaining`, `attempt_count` |
 | `retry_start` | 재도전 | `stage_id`, `attempt_count`, `source`, `heart_spent` |
 
+현재 Godot 런타임 계약은 `level_start`의 구현 이벤트명으로 `stage_start`를 사용한다. `stage_start`는 `session_id`, `stage_id`, `band`, `roster_group`, `moves`를 필수로 기록하고, `selected_boosters`, `start_boosters_applied`, `difficulty`를 선택 파라미터로 기록한다. 시작 부스터 사용은 `booster_used`에 `source = pre_stage`로 별도 기록한다.
+
 ### 2.3 Collection
 
 | 이벤트 | 트리거 | 필수 파라미터 |

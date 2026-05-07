@@ -44,10 +44,29 @@
 - 빠른 연쇄 매치, 낙하, 리필 중 표정/VFX 겹침이 과하지 않은지 확인한다.
 - 터치감, UI 사운드, 햅틱 강도가 플레이 흐름을 방해하지 않는지 확인한다.
 
+## No-device Stage Popup / 시작 부스터 readiness
+
+`./scripts/validate_gameplay.sh`의 scene load smoke는 기기 없이 아래 항목을 먼저 막는다.
+
+- `WorldStageNode*` press 경로에서 바로 gameplay로 가지 않고 `StagePopupOverlay`가 표시된다.
+- Stage Popup은 Level 제목, 목표, 이동 수/난이도/테마, 보상, `START` 버튼을 가진다.
+- Stage Popup은 `rainbow_paw`, `striped`, `bomb` 시작 부스터 3종 버튼과 아이콘을 가진다.
+- 부스터 버튼 선택은 `selected_pre_boosters`와 버튼 pressed 상태에 즉시 반영된다.
+- Gameplay 시작 시 `GameSession.selected_pre_boosters`가 소비되고, 선택한 3종이 보드 특수 블록과 `stage_start`/`booster_used` analytics에 반영된다.
+
+아래 항목은 no-device readiness로 승인하지 않는다. 실제 기기 또는 시뮬레이터에서 수동 확인해야 한다.
+
+- Stage Popup 페이드/팝인/닫기 애니메이션이 모바일에서 끊기거나 입력을 막지 않는지 확인한다.
+- 시작 부스터가 배치된 첫 보드가 목표 칩, Buddy HUD, 특수 배지와 겹쳐 읽기 어렵지 않은지 확인한다.
+- Stage Popup에 표시될 Rescue Buddy 정보 문구와 실제 Gameplay HUD 문구의 톤이 일관적인지 확인한다.
+
 ## 수동 체크리스트
 
 - 홈 화면에서 이어하기 정보와 스테이지 선택 오버레이가 정상 표시된다.
 - 스테이지 선택에서 잠금/해금/별 수가 정상 표시된다.
+- 스테이지 노드를 누르면 바로 게임으로 가지 않고 Stage Popup이 뜬다.
+- Stage Popup에서 목표, 이동 수, 보상, 아이콘이 있는 시작 부스터 3종, START 버튼이 정상 표시된다.
+- 부스터를 선택하고 START를 누르면 게임 시작 보드에 선택 부스터가 배치된다.
 - 홈 화면 버튼 탭 시 짧은 UI 사운드가 재생된다.
 - 앱 시작 후 보드 8x8 블록이 바로 보인다.
 - 첫 매치 후 화면 전체가 사라지거나 과하게 깜빡이지 않는다.
