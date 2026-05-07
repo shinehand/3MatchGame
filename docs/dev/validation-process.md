@@ -10,7 +10,8 @@
 1. `./scripts/validate_gameplay.sh`
 2. Godot 에디터 또는 Android 기기에서 수동 플레이 1회
 3. `zsh scripts/export_android_debug.sh`
-4. 아래 체크리스트를 모두 통과하면 Android 기기 설치/실행 QA로 넘어간다
+4. Android 기기가 연결되어 있으면 `zsh scripts/export_android_debug.sh --install` 후 `zsh scripts/capture_android_device_evidence.sh --allow-orientation-change`
+5. 아래 체크리스트를 모두 통과하면 Android 기기 설치/실행 QA로 넘어간다
 
 `validate_gameplay.sh`는 아래를 순서대로 검사한다.
 
@@ -30,6 +31,8 @@
 - 수동 스모크 체크리스트 출력
 
 `zsh scripts/export_android_debug.sh`는 Android debug export를 수행하고 `build/android/puzzle-mobile-starter-debug.apk`를 `apksigner`로 검증한 뒤 `output/alpha-lock-pass/YYYY-MM-DD/captures/android-debug-export.txt`에 commit, APK 경로, export 결과, signature verify 결과, ADB device 상태를 남긴다. 기기가 연결된 설치 검증은 `zsh scripts/export_android_debug.sh --install`로 실행하며, 연결 기기가 정확히 1대가 아니면 install evidence는 Blocked로 기록한다.
+
+`zsh scripts/capture_android_device_evidence.sh --allow-orientation-change`는 연결된 Android 실기기가 정확히 1대일 때 앱을 실행하고 `device-info.txt`, `device-portrait.png`, `device-landscape.png`, `device-10s.mp4`, `device-log.txt`, `android-device-evidence.txt`를 `output/alpha-lock-pass/YYYY-MM-DD/captures/`에 남긴다. 기본 실행은 기기 회전 설정을 바꾸지 않으며, `--allow-orientation-change`를 줄 때만 현재 회전 설정을 저장한 뒤 portrait/landscape 캡처를 시도하고 종료 시 복원한다. 소리, 햅틱, 터치감은 자동 판정하지 않고 manifest의 수동 후속 항목으로 남긴다. 기기가 없거나 unauthorized/offline이면 capture는 Blocked로 실패하며 일반 `validate_gameplay.sh`에는 포함하지 않는다.
 
 `zsh scripts/validate_alpha_qa_report.sh --report=output/alpha-lock-pass/YYYY-MM-DD/alpha-lock-pass-manual-qa-YYYY-MM-DD.md`는 수동 QA 보고서의 최종 승인 직전 게이트다. 템플릿 placeholder, `Pending`/`Fail`/`Blocked`/`Open` 결과, `Overall result: Pass`와 `QA result: Approve` 불일치, 현재 HEAD와 맞지 않는 build commit, 비어 있거나 존재하지 않는 evidence path가 남아 있으면 실패한다. 이 검사는 작성 중인 보고서에는 의도적으로 실패하므로 일반 `validate_gameplay.sh`에는 포함하지 않는다.
 

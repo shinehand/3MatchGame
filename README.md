@@ -52,6 +52,7 @@ Godot 4 기반 모바일 3매치 퍼즐 게임 프로젝트입니다.
 - 스테이지 밸런스 점검: `zsh scripts/validate_stage_balance.sh`
 - Android debug 환경 점검: `zsh scripts/check_android_setup.sh`
 - Android debug APK 생성/서명 검증: `zsh scripts/export_android_debug.sh`
+- Android 실기기 증거 수집: `zsh scripts/capture_android_device_evidence.sh --allow-orientation-change`
 - Android release 프리플라이트: `GODOT_RELEASE_KEYSTORE_PATH=/path/to/release.keystore zsh scripts/check_android_setup.sh --release`
 - Alpha 수동 QA 패킷 생성: `zsh scripts/create_alpha_qa_packet.sh`
 - Alpha 수동 QA 보고서 최종 검증: `zsh scripts/validate_alpha_qa_report.sh --report=output/alpha-lock-pass/YYYY-MM-DD/alpha-lock-pass-manual-qa-YYYY-MM-DD.md`
@@ -61,6 +62,7 @@ Godot 4 기반 모바일 3매치 퍼즐 게임 프로젝트입니다.
 
 - Debug APK 생성/서명 검증/evidence 기록: `zsh scripts/export_android_debug.sh`
 - 연결 기기 설치 포함: `zsh scripts/export_android_debug.sh --install`
+- 실기기 device info/screenshot/video/logcat evidence 수집: `zsh scripts/capture_android_device_evidence.sh --allow-orientation-change`
 - Release APK 프리플라이트: `GODOT_RELEASE_KEYSTORE_PATH=/path/to/release.keystore zsh scripts/check_android_setup.sh --release`
 - 기기 설치: `adb install -r build/android/puzzle-mobile-starter-debug.apk`
 

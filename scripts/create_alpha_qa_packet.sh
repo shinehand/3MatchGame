@@ -19,7 +19,7 @@ fail_template_contract() {
 require_template_text() {
 	local missing_kind="$1"
 	local required_text="$2"
-	if ! grep -Fq "$required_text" "$TEMPLATE_PATH"; then
+	if ! grep -Fq -- "$required_text" "$TEMPLATE_PATH"; then
 		fail_template_contract "$missing_kind" "$required_text"
 	fi
 }
@@ -27,7 +27,7 @@ require_template_text() {
 require_template_regex() {
 	local missing_kind="$1"
 	local required_pattern="$2"
-	if ! grep -Eq "$required_pattern" "$TEMPLATE_PATH"; then
+	if ! grep -Eq -- "$required_pattern" "$TEMPLATE_PATH"; then
 		fail_template_contract "$missing_kind" "$required_pattern"
 	fi
 }
@@ -58,6 +58,10 @@ validate_template_contract() {
 	require_template_text "android debug export preflight" "| Android debug APK export |"
 	require_template_text "android debug export command" "zsh scripts/export_android_debug.sh"
 	require_template_text "android debug export evidence" "android-debug-export.txt"
+	require_template_text "android device evidence preflight" "| Android device evidence capture |"
+	require_template_text "android device evidence command" "zsh scripts/capture_android_device_evidence.sh"
+	require_template_text "android device evidence orientation option" "--allow-orientation-change"
+	require_template_text "android device evidence manifest" "android-device-evidence.txt"
 	require_template_text "alpha qa report validation preflight" "| Alpha QA report validation |"
 	require_template_text "alpha qa report validation command" "zsh scripts/validate_alpha_qa_report.sh"
 	require_template_text "representative course header" "| Course | Result | Capture path | 10s understanding | HUD/board readability | Overlay/action clarity | Save/unlock/star persistence | Sound | Haptics | Orientation | Notes |"

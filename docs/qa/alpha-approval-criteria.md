@@ -7,6 +7,7 @@
 - `zsh scripts/validate_gameplay.sh` 통과
 - `zsh scripts/check_android_setup.sh` 통과
 - `zsh scripts/export_android_debug.sh` 통과 및 `output/alpha-lock-pass/YYYY-MM-DD/captures/android-debug-export.txt` evidence 생성
+- 실기기 QA 시 `zsh scripts/export_android_debug.sh --install` 및 `zsh scripts/capture_android_device_evidence.sh --allow-orientation-change` 통과
 - 수동 QA 완료 후 `zsh scripts/validate_alpha_qa_report.sh --report=output/alpha-lock-pass/YYYY-MM-DD/alpha-lock-pass-manual-qa-YYYY-MM-DD.md` 통과
 - 릴리즈 후보는 `GODOT_RELEASE_KEYSTORE_PATH=/path/to/release.keystore zsh scripts/check_android_setup.sh --release` 통과
 - 100개 출시 스테이지 JSON 로드
