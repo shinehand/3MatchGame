@@ -10,7 +10,7 @@
 - 실기기 QA 시 `zsh scripts/export_android_debug.sh --install` 및 `zsh scripts/capture_android_device_evidence.sh --allow-orientation-change` 통과
 - 실기기 수동 판정 후 `zsh scripts/record_manual_device_checks.sh`로 sound/haptics/touch `PASS` evidence 생성
 - 수동 QA 완료 후 `zsh scripts/validate_alpha_qa_report.sh --report=output/alpha-lock-pass/YYYY-MM-DD/alpha-lock-pass-manual-qa-YYYY-MM-DD.md` 통과
-- 릴리즈 후보는 `GODOT_RELEASE_KEYSTORE_PATH=/path/to/release.keystore zsh scripts/check_android_setup.sh --release` 통과
+- 릴리즈 후보는 `GODOT_ANDROID_KEYSTORE_RELEASE_PATH`, `GODOT_ANDROID_KEYSTORE_RELEASE_USER`, `GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD` 설정 후 `zsh scripts/check_android_setup.sh --release`와 `zsh scripts/export_android_release.sh --install` 통과
 - 100개 출시 스테이지 JSON 로드
 - 대표 스테이지 `1, 11, 25, 50, 75, 100` 존재
 - 튜토리얼 체크포인트 `1, 11, 25, 45, 65, 85, 95` 안내 문구 존재

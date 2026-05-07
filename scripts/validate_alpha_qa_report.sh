@@ -198,6 +198,15 @@ validate_known_evidence_file() {
 			require_evidence_text "$evidence_path" "$evidence_name" "Signature verify result: PASS"
 			reject_evidence_regex "$evidence_path" "$evidence_name" '(Export|Signature verify|Install) result: (FAIL|BLOCKED)'
 			;;
+		android-release-export.txt)
+			require_evidence_text "$evidence_path" "$evidence_name" "Signing mode: release"
+			require_evidence_text "$evidence_path" "$evidence_name" "Release export result: PASS"
+			require_evidence_text "$evidence_path" "$evidence_name" "Artifact SHA-256:"
+			require_evidence_text "$evidence_path" "$evidence_name" "Signature verify result: PASS"
+			require_evidence_text "$evidence_path" "$evidence_name" "Install result: PASS"
+			require_evidence_text "$evidence_path" "$evidence_name" "Launch result: PASS"
+			reject_evidence_regex "$evidence_path" "$evidence_name" '(Release export|Signature verify|Install|Launch) result: (FAIL|BLOCKED|NOT_REQUESTED)'
+			;;
 		android-device-evidence.txt)
 			require_evidence_text "$evidence_path" "$evidence_name" "Capture result: PASS"
 			reject_evidence_regex "$evidence_path" "$evidence_name" '(Capture|Launch|Portrait screenshot|Landscape screenshot|Screenrecord|Logcat) result: (FAIL|BLOCKED)'
@@ -211,8 +220,11 @@ validate_known_evidence_file() {
 				add_failure "device-info.txt Window size does not include a pixel size: ${evidence_path}"
 			fi
 			;;
-		install-log.txt)
+		install-log.txt|release-install-log.txt)
 			require_evidence_text "$evidence_path" "$evidence_name" "Success"
+			;;
+		release-run-log.txt)
+			require_evidence_text "$evidence_path" "$evidence_name" "Launch result: PASS"
 			;;
 		manual-device-checks.txt)
 			require_evidence_text "$evidence_path" "$evidence_name" "Manual checks result: PASS"

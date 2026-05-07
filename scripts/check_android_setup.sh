@@ -27,7 +27,9 @@ BUILD_TOOLS_VERSION="${ANDROID_BUILD_TOOLS_VERSION:-35.0.1}"
 BUILD_TOOLS_PATH="$SDK_PATH/build-tools/$BUILD_TOOLS_VERSION"
 GODOT_TEMPLATES_PATH="$HOME/Library/Application Support/Godot/export_templates/4.6.1.stable"
 DEBUG_KEYSTORE_PATH="$HOME/Library/Application Support/Godot/keystores/debug.keystore"
-RELEASE_KEYSTORE_PATH="${GODOT_RELEASE_KEYSTORE_PATH:-}"
+RELEASE_KEYSTORE_PATH="${GODOT_ANDROID_KEYSTORE_RELEASE_PATH:-${GODOT_RELEASE_KEYSTORE_PATH:-}}"
+RELEASE_KEYSTORE_USER="${GODOT_ANDROID_KEYSTORE_RELEASE_USER:-${GODOT_RELEASE_KEYSTORE_USER:-}}"
+RELEASE_KEYSTORE_PASSWORD="${GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD:-${GODOT_RELEASE_KEYSTORE_PASSWORD:-}}"
 EXPORT_PRESETS_PATH="export_presets.cfg"
 
 print_status() {
@@ -81,10 +83,22 @@ if [ "$CHECK_RELEASE" = true ]; then
 	check_path "zipalign" "$BUILD_TOOLS_PATH/zipalign" || exit_code=1
 	check_path "apksigner" "$BUILD_TOOLS_PATH/apksigner" || exit_code=1
 	if [ -z "$RELEASE_KEYSTORE_PATH" ]; then
-		print_status "Release Keystore" "MISSING -> set GODOT_RELEASE_KEYSTORE_PATH"
+		print_status "Release Keystore" "MISSING -> set GODOT_ANDROID_KEYSTORE_RELEASE_PATH"
 		exit_code=1
 	else
 		check_path "Release Keystore" "$RELEASE_KEYSTORE_PATH" || exit_code=1
+	fi
+	if [ -z "$RELEASE_KEYSTORE_USER" ]; then
+		print_status "Release User" "MISSING -> set GODOT_ANDROID_KEYSTORE_RELEASE_USER"
+		exit_code=1
+	else
+		print_status "Release User" "SET"
+	fi
+	if [ -z "$RELEASE_KEYSTORE_PASSWORD" ]; then
+		print_status "Release Password" "MISSING -> set GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD"
+		exit_code=1
+	else
+		print_status "Release Password" "SET"
 	fi
 fi
 
