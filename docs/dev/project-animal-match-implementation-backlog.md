@@ -256,17 +256,19 @@
 
 ### PAM-DEV-054: 결과/실패 near-miss 플로우
 
-- 상태: 부분 완료. `FailOfferPolicy`가 Near Miss, Strategic Miss, First Fail, Repeat Fail, Hard Level Fail을 분류하고 Level 1-10 광고/IAP 제안을 차단한다. Near Miss 기준은 `near_miss_goal_threshold`와 `near_miss_progress_threshold` remote config 기본값으로 조정 가능하며 scene smoke가 튜닝 분기를 검증한다. Scene load smoke는 정책 단위에서 near miss, strategic miss, first fail, repeat fail, hard fail, 초반 수익화 차단을 검증하고, 실제 Gameplay runtime에서 Stage 1 클리어 오버레이의 보상/별/다음 CTA, Stage 1 FTUE 실패 오버레이의 무료 재도전/수익화 문구 차단, Stage 25 near-miss 실패 오버레이의 `+3 이동 받고 계속`/`재도전` CTA, `stage_fail`, `offer_impression`, `fail_offer_show`, `fail_offer_select`, `fail_offer_dismiss`, `ad_reward_complete`, `ad_reward_fail`, `iap_purchase_start`, `iap_purchase_complete`, `iap_purchase_restore`, `iap_purchase_cancel`, `iap_purchase_fail`, `extra_moves_grant`, `continue_stage` +3 이동 재개, 보조 CTA 재시도 복구, 광고 실패/IAP 취소·실패·복구/코인 continue 성공·부족 상태 보존, IAP 성공형 continue transaction 공유, 보상형 광고/IAP continue transaction idempotency를 검증한다. 남은 작업은 실제 광고 SDK/IAP SDK 연결과 실제 상품/영수증 복구 QA다.
+- 상태: 부분 완료. `FailOfferPolicy`가 Near Miss, Strategic Miss, First Fail, Repeat Fail, Hard Level Fail을 분류하고 Level 1-10 광고/IAP 제안을 차단한다. Near Miss 기준은 `near_miss_goal_threshold`와 `near_miss_progress_threshold` remote config 기본값으로 조정 가능하며 scene smoke가 튜닝 분기를 검증한다. Scene load smoke는 정책 단위에서 near miss, strategic miss, first fail, repeat fail, hard fail, 초반 수익화 차단을 검증하고, 실제 Gameplay runtime에서 Stage 1 클리어 오버레이의 보상/별/다음 CTA, Stage 1 FTUE 실패 오버레이의 무료 재도전/수익화 문구 차단, Stage 25 near-miss 실패 오버레이의 `+3 이동 받고 계속`/`재도전` CTA, `stage_fail`, `offer_impression`, `fail_offer_show`, `fail_offer_select`, `fail_offer_dismiss`, `ad_reward_complete`, `ad_reward_fail`, `iap_purchase_start`, `iap_purchase_complete`, `iap_purchase_restore`, `iap_purchase_cancel`, `iap_purchase_fail`, `extra_moves_grant`, `continue_stage` +3 이동 재개, 보조 CTA 재시도 복구, 광고 실패/IAP 취소·실패·복구/코인 continue 성공·부족 상태 보존, IAP 성공형 continue transaction 공유, 보상형 광고/IAP continue transaction idempotency를 검증한다. `MonetizationGateway`가 SDK 공급자 결정 전 rewarded continue 요청을 provider-neutral 결과 콜백으로 정규화하며, scene smoke는 queued gateway 실패/성공, provider metadata 전달, invalid source 차단, duplicate IAP start 누수 차단을 검증한다. 남은 작업은 선택된 광고/IAP SDK adapter를 이 gateway 뒤에 연결하고 실제 상품/영수증 복구 QA를 수행하는 것이다.
 - 소유: Development Agent + UX Planning Agent
 - 대상 파일:
   - `scripts/gameplay.gd`
   - 필요 시 `scripts/fail_offer_policy.gd`
+  - `scripts/monetization_gateway.gd`
   - 결과/실패 팝업 씬
 - 작업:
   - Near Miss, Strategic Miss, First Fail, Repeat Fail, Hard Level Fail을 분류한다.
   - Level 1-10에서는 하트 소모, 전면 광고, IAP 직접 제안을 차단한다.
 - 완료 기준:
   - 실패 유형에 따라 CTA가 달라지고 비구매 선택지가 항상 보인다.
+  - SDK 공급자 결정 전에는 실패 overlay가 직접 완료 호출에 의존하지 않고 provider-neutral monetization gateway stub을 통해 rewarded/IAP/coin 결과를 수신한다.
 
 ### PAM-DEV-055: 동물 해금/풀 회전 validator 강화
 

@@ -5,6 +5,7 @@ const CollectionState = preload("res://scripts/collection_state.gd")
 const GameSession = preload("res://scripts/game_session.gd")
 const FailOfferPolicy = preload("res://scripts/fail_offer_policy.gd")
 const LiveEventService = preload("res://scripts/live_event_service.gd")
+const MonetizationGateway = preload("res://scripts/monetization_gateway.gd")
 
 const LOADING_SCENE_PATH: String = "res://scenes/loading.tscn"
 const MAIN_SCENE_PATH: String = "res://scenes/main.tscn"
@@ -1694,7 +1695,7 @@ func _validate_start_booster_runtime_rules(node: Node, errors: PackedStringArray
 
 
 func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> void:
-	for method_name in ["_start_stage", "_check_stage_state", "_on_overlay_primary_button_pressed", "_on_overlay_secondary_button_pressed", "_resolve_fail_offer_continue_result", "_current_stage", "_current_stage_id", "_build_failure_focus_summary", "_build_failure_retry_hint", "_build_failure_offer"]:
+	for method_name in ["_start_stage", "_check_stage_state", "_on_overlay_primary_button_pressed", "_on_overlay_secondary_button_pressed", "_resolve_fail_offer_continue_result", "_request_fail_offer_continue", "_current_stage", "_current_stage_id", "_build_failure_focus_summary", "_build_failure_retry_hint", "_build_failure_offer"]:
 		if not node.has_method(method_name):
 			errors.append("%s should expose %s for result overlay runtime smoke." % [GAMEPLAY_SCENE_PATH, method_name])
 			return
@@ -1800,6 +1801,14 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	if int(offer_show_params.get("stage_id", 0)) != 25 or String(offer_show_params.get("fail_type", "")) != "near_miss" or int(offer_show_params.get("attempt_count", 0)) <= 0 or String(offer_show_params.get("offer_type", "")) != "rewarded_continue" or float(offer_show_params.get("progress_ratio", -1.0)) < 0.0:
 		errors.append("%s fail_offer_show analytics should identify Stage 25 near_miss rewarded offer exposure." % GAMEPLAY_SCENE_PATH)
 
+	var invalid_source_extra_before := _analytics_event_count("extra_moves_grant")
+	if bool(node.call("_resolve_fail_offer_continue_result", "mystery_sdk", "completed", {"transaction_id": "invalid-source-continue"})):
+		errors.append("%s invalid fail offer continue source should not grant extra moves." % GAMEPLAY_SCENE_PATH)
+	if String(node.get("stage_state")) != "failed" or int(node.get("remaining_moves")) != 0:
+		errors.append("%s invalid fail offer continue source should preserve failed state and moves." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("extra_moves_grant") != invalid_source_extra_before:
+		errors.append("%s invalid fail offer continue source should not emit extra_moves_grant." % GAMEPLAY_SCENE_PATH)
+
 	var wallet_before_failed_continue := GameSession.get_wallet()
 	var failed_continue_score := int(node.get("score"))
 	var failed_continue_blockers := int(node.get("cleared_blockers"))
@@ -1848,6 +1857,24 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	if _analytics_event_count("iap_purchase_complete") != iap_complete_events_before:
 		errors.append("%s IAP cancel/fail/restore should not emit iap_purchase_complete." % GAMEPLAY_SCENE_PATH)
 
+	MonetizationGateway.queue_continue_result_for_testing("rewarded_ad", "failed", {"ad_network": "gateway_validation", "error_code": "gateway_load_failed"})
+	var gateway_fail_extra_before := _analytics_event_count("extra_moves_grant")
+	var gateway_fail_ad_fail_before := _analytics_event_count("ad_reward_fail")
+	node.call("_on_overlay_primary_button_pressed")
+	if String(node.get("stage_state")) != "failed" or int(node.get("remaining_moves")) != failed_continue_moves:
+		errors.append("%s queued rewarded ad gateway failure should preserve failed stage state and moves." % GAMEPLAY_SCENE_PATH)
+	if overlay == null or not overlay.visible or String(node.get("overlay_action")) != "continue_stage":
+		errors.append("%s queued rewarded ad gateway failure should keep continue overlay visible." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("extra_moves_grant") != gateway_fail_extra_before:
+		errors.append("%s queued rewarded ad gateway failure should not grant extra moves." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("ad_reward_fail") <= gateway_fail_ad_fail_before:
+		errors.append("%s queued rewarded ad gateway failure should emit ad_reward_fail." % GAMEPLAY_SCENE_PATH)
+	var gateway_fail_event := _last_analytics_event_by_name("ad_reward_fail")
+	var gateway_fail_params: Dictionary = Dictionary(gateway_fail_event.get("params", {}))
+	if String(gateway_fail_params.get("ad_network", "")) != "gateway_validation" or String(gateway_fail_params.get("error_code", "")) != "gateway_load_failed":
+		errors.append("%s queued rewarded ad gateway failure should pass provider error details." % GAMEPLAY_SCENE_PATH)
+
+	MonetizationGateway.queue_continue_result_for_testing("rewarded_ad", "completed", {"ad_network": "gateway_validation", "transaction_id": "gateway-validation-continue"})
 	node.call("_on_overlay_primary_button_pressed")
 	if String(node.get("stage_state")) != "playing" or int(node.get("remaining_moves")) != 3:
 		errors.append("%s continue_stage primary action should resume play with exactly 3 moves." % GAMEPLAY_SCENE_PATH)
@@ -1871,6 +1898,8 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	var ad_complete_params: Dictionary = Dictionary(ad_complete_event.get("params", {}))
 	if String(ad_complete_params.get("transaction_id", "")) != String(extra_moves_params.get("transaction_id", "")) or int(ad_complete_params.get("reward_amount", 0)) != 3:
 		errors.append("%s ad_reward_complete should share transaction_id and move amount with extra_moves_grant." % GAMEPLAY_SCENE_PATH)
+	if String(ad_complete_params.get("transaction_id", "")) != "gateway-validation-continue" or String(ad_complete_params.get("ad_network", "")) != "gateway_validation":
+		errors.append("%s rewarded continue primary action should route through MonetizationGateway metadata." % GAMEPLAY_SCENE_PATH)
 	var extra_moves_after_primary := _analytics_event_count("extra_moves_grant")
 	var moves_after_primary := int(node.get("remaining_moves"))
 	if bool(node.call("_resolve_fail_offer_continue_result", "rewarded_ad", "completed")):
@@ -1968,6 +1997,7 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	node.set("remaining_moves", 0)
 	await node.call("_check_stage_state")
 	var duplicate_iap_extra_before := _analytics_event_count("extra_moves_grant")
+	var duplicate_iap_start_before := _analytics_event_count("iap_purchase_start")
 	var duplicate_iap_complete_before := _analytics_event_count("iap_purchase_complete")
 	var duplicate_iap_result := bool(node.call("_resolve_fail_offer_continue_result", "iap", "completed", {"product_id": "validation_pack", "price": 1.99, "currency": "USD", "transaction_id": "iap-validation-continue"}))
 	if duplicate_iap_result:
@@ -1976,6 +2006,8 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s duplicate IAP transaction should preserve failed state and moves." % GAMEPLAY_SCENE_PATH)
 	if overlay == null or not overlay.visible or String(node.get("overlay_action")) != "continue_stage":
 		errors.append("%s duplicate IAP transaction should keep the continue offer overlay visible." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("iap_purchase_start") != duplicate_iap_start_before:
+		errors.append("%s duplicate IAP transaction should not emit another iap_purchase_start callback." % GAMEPLAY_SCENE_PATH)
 	if _analytics_event_count("extra_moves_grant") != duplicate_iap_extra_before or _analytics_event_count("iap_purchase_complete") != duplicate_iap_complete_before:
 		errors.append("%s duplicate IAP transaction should not emit purchase complete or grant analytics again." % GAMEPLAY_SCENE_PATH)
 

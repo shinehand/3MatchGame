@@ -9,6 +9,7 @@ const GameSession = preload("res://scripts/game_session.gd")
 const LiveEventService = preload("res://scripts/live_event_service.gd")
 const MobileLayout = preload("res://scripts/mobile_layout.gd")
 const FailOfferPolicy = preload("res://scripts/fail_offer_policy.gd")
+const MonetizationGateway = preload("res://scripts/monetization_gateway.gd")
 const OVERLAY_SUCCESS_TEXTURE = preload("res://assets/generated/polish/overlay_success_cat_clean.png")
 const OVERLAY_FAIL_TEXTURE = preload("res://assets/generated/polish/overlay_fail_bear_clean.png")
 const OVERLAY_FINALE_TEXTURE = preload("res://assets/generated/polish/overlay_finale_rabbit_clean.png")
@@ -1873,13 +1874,31 @@ func _is_iap_restore_result(result: String) -> bool:
 	return ["restore", "restored", "restore_completed", "restoration_completed"].has(result)
 
 
+func _is_continue_source_allowed(source: String) -> bool:
+	match source:
+		"rewarded_ad":
+			return bool(active_fail_offer.get("show_rewarded_ad", false))
+		"iap":
+			return bool(active_fail_offer.get("show_iap", false))
+		"coins":
+			return true
+	return false
+
+
 func _resolve_fail_offer_continue_result(source: String, result: String, details: Dictionary = {}) -> bool:
 	var normalized_source := source.strip_edges().to_lower()
 	var normalized_result := result.strip_edges().to_lower()
 	if overlay_action != "continue_stage" or active_fail_offer.is_empty():
 		return false
+	if not _is_continue_source_allowed(normalized_source):
+		_set_status("현재 실패 제안에서 사용할 수 없는 이어하기 방식입니다.")
+		return false
 
 	if normalized_source == "iap":
+		var iap_transaction_id := _continue_transaction_id("iap_continue", details)
+		if ["completed", "success"].has(normalized_result) and (active_fail_offer_continue_granted or GameSession.has_reward_transaction_granted(iap_transaction_id)):
+			_set_status("이미 처리된 추가 이동 보상입니다.")
+			return false
 		_track_iap_purchase_start_analytics(details)
 		if _is_iap_restore_result(normalized_result):
 			_track_iap_purchase_restore_analytics(details)
@@ -1935,6 +1954,15 @@ func _resolve_fail_offer_continue_result(source: String, result: String, details
 	_update_hud()
 	_hide_overlay()
 	return true
+
+
+func _request_fail_offer_continue(source: String, details: Dictionary = {}) -> bool:
+	var gateway_result := MonetizationGateway.request_continue(source, _current_stage_id(), active_fail_offer, details)
+	return _resolve_fail_offer_continue_result(
+		String(gateway_result.get("source", source)),
+		String(gateway_result.get("result", "failed")),
+		Dictionary(gateway_result.get("details", {}))
+	)
 
 
 func _track_booster_used_analytics(booster_id: String, source: String) -> void:
@@ -3310,7 +3338,7 @@ func _on_overlay_primary_button_pressed() -> void:
 	var action: String = overlay_action
 	_track_fail_offer_select_analytics(action, overlay_primary_button.text)
 	if action == "continue_stage":
-		_resolve_fail_offer_continue_result("rewarded_ad", "completed")
+		_request_fail_offer_continue("rewarded_ad")
 		return
 
 	_hide_overlay()
