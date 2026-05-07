@@ -370,11 +370,11 @@ func _validate_expression_animation_rules(node: Node, errors: PackedStringArray)
 func _validate_special_effect_rules(node: Node, errors: PackedStringArray) -> void:
 	var from_cell := Vector2i(3, 3)
 	var to_cell := Vector2i(3, 4)
-	var board_data: Array = node.get("board_data")
-	if board_data.size() < 8:
+	if Array(node.get("board_data")).size() < 8:
 		errors.append("%s special combo smoke could not inspect board data." % GAMEPLAY_SCENE_PATH)
 		return
 
+	var board_data: Array = _seed_plain_gameplay_board(node)
 	board_data[from_cell.x][from_cell.y] = node.call("_make_piece", "rabbit", "row")
 	board_data[to_cell.x][to_cell.y] = node.call("_make_piece", "bear", "col")
 	node.set("board_data", board_data)
@@ -419,6 +419,54 @@ func _validate_special_effect_rules(node: Node, errors: PackedStringArray) -> vo
 		errors.append("%s rainbow+special swap should route through the rainbow resolution path first." % GAMEPLAY_SCENE_PATH)
 	elif String(rainbow_outcome.get("target_animal", "")) != "fox":
 		errors.append("%s rainbow+special swap should target the non-rainbow animal, got %s." % [GAMEPLAY_SCENE_PATH, String(rainbow_outcome.get("target_animal", ""))])
+
+	board_data = _seed_plain_gameplay_board(node)
+	var row_combo_a := Vector2i(1, 2)
+	var row_combo_b := Vector2i(1, 3)
+	board_data[row_combo_a.x][row_combo_a.y] = node.call("_make_piece", "rabbit", "row")
+	board_data[row_combo_b.x][row_combo_b.y] = node.call("_make_piece", "bear", "row")
+	node.set("board_data", board_data)
+	if not bool(node.call("_is_special_combo_swap", row_combo_a, row_combo_b)):
+		errors.append("%s should treat adjacent row+row special blocks as a valid special combo swap." % GAMEPLAY_SCENE_PATH)
+	var row_combo_cells: Array = node.call("_special_combo_clear_cells", row_combo_a, row_combo_b)
+	if row_combo_cells.size() != 8:
+		errors.append("%s row+row special combo should clear one full row without duplicates, got %d cells." % [GAMEPLAY_SCENE_PATH, row_combo_cells.size()])
+	if not row_combo_cells.has(Vector2i(1, 0)) or not row_combo_cells.has(Vector2i(1, 7)):
+		errors.append("%s row+row special combo should include both ends of the target row." % GAMEPLAY_SCENE_PATH)
+
+	board_data = _seed_plain_gameplay_board(node)
+	var bomb_combo_a := Vector2i(5, 4)
+	var bomb_combo_b := Vector2i(5, 5)
+	board_data[bomb_combo_a.x][bomb_combo_a.y] = node.call("_make_piece", "rabbit", "bomb")
+	board_data[bomb_combo_b.x][bomb_combo_b.y] = node.call("_make_piece", "bear", "bomb")
+	node.set("board_data", board_data)
+	if not bool(node.call("_is_special_combo_swap", bomb_combo_a, bomb_combo_b)):
+		errors.append("%s should treat adjacent bomb+bomb special blocks as a valid special combo swap." % GAMEPLAY_SCENE_PATH)
+	var bomb_combo_cells: Array = node.call("_special_combo_clear_cells", bomb_combo_a, bomb_combo_b)
+	if bomb_combo_cells.size() != 12:
+		errors.append("%s bomb+bomb special combo should clear the two 3x3 blasts as a unique 12-cell union, got %d cells." % [GAMEPLAY_SCENE_PATH, bomb_combo_cells.size()])
+	if not bomb_combo_cells.has(Vector2i(4, 3)) or not bomb_combo_cells.has(Vector2i(6, 6)):
+		errors.append("%s bomb+bomb special combo should include the far corners of both blast areas." % GAMEPLAY_SCENE_PATH)
+
+	board_data = _seed_plain_gameplay_board(node)
+	var intersection := Vector2i(5, 5)
+	for cell in [Vector2i(5, 4), intersection, Vector2i(5, 6), Vector2i(3, 5), Vector2i(4, 5)]:
+		board_data[cell.x][cell.y] = node.call("_make_piece", "rabbit")
+	node.set("board_data", board_data)
+	var match_outcome: Dictionary = node.call("_analyze_match_outcome", [intersection])
+	var special_spawns: Dictionary = Dictionary(match_outcome.get("special_spawns", {}))
+	if String(special_spawns.get(intersection, "")) != "bomb":
+		errors.append("%s T/L intersection match should spawn a bomb at the preferred intersection, got %s." % [GAMEPLAY_SCENE_PATH, String(special_spawns.get(intersection, ""))])
+
+
+func _seed_plain_gameplay_board(node: Node) -> Array:
+	var animals := ["rabbit", "bear", "cat", "chick", "frog"]
+	var board_data: Array = node.get("board_data")
+	for row in range(8):
+		for col in range(8):
+			board_data[row][col] = node.call("_make_piece", String(animals[(row * 2 + col) % animals.size()]))
+	node.set("board_data", board_data)
+	return board_data
 
 
 func _validate_collection_scene(node: Node, errors: PackedStringArray) -> void:

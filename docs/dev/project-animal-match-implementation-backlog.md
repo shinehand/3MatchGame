@@ -190,7 +190,7 @@
 
 ### PAM-DEV-051: SpecialEffectQueue와 조합 테스트
 
-- 상태: 부분 완료. 인접한 non-rainbow 특수 블록끼리 교환하면 일반 매치가 없어도 유효 이동으로 처리되어 공통 특수 효과 큐를 먼저 해결하고, scene load smoke가 row+column 15칸 제거, row 경로 위 bomb 연쇄 21칸 제거, clear 경로 인접 장애물 피해, rainbow+special 우선순위 라우팅을 검증한다. 남은 작업은 수동 플레이 QA다.
+- 상태: 부분 완료. 인접한 non-rainbow 특수 블록끼리 교환하면 일반 매치가 없어도 유효 이동으로 처리되어 공통 특수 효과 큐를 먼저 해결한다. scene load smoke가 row+column 15칸 제거, row 경로 위 bomb 연쇄 21칸 제거, clear 경로 인접 장애물 피해, rainbow+special 우선순위 라우팅, row+row 8칸 중복 제거, bomb+bomb 12칸 합집합, T/L 교차 bomb 생성까지 검증한다. 남은 작업은 수동 플레이 QA다.
 - 소유: Development Agent
 - 대상 파일:
   - `scripts/gameplay.gd`
