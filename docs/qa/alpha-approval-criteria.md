@@ -5,6 +5,8 @@
 ## 자동 게이트
 
 - `zsh scripts/validate_gameplay.sh` 통과
+- `zsh scripts/check_android_setup.sh` 통과
+- 릴리즈 후보는 `GODOT_RELEASE_KEYSTORE_PATH=/path/to/release.keystore zsh scripts/check_android_setup.sh --release` 통과
 - 100개 출시 스테이지 JSON 로드
 - 대표 스테이지 `1, 11, 25, 50, 75, 100` 존재
 - 튜토리얼 체크포인트 `1, 11, 25, 45, 65, 85, 95` 안내 문구 존재
@@ -29,4 +31,4 @@
 - HUD가 보드 가독성을 침범
 - 특수 블록, 덤불, 선택 상태가 즉시 구분되지 않음
 - Android 실기기에서 사운드/햅틱 설정이 동작하지 않음
-- 릴리즈 keystore/export preset 연결 미완료
+- 릴리즈 keystore/export preset 프리플라이트 실패

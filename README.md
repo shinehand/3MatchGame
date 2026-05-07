@@ -34,7 +34,7 @@ Godot 4 기반 모바일 3매치 퍼즐 게임 프로젝트입니다.
 - Android SDK: `~/Library/Android/sdk`
 - Godot export templates: `~/Library/Application Support/Godot/export_templates/4.6.1.stable`
 - Debug keystore: `~/Library/Application Support/Godot/keystores/debug.keystore`
-- 모바일 방향: 가로 고정 (`landscape`)
+- 모바일 방향: 세로 고정 (`portrait`)
 
 ## 시작 방법
 
@@ -50,25 +50,28 @@ Godot 4 기반 모바일 3매치 퍼즐 게임 프로젝트입니다.
 - 자동 점검: `./scripts/validate_gameplay.sh`
 - 스테이지 데이터 점검: `zsh scripts/validate_stage_data.sh`
 - 스테이지 밸런스 점검: `zsh scripts/validate_stage_balance.sh`
-- 검증 문서: [validation-process.md](/Users/shinehandmac/Documents/puzzle/docs/dev/validation-process.md)
+- Android debug 환경 점검: `zsh scripts/check_android_setup.sh`
+- Android release 프리플라이트: `GODOT_RELEASE_KEYSTORE_PATH=/path/to/release.keystore zsh scripts/check_android_setup.sh --release`
+- 검증 문서: [validation-process.md](/Users/shinehandmac/Github/3MatchGame/docs/dev/validation-process.md)
 
 ## CLI 빌드
 
 - Debug APK 생성: `godot --headless --path . --export-debug Android build/android/puzzle-mobile-starter-debug.apk`
+- Release APK 프리플라이트: `GODOT_RELEASE_KEYSTORE_PATH=/path/to/release.keystore zsh scripts/check_android_setup.sh --release`
 - 기기 설치: `adb install -r build/android/puzzle-mobile-starter-debug.apk`
 
 ## Codex 멀티 에이전트
 
-- 루트 규칙: [AGENTS.md](/Users/shinehandmac/Documents/puzzle/AGENTS.md)
-- 운영 흐름: [.codex/workflows/multi-agent.md](/Users/shinehandmac/Documents/puzzle/.codex/workflows/multi-agent.md)
-- 작업 템플릿: [.codex/templates/task-brief.md](/Users/shinehandmac/Documents/puzzle/.codex/templates/task-brief.md)
+- 루트 규칙: [AGENTS.md](/Users/shinehandmac/Github/3MatchGame/AGENTS.md)
+- 운영 흐름: [.codex/workflows/multi-agent.md](/Users/shinehandmac/Github/3MatchGame/.codex/workflows/multi-agent.md)
+- 작업 템플릿: [.codex/templates/task-brief.md](/Users/shinehandmac/Github/3MatchGame/.codex/templates/task-brief.md)
 - 역할 문서:
-  [.codex/agents/planning.md](/Users/shinehandmac/Documents/puzzle/.codex/agents/planning.md)
-  [.codex/agents/art.md](/Users/shinehandmac/Documents/puzzle/.codex/agents/art.md)
-  [.codex/agents/development.md](/Users/shinehandmac/Documents/puzzle/.codex/agents/development.md)
-- MCP 설정 메모: [docs/dev/codex-mcp.md](/Users/shinehandmac/Documents/puzzle/docs/dev/codex-mcp.md)
-- Gemini CLI 메모: [docs/dev/gemini-cli.md](/Users/shinehandmac/Documents/puzzle/docs/dev/gemini-cli.md)
-- 로컬 SD MCP 메모: [docs/dev/local-sd-mcp.md](/Users/shinehandmac/Documents/puzzle/docs/dev/local-sd-mcp.md)
+  [.codex/agents/planning.md](/Users/shinehandmac/Github/3MatchGame/.codex/agents/planning.md)
+  [.codex/agents/art.md](/Users/shinehandmac/Github/3MatchGame/.codex/agents/art.md)
+  [.codex/agents/development.md](/Users/shinehandmac/Github/3MatchGame/.codex/agents/development.md)
+- MCP 설정 메모: [docs/dev/codex-mcp.md](/Users/shinehandmac/Github/3MatchGame/docs/dev/codex-mcp.md)
+- Gemini CLI 메모: [docs/dev/gemini-cli.md](/Users/shinehandmac/Github/3MatchGame/docs/dev/gemini-cli.md)
+- 로컬 SD MCP 메모: [docs/dev/local-sd-mcp.md](/Users/shinehandmac/Github/3MatchGame/docs/dev/local-sd-mcp.md)
 
 ## 권장 운영
 
@@ -76,41 +79,41 @@ Godot 4 기반 모바일 3매치 퍼즐 게임 프로젝트입니다.
 - 기획 초안 생성: `gemini-plan.sh`
 - 아트 방향/이미지 프롬프트 초안 생성: `gemini-art.sh`
 - 로컬 이미지 생성 백엔드: `AUTOMATIC1111 + image-gen-mcp`
-- 로컬 생성 테스트 결과: [rabbit_local_sd_test.png](/Users/shinehandmac/Documents/puzzle/assets/generated/local-sd/rabbit_local_sd_test.png)
-- 최종 동물 블록 에셋: [assets/animals](/Users/shinehandmac/Documents/puzzle/assets/animals)
-- 배경 이미지: [stage_meadow_bg_v1.png](/Users/shinehandmac/Documents/puzzle/assets/backgrounds/stage_meadow_bg_v1.png)
-- 매치 이펙트 이미지: [match_burst_v1.png](/Users/shinehandmac/Documents/puzzle/assets/effects/match_burst_v1.png)
-- 장애물 이미지: [bush_obstacle_v1.png](/Users/shinehandmac/Documents/puzzle/assets/effects/bush_obstacle_v1.png)
-- 로컬 SD 생성 기록: [local-sd-animal-blocks-2026-03-18.md](/Users/shinehandmac/Documents/puzzle/docs/art/generated/local-sd-animal-blocks-2026-03-18.md)
+- 로컬 생성 테스트 결과: [rabbit_local_sd_test.png](/Users/shinehandmac/Github/3MatchGame/assets/generated/local-sd/rabbit_local_sd_test.png)
+- 최종 동물 블록 에셋: [assets/animals](/Users/shinehandmac/Github/3MatchGame/assets/animals)
+- 배경 이미지: [stage_meadow_bg_v1.png](/Users/shinehandmac/Github/3MatchGame/assets/backgrounds/stage_meadow_bg_v1.png)
+- 매치 이펙트 이미지: [match_burst_v1.png](/Users/shinehandmac/Github/3MatchGame/assets/effects/match_burst_v1.png)
+- 장애물 이미지: [bush_obstacle_v1.png](/Users/shinehandmac/Github/3MatchGame/assets/effects/bush_obstacle_v1.png)
+- 로컬 SD 생성 기록: [local-sd-animal-blocks-2026-03-18.md](/Users/shinehandmac/Github/3MatchGame/docs/art/generated/local-sd-animal-blocks-2026-03-18.md)
 
 ## 기획 문서
 
-- 요약: [docs/game/brief.md](/Users/shinehandmac/Documents/puzzle/docs/game/brief.md)
-- 전체 개요: [game-plan-overview.md](/Users/shinehandmac/Documents/puzzle/docs/game/game-plan-overview.md)
-- 상세 기획: [docs/game/game-design.md](/Users/shinehandmac/Documents/puzzle/docs/game/game-design.md)
-- 첫 화면부터 첫 스테이지: [first-stage-flow.md](/Users/shinehandmac/Documents/puzzle/docs/game/first-stage-flow.md)
-- 스테이지 제작 방식: [stage-production-guide.md](/Users/shinehandmac/Documents/puzzle/docs/game/stage-production-guide.md)
-- 100스테이지 곡선: [level-progression-100.md](/Users/shinehandmac/Documents/puzzle/docs/game/level-progression-100.md)
-- 100스테이지 명세: [stage-map-spec-001-100.md](/Users/shinehandmac/Documents/puzzle/docs/game/stage-map-spec-001-100.md)
-- 밸런스 패스 메모: [balance-pass-2026-03-18.md](/Users/shinehandmac/Documents/puzzle/docs/game/balance-pass-2026-03-18.md)
-- 백로그: [docs/game/backlog.md](/Users/shinehandmac/Documents/puzzle/docs/game/backlog.md)
-- UX 벤치마크: [docs/game/ux-benchmark.md](/Users/shinehandmac/Documents/puzzle/docs/game/ux-benchmark.md)
-- 구현 점검: [implementation-review-2026-03-18.md](/Users/shinehandmac/Documents/puzzle/docs/game/implementation-review-2026-03-18.md)
-- 현재 버전 감사: [current-version-audit-2026-03-18.md](/Users/shinehandmac/Documents/puzzle/docs/game/current-version-audit-2026-03-18.md)
+- 요약: [docs/game/brief.md](/Users/shinehandmac/Github/3MatchGame/docs/game/brief.md)
+- 전체 개요: [game-plan-overview.md](/Users/shinehandmac/Github/3MatchGame/docs/game/game-plan-overview.md)
+- 상세 기획: [docs/game/game-design.md](/Users/shinehandmac/Github/3MatchGame/docs/game/game-design.md)
+- 첫 화면부터 첫 스테이지: [first-stage-flow.md](/Users/shinehandmac/Github/3MatchGame/docs/game/first-stage-flow.md)
+- 스테이지 제작 방식: [stage-production-guide.md](/Users/shinehandmac/Github/3MatchGame/docs/game/stage-production-guide.md)
+- 100스테이지 곡선: [level-progression-100.md](/Users/shinehandmac/Github/3MatchGame/docs/game/level-progression-100.md)
+- 100스테이지 명세: [stage-map-spec-001-100.md](/Users/shinehandmac/Github/3MatchGame/docs/game/stage-map-spec-001-100.md)
+- 밸런스 패스 메모: [balance-pass-2026-03-18.md](/Users/shinehandmac/Github/3MatchGame/docs/game/balance-pass-2026-03-18.md)
+- 백로그: [docs/game/backlog.md](/Users/shinehandmac/Github/3MatchGame/docs/game/backlog.md)
+- UX 벤치마크: [docs/game/ux-benchmark.md](/Users/shinehandmac/Github/3MatchGame/docs/game/ux-benchmark.md)
+- 구현 점검: [implementation-review-2026-03-18.md](/Users/shinehandmac/Github/3MatchGame/docs/game/implementation-review-2026-03-18.md)
+- 현재 버전 감사: [current-version-audit-2026-03-18.md](/Users/shinehandmac/Github/3MatchGame/docs/game/current-version-audit-2026-03-18.md)
 
 ## 아트 문서
 
-- 총괄 방향: [docs/art/art-direction.md](/Users/shinehandmac/Documents/puzzle/docs/art/art-direction.md)
-- 씬별 아트 컨셉: [scene-art-concept.md](/Users/shinehandmac/Documents/puzzle/docs/art/scene-art-concept.md)
-- 씬 레이아웃 보드: [scene-layout-boards.md](/Users/shinehandmac/Documents/puzzle/docs/art/scene-layout-boards.md)
-- 블록 퍼스트 씬 설계: [block-first-scene-design.md](/Users/shinehandmac/Documents/puzzle/docs/art/block-first-scene-design.md)
-- 컨셉 보드: [concept-board.md](/Users/shinehandmac/Documents/puzzle/docs/art/concept-board.md)
-- 동물 블록 명세: [docs/art/animal-blocks.md](/Users/shinehandmac/Documents/puzzle/docs/art/animal-blocks.md)
-- HUD/UI 명세: [docs/art/ui-hud.md](/Users/shinehandmac/Documents/puzzle/docs/art/ui-hud.md)
-- 현재 아트 감사: [current-art-audit-2026-03-18.md](/Users/shinehandmac/Documents/puzzle/docs/art/current-art-audit-2026-03-18.md)
-- 100스테이지 시각 진행: [level-visual-progression.md](/Users/shinehandmac/Documents/puzzle/docs/art/level-visual-progression.md)
-- Gemini 프롬프트 팩: [docs/art/gemini-prompts.md](/Users/shinehandmac/Documents/puzzle/docs/art/gemini-prompts.md)
-- 실제 생성 결과: [docs/art/generated/gemini-art-draft-2026-03-17.md](/Users/shinehandmac/Documents/puzzle/docs/art/generated/gemini-art-draft-2026-03-17.md)
+- 총괄 방향: [docs/art/art-direction.md](/Users/shinehandmac/Github/3MatchGame/docs/art/art-direction.md)
+- 씬별 아트 컨셉: [scene-art-concept.md](/Users/shinehandmac/Github/3MatchGame/docs/art/scene-art-concept.md)
+- 씬 레이아웃 보드: [scene-layout-boards.md](/Users/shinehandmac/Github/3MatchGame/docs/art/scene-layout-boards.md)
+- 블록 퍼스트 씬 설계: [block-first-scene-design.md](/Users/shinehandmac/Github/3MatchGame/docs/art/block-first-scene-design.md)
+- 컨셉 보드: [concept-board.md](/Users/shinehandmac/Github/3MatchGame/docs/art/concept-board.md)
+- 동물 블록 명세: [docs/art/animal-blocks.md](/Users/shinehandmac/Github/3MatchGame/docs/art/animal-blocks.md)
+- HUD/UI 명세: [docs/art/ui-hud.md](/Users/shinehandmac/Github/3MatchGame/docs/art/ui-hud.md)
+- 현재 아트 감사: [current-art-audit-2026-03-18.md](/Users/shinehandmac/Github/3MatchGame/docs/art/current-art-audit-2026-03-18.md)
+- 100스테이지 시각 진행: [level-visual-progression.md](/Users/shinehandmac/Github/3MatchGame/docs/art/level-visual-progression.md)
+- Gemini 프롬프트 팩: [docs/art/gemini-prompts.md](/Users/shinehandmac/Github/3MatchGame/docs/art/gemini-prompts.md)
+- 실제 생성 결과: [docs/art/generated/gemini-art-draft-2026-03-17.md](/Users/shinehandmac/Github/3MatchGame/docs/art/generated/gemini-art-draft-2026-03-17.md)
 
 ## 다음 작업
 
