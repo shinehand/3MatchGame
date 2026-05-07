@@ -5,6 +5,9 @@
     "title": "매일 구조 보급",
     "enabled": true,
     "unlock_stage": 2,
+    "starts_at_unix": 1767225600,
+    "ends_at_unix": 4102444799,
+    "offline_fallback": true,
     "placements": ["home", "result_overlay"],
     "reward": { "gold": 100, "booster": "rainbow_paw", "booster_count": 1 }
   },
@@ -14,6 +17,9 @@
     "title": "신입 구조대 미션",
     "enabled": true,
     "unlock_stage": 3,
+    "starts_at_unix": 1767225600,
+    "ends_at_unix": 4102444799,
+    "offline_fallback": true,
     "placements": ["home", "stage_select"],
     "missions": [
       { "id": "clear_3_stages", "target": 3, "reward_gold": 150 },
@@ -26,6 +32,9 @@
     "title": "주말 구조 도감",
     "enabled": true,
     "unlock_stage": 9,
+    "starts_at_unix": 1767225600,
+    "ends_at_unix": 4102444799,
+    "offline_fallback": true,
     "placements": ["home", "collection"],
     "featured_animals": ["panda", "pig", "penguin", "fox"],
     "reward": { "tokens": 20, "gold": 200 }
@@ -36,6 +45,9 @@
     "title": "정글 구조 패스",
     "enabled": false,
     "unlock_stage": 21,
+    "starts_at_unix": 1798761600,
+    "ends_at_unix": 4102444799,
+    "offline_fallback": false,
     "placements": ["home"],
     "free_track_rewards": ["gold", "booster"],
     "premium_track_rewards": ["cosmetic", "booster", "gold"]

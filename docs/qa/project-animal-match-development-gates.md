@@ -98,11 +98,12 @@
 
 - 원격 설정 누락 시 기본값으로 안전하게 동작한다.
 - 이벤트 미시작/진행 중/종료/오프라인 상태가 각각 올바른 UI를 표시한다.
+- 원격 설정 적용은 세션별 `remote_config_exposure`로 기록되고, `variant_id`, `config_key`, `config_value_hash`가 비어 있지 않다.
 - 이벤트 보상 수령은 idempotent하게 처리되어 중복 수령되지 않는다.
 - 홈 이벤트 상세 overlay에서 이벤트 참여와 보상 수령 상태가 저장되고, 미션형 이벤트 보상은 wallet 지급값으로 집계된다.
 - 혼합 이벤트 보상은 `reward_type=mixed`와 `reward_breakdown`으로 골드/토큰/부스터 구성 요소가 누락 없이 기록된다.
 - 필수 분석 이벤트와 파라미터가 디버그 로그에 누락 없이 기록된다.
-- 자동 scene smoke가 런타임에서 실제 기록된 분석 이벤트의 필수 파라미터 누락과 `event_join`, `event_progress`, `event_reward_claim` idempotency 회귀를 잡는다.
+- 자동 scene smoke가 런타임에서 실제 기록된 분석 이벤트의 필수 파라미터 누락, `remote_config_exposure`, 이벤트 기간/오프라인 상태, `event_join`, `event_progress`, `event_reward_claim` idempotency 회귀를 잡는다.
 - 라이브 이벤트 노출은 `home`, `stage_select`, `result_overlay`, `collection` placement별 노출면 또는 기록 경로를 가진다.
 - A/B 테스트 노출은 `remote_config_exposure` 이벤트로 variant별 1회 이상 기록된다.
 - 원격 설정 변경 후 이전 기본값으로 롤백 가능하다.

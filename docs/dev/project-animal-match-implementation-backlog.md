@@ -358,7 +358,7 @@
 
 ### PAM-DEV-080: 라이브 이벤트 템플릿과 원격 설정 연결
 
-- 상태: 완료됨. `data/events/live_events.json` 템플릿과 `data/events/remote_config.json`을 `LiveEventService`에 연결해 이벤트 해금 레벨/노출 위치를 원격 설정값으로 검증·조회한다. 홈/스테이지 선택에는 `LiveEventStrip` 노출면을 두고, 홈/스테이지 선택/결과 오버레이/컬렉션 이벤트 노출은 `live_event_impression`으로 기록한다. 홈 이벤트 상세 overlay는 이벤트 참여, 미션형 보상 집계, 보상 수령 완료 상태를 제공하며 `GameSession`의 `live_events`와 wallet에 idempotent하게 저장한다.
+- 상태: 완료됨. `data/events/live_events.json` 템플릿과 `data/events/remote_config.json`을 `LiveEventService`에 연결해 이벤트 해금 레벨/노출 위치를 원격 설정값으로 검증·조회한다. 홈/스테이지 선택에는 `LiveEventStrip` 노출면을 두고, 홈/스테이지 선택/결과 오버레이/컬렉션 이벤트 노출은 `live_event_impression`으로 기록한다. 홈 이벤트 상세 overlay는 이벤트 참여, 미션형 보상 집계, 보상 수령 완료 상태를 제공하며 `GameSession`의 `live_events`와 wallet에 idempotent하게 저장한다. 이벤트 기간 상태(`upcoming`, `active`, `ended`, `disabled`, `offline`)와 원격 설정 기본값 fallback, 세션별 `remote_config_exposure` 기록도 자동 검증한다.
 - 소유: Development Agent + Ops Agent
 - 대상 파일 후보:
   - 신규 `data/events/*.json`
@@ -367,6 +367,7 @@
 - 완료 기준:
   - Daily Reward, Starter Missions, Collection Event, Season Pass 해금 레벨과 노출 위치가 데이터로 제어된다.
   - 홈 이벤트 상세에서 `event_join`, `event_progress`, `event_reward_claim` 계약과 중복 수령 방지 검증이 통과한다.
+  - 원격 설정 노출은 `remote_config_exposure`로 기록되고, 이벤트 기간/오프라인 fallback 상태가 service smoke에서 검증된다.
 
 ### PAM-ANA-090: 분석 이벤트 계약 검증기 추가
 
@@ -422,6 +423,6 @@
 다음 고가치 순서:
 
 1. `PAM-QA-040` - 실제 기기/수동 플레이 표정·Buddy·특수조합 QA
-2. `PAM-DEV-051` - 특수 조합 수동 플레이 QA 및 밸런스 튜닝
-3. `PAM-DEV-053` 후속 - Rescue Buddy 수치 튜닝과 분석 이벤트 추가 커버리지
-4. `PAM-DEV-080` 후속 - 실제 이벤트 기간/종료 상태, 오프라인 fallback, `remote_config_exposure` 기록 연결
+2. `PAM-DEV-053` 후속 - Rescue Buddy 분석 이벤트 실제 발생 smoke와 `loyal_fetch` 경로 커버리지
+3. `PAM-DEV-051` - 특수 조합 수동 플레이 QA 및 밸런스 튜닝
+4. `PAM-DEV-080` 후속 - 이벤트 종료/오프라인 상태별 사용자-facing UI 문구 확장

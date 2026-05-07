@@ -89,7 +89,7 @@
 | Rescue Buddy | `buddy_skill_charge`, `buddy_skill_ready`, `buddy_skill_trigger`, `buddy_skill_blocked` |
 | Collection | `rescue_book_open` now; `animal_unlock`, `animal_token_gain`, `animal_friendship_level_up` planned with reward implementation |
 | Fail Offer | `offer_impression` now; selection/dismiss events planned with UI action wiring |
-| Live Ops | `live_event_impression`, `event_join`, `event_progress`, `event_reward_claim`; reward claims are idempotent per `event_id + reward_id` |
+| Live Ops | `remote_config_exposure`, `live_event_impression`, `event_join`, `event_progress`, `event_reward_claim`; reward claims are idempotent per `event_id + reward_id`; event status supports upcoming/active/ended/disabled/offline |
 
 ## 9. QA Smoke Set
 

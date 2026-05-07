@@ -1,4 +1,6 @@
 {
+  "remote_config_version": "2026.05.liveops.v1",
+  "variant_id": "baseline",
   "heart_spend_start_level": 11,
   "rewarded_ad_start_level": 11,
   "iap_offer_start_level": 16,

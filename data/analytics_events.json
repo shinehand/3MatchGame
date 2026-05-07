@@ -91,6 +91,19 @@
     ]
   },
   {
+    "name": "remote_config_exposure",
+    "required_params": [
+      "session_id",
+      "config_key",
+      "variant_id",
+      "config_value_hash"
+    ],
+    "optional_params": [
+      "remote_config_version",
+      "source"
+    ]
+  },
+  {
     "name": "event_join",
     "required_params": [
       "session_id",

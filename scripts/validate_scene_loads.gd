@@ -40,6 +40,7 @@ func _init() -> void:
 
 func _run() -> void:
 	GameSession.use_save_path_for_testing(SESSION_VALIDATION_SAVE_PATH)
+	LiveEventService.reset_remote_config_exposures_for_testing()
 	_remove_validation_save()
 	var errors: PackedStringArray = PackedStringArray()
 	GameSession.clear_analytics_events()
@@ -99,7 +100,11 @@ func _remove_validation_save() -> void:
 			return
 		var remove_error := user_dir.remove(SESSION_VALIDATION_SAVE_FILE_NAME)
 		if remove_error != OK:
-			push_warning("Scene validation could not remove temporary %s." % SESSION_VALIDATION_SAVE_PATH)
+			var file := FileAccess.open(SESSION_VALIDATION_SAVE_PATH, FileAccess.WRITE)
+			if file != null:
+				file.store_string("{}")
+				return
+			push_warning("Scene validation could not reset temporary %s." % SESSION_VALIDATION_SAVE_PATH)
 
 
 func _validate_scene_specifics(scene_path: String, node: Node) -> PackedStringArray:
@@ -219,9 +224,12 @@ func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
 		var missing_params := GameSession.analytics_event_missing_required_params(event_name, params)
 		if not missing_params.is_empty():
 			errors.append("runtime analytics event %s missing required params: %s" % [event_name, ", ".join(Array(missing_params))])
-		if event_name == "live_event_impression":
-			_validate_live_event_impression_payload(params, live_events_by_id, errors)
-	for required_event in ["rescue_book_open", "stage_start", "event_join", "event_progress", "event_reward_claim"]:
+		match event_name:
+			"live_event_impression":
+				_validate_live_event_impression_payload(params, live_events_by_id, errors)
+			"remote_config_exposure":
+				_validate_remote_config_exposure_payload(params, errors)
+	for required_event in ["rescue_book_open", "stage_start", "remote_config_exposure", "event_join", "event_progress", "event_reward_claim"]:
 		if not seen_names.has(required_event):
 			errors.append("runtime analytics should emit %s during scene smoke." % required_event)
 	var active_current_live_events := false
@@ -239,6 +247,14 @@ func _last_analytics_event_by_name(event_name: String) -> Dictionary:
 		if event is Dictionary and String(Dictionary(event).get("name", "")) == event_name:
 			return Dictionary(event)
 	return {}
+
+
+func _analytics_event_count(event_name: String) -> int:
+	var count := 0
+	for event in GameSession.get_analytics_events():
+		if event is Dictionary and String(Dictionary(event).get("name", "")) == event_name:
+			count += 1
+	return count
 
 
 func _live_events_by_id() -> Dictionary:
@@ -271,6 +287,20 @@ func _validate_live_event_impression_payload(params: Dictionary, live_events_by_
 		errors.append("live_event_impression %s type mismatch: %s vs %s." % [event_id, event_type, String(config_event.get("type", ""))])
 	if not Array(config_event.get("placements", [])).has(placement):
 		errors.append("live_event_impression %s placement %s is not in event config." % [event_id, placement])
+
+
+func _validate_remote_config_exposure_payload(params: Dictionary, errors: PackedStringArray) -> void:
+	var config_key := String(params.get("config_key", ""))
+	var variant_id := String(params.get("variant_id", ""))
+	var config_value_hash := String(params.get("config_value_hash", ""))
+	if config_key.is_empty():
+		errors.append("remote_config_exposure should not have an empty config_key.")
+	if variant_id.is_empty():
+		errors.append("remote_config_exposure should not have an empty variant_id.")
+	if config_value_hash.is_empty():
+		errors.append("remote_config_exposure should not have an empty config_value_hash.")
+	if not LiveEventService.REMOTE_CONFIG_EXPOSURE_KEYS.has(config_key):
+		errors.append("remote_config_exposure has unsupported config_key %s." % config_key)
 
 
 func _validate_loading_scene(node: Node, errors: PackedStringArray) -> void:
@@ -795,6 +825,7 @@ func _validate_rescue_buddy_stage_config(stage_by_id: Dictionary, errors: Packed
 func _validate_live_event_config(errors: PackedStringArray) -> void:
 	for event_error in LiveEventService.validate_events():
 		errors.append(event_error)
+	_validate_live_event_status_model(errors)
 	var smoke_stages_by_placement := {
 		"home": 9,
 		"collection": 9,
@@ -803,7 +834,7 @@ func _validate_live_event_config(errors: PackedStringArray) -> void:
 	}
 	for placement in smoke_stages_by_placement.keys():
 		var smoke_stage := int(smoke_stages_by_placement[placement])
-		if LiveEventService.active_events_for(smoke_stage, String(placement)).is_empty():
+		if LiveEventService.active_events_for(smoke_stage, String(placement), -1, false).is_empty():
 			errors.append("LiveEventService should expose %s event by stage %d." % [String(placement), smoke_stage])
 	for event in LiveEventService.load_events():
 		if not (event is Dictionary):
@@ -815,6 +846,43 @@ func _validate_live_event_config(errors: PackedStringArray) -> void:
 			var placement := String(placement_value)
 			if not IMPLEMENTED_LIVE_EVENT_PLACEMENTS.has(placement):
 				errors.append("enabled live event %s uses placement %s without an implemented surface." % [String(event_dict.get("id", "")), placement])
+
+
+func _validate_live_event_status_model(errors: PackedStringArray) -> void:
+	var active_fixture := {
+		"enabled": true,
+		"starts_at_unix": 1767225600,
+		"ends_at_unix": 4102444799,
+	}
+	if LiveEventService.event_status(active_fixture, 1778198400) != "active":
+		errors.append("LiveEventService should classify in-window events as active.")
+	if LiveEventService.event_status(active_fixture, 1767225599) != "upcoming":
+		errors.append("LiveEventService should classify pre-window events as upcoming.")
+	if LiveEventService.event_status(active_fixture, 4102444800) != "ended":
+		errors.append("LiveEventService should classify post-window events as ended.")
+	if LiveEventService.event_status({"enabled": false}, 1778198400) != "disabled":
+		errors.append("LiveEventService should classify disabled events as disabled.")
+
+	var inactive_home_events := LiveEventService.events_for(21, "home", 4102444800, true, false)
+	var saw_ended_event := false
+	for event in inactive_home_events:
+		if event is Dictionary and String(Dictionary(event).get("status", "")) == "ended":
+			saw_ended_event = true
+	if not saw_ended_event:
+		errors.append("LiveEventService.events_for(include_inactive=true) should expose ended event state.")
+
+	var offline_events := LiveEventService.offline_events_for(9, "home", 1778198400)
+	if offline_events.is_empty():
+		errors.append("LiveEventService should expose offline fallback events for eligible home placement.")
+	else:
+		for event in offline_events:
+			if String(Dictionary(event).get("status", "")) != "offline":
+				errors.append("LiveEventService offline fallback events should be marked offline.")
+
+	var exposure_count_before := _analytics_event_count("remote_config_exposure")
+	LiveEventService.active_events_for(9, "home", 1778198400, false)
+	if _analytics_event_count("remote_config_exposure") != exposure_count_before:
+		errors.append("LiveEventService status/config validation should not record remote_config_exposure.")
 
 
 func _validate_live_event_state_model(errors: PackedStringArray) -> void:
