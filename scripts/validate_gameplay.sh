@@ -16,6 +16,7 @@ zsh scripts/validate_stage_balance.sh
 echo "[3/8] Godot import cache"
 import_log="/tmp/puzzle-import-cache.log"
 import_stdout="/tmp/puzzle-import-cache.stdout"
+rm -f "$import_log" "$import_stdout"
 if ! godot --headless --quiet --path . --import --quit --log-file "$import_log" >"$import_stdout" 2>&1; then
   echo "Godot import failed."
   cat "$import_stdout"
@@ -27,6 +28,7 @@ echo "Godot import cache prepared."
 echo "[4/8] Focused scene load smoke"
 scene_log="/tmp/puzzle-scene-load-validate.log"
 scene_stdout="/tmp/puzzle-scene-load-validate.stdout"
+rm -f "$scene_log" "$scene_stdout"
 if ! godot --headless --quiet --path . --log-file "$scene_log" --script res://scripts/validate_scene_loads.gd >"$scene_stdout" 2>&1; then
   echo "Focused scene load smoke failed."
   cat "$scene_stdout"
@@ -42,6 +44,7 @@ fi
 echo "[5/8] Headless main load"
 headless_log="/tmp/puzzle-headless-validate.log"
 headless_stdout="/tmp/puzzle-headless-validate.stdout"
+rm -f "$headless_log" "$headless_stdout"
 if ! godot --headless --quiet --path . --log-file "$headless_log" --quit >"$headless_stdout" 2>&1; then
   echo "Headless main load failed."
   cat "$headless_stdout"
@@ -64,6 +67,7 @@ echo "No direct file-based texture loading in scripts."
 
 echo "[7/8] Alpha QA packet integrity"
 alpha_packet_stdout="/tmp/puzzle-alpha-qa-packet-dry-run.stdout"
+rm -f "$alpha_packet_stdout"
 if ! zsh scripts/create_alpha_qa_packet.sh --dry-run >"$alpha_packet_stdout" 2>&1; then
   echo "Alpha QA packet dry-run failed."
   cat "$alpha_packet_stdout"

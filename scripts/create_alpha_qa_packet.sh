@@ -52,6 +52,9 @@ validate_template_contract() {
 	done
 
 	require_template_text "device evidence header" "| Evidence | Result | Evidence path | Notes |"
+	require_template_text "mobile viewport preflight" "| Mobile viewport matrix |"
+	require_template_text "mobile viewport compact portrait" "390x844"
+	require_template_text "mobile viewport compact landscape" "844x390"
 	require_template_text "representative course header" "| Course | Result | Capture path | 10s understanding | HUD/board readability | Overlay/action clarity | Save/unlock/star persistence | Sound | Haptics | Orientation | Notes |"
 	require_template_text "stage data smoke header" "| Scenario ID | Stage | Stage data trigger | Result | Evidence path | Notes |"
 	require_template_text "focused gate header" "| Scenario ID | Gate | Required scenario | Result | Evidence path | Notes |"

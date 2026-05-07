@@ -53,6 +53,7 @@ var representative_stage_ids: Array[int] = [1, 11, 25, 50, 75, 100]
 var tutorial_stage_ids: Array[int] = [1, 11, 25, 45, 65, 85, 95]
 var analytics_flush_adapter_requests: Array = []
 var monetization_adapter_requests: Array = []
+var validation_analytics_queue_path := SESSION_VALIDATION_ANALYTICS_QUEUE_PATH
 
 
 func _init() -> void:
@@ -60,8 +61,9 @@ func _init() -> void:
 
 
 func _run() -> void:
+	validation_analytics_queue_path = "user://scene_validation_analytics_gateway_queue_%d.json" % Time.get_ticks_usec()
 	GameSession.use_save_path_for_testing(SESSION_VALIDATION_SAVE_PATH)
-	AnalyticsGateway.use_queue_path_for_testing(SESSION_VALIDATION_ANALYTICS_QUEUE_PATH)
+	AnalyticsGateway.use_queue_path_for_testing(validation_analytics_queue_path)
 	AnalyticsGateway.reset_for_testing()
 	AnalyticsGateway.clear_persisted_queue_for_testing()
 	MonetizationGateway.reset_for_testing()
@@ -512,6 +514,11 @@ func _analytics_event_signature_count(events: Array, event_name: String, event_t
 
 
 func _validate_analytics_gateway_contract_gate(errors: PackedStringArray) -> void:
+	# The runtime analytics smoke above intentionally fills the local-buffer queue.
+	# Isolate the contract/flush checks so provider persistence assertions are not
+	# coupled to unrelated scene-smoke event volume or aborted prior runs.
+	AnalyticsGateway.reset_for_testing()
+	AnalyticsGateway.clear_persisted_queue_for_testing()
 	var saved_before := GameSession.get_analytics_events().size()
 	var dispatched_before := AnalyticsGateway.get_dispatched_events_for_testing().size()
 	var rejected_before := AnalyticsGateway.get_rejected_events_for_testing().size()
@@ -838,7 +845,7 @@ func _validate_analytics_gateway_flush_adapter(errors: PackedStringArray) -> voi
 
 func _write_validation_analytics_queue(raw_json: String) -> void:
 	DirAccess.make_dir_recursive_absolute("user://")
-	var file := FileAccess.open(SESSION_VALIDATION_ANALYTICS_QUEUE_PATH, FileAccess.WRITE)
+	var file := FileAccess.open(validation_analytics_queue_path, FileAccess.WRITE)
 	if file != null:
 		file.store_string(raw_json)
 
@@ -3701,7 +3708,7 @@ func _validate_alpha_manual_qa_template_coverage(stages: Array, errors: PackedSt
 			errors
 		)
 
-	for scenario_id in ["SPECIAL_COMBO_6", "MONETIZATION_GATEWAY_PENDING", "ANALYTICS_GATEWAY_LOCAL_BUFFER"]:
+	for scenario_id in ["Mobile viewport matrix", "390x844", "844x390", "SPECIAL_COMBO_6", "MONETIZATION_GATEWAY_PENDING", "ANALYTICS_GATEWAY_LOCAL_BUFFER"]:
 		_require_alpha_template_text(
 			template_text,
 			scenario_id,

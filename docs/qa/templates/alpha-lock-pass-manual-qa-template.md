@@ -16,6 +16,7 @@
 | Gate | Command or Evidence | Result | Notes |
 | --- | --- | --- | --- |
 | Gameplay validation | `zsh scripts/validate_gameplay.sh` | Pending |  |
+| Mobile viewport matrix | `zsh scripts/validate_gameplay.sh` includes 1080x1920, 720x1280, 390x844, 1920x1080, 1280x720, 844x390 requested windows | Pending | Verifies logical viewport bounds for Home, Stage Select, Collection, Stage 4 HUD, Stage Popup, Stage 25 failure overlay |
 | Android debug environment | `zsh scripts/check_android_setup.sh` | Pending |  |
 | Release preflight | `GODOT_RELEASE_KEYSTORE_PATH=/path/to/release.keystore zsh scripts/check_android_setup.sh --release` | Pending | Required for release candidates |
 | Install/run evidence | APK path + install result | Pending | Device required |
