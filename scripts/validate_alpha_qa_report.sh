@@ -50,6 +50,14 @@ require_text() {
 	fi
 }
 
+require_regex() {
+	local label="$1"
+	local pattern="$2"
+	if ! grep -Eq -- "$pattern" "$REPORT_PATH"; then
+		add_failure "missing ${label}: ${pattern}"
+	fi
+}
+
 metadata_value() {
 	local label="$1"
 	awk -v label="$label" '
@@ -250,6 +258,308 @@ validate_known_evidence_file() {
 	esac
 }
 
+validate_report_contract() {
+	for section in \
+		"Run Metadata" \
+		"Required Preflight" \
+		"Device Evidence Pack" \
+		"Representative Course Results" \
+		"Stage Data Smoke Coverage" \
+		"Focused Device Gate Matrix" \
+		"Stage 31 Special Combo Evidence" \
+		"Rescue Buddy Stage Matrix" \
+		"Monetization And Analytics Evidence" \
+		"Failure Continue Gateway" \
+		"Analytics Gateway Local Buffer" \
+		"Alpha Blocker Log" \
+		"Device-Blocked Items" \
+		"Decision"; do
+		require_regex "section" "^#{2,3}[[:space:]]+${section}[[:space:]]*$"
+	done
+
+	for required_text in \
+		"| Gate | Command or Evidence | Result | Notes |" \
+		"| Evidence | Result | Evidence path | Notes |" \
+		"| Course | Result | Capture path | 10s understanding | HUD/board readability | Overlay/action clarity | Save/unlock/star persistence | Sound | Haptics | Orientation | Notes |" \
+		"| Scenario ID | Stage | Stage data trigger | Result | Evidence path | Notes |" \
+		"| Scenario ID | Gate | Required scenario | Result | Evidence path | Notes |" \
+		"| Combo | combo_type | Result | Portrait evidence | Landscape evidence | cleared_count | obstacles_cleared | special_combo_trigger | VFX label distinct | SFX/haptic distinct | input recovers <2s | Notes |" \
+		"| Scenario ID | Stage | Buddy focus | Result | Portrait evidence | Landscape evidence | HUD readable | VFX overlap acceptable | Analytics events | Notes |" \
+		"Mobile viewport matrix" \
+		"390x844" \
+		"844x390" \
+		"Android debug APK export" \
+		"zsh scripts/export_android_debug.sh" \
+		"Android device evidence capture" \
+		"zsh scripts/capture_android_device_evidence.sh" \
+		"--allow-orientation-change" \
+		"Manual device checks" \
+		"zsh scripts/record_manual_device_checks.sh" \
+		"Release preflight" \
+		"GODOT_ANDROID_KEYSTORE_RELEASE_PATH" \
+		"GODOT_ANDROID_KEYSTORE_RELEASE_USER" \
+		"GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD" \
+		"Android release APK export/install" \
+		"zsh scripts/export_android_release.sh --install" \
+		"Alpha QA report validation" \
+		"zsh scripts/validate_alpha_qa_report.sh"; do
+		require_text "required report content" "$required_text"
+	done
+
+	for evidence_anchor in \
+		"puzzle-mobile-starter-debug.apk" \
+		"puzzle-mobile-starter-release.apk" \
+		"android-debug-export.txt" \
+		"android-device-evidence.txt" \
+		"manual-device-checks.txt" \
+		"android-release-export.txt" \
+		"install-log.txt" \
+		"release-install-log.txt" \
+		"release-run-log.txt" \
+		"device-info.txt" \
+		"device-portrait.png" \
+		"device-landscape.png" \
+		"device-10s.mp4" \
+		"device-log.txt" \
+		"sound-toggle-notes.md" \
+		"haptics-toggle-notes.md" \
+		"touch-latency-notes.md"; do
+		require_text "evidence anchor" "$evidence_anchor"
+	done
+
+	for preflight_gate in \
+		"Gameplay validation" \
+		"Mobile viewport matrix" \
+		"Android debug environment" \
+		"Android debug APK export" \
+		"Android device evidence capture" \
+		"Manual device checks" \
+		"Release preflight" \
+		"Android release APK export/install" \
+		"Install/run evidence" \
+		"Alpha QA report validation"; do
+		require_regex "preflight Pass row" "^\\|[[:space:]]*${preflight_gate}[[:space:]]*\\|[^|]*\\|[[:space:]]*Pass[[:space:]]*\\|"
+	done
+
+	for device_evidence in \
+		"Build source commit" \
+		"APK/AAB path" \
+		"Install result" \
+		"Release APK path" \
+		"Release install result" \
+		"Release launch/run result" \
+		"Device model and OS version" \
+		"Portrait screenshot" \
+		"Landscape screenshot" \
+		"10s video path" \
+		"sound ON/OFF" \
+		"haptics ON/OFF" \
+		"touch latency notes" \
+		"logcat or app log path"; do
+		require_regex "device evidence Pass row" "^\\|[[:space:]]*${device_evidence}[[:space:]]*\\|[[:space:]]*Pass[[:space:]]*\\|"
+	done
+
+	for course in \
+		"Home" \
+		"Stage 1" \
+		"Stage 11" \
+		"Stage 25" \
+		"Stage 50" \
+		"Stage 75" \
+		"Stage 100"; do
+		require_regex "representative course row" "^\\|[[:space:]]*${course}[[:space:]]*\\|"
+		require_regex "representative course Pass row" "^\\|[[:space:]]*${course}[[:space:]]*\\|[[:space:]]*Pass[[:space:]]*\\|"
+	done
+
+	for course_capture in \
+		"home.png" \
+		"stage-001.png" \
+		"stage-011.png" \
+		"stage-025.png" \
+		"stage-050.png" \
+		"stage-075.png" \
+		"stage-100.png"; do
+		require_text "representative course capture anchor" "$course_capture"
+	done
+
+	for smoke_id in \
+		"STAGE_SMOKE_001" \
+		"STAGE_SMOKE_004" \
+		"STAGE_SMOKE_005" \
+		"STAGE_SMOKE_008" \
+		"STAGE_SMOKE_010" \
+		"STAGE_SMOKE_016" \
+		"STAGE_SMOKE_018" \
+		"STAGE_SMOKE_020" \
+		"STAGE_SMOKE_024" \
+		"STAGE_SMOKE_025" \
+		"STAGE_SMOKE_031" \
+		"STAGE_SMOKE_041" \
+		"STAGE_SMOKE_051" \
+		"STAGE_SMOKE_081" \
+		"STAGE_SMOKE_100"; do
+		require_regex "stage data smoke row" "^\\|[[:space:]]*${smoke_id}[[:space:]]*\\|"
+		require_regex "stage data smoke Pass row" "^\\|[[:space:]]*${smoke_id}[[:space:]]*\\|[^|]*\\|[^|]*\\|[[:space:]]*Pass[[:space:]]*\\|"
+	done
+
+	for stage_smoke_anchor in \
+		"stage-smoke-001" \
+		"stage-smoke-004" \
+		"stage-smoke-005" \
+		"stage-smoke-008" \
+		"stage-smoke-010" \
+		"stage-smoke-016" \
+		"stage-smoke-018" \
+		"stage-smoke-020" \
+		"stage-smoke-024" \
+		"stage-smoke-025" \
+		"stage-smoke-031" \
+		"stage-smoke-041" \
+		"stage-smoke-051" \
+		"stage-smoke-081" \
+		"stage-smoke-100"; do
+		require_text "stage smoke evidence anchor" "$stage_smoke_anchor"
+	done
+
+	for scenario_id in \
+		"PAM_QA_040_EXPRESSIONS" \
+		"PAM_QA_041_STAGE_POPUP" \
+		"STAGE_POPUP_BUDDY" \
+		"RESCUE_BOOK_UNLOCK" \
+		"SPECIAL_COMBO_6" \
+		"RESCUE_BUDDY_SMOKE" \
+		"NEAR_MISS_CONTINUE" \
+		"MONETIZATION_GATEWAY_PENDING" \
+		"ANALYTICS_GATEWAY_LOCAL_BUFFER"; do
+		require_regex "focused scenario row" "^\\|[[:space:]]*${scenario_id}[[:space:]]*\\|"
+		require_regex "focused scenario Pass row" "^\\|[[:space:]]*${scenario_id}[[:space:]]*\\|[^|]*\\|[^|]*\\|[[:space:]]*Pass[[:space:]]*\\|"
+	done
+
+	for focused_anchor in \
+		"pam-qa-040-expressions" \
+		"pam-qa-041-popup" \
+		"stage-popup-buddy" \
+		"rescue-book-unlock" \
+		"stage-031-special-combos" \
+		"buddy-readability" \
+		"near-miss-continue" \
+		"monetization-gateway" \
+		"analytics-local-buffer"; do
+		require_text "focused evidence anchor" "$focused_anchor"
+	done
+
+	for combo in \
+		"row[+]column" \
+		"row[+]row" \
+		"column[+]column" \
+		"row[+]bomb" \
+		"column[+]bomb" \
+		"bomb[+]bomb"; do
+		require_regex "Stage 31 combo row" "^\\|[[:space:]]*${combo}[[:space:]]*\\|"
+		require_regex "Stage 31 combo Pass row" "^\\|[[:space:]]*${combo}[[:space:]]*\\|[^|]*\\|[[:space:]]*Pass[[:space:]]*\\|"
+	done
+
+	for combo_anchor in \
+		"combo-row-column-portrait" \
+		"combo-row-column-landscape" \
+		"combo-row-row-portrait" \
+		"combo-row-row-landscape" \
+		"combo-column-column-portrait" \
+		"combo-column-column-landscape" \
+		"combo-row-bomb-portrait" \
+		"combo-row-bomb-landscape" \
+		"combo-column-bomb-portrait" \
+		"combo-column-bomb-landscape" \
+		"combo-bomb-bomb-portrait" \
+		"combo-bomb-bomb-landscape"; do
+		require_text "Stage 31 combo evidence anchor" "$combo_anchor"
+	done
+
+	for buddy_id in \
+		"BUDDY_STAGE_004" \
+		"BUDDY_STAGE_005" \
+		"BUDDY_STAGE_008" \
+		"BUDDY_STAGE_016" \
+		"BUDDY_STAGE_018" \
+		"BUDDY_STAGE_020" \
+		"BUDDY_STAGE_024" \
+		"BUDDY_STAGE_025" \
+		"BUDDY_STAGE_031" \
+		"BUDDY_STAGE_041" \
+		"BUDDY_STAGE_051" \
+		"BUDDY_STAGE_081"; do
+		require_regex "Rescue Buddy row" "^\\|[[:space:]]*${buddy_id}[[:space:]]*\\|"
+		require_regex "Rescue Buddy Pass row" "^\\|[[:space:]]*${buddy_id}[[:space:]]*\\|[^|]*\\|[^|]*\\|[[:space:]]*Pass[[:space:]]*\\|"
+	done
+
+	for buddy_anchor in \
+		"buddy-stage-004-portrait" \
+		"buddy-stage-004-landscape" \
+		"buddy-stage-005-portrait" \
+		"buddy-stage-005-landscape" \
+		"buddy-stage-008-portrait" \
+		"buddy-stage-008-landscape" \
+		"buddy-stage-016-portrait" \
+		"buddy-stage-016-landscape" \
+		"buddy-stage-018-portrait" \
+		"buddy-stage-018-landscape" \
+		"buddy-stage-020-portrait" \
+		"buddy-stage-020-landscape" \
+		"buddy-stage-024-portrait" \
+		"buddy-stage-024-landscape" \
+		"buddy-stage-025-portrait" \
+		"buddy-stage-025-landscape" \
+		"buddy-stage-031-portrait" \
+		"buddy-stage-031-landscape" \
+		"buddy-stage-041-portrait" \
+		"buddy-stage-041-landscape" \
+		"buddy-stage-051-portrait" \
+		"buddy-stage-051-landscape" \
+		"buddy-stage-081-portrait" \
+		"buddy-stage-081-landscape"; do
+		require_text "Rescue Buddy evidence anchor" "$buddy_anchor"
+	done
+
+	for required_text in \
+		"rewarded_ad pending keeps overlay" \
+		"IAP pending" \
+		"pending duplicate tap does not create second request" \
+		"invalid source rejected_invalid_source" \
+		"request log source/stage_id/fail_reason/provider_id/status/result" \
+		"completed grants once" \
+		"failed/canceled preserves moves/wallet/objectives" \
+		"duplicate transaction_id grants once" \
+		"GameSession saved event" \
+		"AnalyticsGateway local_buffer queued" \
+		"disk reload preserves queue" \
+		"flush drains in order exactly once" \
+		"pending queue removed after flush" \
+		"contract violation rejected_contract not queued" \
+		"provider-neutral/no SDK selected"; do
+		require_text "monetization or analytics scenario" "$required_text"
+		require_regex "monetization or analytics Pass row" "^\\|[[:space:]]*${required_text}[[:space:]]*\\|[^|]*\\|[[:space:]]*Pass[[:space:]]*\\|"
+	done
+
+	for gateway_anchor in \
+		"rewarded-pending" \
+		"iap-pending" \
+		"pending-duplicate-tap" \
+		"invalid-source" \
+		"request-log" \
+		"completed-grants-once" \
+		"failed-canceled-preserve-state" \
+		"duplicate-transaction" \
+		"analytics-gamesession" \
+		"analytics-buffer-queued" \
+		"analytics-buffer-reload" \
+		"analytics-flush-order" \
+		"analytics-flush-empty" \
+		"analytics-rejected-contract" \
+		"analytics-provider-neutral"; do
+		require_text "monetization or analytics evidence anchor" "$gateway_anchor"
+	done
+}
+
 if [ ! -f "$REPORT_PATH" ]; then
 	echo "Alpha QA report missing: $REPORT_PATH"
 	exit 1
@@ -260,21 +570,7 @@ if [ ! -s "$REPORT_PATH" ]; then
 	exit 1
 fi
 
-for section in \
-	"Run Metadata" \
-	"Required Preflight" \
-	"Device Evidence Pack" \
-	"Representative Course Results" \
-	"Stage Data Smoke Coverage" \
-	"Focused Device Gate Matrix" \
-	"Stage 31 Special Combo Evidence" \
-	"Rescue Buddy Stage Matrix" \
-	"Failure Continue Gateway" \
-	"Analytics Gateway Local Buffer" \
-	"Alpha Blocker Log" \
-	"Decision"; do
-	require_text "section" "## ${section}"
-done
+validate_report_contract
 
 for label in \
 	"QA date" \
