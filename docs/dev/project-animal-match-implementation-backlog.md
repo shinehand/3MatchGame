@@ -397,7 +397,7 @@
 
 ### PAM-ANA-090: 분석 이벤트 계약 검증기 추가
 
-- 상태: 완료됨. `data/analytics_events.json`와 `scripts/validate_analytics_contract.gd`가 앱/스테이지/오퍼/이벤트/Fever/Buddy/Collection 필수 이벤트와 파라미터를 검증한다. `GameSession`은 런타임 이벤트 필수 파라미터 누락을 경고하고, provider-neutral `AnalyticsGateway`에 저장된 이벤트를 dispatch한다. scene smoke가 `stage_start`, `rescue_book_open`, Level 1-5 첫 세션 카드 해금의 `animal_unlock`, 활성 live ops 노출의 `live_event_impression`, 이벤트 참여/진행/보상 수령의 `event_join`, `event_progress`, `event_reward_claim` 실제 기록과 gateway `local_buffer` queued dispatch, disk reload 보존, 순차 flush 후 pending queue 제거, corrupt queue tolerance, 320개 bounded queue eviction, 계약 위반 이벤트의 `rejected_contract` 격리를 검사한다.
+- 상태: 완료됨. `data/analytics_events.json`와 `scripts/validate_analytics_contract.gd`가 앱/스테이지/오퍼/이벤트/Fever/Buddy/Collection 필수 이벤트와 파라미터를 검증한다. `GameSession`은 런타임 이벤트 필수 파라미터 누락을 경고하고, provider-neutral `AnalyticsGateway`에 저장된 이벤트를 dispatch한다. scene smoke가 `stage_start`, `rescue_book_open`, Level 1-5 첫 세션 카드 해금의 `animal_unlock`, 활성 live ops 노출의 `live_event_impression`, 이벤트 참여/진행/보상 수령의 `event_join`, `event_progress`, `event_reward_claim` 실제 기록과 gateway `local_buffer` queued dispatch, disk reload 보존, 순차 flush 후 pending queue 제거, `configure_flush_adapter(provider_id, Callable)` SDK adapter hook, adapter partial failure, adapter payload mutation guard, corrupt queue tolerance, 320개 bounded queue eviction, 계약 위반 이벤트의 `rejected_contract` 격리를 검사한다.
 - 소유: Technical Lead + QA Agent
 - 대상 파일 후보:
   - `docs/planning/project-animal-match-analytics-remote-config-spec.md`

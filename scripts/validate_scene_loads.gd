@@ -40,6 +40,7 @@ const SPECIAL_COMBO_MANUAL_ROWS := ["row+column", "row+row", "column+column", "r
 
 var representative_stage_ids: Array[int] = [1, 11, 25, 50, 75, 100]
 var tutorial_stage_ids: Array[int] = [1, 11, 25, 45, 65, 85, 95]
+var analytics_flush_adapter_requests: Array = []
 var monetization_adapter_requests: Array = []
 
 
@@ -515,6 +516,7 @@ func _validate_analytics_gateway_contract_gate(errors: PackedStringArray) -> voi
 	_validate_gateway_flush_order(queued_before_flush, flushed_events, errors)
 	_validate_analytics_gateway_corrupt_queue_tolerance(errors)
 	_validate_analytics_gateway_bounded_queue(errors)
+	_validate_analytics_gateway_flush_adapter(errors)
 
 	AnalyticsGateway.set_provider_id_for_testing(AnalyticsGateway.DEFAULT_PROVIDER_ID)
 	AnalyticsGateway.set_dispatch_enabled_for_testing(true)
@@ -577,6 +579,14 @@ func _mutate_and_reject_gateway_flush_event(event: Dictionary) -> bool:
 	return false
 
 
+func _analytics_flush_adapter_accept_first(event: Dictionary) -> Dictionary:
+	analytics_flush_adapter_requests.append(event.duplicate(true))
+	var params := Dictionary(event.get("params", {}))
+	params["stage_id"] = -999
+	event["params"] = params
+	return {"accepted": analytics_flush_adapter_requests.size() == 1}
+
+
 func _validate_analytics_gateway_corrupt_queue_tolerance(errors: PackedStringArray) -> void:
 	AnalyticsGateway.clear_persisted_queue_for_testing()
 	_write_validation_analytics_queue("{not valid json")
@@ -617,6 +627,60 @@ func _validate_analytics_gateway_bounded_queue(errors: PackedStringArray) -> voi
 			errors.append("AnalyticsGateway bounded local_buffer queue should preserve the newest event.")
 	AnalyticsGateway.clear_persisted_queue_for_testing()
 	AnalyticsGateway.set_provider_id_for_testing("validation_sdk")
+
+
+func _validate_analytics_gateway_flush_adapter(errors: PackedStringArray) -> void:
+	AnalyticsGateway.reset_for_testing()
+	AnalyticsGateway.clear_persisted_queue_for_testing()
+	analytics_flush_adapter_requests.clear()
+	AnalyticsGateway.configure_flush_adapter("adapter_validation_sdk", Callable(self, "_analytics_flush_adapter_accept_first"))
+	var rejected_before_adapter := AnalyticsGateway.get_rejected_events_for_testing().size()
+	for index in range(3):
+		AnalyticsGateway.dispatch_event({
+			"name": "stage_start",
+			"timestamp": 1800000000 + index,
+			"params": {
+				"session_id": "adapter_validation",
+				"stage_id": 2000 + index,
+				"band": "validation",
+				"roster_group": "validation",
+				"moves": 1,
+			},
+		})
+	var queued_before_adapter := AnalyticsGateway.get_dispatched_events_for_testing()
+	var adapter_sent_events := AnalyticsGateway.flush_queued_events()
+	if analytics_flush_adapter_requests.size() != 2:
+		errors.append("AnalyticsGateway flush adapter should stop after the first rejected provider event, got %d adapter calls." % analytics_flush_adapter_requests.size())
+	if adapter_sent_events.size() != 1:
+		errors.append("AnalyticsGateway flush adapter should report exactly one accepted sent event.")
+	elif String(Dictionary(adapter_sent_events[0]).get("dispatch_status", "")) != "sent":
+		errors.append("AnalyticsGateway flush adapter should return accepted events with sent status.")
+	var pending_after_adapter := AnalyticsGateway.get_dispatched_events_for_testing()
+	if pending_after_adapter.size() != 2:
+		errors.append("AnalyticsGateway flush adapter should leave rejected and unattempted events pending, got %d." % pending_after_adapter.size())
+	elif queued_before_adapter.size() >= 3:
+		if not _analytics_values_equivalent(Dictionary(pending_after_adapter[0]), Dictionary(queued_before_adapter[1])):
+			errors.append("AnalyticsGateway flush adapter should preserve the rejected event payload after adapter mutation.")
+		if not _analytics_values_equivalent(Dictionary(pending_after_adapter[1]), Dictionary(queued_before_adapter[2])):
+			errors.append("AnalyticsGateway flush adapter should preserve the unattempted event payload after adapter mutation.")
+	if not analytics_flush_adapter_requests.is_empty():
+		var first_request := Dictionary(analytics_flush_adapter_requests[0])
+		if String(first_request.get("provider_id", "")) != "adapter_validation_sdk" or String(first_request.get("dispatch_status", "")) != "sent":
+			errors.append("AnalyticsGateway flush adapter should receive deep-copied sent event payload with adapter provider metadata.")
+		var first_request_params := Dictionary(first_request.get("params", {}))
+		if int(first_request_params.get("stage_id", 0)) != 2000:
+			errors.append("AnalyticsGateway flush adapter should receive FIFO event params before mutation.")
+	if AnalyticsGateway.get_rejected_events_for_testing().size() != rejected_before_adapter:
+		errors.append("AnalyticsGateway flush adapter should not mutate rejected_contract events.")
+	AnalyticsGateway.reload_queue_from_disk_for_testing()
+	if AnalyticsGateway.get_dispatched_events_for_testing().size() != pending_after_adapter.size():
+		errors.append("AnalyticsGateway flush adapter pending queue should persist after disk reload.")
+	AnalyticsGateway.clear_flush_adapter_for_testing()
+	var remaining_sent := AnalyticsGateway.flush_queued_events()
+	if remaining_sent.size() != pending_after_adapter.size() or AnalyticsGateway.get_dispatched_events_for_testing().size() != 0:
+		errors.append("AnalyticsGateway flush adapter cleanup should allow remaining local_buffer events to flush once.")
+	AnalyticsGateway.clear_persisted_queue_for_testing()
+	AnalyticsGateway.reset_for_testing()
 
 
 func _write_validation_analytics_queue(raw_json: String) -> void:

@@ -23,7 +23,7 @@
 | DEC-014 | Rescue Book 첫 해금 동물은 rabbit 고정 | Locked | FTUE 표와 Level 4 첫 카드 해금 기준 확정 | UX |
 | DEC-015 | 우정 레벨 보상은 MVP에서 cosmetic 중심 | Accepted | 초반 pay-to-win 방지. booster/event XP는 소프트 런칭 이후 실험 | BM/UX |
 | DEC-016 | Near Miss 기준은 남은 목표 2개 이하 또는 목표 진행률 80% 이상 | Locked | `FailOfferPolicy` 기본값과 remote config `near_miss_goal_threshold`, `near_miss_progress_threshold`로 조정 가능 | UX/Balance/Tech |
-| DEC-017 | 분석 SDK 공급자 선택 전 이벤트 경계는 `AnalyticsGateway` `local_buffer` queued dispatch로 고정 | Accepted | 계약 위반 이벤트는 `rejected_contract`로 격리하고, Firebase/GameAnalytics/custom adapter는 provider-neutral gateway 뒤에 연결 | Tech/PM |
+| DEC-017 | 분석 SDK 공급자 선택 전 이벤트 경계는 `AnalyticsGateway` `local_buffer` queued dispatch로 고정 | Accepted | 계약 위반 이벤트는 `rejected_contract`로 격리하고, Firebase/GameAnalytics/custom adapter는 `configure_flush_adapter(provider_id, Callable)` 뒤에 연결 | Tech/PM |
 
 ## 2. 아직 열려 있는 결정
 

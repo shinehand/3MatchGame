@@ -6,6 +6,7 @@ const MAX_DISPATCHED_EVENTS := 320
 
 static var _provider_id := DEFAULT_PROVIDER_ID
 static var _dispatch_enabled := true
+static var _flush_adapter: Callable = Callable()
 static var _queue_path := DEFAULT_QUEUE_PATH
 static var _queue_loaded := false
 static var _dispatched_events: Array = []
@@ -50,6 +51,19 @@ static func clear_rejected_events_for_testing() -> void:
 
 
 static func set_provider_id_for_testing(provider_id: String) -> void:
+	_set_provider_id(provider_id)
+
+
+static func configure_flush_adapter(provider_id: String, adapter: Callable) -> void:
+	_set_provider_id(provider_id)
+	_flush_adapter = adapter
+
+
+static func clear_flush_adapter_for_testing() -> void:
+	_flush_adapter = Callable()
+
+
+static func _set_provider_id(provider_id: String) -> void:
 	var normalized_provider := provider_id.strip_edges()
 	_provider_id = DEFAULT_PROVIDER_ID if normalized_provider.is_empty() else normalized_provider
 
@@ -83,6 +97,7 @@ static func flush_queued_events(send_callback: Callable = Callable(), max_count:
 	var sent_events: Array = []
 	var remaining_events: Array = []
 	var flush_limit := _dispatched_events.size() if max_count < 0 else max_count
+	var effective_callback := send_callback if send_callback.is_valid() else _flush_adapter
 	var stop_flush := false
 	for event_value in _dispatched_events:
 		var event := Dictionary(event_value).duplicate(true)
@@ -91,7 +106,7 @@ static func flush_queued_events(send_callback: Callable = Callable(), max_count:
 			continue
 		var send_event := event.duplicate(true)
 		send_event["dispatch_status"] = "sent"
-		if _send_callback_accepts_event(send_callback, send_event):
+		if _send_callback_accepts_event(effective_callback, send_event):
 			sent_events.append(send_event)
 		else:
 			remaining_events.append(event)
@@ -104,6 +119,7 @@ static func flush_queued_events(send_callback: Callable = Callable(), max_count:
 static func reset_for_testing() -> void:
 	_provider_id = DEFAULT_PROVIDER_ID
 	_dispatch_enabled = true
+	_flush_adapter = Callable()
 	_queue_loaded = false
 	_dispatched_events.clear()
 	_rejected_events.clear()
