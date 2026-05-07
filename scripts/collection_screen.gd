@@ -210,6 +210,9 @@ func _make_animal_card(animal: Dictionary, entry: Dictionary) -> PanelContainer:
 	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	preview.modulate = Color(1, 1, 1, 1) if unlocked else Color(0.24, 0.28, 0.32, 0.44)
+	preview.set_meta("animal_id", animal_id)
+	preview.set_meta("expression_source", "collection")
+	preview.set_meta("expression_state", "idle")
 	stack.add_child(preview)
 	if unlocked:
 		preview_nodes[animal_id] = preview
@@ -330,6 +333,8 @@ func _sync_preview_motion() -> void:
 	for preview in preview_nodes.values():
 		if preview is TextureRect:
 			(preview as TextureRect).scale = Vector2.ONE
+			(preview as TextureRect).modulate = Color(1, 1, 1, 1)
+			(preview as TextureRect).set_meta("expression_state", "idle")
 	if not is_visible_in_tree():
 		return
 
@@ -344,15 +349,39 @@ func _sync_preview_motion() -> void:
 		var preview_rect := Rect2((preview as TextureRect).global_position, (preview as TextureRect).size)
 		if not _preview_rect_is_visible(preview_rect):
 			continue
-		var tween := create_tween()
-		tween.set_loops()
-		tween.set_trans(Tween.TRANS_SINE)
-		tween.set_ease(Tween.EASE_IN_OUT)
-		tween.tween_property(preview, "scale", Vector2(1.06, 1.06), 0.65)
-		tween.tween_property(preview, "scale", Vector2.ONE, 0.75)
+		var tween := _start_preview_expression_loop(preview as TextureRect, animated)
 		_preview_tweens.append(tween)
 		_active_preview_ids.append(animal_id)
 		animated += 1
+
+
+func _start_preview_expression_loop(preview: TextureRect, stagger_index: int) -> Tween:
+	preview.pivot_offset = preview.size * 0.5
+	_set_preview_expression_state(preview, "blink")
+	var base_modulate := Color(1, 1, 1, 1)
+	var smile_modulate := Color(1.10, 1.08, 1.03, 1)
+	var tween := create_tween()
+	tween.set_loops()
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.tween_interval(0.10 * float(stagger_index))
+	tween.tween_callback(_set_preview_expression_state.bind(preview, "blink"))
+	tween.tween_property(preview, "scale", Vector2(1.02, 0.86), 0.08)
+	tween.tween_property(preview, "scale", Vector2.ONE, 0.10)
+	tween.tween_callback(_set_preview_expression_state.bind(preview, "smile"))
+	tween.tween_property(preview, "scale", Vector2(1.06, 1.06), 0.36)
+	tween.parallel().tween_property(preview, "modulate", smile_modulate, 0.18)
+	tween.tween_property(preview, "scale", Vector2.ONE, 0.44)
+	tween.parallel().tween_property(preview, "modulate", base_modulate, 0.44)
+	tween.tween_callback(_set_preview_expression_state.bind(preview, "idle"))
+	tween.tween_interval(0.75)
+	return tween
+
+
+func _set_preview_expression_state(preview: TextureRect, expression_id: String) -> void:
+	if preview == null:
+		return
+	preview.set_meta("expression_state", expression_id)
 
 
 func _preview_rect_is_visible(rect: Rect2) -> bool:
@@ -378,6 +407,16 @@ func _active_preview_count_for_testing() -> int:
 
 func _active_preview_ids_for_testing() -> Array:
 	return _active_preview_ids.duplicate()
+
+
+func _preview_expression_states_for_testing() -> Dictionary:
+	var states := {}
+	for animal_id_value in preview_nodes.keys():
+		var animal_id := String(animal_id_value)
+		var preview = preview_nodes[animal_id_value]
+		if preview is TextureRect:
+			states[animal_id] = String((preview as TextureRect).get_meta("expression_state", ""))
+	return states
 
 
 func _preview_id_is_visible_for_testing(animal_id: String) -> bool:

@@ -165,6 +165,8 @@ var _prev_complete_set: Dictionary = {}
 var _last_moves_warning := -1
 var _last_worried_moves := -1
 var _idle_expression_run_id := 0
+var _overlay_expression_tween: Tween
+var _overlay_expression_state := "idle"
 var last_zoo_zoo_bonus_score := 0
 var last_zoo_zoo_moves_spent := 0
 var stage_selected_boosters: Array = []
@@ -3335,6 +3337,7 @@ func _show_overlay(title: String, body: String, action: String, primary_text: St
 	overlay_secondary_button.visible = show_secondary
 	overlay_secondary_button.text = secondary_text
 	_update_overlay_mascot(title, action)
+	_play_overlay_mascot_expression(_overlay_expression_for_action(title, action))
 	_update_overlay_ribbon(action)
 	_track_result_overlay_live_event_impression(action)
 	var tween := create_tween()
@@ -3342,6 +3345,7 @@ func _show_overlay(title: String, body: String, action: String, primary_text: St
 
 
 func _hide_overlay() -> void:
+	_stop_overlay_mascot_expression()
 	overlay.visible = false
 	overlay.modulate = Color(1, 1, 1, 1)
 	overlay_action = ""
@@ -3534,6 +3538,93 @@ func _update_overlay_mascot(title: String, action: String) -> void:
 		overlay_mascot.texture = animal_textures.get("bear")
 		return
 	overlay_mascot.texture = animal_textures.get("rabbit")
+
+
+func _overlay_expression_for_action(title: String, action: String) -> String:
+	if action == "all_clear":
+		return "fever"
+	if action in ["next_stage", "clear_stage"]:
+		return "smile"
+	if title.contains("실패") or stage_state == "failed":
+		return "worried"
+	if action == "resume_stage":
+		return "blink"
+	return "idle"
+
+
+func _play_overlay_mascot_expression(expression_id: String) -> void:
+	_stop_overlay_mascot_expression(false)
+	if overlay_mascot == null:
+		return
+	var normalized_expression := expression_id.strip_edges().to_lower()
+	if not ["idle", "blink", "smile", "fever", "worried"].has(normalized_expression):
+		normalized_expression = "idle"
+	_set_overlay_expression_state(normalized_expression)
+	overlay_mascot.pivot_offset = overlay_mascot.size * 0.5
+	overlay_mascot.scale = Vector2.ONE
+	overlay_mascot.modulate = Color(1, 1, 1, 1)
+	match normalized_expression:
+		"blink":
+			_overlay_expression_tween = create_tween()
+			_overlay_expression_tween.set_trans(Tween.TRANS_SINE)
+			_overlay_expression_tween.set_ease(Tween.EASE_IN_OUT)
+			_overlay_expression_tween.tween_property(overlay_mascot, "scale", Vector2(1.02, 0.86), 0.08)
+			_overlay_expression_tween.tween_property(overlay_mascot, "scale", Vector2.ONE, 0.10)
+		"smile":
+			_overlay_expression_tween = create_tween()
+			_overlay_expression_tween.set_parallel(true)
+			_overlay_expression_tween.set_trans(Tween.TRANS_BACK)
+			_overlay_expression_tween.set_ease(Tween.EASE_OUT)
+			_overlay_expression_tween.tween_property(overlay_mascot, "scale", Vector2(1.08, 1.08), 0.18)
+			_overlay_expression_tween.tween_property(overlay_mascot, "modulate", Color(1.10, 1.08, 1.03, 1), 0.16)
+			_overlay_expression_tween.chain().tween_property(overlay_mascot, "scale", Vector2.ONE, 0.30)
+			_overlay_expression_tween.parallel().tween_property(overlay_mascot, "modulate", Color(1, 1, 1, 1), 0.30)
+		"fever":
+			_overlay_expression_tween = create_tween()
+			_overlay_expression_tween.set_loops()
+			_overlay_expression_tween.set_parallel(true)
+			_overlay_expression_tween.set_trans(Tween.TRANS_SINE)
+			_overlay_expression_tween.set_ease(Tween.EASE_IN_OUT)
+			_overlay_expression_tween.tween_property(overlay_mascot, "scale", Vector2(1.07, 1.07), 0.28)
+			_overlay_expression_tween.tween_property(overlay_mascot, "modulate", Color(1.16, 1.12, 1.02, 1), 0.24)
+			_overlay_expression_tween.chain().tween_property(overlay_mascot, "scale", Vector2.ONE, 0.30)
+			_overlay_expression_tween.parallel().tween_property(overlay_mascot, "modulate", Color(1, 1, 1, 1), 0.30)
+		"worried":
+			_overlay_expression_tween = create_tween()
+			_overlay_expression_tween.set_trans(Tween.TRANS_SINE)
+			_overlay_expression_tween.set_ease(Tween.EASE_IN_OUT)
+			_overlay_expression_tween.tween_property(overlay_mascot, "rotation_degrees", -2.0, 0.06)
+			_overlay_expression_tween.tween_property(overlay_mascot, "rotation_degrees", 2.0, 0.08)
+			_overlay_expression_tween.tween_property(overlay_mascot, "rotation_degrees", 0.0, 0.08)
+			_overlay_expression_tween.parallel().tween_property(overlay_mascot, "modulate", Color(0.88, 0.92, 1.0, 1), 0.12)
+		_:
+			_overlay_expression_tween = null
+
+
+func _stop_overlay_mascot_expression(reset_state: bool = true) -> void:
+	if _overlay_expression_tween != null and _overlay_expression_tween.is_valid():
+		_overlay_expression_tween.kill()
+	_overlay_expression_tween = null
+	if overlay_mascot != null:
+		overlay_mascot.scale = Vector2.ONE
+		overlay_mascot.rotation_degrees = 0.0
+		overlay_mascot.modulate = Color(1, 1, 1, 1)
+	if reset_state:
+		_set_overlay_expression_state("idle")
+
+
+func _set_overlay_expression_state(expression_id: String) -> void:
+	_overlay_expression_state = expression_id
+	if overlay_mascot != null:
+		overlay_mascot.set_meta("expression_state", expression_id)
+
+
+func _overlay_expression_state_for_testing() -> String:
+	return _overlay_expression_state
+
+
+func _overlay_expression_tween_active_for_testing() -> bool:
+	return _overlay_expression_tween != null and _overlay_expression_tween.is_valid()
 
 
 func _make_piece(animal_id: String, special_type: String = "") -> String:

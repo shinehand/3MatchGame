@@ -79,6 +79,7 @@ echo "[8/8] Manual smoke checklist"
 cat <<'EOF'
 - 앱 실행 직후 캔디 배경, 큰 `Zoo-Zoo Pop` 로고, 움직이는 동물 캔디, 진행바가 있는 로딩 화면이 먼저 보이는지 확인
 - 홈 화면에서 큰 `Zoo-Zoo Pop` 로고, 동물 마스코트, `PLAY`, `맵`, `도감`, `설정`이 게임 화면처럼 보이는지 확인
+- 홈 화면의 큰 동물 마스코트와 AnimalStrip 동물 토큰이 과하지 않게 blink/smile/idle fallback 움직임을 보이는지 확인
 - `PLAY`를 누르면 월드맵/스테이지 선택 씬으로 이동하는지 확인
 - 스테이지 선택 씬 첫 화면에서 긴 설명 패널/카드 목록이 아니라 전체 월드맵, 10개 경로 노드, 큰 `출동` 버튼이 먼저 보이는지 확인
 - 스테이지 선택 씬에서 두꺼운 캔디 경로, 컬러 도트, 광택 원형 노드, 배경 캔디 장식, 마스코트가 함께 보여 사가맵처럼 보이는지 확인
@@ -90,6 +91,7 @@ cat <<'EOF'
 - 부스터를 선택하고 START를 누르면 게임 시작 보드에 선택 부스터가 배치되는지 확인
 - 첫 세션 Level 1-5 순차 클리어 후 Stage 6, `frog`/`koala`/`hamster` Rescue Book `NEW`, `animal_unlock` 기록이 유지되는지 확인
 - Rescue Book 카드에서 해금 동물의 토큰/우정 레벨/NEW 상태와 잠김 동물의 해금 스테이지 문구가 정상 표시되는지 확인
+- Rescue Book에서 화면에 보이는 동물 preview만 최대 4개까지 은은하게 blink/smile fallback 움직임을 보이는지 확인
 - 라이브 이벤트 노출이 홈, 스테이지 선택, 결과 오버레이, 컬렉션에서 각각 `live_event_impression`으로 기록되는지 확인
 - 런타임 analytics가 `GameSession` 저장과 `AnalyticsGateway` local_buffer queued dispatch 양쪽에 남고, local_buffer가 disk reload 후에도 유지되며, flush 후 pending queue에서 제거되고, corrupt/bounded queue가 안전하며, 계약 위반 이벤트는 provider queue 대신 rejected_contract로 격리되는지 확인
 - 앱 실행 후 보드 8x8 블록이 즉시 보이는지 확인
@@ -114,6 +116,7 @@ cat <<'EOF'
 - 스테이지 클리어 후 남은 이동 수가 있으면 Zoo-Zoo Time 보너스 폭발이 먼저 재생되는지 확인
 - 스테이지 클리어 결과에서 별, 골드, Zoo-Zoo Time 보너스, `다음 스테이지`, `홈으로` 선택이 정상적으로 보이는지 확인
 - 스테이지 실패 오버레이가 정상적으로 뜨는지 확인
+- 성공 결과 mascot은 smile/fever 느낌, 실패 결과 mascot은 worried 느낌의 fallback 움직임으로 구분되는지 확인
 - Stage 1 같은 FTUE 실패 오버레이는 무료 재도전만 보이고 보상형 광고/IAP 문구가 없는지 확인
 - Near Miss 실패 오버레이에서 `놓친 핵심`, `다음 한 수`, `+3 이동 받고 계속`이 함께 보이고, 계속하기를 누르면 이동 3회로 실제 플레이가 재개되는지 확인
 - Near Miss 실패 오버레이에서 `재도전`을 누르면 같은 스테이지가 새 이동 수/점수 0 상태로 다시 시작되는지 확인

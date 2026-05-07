@@ -7,6 +7,21 @@ const MobileLayout = preload("res://scripts/mobile_layout.gd")
 const LiveEventService = preload("res://scripts/live_event_service.gd")
 const HOME_RABBIT_TEXTURE := preload("res://assets/generated/polish/home_mascot_rabbit_clean.png")
 const HOME_CHICK_TEXTURE := preload("res://assets/generated/polish/home_mascot_chick_clean.png")
+const HOME_MAX_ACTIVE_PREVIEW_EXPRESSIONS := 4
+const HOME_ANIMAL_PREVIEW_IDS := [
+	"rabbit",
+	"bear",
+	"cat",
+	"chick",
+	"frog",
+	"dog",
+	"panda",
+	"pig",
+	"penguin",
+	"fox",
+	"lion",
+	"elephant",
+]
 const ANIMAL_PREVIEW_TEXTURES := [
 	preload("res://assets/generated/candy/rabbit_candy_block.png"),
 	preload("res://assets/generated/candy/bear_candy_block.png"),
@@ -53,6 +68,8 @@ const ANIMAL_PREVIEW_TEXTURES := [
 
 var stage_defs: Array = []
 var _home_tweens: Array[Tween] = []
+var _home_preview_tweens: Array[Tween] = []
+var _home_active_preview_ids: Array[String] = []
 var game_home_layer: Control
 var home_play_button: Button
 var home_status_label: Label
@@ -350,8 +367,8 @@ func _build_game_home_layer() -> void:
 	home_animal_strip.alignment = BoxContainer.ALIGNMENT_CENTER
 	home_animal_strip.add_theme_constant_override("separation", 8)
 	hero_stack.add_child(home_animal_strip)
-	for texture in ANIMAL_PREVIEW_TEXTURES:
-		home_animal_strip.add_child(_make_animal_token(texture))
+	for index in range(ANIMAL_PREVIEW_TEXTURES.size()):
+		home_animal_strip.add_child(_make_animal_token(ANIMAL_PREVIEW_TEXTURES[index], HOME_ANIMAL_PREVIEW_IDS[index]))
 
 	home_event_strip = HBoxContainer.new()
 	home_event_strip.name = "LiveEventStrip"
@@ -472,6 +489,8 @@ func _make_mascot(node_name: String, texture: Texture2D) -> TextureRect:
 	mascot.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	mascot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	mascot.modulate = Color(1, 1, 1, 0.98)
+	mascot.set_meta("expression_source", "home")
+	mascot.set_meta("expression_state", "idle")
 	return mascot
 
 
@@ -833,17 +852,22 @@ func _make_home_label(text: String, font_size: int, color: Color, alignment: Hor
 	return label
 
 
-func _make_animal_token(texture: Texture2D) -> PanelContainer:
+func _make_animal_token(texture: Texture2D, animal_id: String) -> PanelContainer:
 	var panel := PanelContainer.new()
+	panel.name = "HomeAnimalToken_%s" % animal_id
 	panel.custom_minimum_size = Vector2(62, 62)
 	panel.add_theme_stylebox_override("panel", _home_style(Color(1, 1, 1, 0.66), Color(1, 0.86, 0.26, 0.88), 18, 3))
 	var center := CenterContainer.new()
 	panel.add_child(center)
 	var icon := TextureRect.new()
+	icon.name = "HomeAnimalPreview"
 	icon.texture = texture
 	icon.custom_minimum_size = Vector2(50, 50)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.set_meta("animal_id", animal_id)
+	icon.set_meta("expression_state", "idle")
+	icon.set_meta("expression_source", "home")
 	center.add_child(icon)
 	return panel
 
@@ -916,11 +940,16 @@ func _start_home_animations() -> void:
 		if tween != null and tween.is_valid():
 			tween.kill()
 	_home_tweens.clear()
+	_stop_home_preview_expressions()
 
 	if home_play_button:
 		_pulse_control(home_play_button, Vector2(1.0, 1.0), Vector2(1.055, 1.055), 0.78)
 	else:
 		_pulse_control(play_button, Vector2(1.0, 1.0), Vector2(1.055, 1.055), 0.78)
+	if home_rabbit:
+		_set_preview_expression_state(home_rabbit, "smile")
+	if home_chick:
+		_set_preview_expression_state(home_chick, "blink")
 	var float_targets := [
 		home_rabbit,
 		home_chick,
@@ -933,6 +962,97 @@ func _start_home_animations() -> void:
 		var target := float_targets[index] as Control
 		if target:
 			_float_control(target, 10.0 + float(index % 2) * 4.0, 1.15 + float(index) * 0.08)
+	_start_home_preview_expressions()
+
+
+func _stop_home_preview_expressions() -> void:
+	for tween in _home_preview_tweens:
+		if tween != null and tween.is_valid():
+			tween.kill()
+	_home_preview_tweens.clear()
+	_home_active_preview_ids.clear()
+	if home_animal_strip == null:
+		return
+	for child in home_animal_strip.get_children():
+		var preview := child.find_child("HomeAnimalPreview", true, false) as TextureRect
+		if preview != null:
+			preview.scale = Vector2.ONE
+			preview.modulate = Color(1, 1, 1, 1)
+			preview.set_meta("expression_state", "idle")
+
+
+func _start_home_preview_expressions() -> void:
+	if home_animal_strip == null or not home_animal_strip.visible:
+		return
+	var animated := 0
+	for child in home_animal_strip.get_children():
+		if animated >= HOME_MAX_ACTIVE_PREVIEW_EXPRESSIONS:
+			break
+		var preview := child.find_child("HomeAnimalPreview", true, false) as TextureRect
+		if preview == null:
+			continue
+		var animal_id := String(preview.get_meta("animal_id", ""))
+		_set_preview_expression_state(preview, "blink")
+		_home_preview_tweens.append(_start_preview_expression_loop(preview, animated))
+		_home_active_preview_ids.append(animal_id)
+		animated += 1
+
+
+func _start_preview_expression_loop(preview: TextureRect, stagger_index: int) -> Tween:
+	preview.pivot_offset = preview.size * 0.5
+	var base_modulate := Color(1, 1, 1, 1)
+	var smile_modulate := Color(1.10, 1.08, 1.03, 1)
+	var tween := create_tween()
+	tween.set_loops()
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.tween_interval(0.12 * float(stagger_index))
+	tween.tween_callback(_set_preview_expression_state.bind(preview, "blink"))
+	tween.tween_property(preview, "scale", Vector2(1.02, 0.86), 0.08)
+	tween.tween_property(preview, "scale", Vector2.ONE, 0.10)
+	tween.tween_callback(_set_preview_expression_state.bind(preview, "smile"))
+	tween.tween_property(preview, "scale", Vector2(1.07, 1.07), 0.34)
+	tween.parallel().tween_property(preview, "modulate", smile_modulate, 0.18)
+	tween.tween_property(preview, "scale", Vector2.ONE, 0.42)
+	tween.parallel().tween_property(preview, "modulate", base_modulate, 0.42)
+	tween.tween_callback(_set_preview_expression_state.bind(preview, "idle"))
+	tween.tween_interval(0.75)
+	return tween
+
+
+func _set_preview_expression_state(preview: TextureRect, expression_id: String) -> void:
+	if preview == null:
+		return
+	preview.set_meta("expression_state", expression_id)
+
+
+func _home_preview_expression_count_for_testing() -> int:
+	return _home_preview_tweens.size()
+
+
+func _home_preview_expression_ids_for_testing() -> Array:
+	return _home_active_preview_ids.duplicate()
+
+
+func _home_preview_expression_states_for_testing() -> Dictionary:
+	var states := {}
+	if home_animal_strip == null:
+		return states
+	for child in home_animal_strip.get_children():
+		var preview := child.find_child("HomeAnimalPreview", true, false) as TextureRect
+		if preview == null:
+			continue
+		var animal_id := String(preview.get_meta("animal_id", ""))
+		if not animal_id.is_empty():
+			states[animal_id] = String(preview.get_meta("expression_state", ""))
+	return states
+
+
+func _home_mascot_expression_states_for_testing() -> Dictionary:
+	return {
+		"rabbit": String(home_rabbit.get_meta("expression_state", "")) if home_rabbit != null else "",
+		"chick": String(home_chick.get_meta("expression_state", "")) if home_chick != null else "",
+	}
 
 
 func _pulse_control(control: Control, base_scale: Vector2, peak_scale: Vector2, duration: float) -> void:

@@ -1149,6 +1149,8 @@ func _validate_main_event_detail_overlay(node: Node, errors: PackedStringArray) 
 
 
 func _validate_main_settings_runtime(node: Node, errors: PackedStringArray) -> void:
+	_validate_main_home_preview_expression_runtime(node, errors)
+
 	for method_name in ["_on_settings_button_pressed", "_on_sound_toggle_button_pressed", "_on_haptics_toggle_button_pressed", "_on_settings_overlay_close_button_pressed"]:
 		if not node.has_method(method_name):
 			errors.append("%s should expose %s for settings smoke validation." % [MAIN_SCENE_PATH, method_name])
@@ -1192,6 +1194,34 @@ func _validate_main_settings_runtime(node: Node, errors: PackedStringArray) -> v
 	GameSession.set_sound_enabled(original_sound)
 	GameSession.set_haptics_enabled(original_haptics)
 	GameSession.apply_feedback_preferences()
+
+
+func _validate_main_home_preview_expression_runtime(node: Node, errors: PackedStringArray) -> void:
+	for method_name in ["_start_home_animations", "_home_preview_expression_count_for_testing", "_home_preview_expression_ids_for_testing", "_home_preview_expression_states_for_testing", "_home_mascot_expression_states_for_testing"]:
+		if not node.has_method(method_name):
+			errors.append("%s should expose %s for home preview expression smoke validation." % [MAIN_SCENE_PATH, method_name])
+			return
+
+	node.call("_start_home_animations")
+	var mascot_states: Dictionary = Dictionary(node.call("_home_mascot_expression_states_for_testing"))
+	if String(mascot_states.get("rabbit", "")) != "smile":
+		errors.append("%s RabbitHero should expose smile fallback expression after home animation start." % MAIN_SCENE_PATH)
+	if String(mascot_states.get("chick", "")) != "blink":
+		errors.append("%s ChickHero should expose blink fallback expression after home animation start." % MAIN_SCENE_PATH)
+	var active_count := int(node.call("_home_preview_expression_count_for_testing"))
+	if active_count <= 0:
+		errors.append("%s home preview expression smoke should animate at least one animal token." % MAIN_SCENE_PATH)
+	elif active_count > 4:
+		errors.append("%s home preview expression smoke should cap active animal token tweens at 4, got %d." % [MAIN_SCENE_PATH, active_count])
+	var active_ids: Array = Array(node.call("_home_preview_expression_ids_for_testing"))
+	if active_ids.size() != active_count:
+		errors.append("%s home preview expression smoke should track active ids for every active tween." % MAIN_SCENE_PATH)
+	var states: Dictionary = Dictionary(node.call("_home_preview_expression_states_for_testing"))
+	for animal_id_value in active_ids:
+		var animal_id := String(animal_id_value)
+		var expression_state := String(states.get(animal_id, ""))
+		if not ["idle", "blink", "smile"].has(expression_state):
+			errors.append("%s home preview %s should expose idle/blink/smile fallback state, got %s." % [MAIN_SCENE_PATH, animal_id, expression_state])
 
 
 func _validate_gameplay_scene(node: Node, errors: PackedStringArray) -> void:
@@ -2028,7 +2058,8 @@ func _validate_buddy_blocker_auto_complete_guard(node: Node, errors: PackedStrin
 func _validate_special_effect_rules(node: Node, errors: PackedStringArray) -> void:
 	var from_cell := Vector2i(3, 3)
 	var to_cell := Vector2i(3, 4)
-	if Array(node.get("board_data")).size() < 8:
+	var board_data_value = node.get("board_data")
+	if not (board_data_value is Array) or board_data_value.size() < 8:
 		errors.append("%s special combo smoke could not inspect board data." % GAMEPLAY_SCENE_PATH)
 		return
 
@@ -2333,7 +2364,7 @@ func _validate_start_booster_runtime_rules(node: Node, errors: PackedStringArray
 
 
 func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> void:
-	for method_name in ["_start_stage", "_check_stage_state", "_on_overlay_primary_button_pressed", "_on_overlay_secondary_button_pressed", "_resolve_fail_offer_continue_result", "_request_fail_offer_continue", "_current_stage", "_current_stage_id", "_build_failure_focus_summary", "_build_failure_retry_hint", "_build_failure_offer"]:
+	for method_name in ["_start_stage", "_check_stage_state", "_on_overlay_primary_button_pressed", "_on_overlay_secondary_button_pressed", "_resolve_fail_offer_continue_result", "_request_fail_offer_continue", "_current_stage", "_current_stage_id", "_build_failure_focus_summary", "_build_failure_retry_hint", "_build_failure_offer", "_overlay_expression_state_for_testing", "_overlay_expression_tween_active_for_testing"]:
 		if not node.has_method(method_name):
 			errors.append("%s should expose %s for result overlay runtime smoke." % [GAMEPLAY_SCENE_PATH, method_name])
 			return
@@ -2349,6 +2380,7 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	var overlay := node.get_node_or_null("Overlay") as CanvasItem
 	var overlay_title := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayTitle") as Label
 	var overlay_body := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayBody") as Label
+	var overlay_mascot := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayMascot") as TextureRect
 	var overlay_primary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlayPrimaryButton") as Button
 	var overlay_secondary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlaySecondaryButton") as Button
 	if overlay == null or not overlay.visible:
@@ -2361,10 +2393,16 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s clear overlay should show a clear title." % GAMEPLAY_SCENE_PATH)
 	if overlay_body == null or not overlay_body.text.contains("보상") or not overlay_body.text.contains("별") or not overlay_body.text.contains("다음"):
 		errors.append("%s clear overlay body should show reward, stars, and next action text." % GAMEPLAY_SCENE_PATH)
+	if overlay_mascot == null or overlay_mascot.texture == null:
+		errors.append("%s clear overlay should show a non-null success mascot texture." % GAMEPLAY_SCENE_PATH)
 	if overlay_primary == null or overlay_primary.text != "다음 스테이지":
 		errors.append("%s clear overlay primary CTA should be 다음 스테이지." % GAMEPLAY_SCENE_PATH)
 	if overlay_secondary == null or not overlay_secondary.visible or overlay_secondary.text != "홈으로":
 		errors.append("%s clear overlay secondary CTA should be visible 홈으로." % GAMEPLAY_SCENE_PATH)
+	if String(node.call("_overlay_expression_state_for_testing")) != "smile":
+		errors.append("%s clear overlay mascot should use smile expression fallback." % GAMEPLAY_SCENE_PATH)
+	if not bool(node.call("_overlay_expression_tween_active_for_testing")):
+		errors.append("%s clear overlay mascot should run a fallback expression tween." % GAMEPLAY_SCENE_PATH)
 	if _analytics_event_count("stage_complete") <= complete_events_before:
 		errors.append("%s clear overlay runtime smoke should emit stage_complete analytics." % GAMEPLAY_SCENE_PATH)
 
@@ -2382,6 +2420,10 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s FTUE failure primary CTA should be 무료 재도전." % GAMEPLAY_SCENE_PATH)
 	if overlay_body == null or overlay_body.text.contains("보상형 +3 이동") or overlay_body.text.contains("부스터 팩"):
 		errors.append("%s FTUE failure overlay should not expose rewarded ad or IAP copy." % GAMEPLAY_SCENE_PATH)
+	if overlay_mascot == null or overlay_mascot.texture == null:
+		errors.append("%s failure overlay should show a non-null failure mascot texture." % GAMEPLAY_SCENE_PATH)
+	if String(node.call("_overlay_expression_state_for_testing")) != "worried":
+		errors.append("%s failure overlay mascot should use worried expression fallback." % GAMEPLAY_SCENE_PATH)
 
 	node.call("_start_stage", 24)
 	GameSession.set_stage_fail_count_for_testing(25, 0)
@@ -3193,6 +3235,10 @@ func _validate_collection_scene(node: Node, errors: PackedStringArray) -> void:
 	for animal_id in collection_ids:
 		if node.find_child("AnimalCard_%s" % animal_id, true, false) == null:
 			errors.append("%s missing AnimalCard_%s." % [COLLECTION_SCENE_PATH, animal_id])
+	if node.has_method("_load_animal_texture"):
+		var fallback_texture = node.call("_load_animal_texture", "koala")
+		if not (fallback_texture is Texture2D):
+			errors.append("%s should return a fallback Texture2D for koala collection preview." % COLLECTION_SCENE_PATH)
 	_validate_collection_card_label_state(node, errors)
 	if node.has_method("_collection_live_event_line_for_event"):
 		var ended_line := String(node.call("_collection_live_event_line_for_event", {
@@ -3280,7 +3326,7 @@ func _validate_collection_card_input_runtime(node: Node, grid: Node, errors: Pac
 
 
 func _validate_collection_preview_motion_runtime(node: Node, errors: PackedStringArray) -> void:
-	for method_name in ["_sync_preview_motion", "_active_preview_count_for_testing", "_active_preview_ids_for_testing", "_preview_id_is_visible_for_testing"]:
+	for method_name in ["_sync_preview_motion", "_active_preview_count_for_testing", "_active_preview_ids_for_testing", "_preview_expression_states_for_testing", "_preview_id_is_visible_for_testing"]:
 		if not node.has_method(method_name):
 			errors.append("%s should expose %s for Rescue Book preview motion smoke." % [COLLECTION_SCENE_PATH, method_name])
 			return
@@ -3293,6 +3339,7 @@ func _validate_collection_preview_motion_runtime(node: Node, errors: PackedStrin
 	elif active_count > 4:
 		errors.append("%s Rescue Book preview smoke should cap active preview tweens at 4, got %d." % [COLLECTION_SCENE_PATH, active_count])
 	_validate_active_collection_preview_visibility(node, errors)
+	_validate_active_collection_preview_expressions(node, errors)
 
 	var collection_scroll := node.find_child("CollectionScroll", true, false) as ScrollContainer
 	if collection_scroll != null:
@@ -3302,6 +3349,7 @@ func _validate_collection_preview_motion_runtime(node: Node, errors: PackedStrin
 			await process_frame
 			await process_frame
 			_validate_active_collection_preview_visibility(node, errors)
+			_validate_active_collection_preview_expressions(node, errors)
 
 	(node as CanvasItem).visible = false
 	await process_frame
@@ -3320,6 +3368,17 @@ func _validate_active_collection_preview_visibility(node: Node, errors: PackedSt
 			continue
 		if not bool(node.call("_preview_id_is_visible_for_testing", animal_id)):
 			errors.append("%s Rescue Book preview tween should only run for visible cards, got offscreen %s." % [COLLECTION_SCENE_PATH, animal_id])
+
+
+func _validate_active_collection_preview_expressions(node: Node, errors: PackedStringArray) -> void:
+	var states: Dictionary = Dictionary(node.call("_preview_expression_states_for_testing"))
+	for animal_id_value in Array(node.call("_active_preview_ids_for_testing")):
+		var animal_id := String(animal_id_value)
+		if animal_id.is_empty():
+			continue
+		var expression_state := String(states.get(animal_id, ""))
+		if not ["idle", "blink", "smile"].has(expression_state):
+			errors.append("%s Rescue Book preview %s should expose idle/blink/smile fallback state, got %s." % [COLLECTION_SCENE_PATH, animal_id, expression_state])
 
 
 func _collection_card_label_texts_after(grid: Node, start_index: int) -> Array[String]:

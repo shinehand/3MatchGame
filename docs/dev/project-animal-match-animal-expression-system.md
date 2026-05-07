@@ -141,4 +141,6 @@ Content
 - MVP 12종 보드 로스터가 fallback 포함으로 표시 가능하다.
 - 대기 중 blink가 일부 타일에서만 재생된다.
 - 매치/낙하 중 idle expression이 새로 시작되지 않는다.
+- 홈 AnimalStrip, Rescue Book 카드 preview, 결과 overlay mascot도 `idle`/`blink`/`smile` 또는 상황별 `worried`/`fever` fallback 상태를 노출한다.
+- 홈과 Rescue Book preview Tween은 화면에 보이는 대상 기준 최대 4개만 활성화한다.
 - `scripts/validate_gameplay.sh` 또는 씬 로드 검증이 통과한다.
