@@ -810,9 +810,13 @@ func _on_stage_popup_close_pressed() -> void:
 
 func _on_stage_popup_start_pressed() -> void:
 	Feedback.play_ui_tap()
+	_commit_stage_popup_selection()
+	get_tree().change_scene_to_file("res://scenes/gameplay.tscn")
+
+
+func _commit_stage_popup_selection() -> void:
 	GameSession.set_selected_stage_id(selected_popup_stage_id)
 	GameSession.set_selected_pre_boosters(selected_pre_boosters)
-	get_tree().change_scene_to_file("res://scenes/gameplay.tscn")
 
 
 func _refresh_stage_world_layer(stage_def: Dictionary, meta: Dictionary) -> void:

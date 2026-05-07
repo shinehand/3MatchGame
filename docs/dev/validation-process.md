@@ -54,6 +54,8 @@
 - Buddy가 없는 스테이지의 Stage Popup은 빈 Buddy 영역을 보여 주지 않는다.
 - Stage Popup은 `rainbow_paw`, `striped`, `bomb` 시작 부스터 3종 버튼과 아이콘을 가진다.
 - 부스터 버튼 선택은 `selected_pre_boosters`와 버튼 pressed 상태에 즉시 반영된다.
+- Stage Popup 닫기는 tween 이후 overlay를 숨기고 panel scale을 복구한다.
+- START 선택값 commit helper는 `GameSession.selected_stage_id`와 `GameSession.selected_pre_boosters`를 gameplay 전환 전에 저장한다.
 - Gameplay 시작 시 `GameSession.selected_pre_boosters`가 소비되고, 선택한 3종이 보드 특수 블록과 `stage_start`/`booster_used` analytics에 반영된다.
 
 아래 항목은 no-device readiness로 승인하지 않는다. 실제 기기 또는 시뮬레이터에서 수동 확인해야 한다.
@@ -67,8 +69,10 @@
 `./scripts/validate_gameplay.sh`의 scene load smoke는 기기 없이 아래 항목을 먼저 막는다.
 
 - Stage 1 클리어 판정 경로에서 결과 overlay가 표시되고, 보상/별/점수/다음 행동과 `다음 스테이지`/`홈으로` CTA를 보여 준다.
+- Stage 1 FTUE 실패 판정 경로에서 실패 overlay는 `무료 재도전` CTA를 보여 주고 보상형 광고/IAP 문구를 노출하지 않는다.
 - Stage 25 near-miss 실패 판정 경로에서 실패 overlay가 표시되고, 실패 유형, 남은 목표, 추천 부스터, `+3 이동 받고 계속`/`재도전` CTA를 보여 준다.
 - `+3 이동 받고 계속` primary CTA는 overlay를 닫고 `remaining_moves = 3`, `stage_state = playing`으로 실제 재개한다.
+- `재도전` secondary CTA는 같은 Stage 25를 새 이동 수/점수 0/장애물 0/overlay hidden 상태로 다시 시작한다.
 - 실패 overlay 노출, 선택, 추가 이동 지급은 `stage_fail`, `offer_impression`, `fail_offer_show`, `fail_offer_select`, `fail_offer_dismiss`, `extra_moves_grant` analytics에 near-miss 및 보상형 continue 정보를 기록한다.
 - `FailOfferPolicy`는 near miss, strategic miss, first fail, repeat fail, hard fail, Level 1-10 수익화 차단을 분리 검증한다.
 

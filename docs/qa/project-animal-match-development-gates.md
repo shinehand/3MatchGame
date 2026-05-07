@@ -92,6 +92,7 @@
 - Stage Popup은 목표, 이동 수, 난이도/테마, 보상, 시작 부스터 3종, `START` 버튼을 보여 준다.
 - Rescue Buddy가 있는 스테이지는 Stage Popup에 Buddy 동물명, 스킬명, 충전 조건, 짧은 효과 설명을 보여 주고, Buddy가 없는 스테이지는 빈 Buddy 영역을 보여 주지 않는다.
 - 시작 부스터 3종은 아이콘과 선택 상태를 가지며, 선택 결과가 `GameSession.selected_pre_boosters`에 저장된다.
+- Stage Popup 닫기와 START 선택값 저장은 scene smoke에서 gameplay 전환 전 상태로 검증된다.
 - Gameplay 시작 시 선택 부스터는 한 번만 소비되고 보드에는 `rainbow`, `row/col`, `bomb` 특수 블록이 각각 배치된다.
 - `stage_start`는 `selected_boosters`와 `start_boosters_applied`를 기록하고, 각 시작 부스터는 `booster_used`의 `source = pre_stage`로 기록된다.
 - Stage Popup 열기/닫기 애니메이션과 모바일 터치감은 실제 기기 또는 시뮬레이터에서 최종 확인한다.
@@ -116,9 +117,11 @@
 ## Gate 9. 실패/광고/IAP 공정성
 
 - 강제 실패 케이스에서 Near Miss와 Strategic Miss가 다르게 분기된다.
+- Stage 1 FTUE 실패 overlay는 무료 재도전 CTA와 수익화 문구 차단을 runtime smoke에서 검증한다.
 - 실패 팝업에서 재도전, 지도, 닫기 같은 비구매 선택지가 항상 보인다.
 - Near Miss 실패 팝업의 `+3 이동 받고 계속` CTA는 실제로 overlay를 닫고 이동 3회를 지급해 플레이 상태로 복귀한다.
-- 결과/실패 overlay runtime smoke는 Stage 1 클리어 보상/CTA와 Stage 25 near-miss 실패 offer 노출, 선택/닫기, 추가 이동 지급 analytics를 검증한다.
+- Near Miss secondary 재도전은 같은 스테이지를 새 이동 수와 초기 점수/장애물 상태로 복구한다.
+- 결과/실패 overlay runtime smoke는 Stage 1 클리어 보상/CTA, Stage 1 FTUE 실패 CTA, Stage 25 near-miss 실패 offer 노출, 선택/닫기, 추가 이동 지급 analytics를 검증한다.
 - 광고 완료 후 추가 이동은 1회만 지급된다.
 - 광고 로드 실패/중단 시 하트, 코인, 이동 수가 잘못 소모되지 않는다.
 - 구매 취소/실패/복구가 게임 상태를 꼬이게 하지 않는다.

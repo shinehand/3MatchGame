@@ -173,7 +173,7 @@
 
 ### PAM-QA-041: Stage Popup / 시작 부스터 / Buddy Preview 회귀 스모크
 
-- 상태: no-device readiness 자동화됨. Scene load smoke가 `WorldStageNode*` press로 Stage Popup 표시, 목표/이동 수/보상/START/시작 부스터 3종 버튼과 아이콘, 부스터 선택 상태 반영을 검증한다. Stage 4/51/81 Buddy Preview는 동물명, 스킬명, 충전 조건/효과 설명과 후반 동물 한글명을 검증하고, Stage 1은 Buddy 영역을 숨기는지 검증한다. Gameplay smoke는 `rainbow_paw`, `striped`, `bomb` 선택값이 `GameSession`에서 한 번 소비되고 보드 특수 블록, `stage_start.selected_boosters`, `stage_start.start_boosters_applied`, `booster_used.source = pre_stage`로 이어지는지 검증한다. 남은 작업은 실제 기기에서 팝업 열기/닫기 애니메이션, 터치감, 시작 보드 판독성을 확인하는 것이다.
+- 상태: no-device readiness 자동화됨. Scene load smoke가 `WorldStageNode*` press로 Stage Popup 표시, 목표/이동 수/보상/START/시작 부스터 3종 버튼과 아이콘, 부스터 선택 상태 반영, 닫기 후 overlay 해제, START 선택값 commit helper를 검증한다. Stage 4/51/81 Buddy Preview는 동물명, 스킬명, 충전 조건/효과 설명과 후반 동물 한글명을 검증하고, Stage 1은 Buddy 영역을 숨기는지 검증한다. Gameplay smoke는 `rainbow_paw`, `striped`, `bomb` 선택값이 `GameSession`에서 한 번 소비되고 보드 특수 블록, `stage_start.selected_boosters`, `stage_start.start_boosters_applied`, `booster_used.source = pre_stage`로 이어지는지 검증한다. 남은 작업은 실제 기기에서 팝업 열기/닫기 애니메이션, 터치감, 시작 보드 판독성을 확인하는 것이다.
 - 소유: QA Agent + Development Agent
 - 대상 파일:
   - `scripts/validate_scene_loads.gd`
@@ -256,7 +256,7 @@
 
 ### PAM-DEV-054: 결과/실패 near-miss 플로우
 
-- 상태: 부분 완료. `FailOfferPolicy`가 Near Miss, Strategic Miss, First Fail, Repeat Fail, Hard Level Fail을 분류하고 Level 1-10 광고/IAP 제안을 차단한다. Scene load smoke는 정책 단위에서 near miss, strategic miss, first fail, repeat fail, hard fail, 초반 수익화 차단을 검증하고, 실제 Gameplay runtime에서 Stage 1 클리어 오버레이의 보상/별/다음 CTA와 Stage 25 near-miss 실패 오버레이의 `+3 이동 받고 계속`/`재도전` CTA, `stage_fail`, `offer_impression`, `fail_offer_show`, `fail_offer_select`, `fail_offer_dismiss`, `extra_moves_grant`, `continue_stage` +3 이동 재개 동작을 검증한다. 남은 작업은 실제 광고 SDK/코인 continue, 구매 취소/광고 실패 상태 보존 QA다.
+- 상태: 부분 완료. `FailOfferPolicy`가 Near Miss, Strategic Miss, First Fail, Repeat Fail, Hard Level Fail을 분류하고 Level 1-10 광고/IAP 제안을 차단한다. Scene load smoke는 정책 단위에서 near miss, strategic miss, first fail, repeat fail, hard fail, 초반 수익화 차단을 검증하고, 실제 Gameplay runtime에서 Stage 1 클리어 오버레이의 보상/별/다음 CTA, Stage 1 FTUE 실패 오버레이의 무료 재도전/수익화 문구 차단, Stage 25 near-miss 실패 오버레이의 `+3 이동 받고 계속`/`재도전` CTA, `stage_fail`, `offer_impression`, `fail_offer_show`, `fail_offer_select`, `fail_offer_dismiss`, `extra_moves_grant`, `continue_stage` +3 이동 재개와 보조 CTA 재시도 복구를 검증한다. 남은 작업은 실제 광고 SDK/코인 continue, 구매 취소/광고 실패 상태 보존 QA다.
 - 소유: Development Agent + UX Planning Agent
 - 대상 파일:
   - `scripts/gameplay.gd`

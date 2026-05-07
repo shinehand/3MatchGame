@@ -284,6 +284,18 @@ static func get_stage_fail_count(stage_id: int) -> int:
 	return int(Dictionary(_save_data.get("fail_count_by_stage_id", {})).get(str(stage_id), 0))
 
 
+static func set_stage_fail_count_for_testing(stage_id: int, fail_count: int) -> void:
+	load_state()
+	var key := str(stage_id)
+	var fail_counts: Dictionary = _save_data.get("fail_count_by_stage_id", {})
+	if fail_count <= 0:
+		fail_counts.erase(key)
+	else:
+		fail_counts[key] = fail_count
+	_save_data["fail_count_by_stage_id"] = fail_counts
+	save_state()
+
+
 static func get_best_score(stage_id: int) -> int:
 	load_state()
 	return int(Dictionary(_save_data["best_score_by_stage_id"]).get(str(stage_id), 0))

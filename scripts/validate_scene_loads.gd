@@ -135,6 +135,8 @@ func _validate_scene_runtime_specifics(scene_path: String, node: Node, errors: P
 		GAMEPLAY_SCENE_PATH:
 			await _validate_special_combo_swap_runtime(node, errors)
 			await _validate_result_overlay_runtime(node, errors)
+		STAGE_SELECT_SCENE_PATH:
+			await _validate_stage_popup_runtime(node, errors)
 		FX_LAYER_SCENE_PATH:
 			await _validate_fx_layer_runtime(node, errors)
 
@@ -1234,7 +1236,7 @@ func _validate_start_booster_runtime_rules(node: Node, errors: PackedStringArray
 
 
 func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> void:
-	for method_name in ["_start_stage", "_check_stage_state", "_on_overlay_primary_button_pressed", "_on_overlay_secondary_button_pressed"]:
+	for method_name in ["_start_stage", "_check_stage_state", "_on_overlay_primary_button_pressed", "_on_overlay_secondary_button_pressed", "_current_stage", "_current_stage_id"]:
 		if not node.has_method(method_name):
 			errors.append("%s should expose %s for result overlay runtime smoke." % [GAMEPLAY_SCENE_PATH, method_name])
 			return
@@ -1266,7 +1268,23 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	if _analytics_event_count("stage_complete") <= complete_events_before:
 		errors.append("%s clear overlay runtime smoke should emit stage_complete analytics." % GAMEPLAY_SCENE_PATH)
 
+	node.call("_start_stage", 0)
+	GameSession.set_stage_fail_count_for_testing(1, 0)
+	node.set("remaining_moves", 0)
+	await node.call("_check_stage_state")
+	if overlay == null or not overlay.visible:
+		errors.append("%s FTUE failure runtime smoke should show the failure overlay." % GAMEPLAY_SCENE_PATH)
+	if String(node.get("stage_state")) != "failed":
+		errors.append("%s FTUE failure runtime smoke should leave Stage 1 failed, got %s." % [GAMEPLAY_SCENE_PATH, String(node.get("stage_state"))])
+	if String(node.get("overlay_action")) != "restart_stage":
+		errors.append("%s FTUE failure overlay should use restart_stage action, got %s." % [GAMEPLAY_SCENE_PATH, String(node.get("overlay_action"))])
+	if overlay_primary == null or overlay_primary.text != "무료 재도전":
+		errors.append("%s FTUE failure primary CTA should be 무료 재도전." % GAMEPLAY_SCENE_PATH)
+	if overlay_body == null or overlay_body.text.contains("보상형 +3 이동") or overlay_body.text.contains("부스터 팩"):
+		errors.append("%s FTUE failure overlay should not expose rewarded ad or IAP copy." % GAMEPLAY_SCENE_PATH)
+
 	node.call("_start_stage", 24)
+	GameSession.set_stage_fail_count_for_testing(25, 0)
 	var target_collect: Dictionary = Dictionary(node.call("_stage_collect_targets"))
 	var near_miss_counts := {}
 	for animal_id in target_collect.keys():
@@ -1331,7 +1349,8 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	if int(extra_moves_params.get("stage_id", 0)) != 25 or String(extra_moves_params.get("source", "")) != "fail_offer_continue" or int(extra_moves_params.get("moves_amount", 0)) != 3 or String(extra_moves_params.get("transaction_id", "")).is_empty():
 		errors.append("%s extra_moves_grant should identify Stage 25 +3 rewarded continue grant." % GAMEPLAY_SCENE_PATH)
 
-	node.call("_start_stage", 25)
+	node.call("_start_stage", 24)
+	GameSession.set_stage_fail_count_for_testing(25, 0)
 	target_collect = Dictionary(node.call("_stage_collect_targets"))
 	near_miss_counts = {}
 	for animal_id in target_collect.keys():
@@ -1346,8 +1365,19 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s continue_stage secondary action should emit fail_offer_dismiss analytics." % GAMEPLAY_SCENE_PATH)
 	var dismiss_event := _last_analytics_event_by_name("fail_offer_dismiss")
 	var dismiss_params: Dictionary = Dictionary(dismiss_event.get("params", {}))
-	if int(dismiss_params.get("stage_id", 0)) != 26 or String(dismiss_params.get("fail_type", "")) != "near_miss" or String(dismiss_params.get("dismiss_action", "")) != "retry" or int(dismiss_params.get("elapsed_ms", -1)) < 0:
-		errors.append("%s fail_offer_dismiss should identify Stage 26 retry dismissal." % GAMEPLAY_SCENE_PATH)
+	if int(dismiss_params.get("stage_id", 0)) != 25 or String(dismiss_params.get("fail_type", "")) != "near_miss" or String(dismiss_params.get("dismiss_action", "")) != "retry" or int(dismiss_params.get("elapsed_ms", -1)) < 0:
+		errors.append("%s fail_offer_dismiss should identify Stage 25 retry dismissal." % GAMEPLAY_SCENE_PATH)
+	var current_stage: Dictionary = Dictionary(node.call("_current_stage"))
+	if int(node.call("_current_stage_id")) != 25 or String(node.get("stage_state")) != "playing":
+		errors.append("%s continue_stage secondary retry should restart Stage 25 in playing state." % GAMEPLAY_SCENE_PATH)
+	if int(node.get("remaining_moves")) != int(current_stage.get("moves", 0)):
+		errors.append("%s continue_stage secondary retry should restore Stage 25 moves, got %d." % [GAMEPLAY_SCENE_PATH, int(node.get("remaining_moves"))])
+	if int(node.get("score")) != 0 or int(node.get("cleared_blockers")) != 0:
+		errors.append("%s continue_stage secondary retry should reset score and cleared blockers." % GAMEPLAY_SCENE_PATH)
+	if overlay != null and overlay.visible:
+		errors.append("%s continue_stage secondary retry should leave overlay hidden after restart." % GAMEPLAY_SCENE_PATH)
+	if not Dictionary(node.get("active_fail_offer")).is_empty():
+		errors.append("%s continue_stage secondary retry should clear active_fail_offer." % GAMEPLAY_SCENE_PATH)
 
 
 func _complete_current_stage_goals(node: Node) -> void:
@@ -1597,6 +1627,37 @@ func _validate_stage_popup_flow(node: Node, errors: PackedStringArray) -> void:
 		if not rainbow_button.button_pressed:
 			errors.append("%s Stage Popup selected booster button should stay pressed." % STAGE_SELECT_SCENE_PATH)
 
+	GameSession.set_selected_pre_boosters([])
+
+
+func _validate_stage_popup_runtime(node: Node, errors: PackedStringArray) -> void:
+	for method_name in ["_show_stage_popup", "_on_booster_button_pressed", "_on_stage_popup_close_pressed", "_commit_stage_popup_selection"]:
+		if not node.has_method(method_name):
+			errors.append("%s should expose %s for Stage Popup runtime smoke." % [STAGE_SELECT_SCENE_PATH, method_name])
+			return
+
+	GameSession.set_selected_stage_id(1)
+	GameSession.set_selected_pre_boosters([])
+	node.call("_show_stage_popup", 1)
+	var overlay := node.get_node_or_null("StagePopupOverlay") as CanvasItem
+	if overlay == null or not overlay.visible:
+		errors.append("%s Stage Popup runtime smoke should show StagePopupOverlay before close/start checks." % STAGE_SELECT_SCENE_PATH)
+
+	node.call("_on_booster_button_pressed", "rainbow_paw")
+	node.call("_commit_stage_popup_selection")
+	var committed_boosters := GameSession.get_selected_pre_boosters()
+	if GameSession.get_selected_stage_id() != 1:
+		errors.append("%s Stage Popup START bridge should commit selected stage id 1." % STAGE_SELECT_SCENE_PATH)
+	if committed_boosters.size() != 1 or not committed_boosters.has("rainbow_paw"):
+		errors.append("%s Stage Popup START bridge should commit selected booster rainbow_paw, got %s." % [STAGE_SELECT_SCENE_PATH, str(committed_boosters)])
+
+	node.call("_on_stage_popup_close_pressed")
+	await create_timer(0.14).timeout
+	if overlay != null and overlay.visible:
+		errors.append("%s Stage Popup close should hide StagePopupOverlay after tween." % STAGE_SELECT_SCENE_PATH)
+	var panel := node.get("stage_popup_panel") as Control
+	if panel != null and panel.scale.distance_to(Vector2.ONE) > 0.01:
+		errors.append("%s Stage Popup close should restore panel scale to Vector2.ONE." % STAGE_SELECT_SCENE_PATH)
 	GameSession.set_selected_pre_boosters([])
 
 
