@@ -33,6 +33,19 @@
 - Scene smoke는 `StageCatalog`의 `recommended_smoke`/Buddy 스테이지를 Alpha QA 템플릿의 `STAGE_SMOKE_###`/`BUDDY_STAGE_###` 행과 대조해 stage data와 수동 QA packet이 어긋나면 실패한다.
 - 수동 스모크 체크리스트 출력
 
+## No-device Alpha Gate CI
+
+`.github/workflows/no-device-alpha-gate.yml`은 `main` push, pull request, 수동 실행에서 Godot 4.6.1 headless를 설치하고 아래 no-device 검증을 실행한다.
+
+```sh
+zsh scripts/validate_stage_data.sh
+zsh scripts/validate_stage_balance.sh
+zsh scripts/validate_analytics_contract.sh
+zsh scripts/validate_gameplay.sh
+```
+
+이 CI는 Android 실기기 설치, release keystore 서명 증거, 실제 광고/IAP/analytics SDK provider 연동을 증명하지 않는다. 해당 항목은 아래 Android evidence script와 최종 Alpha QA report validator로 별도 승인해야 한다. workflow는 성공/실패와 관계없이 `/tmp/puzzle-*` 검증 로그와 caveat 문서를 `no-device-alpha-gate-logs` artifact로 업로드한다.
+
 `zsh scripts/export_android_debug.sh`는 Android debug export를 수행하고 `build/android/puzzle-mobile-starter-debug.apk`를 `apksigner`로 검증한 뒤 `output/alpha-lock-pass/YYYY-MM-DD/captures/android-debug-export.txt`에 commit, APK 경로, export 결과, signature verify 결과, ADB device 상태를 남긴다. `--dry-run`은 CLI 계약과 evidence path만 확인하며 APK export, signature verify, install, device evidence를 증명하지 않는다. 기기가 연결된 설치 검증은 `zsh scripts/export_android_debug.sh --install`로 실행하며, 연결 기기가 정확히 1대가 아니면 install evidence는 Blocked로 기록한다.
 
 `zsh scripts/export_android_release.sh --install`은 `GODOT_ANDROID_KEYSTORE_RELEASE_PATH`, `GODOT_ANDROID_KEYSTORE_RELEASE_USER`, `GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD`로 Godot Android release signing 값을 주입해 `build/android/puzzle-mobile-starter-release.apk`를 생성하고 `apksigner` 검증, SHA-256 checksum, install/launch evidence를 `output/alpha-lock-pass/YYYY-MM-DD/captures/android-release-export.txt`, `release-install-log.txt`, `release-run-log.txt`에 남긴다. legacy alias `GODOT_RELEASE_KEYSTORE_PATH/USER/PASSWORD`도 허용하지만, 비밀번호 값은 evidence에 기록하지 않는다.
