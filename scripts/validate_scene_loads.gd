@@ -1296,11 +1296,12 @@ func _validate_start_booster_runtime_rules(node: Node, errors: PackedStringArray
 
 
 func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> void:
-	for method_name in ["_start_stage", "_check_stage_state", "_on_overlay_primary_button_pressed", "_on_overlay_secondary_button_pressed", "_resolve_fail_offer_continue_result", "_current_stage", "_current_stage_id"]:
+	for method_name in ["_start_stage", "_check_stage_state", "_on_overlay_primary_button_pressed", "_on_overlay_secondary_button_pressed", "_resolve_fail_offer_continue_result", "_current_stage", "_current_stage_id", "_build_failure_focus_summary", "_build_failure_retry_hint", "_build_failure_offer"]:
 		if not node.has_method(method_name):
 			errors.append("%s should expose %s for result overlay runtime smoke." % [GAMEPLAY_SCENE_PATH, method_name])
 			return
 
+	_validate_failure_focus_hint_runtime(node, errors)
 	node.call("_start_stage", 0)
 	_complete_current_stage_goals(node)
 	node.set("remaining_moves", 0)
@@ -1539,6 +1540,32 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s coin continue insufficient funds should preserve wallet, moves, and failed state." % GAMEPLAY_SCENE_PATH)
 	if _analytics_event_count("extra_moves_grant") != coin_insufficient_extra_before:
 		errors.append("%s coin continue insufficient funds should not emit extra_moves_grant." % GAMEPLAY_SCENE_PATH)
+
+
+func _validate_failure_focus_hint_runtime(node: Node, errors: PackedStringArray) -> void:
+	node.call("_start_stage", 0)
+	node.set("score", 0)
+	var collect_offer: Dictionary = Dictionary(node.call("_build_failure_offer", 1))
+	var collect_focus := String(node.call("_build_failure_focus_summary"))
+	var collect_hint := String(node.call("_build_failure_retry_hint", collect_offer))
+	if collect_focus != "토끼 10개 더 구조":
+		errors.append("%s collection failure focus should identify the missing animal count, got %s." % [GAMEPLAY_SCENE_PATH, collect_focus])
+	if not collect_hint.contains("토끼 주변 매치"):
+		errors.append("%s collection failure hint should suggest matching around the missing animal, got %s." % [GAMEPLAY_SCENE_PATH, collect_hint])
+
+	node.call("_start_stage", 2)
+	var complete_counts := {}
+	for animal_id in Dictionary(node.call("_stage_collect_targets")).keys():
+		complete_counts[String(animal_id)] = int(Dictionary(node.call("_stage_collect_targets"))[animal_id])
+	node.set("collected_counts", complete_counts)
+	node.set("score", 0)
+	var score_offer: Dictionary = Dictionary(node.call("_build_failure_offer", 1))
+	var score_focus := String(node.call("_build_failure_focus_summary"))
+	var score_hint := String(node.call("_build_failure_retry_hint", score_offer))
+	if score_focus != "점수 800점 더 획득":
+		errors.append("%s score failure focus should identify the missing score, got %s." % [GAMEPLAY_SCENE_PATH, score_focus])
+	if not score_hint.contains("4매치 이상") or not score_hint.contains("연쇄"):
+		errors.append("%s score failure hint should suggest bigger matches and cascades, got %s." % [GAMEPLAY_SCENE_PATH, score_hint])
 
 
 func _complete_current_stage_goals(node: Node) -> void:
