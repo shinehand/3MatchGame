@@ -1691,6 +1691,51 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	node.set("cleared_blockers", maxi(0, int(node.call("_target_blockers")) - 1))
 	node.set("score", int(node.call("_target_score")))
 	node.set("remaining_moves", 0)
+	await node.call("_check_stage_state")
+	var ad_stable_transaction_extra_before := _analytics_event_count("extra_moves_grant")
+	var ad_stable_transaction_complete_before := _analytics_event_count("ad_reward_complete")
+	var ad_stable_transaction_result := bool(node.call("_resolve_fail_offer_continue_result", "rewarded_ad", "completed", {"ad_network": "validation", "transaction_id": "ad-validation-continue"}))
+	if not ad_stable_transaction_result:
+		errors.append("%s stable rewarded ad transaction should grant extra moves once." % GAMEPLAY_SCENE_PATH)
+	var ad_stable_transaction_moves := int(node.get("remaining_moves"))
+	if String(node.get("stage_state")) != "playing" or ad_stable_transaction_moves != 3:
+		errors.append("%s stable rewarded ad transaction should resume play with 3 moves." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("ad_reward_complete") <= ad_stable_transaction_complete_before or _analytics_event_count("extra_moves_grant") <= ad_stable_transaction_extra_before:
+		errors.append("%s stable rewarded ad transaction should emit completion and grant analytics once." % GAMEPLAY_SCENE_PATH)
+
+	node.call("_start_stage", 24)
+	GameSession.set_stage_fail_count_for_testing(25, 0)
+	target_collect = Dictionary(node.call("_stage_collect_targets"))
+	near_miss_counts = {}
+	for animal_id in target_collect.keys():
+		near_miss_counts[String(animal_id)] = int(target_collect[animal_id])
+	node.set("collected_counts", near_miss_counts)
+	node.set("cleared_blockers", maxi(0, int(node.call("_target_blockers")) - 1))
+	node.set("score", int(node.call("_target_score")))
+	node.set("remaining_moves", 0)
+	await node.call("_check_stage_state")
+	var duplicate_ad_extra_before := _analytics_event_count("extra_moves_grant")
+	var duplicate_ad_complete_before := _analytics_event_count("ad_reward_complete")
+	var duplicate_ad_result := bool(node.call("_resolve_fail_offer_continue_result", "rewarded_ad", "completed", {"ad_network": "validation", "transaction_id": "ad-validation-continue"}))
+	if duplicate_ad_result:
+		errors.append("%s duplicate rewarded ad transaction should be rejected across stage restarts." % GAMEPLAY_SCENE_PATH)
+	if String(node.get("stage_state")) != "failed" or int(node.get("remaining_moves")) != 0:
+		errors.append("%s duplicate rewarded ad transaction should preserve failed state and moves." % GAMEPLAY_SCENE_PATH)
+	if overlay == null or not overlay.visible or String(node.get("overlay_action")) != "continue_stage":
+		errors.append("%s duplicate rewarded ad transaction should keep the continue offer overlay visible." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("extra_moves_grant") != duplicate_ad_extra_before or _analytics_event_count("ad_reward_complete") != duplicate_ad_complete_before:
+		errors.append("%s duplicate rewarded ad transaction should not emit completion or grant analytics again." % GAMEPLAY_SCENE_PATH)
+
+	node.call("_start_stage", 24)
+	GameSession.set_stage_fail_count_for_testing(25, 0)
+	target_collect = Dictionary(node.call("_stage_collect_targets"))
+	near_miss_counts = {}
+	for animal_id in target_collect.keys():
+		near_miss_counts[String(animal_id)] = int(target_collect[animal_id])
+	node.set("collected_counts", near_miss_counts)
+	node.set("cleared_blockers", maxi(0, int(node.call("_target_blockers")) - 1))
+	node.set("score", int(node.call("_target_score")))
+	node.set("remaining_moves", 0)
 	var iap_success_extra_moves_before := _analytics_event_count("extra_moves_grant")
 	var iap_success_complete_before := _analytics_event_count("iap_purchase_complete")
 	await node.call("_check_stage_state")
@@ -1713,6 +1758,29 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	var iap_extra_params: Dictionary = Dictionary(iap_extra_event.get("params", {}))
 	if String(iap_extra_params.get("source", "")) != "iap_continue" or int(iap_extra_params.get("moves_amount", 0)) != 3 or String(iap_extra_params.get("transaction_id", "")) != "iap-validation-continue":
 		errors.append("%s IAP extra_moves_grant should share transaction_id and identify iap_continue." % GAMEPLAY_SCENE_PATH)
+
+	node.call("_start_stage", 24)
+	GameSession.set_stage_fail_count_for_testing(25, 0)
+	target_collect = Dictionary(node.call("_stage_collect_targets"))
+	near_miss_counts = {}
+	for animal_id in target_collect.keys():
+		near_miss_counts[String(animal_id)] = int(target_collect[animal_id])
+	node.set("collected_counts", near_miss_counts)
+	node.set("cleared_blockers", maxi(0, int(node.call("_target_blockers")) - 1))
+	node.set("score", int(node.call("_target_score")))
+	node.set("remaining_moves", 0)
+	await node.call("_check_stage_state")
+	var duplicate_iap_extra_before := _analytics_event_count("extra_moves_grant")
+	var duplicate_iap_complete_before := _analytics_event_count("iap_purchase_complete")
+	var duplicate_iap_result := bool(node.call("_resolve_fail_offer_continue_result", "iap", "completed", {"product_id": "validation_pack", "price": 1.99, "currency": "USD", "transaction_id": "iap-validation-continue"}))
+	if duplicate_iap_result:
+		errors.append("%s duplicate IAP transaction should be rejected across stage restarts." % GAMEPLAY_SCENE_PATH)
+	if String(node.get("stage_state")) != "failed" or int(node.get("remaining_moves")) != 0:
+		errors.append("%s duplicate IAP transaction should preserve failed state and moves." % GAMEPLAY_SCENE_PATH)
+	if overlay == null or not overlay.visible or String(node.get("overlay_action")) != "continue_stage":
+		errors.append("%s duplicate IAP transaction should keep the continue offer overlay visible." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("extra_moves_grant") != duplicate_iap_extra_before or _analytics_event_count("iap_purchase_complete") != duplicate_iap_complete_before:
+		errors.append("%s duplicate IAP transaction should not emit purchase complete or grant analytics again." % GAMEPLAY_SCENE_PATH)
 
 	node.call("_start_stage", 24)
 	GameSession.set_stage_fail_count_for_testing(25, 0)

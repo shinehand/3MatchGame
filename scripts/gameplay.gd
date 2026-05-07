@@ -1824,6 +1824,13 @@ func _make_continue_transaction_id(source: String) -> String:
 	return "%s-%d-%d" % [source, _current_stage_id(), Time.get_ticks_msec()]
 
 
+func _continue_transaction_id(source: String, details: Dictionary) -> String:
+	var transaction_id := String(details.get("transaction_id", "")).strip_edges()
+	if transaction_id.is_empty():
+		transaction_id = _make_continue_transaction_id(source)
+	return transaction_id
+
+
 func _continue_moves_for_source(source: String) -> int:
 	var remote_config := LiveEventService.load_remote_config(false)
 	if source == "coins":
@@ -1864,21 +1871,29 @@ func _resolve_fail_offer_continue_result(source: String, result: String, details
 
 	var moves_amount := _continue_moves_for_source(normalized_source)
 	var grant_source := "fail_offer_continue"
-	var transaction_id := _make_continue_transaction_id(grant_source)
 	if normalized_source == "coins":
 		grant_source = "coin_continue"
-		transaction_id = _make_continue_transaction_id(grant_source)
+	elif normalized_source == "rewarded_ad":
+		grant_source = "fail_offer_continue"
+	elif normalized_source == "iap":
+		grant_source = "iap_continue"
+	var transaction_id := _continue_transaction_id(grant_source, details)
+	if GameSession.has_reward_transaction_granted(transaction_id):
+		_set_status("이미 처리된 추가 이동 보상입니다.")
+		return false
+
+	if normalized_source == "coins":
 		var cost_amount := int(details.get("cost_amount", FAIL_OFFER_COIN_CONTINUE_COST))
 		if not GameSession.spend_gold(cost_amount):
 			_set_status("코인이 부족해 추가 이동을 받을 수 없습니다.")
 			return false
-	elif normalized_source == "rewarded_ad":
+	if not GameSession.mark_reward_transaction_granted(transaction_id):
+		_set_status("이미 처리된 추가 이동 보상입니다.")
+		return false
+
+	if normalized_source == "rewarded_ad":
 		_track_ad_reward_complete_analytics(moves_amount, transaction_id, details)
 	elif normalized_source == "iap":
-		grant_source = "iap_continue"
-		transaction_id = String(details.get("transaction_id", "")).strip_edges()
-		if transaction_id.is_empty():
-			transaction_id = _make_continue_transaction_id(grant_source)
 		_track_iap_purchase_complete_analytics(details, transaction_id)
 
 	active_fail_offer_continue_granted = true

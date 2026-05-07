@@ -3,6 +3,7 @@ extends RefCounted
 const SAVE_PATH := "user://save_game.json"
 const ANALYTICS_CONTRACT_PATH := "res://data/analytics_events.json"
 const MAX_ANALYTICS_EVENTS := 200
+const MAX_REWARD_TRANSACTION_IDS := 240
 const CollectionState = preload("res://scripts/collection_state.gd")
 
 static var _loaded := false
@@ -26,6 +27,7 @@ static var _save_data := {
 		"tokens": 0,
 		"boosters": {},
 	},
+	"granted_reward_transaction_ids": [],
 	"analytics_events": [],
 	"session_id": "",
 }
@@ -57,6 +59,7 @@ static func load_state() -> void:
 	_save_data["rescue_book"] = CollectionState.normalize_state(Dictionary(parsed.get("rescue_book", {})))
 	_save_data["live_events"] = _normalize_live_events(Dictionary(parsed.get("live_events", {})))
 	_save_data["wallet"] = _normalize_wallet(Dictionary(parsed.get("wallet", {})))
+	_save_data["granted_reward_transaction_ids"] = _normalize_reward_transaction_ids(Array(parsed.get("granted_reward_transaction_ids", [])))
 	_save_data["analytics_events"] = Array(parsed.get("analytics_events", []))
 	_save_data["session_id"] = String(parsed.get("session_id", ""))
 	if String(_save_data["session_id"]).is_empty():
@@ -92,6 +95,7 @@ static func _reset_save_data_to_defaults() -> void:
 			"tokens": 0,
 			"boosters": {},
 		},
+		"granted_reward_transaction_ids": [],
 		"analytics_events": [],
 		"session_id": "",
 	}
@@ -133,6 +137,18 @@ static func _normalize_wallet(wallet: Dictionary) -> Dictionary:
 		"tokens": max(0, int(wallet.get("tokens", 0))),
 		"boosters": boosters,
 	}
+
+
+static func _normalize_reward_transaction_ids(transaction_ids: Array) -> Array:
+	var normalized := []
+	for value in transaction_ids:
+		var transaction_id := String(value).strip_edges()
+		if transaction_id.is_empty() or normalized.has(transaction_id):
+			continue
+		normalized.append(transaction_id)
+	while normalized.size() > MAX_REWARD_TRANSACTION_IDS:
+		normalized.pop_front()
+	return normalized
 
 
 static func save_state() -> void:
@@ -552,6 +568,38 @@ static func spend_gold(amount: int) -> bool:
 	_save_data["wallet"] = wallet
 	save_state()
 	return true
+
+
+static func has_reward_transaction_granted(transaction_id: String) -> bool:
+	load_state()
+	var normalized_id := transaction_id.strip_edges()
+	if normalized_id.is_empty():
+		return false
+	var transaction_ids := _normalize_reward_transaction_ids(Array(_save_data.get("granted_reward_transaction_ids", [])))
+	_save_data["granted_reward_transaction_ids"] = transaction_ids
+	return transaction_ids.has(normalized_id)
+
+
+static func mark_reward_transaction_granted(transaction_id: String) -> bool:
+	load_state()
+	var normalized_id := transaction_id.strip_edges()
+	if normalized_id.is_empty():
+		return true
+	var transaction_ids := _normalize_reward_transaction_ids(Array(_save_data.get("granted_reward_transaction_ids", [])))
+	if transaction_ids.has(normalized_id):
+		_save_data["granted_reward_transaction_ids"] = transaction_ids
+		save_state()
+		return false
+	transaction_ids.append(normalized_id)
+	_save_data["granted_reward_transaction_ids"] = _normalize_reward_transaction_ids(transaction_ids)
+	save_state()
+	return true
+
+
+static func clear_reward_transactions_for_testing() -> void:
+	load_state()
+	_save_data["granted_reward_transaction_ids"] = []
+	save_state()
 
 
 static func _normalized_live_events_from_save() -> Dictionary:
