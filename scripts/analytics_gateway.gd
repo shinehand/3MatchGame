@@ -1,10 +1,13 @@
 extends RefCounted
 
 const DEFAULT_PROVIDER_ID := "local_buffer"
+const DEFAULT_QUEUE_PATH := "user://analytics_gateway_queue.json"
 const MAX_DISPATCHED_EVENTS := 320
 
 static var _provider_id := DEFAULT_PROVIDER_ID
 static var _dispatch_enabled := true
+static var _queue_path := DEFAULT_QUEUE_PATH
+static var _queue_loaded := false
 static var _dispatched_events: Array = []
 static var _rejected_events: Array = []
 
@@ -19,13 +22,16 @@ static func dispatch_event(event_entry: Dictionary, contract_valid: bool = true,
 		return false
 	if not _dispatch_enabled:
 		return false
+	_load_queue()
 	event["provider_id"] = _provider_id
 	event["dispatch_status"] = "queued"
 	_append_bounded(_dispatched_events, event)
+	_save_queue()
 	return true
 
 
 static func get_dispatched_events_for_testing() -> Array:
+	_load_queue()
 	return _dispatched_events.duplicate(true)
 
 
@@ -34,7 +40,9 @@ static func get_rejected_events_for_testing() -> Array:
 
 
 static func clear_dispatched_events_for_testing() -> void:
+	_load_queue()
 	_dispatched_events.clear()
+	_save_queue()
 
 
 static func clear_rejected_events_for_testing() -> void:
@@ -50,9 +58,29 @@ static func set_dispatch_enabled_for_testing(enabled: bool) -> void:
 	_dispatch_enabled = enabled
 
 
+static func use_queue_path_for_testing(queue_path: String) -> void:
+	var normalized_path := queue_path.strip_edges()
+	_queue_path = DEFAULT_QUEUE_PATH if normalized_path.is_empty() else normalized_path
+	_queue_loaded = false
+	_dispatched_events.clear()
+
+
+static func reload_queue_from_disk_for_testing() -> void:
+	_queue_loaded = false
+	_dispatched_events.clear()
+	_load_queue()
+
+
+static func clear_persisted_queue_for_testing() -> void:
+	_queue_loaded = true
+	_dispatched_events.clear()
+	_remove_queue_file()
+
+
 static func reset_for_testing() -> void:
 	_provider_id = DEFAULT_PROVIDER_ID
 	_dispatch_enabled = true
+	_queue_loaded = false
 	_dispatched_events.clear()
 	_rejected_events.clear()
 
@@ -69,3 +97,44 @@ static func _append_bounded(events: Array, event: Dictionary) -> void:
 	events.append(event)
 	while events.size() > MAX_DISPATCHED_EVENTS:
 		events.pop_front()
+
+
+static func _load_queue() -> void:
+	if _queue_loaded:
+		return
+	_queue_loaded = true
+	_dispatched_events.clear()
+	if not FileAccess.file_exists(_queue_path):
+		return
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(_queue_path))
+	if not (parsed is Array):
+		return
+	for event_value in Array(parsed):
+		if not (event_value is Dictionary):
+			continue
+		var event: Dictionary = Dictionary(event_value).duplicate(true)
+		_dispatched_events.append(event)
+	while _dispatched_events.size() > MAX_DISPATCHED_EVENTS:
+		_dispatched_events.pop_front()
+
+
+static func _save_queue() -> void:
+	DirAccess.make_dir_recursive_absolute("user://")
+	var file := FileAccess.open(_queue_path, FileAccess.WRITE)
+	if file == null:
+		push_warning("AnalyticsGateway: failed to persist local queue.")
+		return
+	file.store_string(JSON.stringify(_dispatched_events, "\t"))
+
+
+static func _remove_queue_file() -> void:
+	if not FileAccess.file_exists(_queue_path):
+		return
+	var file_name := _queue_path.get_file()
+	var directory_path := _queue_path.get_base_dir()
+	var queue_dir := DirAccess.open(directory_path)
+	if queue_dir == null:
+		return
+	var remove_error := queue_dir.remove(file_name)
+	if remove_error != OK:
+		push_warning("AnalyticsGateway: failed to remove testing queue file %s." % _queue_path)

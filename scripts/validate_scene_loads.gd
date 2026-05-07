@@ -19,6 +19,7 @@ const BLOCK_TILE_SCENE_PATH: String = "res://scenes/block_tile.tscn"
 const GOAL_CHIP_SCENE_PATH: String = "res://scenes/goal_chip.tscn"
 const SESSION_VALIDATION_SAVE_PATH := "user://scene_validation_save_game.json"
 const SESSION_VALIDATION_SAVE_FILE_NAME := "scene_validation_save_game.json"
+const SESSION_VALIDATION_ANALYTICS_QUEUE_PATH := "user://scene_validation_analytics_gateway_queue.json"
 const ANIMAL_IDS := ["rabbit", "bear", "cat", "chick", "frog", "dog", "panda", "pig", "penguin", "fox", "lion", "elephant"]
 const FIRST_SESSION_COLLECTION_UNLOCK_IDS := ["frog", "koala", "hamster"]
 const FIRST_SESSION_COLLECTION_UNLOCK_STAGES := {"frog": 4, "koala": 5, "hamster": 6}
@@ -45,7 +46,9 @@ func _init() -> void:
 
 func _run() -> void:
 	GameSession.use_save_path_for_testing(SESSION_VALIDATION_SAVE_PATH)
+	AnalyticsGateway.use_queue_path_for_testing(SESSION_VALIDATION_ANALYTICS_QUEUE_PATH)
 	AnalyticsGateway.reset_for_testing()
+	AnalyticsGateway.clear_persisted_queue_for_testing()
 	LiveEventService.reset_remote_config_exposures_for_testing()
 	_remove_validation_save()
 	var errors: PackedStringArray = PackedStringArray()
@@ -96,11 +99,15 @@ func _run() -> void:
 		for error_text in errors:
 			push_error("Scene load validation error: %s" % error_text)
 		_remove_validation_save()
+		AnalyticsGateway.clear_persisted_queue_for_testing()
+		AnalyticsGateway.reset_for_testing()
 		quit(1)
 		return
 
 	print("Scene load validation passed: %d scenes parsed and instantiated." % scene_paths.size())
 	_remove_validation_save()
+	AnalyticsGateway.clear_persisted_queue_for_testing()
+	AnalyticsGateway.reset_for_testing()
 	quit()
 
 
@@ -376,6 +383,20 @@ func _validate_analytics_gateway_contract_gate(errors: PackedStringArray) -> voi
 		)
 	if AnalyticsGateway.get_rejected_events_for_testing().size() != rejected_before:
 		errors.append("AnalyticsGateway provider override should not reject a valid event.")
+	AnalyticsGateway.reload_queue_from_disk_for_testing()
+	var reloaded_after_provider := AnalyticsGateway.get_dispatched_events_for_testing()
+	if reloaded_after_provider.size() != dispatched_after_provider.size():
+		errors.append("AnalyticsGateway local_buffer queue should survive a disk reload.")
+	elif not saved_after_provider.is_empty():
+		_validate_gateway_event_matches_saved_event(
+			Dictionary(saved_after_provider[saved_after_provider.size() - 1]),
+			Dictionary(reloaded_after_provider[reloaded_after_provider.size() - 1]),
+			"validation_sdk",
+			"queued",
+			"persistent local queue",
+			errors
+		)
+	var dispatched_after_reload := AnalyticsGateway.get_dispatched_events_for_testing()
 
 	AnalyticsGateway.set_dispatch_enabled_for_testing(false)
 	GameSession.record_analytics_event("stage_start", {
@@ -388,8 +409,12 @@ func _validate_analytics_gateway_contract_gate(errors: PackedStringArray) -> voi
 	var dispatched_after_disabled := AnalyticsGateway.get_dispatched_events_for_testing()
 	if saved_after_disabled.size() != saved_after_provider.size() + 1:
 		errors.append("AnalyticsGateway disabled dispatch should still preserve local analytics save.")
-	if dispatched_after_disabled.size() != dispatched_after_provider.size():
+	if dispatched_after_disabled.size() != dispatched_after_reload.size():
 		errors.append("AnalyticsGateway disabled dispatch should not queue provider events.")
+	AnalyticsGateway.reload_queue_from_disk_for_testing()
+	var reloaded_after_disabled := AnalyticsGateway.get_dispatched_events_for_testing()
+	if reloaded_after_disabled.size() != dispatched_after_reload.size():
+		errors.append("AnalyticsGateway disabled dispatch should not persist provider events.")
 
 	AnalyticsGateway.set_dispatch_enabled_for_testing(true)
 	var rejected_before_invalid := AnalyticsGateway.get_rejected_events_for_testing().size()
@@ -414,6 +439,9 @@ func _validate_analytics_gateway_contract_gate(errors: PackedStringArray) -> voi
 			errors
 		)
 		_validate_gateway_rejection_reasons(rejection_event, PackedStringArray(["band", "roster_group", "moves"]), "missing-param rejection", errors)
+	AnalyticsGateway.reload_queue_from_disk_for_testing()
+	if AnalyticsGateway.get_dispatched_events_for_testing().size() != dispatched_before_invalid:
+		errors.append("AnalyticsGateway contract rejection should not persist missing-param events.")
 
 	var rejected_before_unknown := AnalyticsGateway.get_rejected_events_for_testing().size()
 	var dispatched_before_unknown := AnalyticsGateway.get_dispatched_events_for_testing().size()
@@ -437,6 +465,9 @@ func _validate_analytics_gateway_contract_gate(errors: PackedStringArray) -> voi
 			errors
 		)
 		_validate_gateway_rejection_reasons(rejection_event, PackedStringArray(["__unknown_event__"]), "unknown-event rejection", errors)
+	AnalyticsGateway.reload_queue_from_disk_for_testing()
+	if AnalyticsGateway.get_dispatched_events_for_testing().size() != dispatched_before_unknown:
+		errors.append("AnalyticsGateway contract rejection should not persist unknown events.")
 
 	AnalyticsGateway.set_provider_id_for_testing(AnalyticsGateway.DEFAULT_PROVIDER_ID)
 	AnalyticsGateway.set_dispatch_enabled_for_testing(true)
@@ -451,7 +482,7 @@ func _validate_gateway_event_matches_saved_event(saved_event: Dictionary, gatewa
 		errors.append("AnalyticsGateway %s should preserve event timestamp for %s." % [context, saved_name])
 	var saved_params := Dictionary(saved_event.get("params", {}))
 	var gateway_params := Dictionary(gateway_event.get("params", {}))
-	if gateway_params != saved_params:
+	if not _analytics_values_equivalent(gateway_params, saved_params):
 		errors.append("AnalyticsGateway %s should preserve params for %s." % [context, saved_name])
 	if String(gateway_event.get("provider_id", "")) != expected_provider_id:
 		errors.append("AnalyticsGateway %s should use provider %s for %s." % [context, expected_provider_id, saved_name])
@@ -464,6 +495,36 @@ func _validate_gateway_rejection_reasons(gateway_event: Dictionary, expected_rea
 	for expected_reason in expected_reasons:
 		if not reasons.has(expected_reason):
 			errors.append("AnalyticsGateway %s should include rejection reason %s." % [context, expected_reason])
+
+
+func _analytics_values_equivalent(left, right) -> bool:
+	if _analytics_value_is_number(left) and _analytics_value_is_number(right):
+		return is_equal_approx(float(left), float(right))
+	if left is Dictionary and right is Dictionary:
+		var left_dict: Dictionary = left
+		var right_dict: Dictionary = right
+		if left_dict.size() != right_dict.size():
+			return false
+		for key in left_dict.keys():
+			if not right_dict.has(key):
+				return false
+			if not _analytics_values_equivalent(left_dict[key], right_dict[key]):
+				return false
+		return true
+	if left is Array and right is Array:
+		var left_array: Array = left
+		var right_array: Array = right
+		if left_array.size() != right_array.size():
+			return false
+		for index in range(left_array.size()):
+			if not _analytics_values_equivalent(left_array[index], right_array[index]):
+				return false
+		return true
+	return left == right
+
+
+func _analytics_value_is_number(value) -> bool:
+	return typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT
 
 
 func _last_analytics_event_by_name(event_name: String) -> Dictionary:
