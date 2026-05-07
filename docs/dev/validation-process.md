@@ -56,7 +56,8 @@
 - 리필 후 남아 있는 블록 위치가 안정적이다.
 - 4매치 특수 블록이 생성된다.
 - 5매치 특수 블록이 생성된다.
-- Stage 31 smoke에서 row+column, row+row, column+column, row+bomb, column+bomb, bomb+bomb 6종 특수 조합이 중복 제거 없이 1회씩 처리된다.
+- 자동 headless fixture가 row+column, row+row, column+column, row+bomb, column+bomb, bomb+bomb 6종 특수 조합을 중복 제거 없이 검증하고, Stage 31 row+column 실제 swap smoke가 이동 수/점수/장애물/`is_busy` 복귀를 검증한다.
+- Stage 31 실제 플레이에서 6종 특수 조합의 VFX 겹침, 낙하/리필 연결, 터치감을 수동 확인한다.
 - Stage 4/5/8/16/18/20/24/25/31/41/51/81 첫 등장 Rescue Buddy가 보드/게이지/장애물/점수/추천/구조 이동에 과한 지연 없이 반응한다.
 - 덤불 스테이지에서 장애물 오버레이와 목표 칩이 함께 보인다.
 - 클리어와 실패 오버레이가 각각 정상 표시된다.

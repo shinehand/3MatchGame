@@ -39,6 +39,12 @@
 2. 단일 특수 발동
 3. 일반 매치 제거
 
+QA 기준:
+
+- 자동 headless fixture는 row+column, row+row, column+column, row+bomb, column+bomb, bomb+bomb clear set과 rainbow 우선순위를 검증한다.
+- Stage 31 runtime smoke는 row+column 실제 `_resolve_swap`의 이동 수 1회 소모, 점수 증가, 장애물 제거, `is_busy` 복귀를 검증한다.
+- Stage 31 수동 QA는 6종 조합의 VFX 체감과 낙하/리필 연결을 확인한다.
+
 ## 4. Fever
 
 | 항목 | MVP 규칙 |

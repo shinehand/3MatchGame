@@ -59,6 +59,7 @@
 - 4매치는 방향에 맞는 row/column 특수를 만들고, 5매치는 rainbow 특수를 만든다.
 - row+column, row+row, column+column, row+bomb, column+bomb, bomb+bomb 6종은 중복 제거 없이 1회씩 처리된다.
 - 특수 조합 경로 위의 chained special과 인접 장애물 피해가 scene smoke에서 검증된다.
+- Stage 31 row+column 특수 조합은 실제 `_resolve_swap` runtime smoke에서 이동 수 1회 소모, 점수 증가, 장애물 제거, `is_busy` 복귀를 검증한다.
 - rainbow+special은 특수+특수 큐보다 rainbow resolution 경로를 우선한다.
 
 ## Gate 5. 모바일 UI

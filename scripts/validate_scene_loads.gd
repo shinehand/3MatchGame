@@ -73,6 +73,7 @@ func _run() -> void:
 		for scene_error in _validate_scene_specifics(scene_path, node):
 			errors.append(scene_error)
 		await _validate_viewport_resilience(scene_path, node, errors)
+		await _validate_scene_runtime_specifics(scene_path, node, errors)
 		await create_timer(0.2).timeout
 		if is_instance_valid(node):
 			node.queue_free()
@@ -123,6 +124,12 @@ func _validate_scene_specifics(scene_path: String, node: Node) -> PackedStringAr
 			_validate_collection_scene(node, errors)
 
 	return errors
+
+
+func _validate_scene_runtime_specifics(scene_path: String, node: Node, errors: PackedStringArray) -> void:
+	match scene_path:
+		GAMEPLAY_SCENE_PATH:
+			await _validate_special_combo_swap_runtime(node, errors)
 
 
 func _validate_viewport_resilience(scene_path: String, node: Node, errors: PackedStringArray) -> void:
@@ -1096,6 +1103,41 @@ func _validate_special_effect_rules(node: Node, errors: PackedStringArray) -> vo
 	var rainbow_spawns: Dictionary = Dictionary(rainbow_outcome_spawn.get("special_spawns", {}))
 	if String(rainbow_spawns.get(rainbow_spawn, "")) != "rainbow":
 		errors.append("%s 5-match run should spawn a rainbow special at the preferred cell, got %s." % [GAMEPLAY_SCENE_PATH, String(rainbow_spawns.get(rainbow_spawn, ""))])
+
+
+func _validate_special_combo_swap_runtime(node: Node, errors: PackedStringArray) -> void:
+	for method_name in ["_start_stage", "_resolve_swap", "_make_piece"]:
+		if not node.has_method(method_name):
+			errors.append("%s should expose %s for special combo runtime smoke." % [GAMEPLAY_SCENE_PATH, method_name])
+			return
+
+	var from_cell := Vector2i(3, 3)
+	var to_cell := Vector2i(3, 4)
+	var obstacle_cell := Vector2i(2, 4)
+	node.call("_start_stage", 30)
+	var board_data: Array = _seed_plain_gameplay_board(node)
+	board_data[from_cell.x][from_cell.y] = node.call("_make_piece", "rabbit", "row")
+	board_data[to_cell.x][to_cell.y] = node.call("_make_piece", "bear", "col")
+	node.set("board_data", board_data)
+	var obstacle_data: Array = node.get("obstacle_data")
+	obstacle_data[obstacle_cell.x][obstacle_cell.y] = 1
+	node.set("obstacle_data", obstacle_data)
+
+	var moves_before := int(node.get("remaining_moves"))
+	var score_before := int(node.get("score"))
+	await node.call("_resolve_swap", from_cell, to_cell)
+
+	if bool(node.get("is_busy")):
+		errors.append("%s special combo runtime smoke should release is_busy after _resolve_swap." % GAMEPLAY_SCENE_PATH)
+	if int(node.get("remaining_moves")) != moves_before - 1:
+		errors.append("%s special combo runtime smoke should consume exactly one move, got %d from %d." % [GAMEPLAY_SCENE_PATH, int(node.get("remaining_moves")), moves_before])
+	if int(node.get("score")) <= score_before:
+		errors.append("%s special combo runtime smoke should increase score through _resolve_swap." % GAMEPLAY_SCENE_PATH)
+	obstacle_data = node.get("obstacle_data")
+	if int(obstacle_data[obstacle_cell.x][obstacle_cell.y]) != 0:
+		errors.append("%s special combo runtime smoke should clear an obstacle on the combo path." % GAMEPLAY_SCENE_PATH)
+	if String(node.get("stage_state")) != "playing":
+		errors.append("%s special combo runtime smoke should leave Stage 31 in playing state, got %s." % [GAMEPLAY_SCENE_PATH, String(node.get("stage_state"))])
 
 
 func _seed_plain_gameplay_board(node: Node) -> Array:
