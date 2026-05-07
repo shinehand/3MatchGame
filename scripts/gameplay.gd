@@ -161,6 +161,11 @@ var _last_worried_moves := -1
 var _idle_expression_run_id := 0
 var last_zoo_zoo_bonus_score := 0
 var last_zoo_zoo_moves_spent := 0
+var stage_selected_boosters: Array = []
+var fever_analytics_open := false
+var fever_turns_spent_current := 0
+var fever_score_at_start := 0
+var fever_target_bonus_collected := 0
 
 
 func _ready() -> void:
@@ -269,6 +274,11 @@ func _start_stage(stage_index: int) -> void:
 	buddy_uses = 0
 	buddy_trigger_pending = false
 	buddy_cascade_bonus_pending = 0
+	stage_selected_boosters = GameSession.get_selected_pre_boosters()
+	fever_analytics_open = false
+	fever_turns_spent_current = 0
+	fever_score_at_start = 0
+	fever_target_bonus_collected = 0
 	stage_state = "playing"
 	cleared_blockers = 0
 	_last_moves_warning = -1
@@ -282,6 +292,7 @@ func _start_stage(stage_index: int) -> void:
 	_setup_tutorial()
 	_generate_fresh_board()
 	var start_booster_count := _apply_start_boosters()
+	_track_stage_start_analytics(start_booster_count)
 	_update_stage_background()
 	_rebuild_goal_chips()
 	_update_hud()
@@ -1339,6 +1350,7 @@ func _apply_start_boosters() -> int:
 		_refresh_tile(cell.x, cell.y)
 		tile_nodes[cell.x][cell.y].play_special_ready_effect()
 		_play_fx_method("play_special_created", [_tile_global_center(cell), special_type])
+		_track_booster_used_analytics(String(booster_id), "pre_stage")
 		applied += 1
 
 	if applied > 0:
@@ -1471,6 +1483,8 @@ func _apply_match_rewards(matches: Array, combo: int) -> void:
 		var animal_id: String = _piece_animal(board_data[cell.x][cell.y])
 		if collected_counts.has(animal_id):
 			collected_counts[animal_id] = int(collected_counts[animal_id]) + collect_increment
+			if _is_fever_active():
+				fever_target_bonus_collected += FEVER_TARGET_BONUS
 			_charge_buddy_skill_for_match(animal_id)
 
 
@@ -1622,12 +1636,108 @@ func _trigger_buddy_skill() -> void:
 	_update_hud()
 
 
+func _track_stage_start_analytics(start_booster_count: int) -> void:
+	var params := _analytics_stage_base()
+	params["band"] = String(_current_stage().get("band", ""))
+	params["roster_group"] = String(_current_stage().get("roster_group", ""))
+	params["moves"] = int(_current_stage().get("moves", 0))
+	params["selected_boosters"] = stage_selected_boosters.duplicate()
+	params["start_boosters_applied"] = start_booster_count
+	params["difficulty"] = String(_current_stage().get("difficulty", ""))
+	GameSession.record_analytics_event("stage_start", params)
+
+
+func _track_stage_complete_analytics(star_count: int) -> void:
+	var moves_left_for_clear := last_zoo_zoo_moves_spent if last_zoo_zoo_moves_spent > 0 else remaining_moves
+	var params := _analytics_stage_base()
+	params["score"] = score
+	params["stars"] = star_count
+	params["moves_left"] = moves_left_for_clear
+	params["zoo_zoo_time_bonus"] = last_zoo_zoo_bonus_score
+	GameSession.record_analytics_event("stage_complete", params)
+
+
+func _track_stage_fail_analytics(fail_offer: Dictionary) -> void:
+	var params := _analytics_stage_base()
+	params["fail_type"] = String(fail_offer.get("type", "general_shortfall"))
+	params["score"] = score
+	params["remaining_goals"] = _remaining_goals_payload()
+	params["offer_type"] = "rewarded_continue" if bool(fail_offer.get("show_rewarded_ad", false)) else "retry"
+	params["booster_suggestion"] = String(fail_offer.get("booster_suggestion", "rainbow_paw"))
+	GameSession.record_analytics_event("stage_fail", params)
+
+
+func _track_offer_impression_analytics(fail_offer: Dictionary) -> void:
+	var params := _analytics_stage_base()
+	params["fail_type"] = String(fail_offer.get("type", "general_shortfall"))
+	params["primary_cta"] = String(fail_offer.get("primary_cta", "재도전"))
+	params["secondary_cta"] = String(fail_offer.get("secondary_cta", "홈으로"))
+	params["show_rewarded_ad"] = bool(fail_offer.get("show_rewarded_ad", false))
+	params["show_iap"] = bool(fail_offer.get("show_iap", false))
+	params["booster_suggestion"] = String(fail_offer.get("booster_suggestion", "rainbow_paw"))
+	GameSession.record_analytics_event("offer_impression", params)
+
+
+func _track_booster_used_analytics(booster_id: String, source: String) -> void:
+	var params := _analytics_stage_base()
+	params["booster_id"] = booster_id
+	params["source"] = source
+	params["move_index"] = _moves_spent_count()
+	GameSession.record_analytics_event("booster_used", params)
+
+
+func _track_fever_start_analytics() -> void:
+	var params := _analytics_stage_base()
+	params["turns_remaining"] = fever_turns_remaining
+	params["score_multiplier"] = FEVER_SCORE_MULTIPLIER
+	params["target_bonus"] = FEVER_TARGET_BONUS
+	params["combo_gauge_value"] = combo_gauge_points
+	params["trigger_source"] = "combo_gauge"
+	GameSession.record_analytics_event("combo_fever_start", params)
+
+
+func _track_fever_end_analytics(trigger_source: String) -> void:
+	if not fever_analytics_open:
+		return
+	var params := _analytics_stage_base()
+	params["turns_spent"] = fever_turns_spent_current
+	params["score_gained"] = maxi(0, score - fever_score_at_start)
+	params["targets_bonus_collected"] = fever_target_bonus_collected
+	params["trigger_source"] = trigger_source
+	GameSession.record_analytics_event("combo_fever_end", params)
+	fever_analytics_open = false
+
+
+func _analytics_stage_base() -> Dictionary:
+	return {
+		"session_id": GameSession.get_session_id(),
+		"stage_id": _current_stage_id(),
+	}
+
+
+func _remaining_goals_payload() -> Dictionary:
+	var remaining := {}
+	var collect_remaining := {}
+	for animal_id in _stage_collect_targets().keys():
+		var count := maxi(0, int(_stage_collect_targets()[animal_id]) - int(collected_counts.get(animal_id, 0)))
+		if count > 0:
+			collect_remaining[String(animal_id)] = count
+	if not collect_remaining.is_empty():
+		remaining["collect"] = collect_remaining
+	var score_remaining := maxi(0, _target_score() - score)
+	if score_remaining > 0:
+		remaining["score"] = score_remaining
+	var blocker_remaining := maxi(0, _target_blockers() - cleared_blockers)
+	if blocker_remaining > 0:
+		remaining["blockers"] = blocker_remaining
+	return remaining
+
+
 func _track_buddy_analytics(event_name: String, extra_params: Dictionary = {}) -> void:
 	if not _has_active_buddy_skill():
 		return
-	var params := {
-		"session_id": GameSession.get_session_id(),
-		"stage_id": _current_stage_id(),
+	var params := _analytics_stage_base()
+	params.merge({
 		"animal_id": String(_current_stage().get("buddy_animal", "")),
 		"skill_id": String(_current_stage().get("buddy_skill_id", "")),
 		"charge_rule": String(_current_stage().get("buddy_charge_rule", "")),
@@ -1635,7 +1745,7 @@ func _track_buddy_analytics(event_name: String, extra_params: Dictionary = {}) -
 		"charges_required": int(_current_stage().get("buddy_charges_required", 0)),
 		"turn_index": _moves_spent_count(),
 		"uses_left": maxi(0, int(_current_stage().get("buddy_max_uses", 0)) - buddy_uses),
-	}
+	})
 	for key in extra_params.keys():
 		params[key] = extra_params[key]
 	GameSession.record_analytics_event(event_name, params)
@@ -1921,8 +2031,15 @@ func _is_fever_active() -> bool:
 
 
 func _activate_fever() -> void:
+	if fever_analytics_open:
+		_track_fever_end_analytics("fever_restart")
 	fever_turns_remaining = FEVER_TURN_COUNT
 	fever_ignore_current_move = true
+	fever_analytics_open = true
+	fever_turns_spent_current = 0
+	fever_score_at_start = score
+	fever_target_bonus_collected = 0
+	_track_fever_start_analytics()
 	_charge_buddy_skill_for_fever_start()
 	_play_fever_goal_expressions()
 
@@ -1933,8 +2050,10 @@ func _consume_fever_turn_after_player_move() -> void:
 	if fever_ignore_current_move:
 		fever_ignore_current_move = false
 		return
+	fever_turns_spent_current += 1
 	fever_turns_remaining = maxi(0, fever_turns_remaining - 1)
 	if fever_turns_remaining == 0:
+		_track_fever_end_analytics("turns_expired")
 		if buddy_trigger_pending and String(_current_stage().get("buddy_skill_id", "")) == "calm_fever":
 			_trigger_buddy_skill()
 		else:
@@ -2260,6 +2379,9 @@ func _check_stage_state() -> void:
 		_play_fx_method("play_star_reveal", [star_count])
 		var prev_best := GameSession.get_best_stars(_current_stage_id())
 		GameSession.record_stage_result(_current_stage_id(), score, star_count)
+		if fever_analytics_open:
+			_track_fever_end_analytics("stage_complete")
+		_track_stage_complete_analytics(star_count)
 		var unlock_text := _build_unlock_text(star_count, prev_best)
 		if current_stage_index == stage_defs.size() - 1:
 			_set_status("최종 스테이지 클리어. 홈으로 돌아가거나 다시 플레이할 수 있습니다.")
@@ -2277,6 +2399,10 @@ func _check_stage_state() -> void:
 		_play_worried_goal_expressions(IDLE_EXPRESSION_MAX_ACTIVE, true)
 		_set_status("이동 수를 모두 사용했습니다. 재시작으로 다시 도전하세요.")
 		var fail_offer := _build_failure_offer(fail_count)
+		if fever_analytics_open:
+			_track_fever_end_analytics("stage_fail")
+		_track_stage_fail_analytics(fail_offer)
+		_track_offer_impression_analytics(fail_offer)
 		_show_overlay(
 			"%s 재도전 필요" % _current_stage()["name"],
 			_build_failure_overlay_body(fail_offer),

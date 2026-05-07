@@ -1,9 +1,11 @@
 extends RefCounted
 
 const SAVE_PATH := "user://save_game.json"
+const ANALYTICS_CONTRACT_PATH := "res://data/analytics_events.json"
 const CollectionState = preload("res://scripts/collection_state.gd")
 
 static var _loaded := false
+static var _analytics_contract_cache: Dictionary = {}
 static var _save_data := {
 	"highest_unlocked_stage_id": 1,
 	"last_selected_stage_id": 1,
@@ -74,11 +76,17 @@ static func get_session_id() -> String:
 
 static func record_analytics_event(event_name: String, params: Dictionary) -> void:
 	load_state()
+	var event_params := params.duplicate(true)
+	if not event_params.has("session_id"):
+		event_params["session_id"] = get_session_id()
+	var missing_params := analytics_event_missing_required_params(event_name, event_params)
+	if not missing_params.is_empty():
+		push_warning("Analytics event %s missing required params: %s" % [event_name, ", ".join(Array(missing_params))])
 	var events: Array = Array(_save_data.get("analytics_events", []))
 	var entry := {
 		"name": event_name,
 		"timestamp": Time.get_unix_time_from_system(),
-		"params": params.duplicate(true),
+		"params": event_params,
 	}
 	events.append(entry)
 	while events.size() > 100:
@@ -90,6 +98,47 @@ static func record_analytics_event(event_name: String, params: Dictionary) -> vo
 static func get_analytics_events() -> Array:
 	load_state()
 	return Array(_save_data.get("analytics_events", [])).duplicate(true)
+
+
+static func clear_analytics_events() -> void:
+	load_state()
+	_save_data["analytics_events"] = []
+	save_state()
+
+
+static func analytics_event_missing_required_params(event_name: String, params: Dictionary) -> PackedStringArray:
+	var missing := PackedStringArray()
+	var contract := _analytics_contract_by_name()
+	if not contract.has(event_name):
+		missing.append("__unknown_event__")
+		return missing
+	var required_params: Array = Dictionary(contract[event_name]).get("required_params", [])
+	for param_value in required_params:
+		var param := String(param_value)
+		if param.is_empty():
+			continue
+		if not params.has(param):
+			missing.append(param)
+	return missing
+
+
+static func _analytics_contract_by_name() -> Dictionary:
+	if not _analytics_contract_cache.is_empty():
+		return _analytics_contract_cache
+	if not FileAccess.file_exists(ANALYTICS_CONTRACT_PATH):
+		return {}
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(ANALYTICS_CONTRACT_PATH))
+	if not (parsed is Array):
+		return {}
+	for entry in Array(parsed):
+		if not (entry is Dictionary):
+			continue
+		var event: Dictionary = entry
+		var event_name := String(event.get("name", ""))
+		if event_name.is_empty():
+			continue
+		_analytics_contract_cache[event_name] = event
+	return _analytics_contract_cache
 
 
 static func get_highest_unlocked_stage_id() -> int:
@@ -203,9 +252,10 @@ static func set_haptics_enabled(enabled: bool) -> void:
 
 static func apply_feedback_preferences() -> void:
 	load_state()
-	if Engine.has_singleton("Feedback") or typeof(Feedback) != TYPE_NIL:
-		Feedback.sound_enabled = get_sound_enabled()
-		Feedback.haptics_enabled = get_haptics_enabled()
+	if Engine.has_singleton("Feedback"):
+		var feedback := Engine.get_singleton("Feedback")
+		feedback.set("sound_enabled", get_sound_enabled())
+		feedback.set("haptics_enabled", get_haptics_enabled())
 
 
 static func is_tutorial_seen(stage_id: int) -> bool:

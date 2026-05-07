@@ -2,6 +2,7 @@ extends SceneTree
 
 const StageCatalog = preload("res://scripts/stage_catalog.gd")
 const CollectionState = preload("res://scripts/collection_state.gd")
+const GameSession = preload("res://scripts/game_session.gd")
 const FailOfferPolicy = preload("res://scripts/fail_offer_policy.gd")
 const LiveEventService = preload("res://scripts/live_event_service.gd")
 
@@ -36,6 +37,7 @@ func _init() -> void:
 
 func _run() -> void:
 	var errors: PackedStringArray = PackedStringArray()
+	GameSession.clear_analytics_events()
 	_validate_alpha_gate_data(errors)
 	var scene_paths: PackedStringArray = PackedStringArray([
 		LOADING_SCENE_PATH,
@@ -71,6 +73,7 @@ func _run() -> void:
 		await process_frame
 		await process_frame
 
+	_validate_runtime_analytics_events(errors)
 	if not errors.is_empty():
 		for error_text in errors:
 			push_error("Scene load validation error: %s" % error_text)
@@ -181,6 +184,25 @@ func _validate_control_in_viewport(candidate: Node, viewport_size: Vector2i, sce
 	var relaxed_rect := viewport_rect.grow(8.0)
 	if not relaxed_rect.encloses(rect):
 		errors.append("%s %s is clipped at %s: %s outside %s." % [scene_path, label, viewport_size, rect, viewport_rect])
+
+
+func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
+	var events := GameSession.get_analytics_events()
+	var seen_names := {}
+	for event in events:
+		if not (event is Dictionary):
+			errors.append("runtime analytics event should be a dictionary")
+			continue
+		var event_dict: Dictionary = event
+		var event_name := String(event_dict.get("name", ""))
+		var params := Dictionary(event_dict.get("params", {}))
+		seen_names[event_name] = true
+		var missing_params := GameSession.analytics_event_missing_required_params(event_name, params)
+		if not missing_params.is_empty():
+			errors.append("runtime analytics event %s missing required params: %s" % [event_name, ", ".join(Array(missing_params))])
+	for required_event in ["rescue_book_open", "stage_start"]:
+		if not seen_names.has(required_event):
+			errors.append("runtime analytics should emit %s during scene smoke." % required_event)
 
 
 func _validate_loading_scene(node: Node, errors: PackedStringArray) -> void:

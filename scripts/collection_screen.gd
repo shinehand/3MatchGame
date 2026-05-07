@@ -27,6 +27,7 @@ func _ready() -> void:
 	GameSession.load_state()
 	_build_layout()
 	_refresh_cards()
+	_track_rescue_book_open_analytics()
 	resized.connect(_apply_responsive_layout)
 	get_window().size_changed.connect(_apply_responsive_layout)
 	call_deferred("_apply_responsive_layout")
@@ -137,6 +138,21 @@ func _refresh_cards() -> void:
 	summary_label.text = "해금 %d / %d · 최고 Stage %d" % [unlocked_count, animals.size(), GameSession.get_highest_unlocked_stage_id()]
 	_update_detail_for_selected(animals, state_animals)
 	_start_preview_motion()
+
+
+func _track_rescue_book_open_analytics() -> void:
+	var state := GameSession.get_rescue_book_state()
+	var animals: Dictionary = Dictionary(state.get("animals", {}))
+	var unlocked_count := 0
+	for entry in animals.values():
+		if entry is Dictionary and bool(Dictionary(entry).get("unlocked", false)):
+			unlocked_count += 1
+	GameSession.record_analytics_event("rescue_book_open", {
+		"session_id": GameSession.get_session_id(),
+		"highest_unlocked_stage": GameSession.get_highest_unlocked_stage_id(),
+		"unlocked_animal_count": unlocked_count,
+		"entry_point": "collection_screen",
+	})
 
 
 func _make_animal_card(animal: Dictionary, entry: Dictionary) -> PanelContainer:
