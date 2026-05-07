@@ -1245,7 +1245,7 @@ func _resolve_special_combo_swap(from_cell: Vector2i, to_cell: Vector2i) -> void
 	current_combo = 1
 	_apply_match_rewards(clear_cells, 1)
 	score += cleared_obstacle_cells.size() * 150
-	Feedback.play_match(2, 2, cleared_obstacle_cells.size())
+	Feedback.play_special_combo(cleared_obstacle_cells.size())
 	_update_hud()
 	_set_status("특수 블록 조합 발동: %d개 블록을 먼저 정리한 뒤 연쇄를 확인합니다." % clear_cells.size())
 	_shake_board(8.0, 0.22)

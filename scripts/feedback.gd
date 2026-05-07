@@ -2,13 +2,17 @@ extends Node
 
 const SAMPLE_RATE := 44100
 const PLAYER_POOL_SIZE := 6
+const FEEDBACK_HISTORY_LIMIT := 24
 
 var sound_enabled := true
 var haptics_enabled := true
 
 var _players: Array[AudioStreamPlayer] = []
 var _streams := {}
+var _played_stream_keys: Array[String] = []
+var _requested_vibration_ms: Array[int] = []
 var _player_index := 0
+var _last_vibration_ms := 0
 
 
 func _ready() -> void:
@@ -42,6 +46,11 @@ func play_match(combo: int, special_count: int, cleared_obstacles: int) -> void:
 
 	var duration_ms := 18 + mini(combo, 3) * 6 + mini(special_count, 2) * 10 + mini(cleared_obstacles, 2) * 8
 	_vibrate(duration_ms)
+
+
+func play_special_combo(cleared_obstacles: int = 0) -> void:
+	_play_stream("special_combo")
+	_vibrate(58 + mini(maxi(cleared_obstacles, 0), 4) * 8)
 
 
 func play_shuffle() -> void:
@@ -118,6 +127,13 @@ func _build_streams() -> void:
 		{"freq": 1240.0, "duration_ms": 36, "gain": 0.13, "wave": "sine"},
 		{"freq": 1560.0, "duration_ms": 60, "gain": 0.12, "wave": "sine"},
 	])
+	_streams["special_combo"] = _make_stream([
+		{"freq": 520.0, "duration_ms": 24, "gain": 0.16, "wave": "triangle"},
+		{"freq": 780.0, "duration_ms": 28, "gain": 0.17, "wave": "triangle"},
+		{"freq": 1120.0, "duration_ms": 34, "gain": 0.15, "wave": "sine"},
+		{"freq": 1520.0, "duration_ms": 42, "gain": 0.13, "wave": "sine"},
+		{"freq": 1960.0, "duration_ms": 82, "gain": 0.11, "wave": "sine"},
+	])
 	_streams["shuffle"] = _make_stream([
 		{"freq": 540.0, "duration_ms": 20, "gain": 0.12, "wave": "sine"},
 		{"freq": 680.0, "duration_ms": 20, "gain": 0.12, "wave": "sine"},
@@ -165,6 +181,7 @@ func _play_stream(key: String) -> void:
 	if not sound_enabled or _players.is_empty() or not _streams.has(key):
 		return
 
+	_remember_stream_key(key)
 	var player: AudioStreamPlayer = _players[_player_index % _players.size()]
 	_player_index += 1
 	player.stop()
@@ -176,9 +193,41 @@ func _play_stream(key: String) -> void:
 func _vibrate(duration_ms: int) -> void:
 	if not haptics_enabled:
 		return
+	_last_vibration_ms = max(0, duration_ms)
+	_remember_vibration_ms(_last_vibration_ms)
 	if not (OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios")):
 		return
 	Input.vibrate_handheld(duration_ms)
+
+
+func clear_feedback_history_for_testing() -> void:
+	_played_stream_keys.clear()
+	_requested_vibration_ms.clear()
+	_last_vibration_ms = 0
+
+
+func feedback_stream_keys_for_testing() -> Array:
+	return _played_stream_keys.duplicate()
+
+
+func last_vibration_ms_for_testing() -> int:
+	return _last_vibration_ms
+
+
+func vibration_ms_history_for_testing() -> Array:
+	return _requested_vibration_ms.duplicate()
+
+
+func _remember_stream_key(key: String) -> void:
+	_played_stream_keys.append(key)
+	while _played_stream_keys.size() > FEEDBACK_HISTORY_LIMIT:
+		_played_stream_keys.pop_front()
+
+
+func _remember_vibration_ms(duration_ms: int) -> void:
+	_requested_vibration_ms.append(duration_ms)
+	while _requested_vibration_ms.size() > FEEDBACK_HISTORY_LIMIT:
+		_requested_vibration_ms.pop_front()
 
 
 func _make_stream(segments: Array) -> AudioStreamWAV:

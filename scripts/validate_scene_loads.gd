@@ -1270,6 +1270,11 @@ func _run_special_combo_swap_runtime_scenario(node: Node, scenario: Dictionary, 
 
 	var moves_before := int(node.get("remaining_moves"))
 	var score_before := int(node.get("score"))
+	var feedback := root.get_node_or_null("Feedback")
+	if feedback != null and feedback.has_method("clear_feedback_history_for_testing"):
+		feedback.set("sound_enabled", true)
+		feedback.set("haptics_enabled", true)
+		feedback.call("clear_feedback_history_for_testing")
 	await node.call("_resolve_swap", from_cell, to_cell)
 
 	if bool(node.get("is_busy")):
@@ -1281,6 +1286,18 @@ func _run_special_combo_swap_runtime_scenario(node: Node, scenario: Dictionary, 
 	obstacle_data = node.get("obstacle_data")
 	if int(obstacle_data[obstacle_cell.x][obstacle_cell.y]) != 0:
 		errors.append("%s %s runtime smoke should clear an obstacle on the combo path." % [GAMEPLAY_SCENE_PATH, label])
+	if feedback != null and feedback.has_method("feedback_stream_keys_for_testing"):
+		var feedback_keys: Array = feedback.call("feedback_stream_keys_for_testing")
+		if not feedback_keys.has("special_combo"):
+			errors.append("%s %s runtime smoke should trigger dedicated special_combo feedback, got %s." % [GAMEPLAY_SCENE_PATH, label, str(feedback_keys)])
+	if feedback != null and feedback.has_method("vibration_ms_history_for_testing"):
+		var has_strong_special_haptic := false
+		for vibration_value in Array(feedback.call("vibration_ms_history_for_testing")):
+			if int(vibration_value) >= 58:
+				has_strong_special_haptic = true
+				break
+		if not has_strong_special_haptic:
+			errors.append("%s %s runtime smoke should request a strong special combo haptic." % [GAMEPLAY_SCENE_PATH, label])
 	if String(node.get("stage_state")) != "playing":
 		errors.append("%s %s runtime smoke should leave Stage 31 in playing state, got %s." % [GAMEPLAY_SCENE_PATH, label, String(node.get("stage_state"))])
 
