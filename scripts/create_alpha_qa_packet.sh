@@ -9,6 +9,139 @@ CAPTURE_DIR="$OUTPUT_ROOT/captures"
 REPORT_PATH="$OUTPUT_ROOT/alpha-lock-pass-manual-qa-$TODAY.md"
 DRY_RUN=false
 
+fail_template_contract() {
+	local missing_kind="$1"
+	local missing_value="$2"
+	echo "Alpha QA template contract failed: missing ${missing_kind}: ${missing_value}"
+	exit 1
+}
+
+require_template_text() {
+	local missing_kind="$1"
+	local required_text="$2"
+	if ! grep -Fq "$required_text" "$TEMPLATE_PATH"; then
+		fail_template_contract "$missing_kind" "$required_text"
+	fi
+}
+
+require_template_regex() {
+	local missing_kind="$1"
+	local required_pattern="$2"
+	if ! grep -Eq "$required_pattern" "$TEMPLATE_PATH"; then
+		fail_template_contract "$missing_kind" "$required_pattern"
+	fi
+}
+
+validate_template_contract() {
+	for section in \
+		"Run Metadata" \
+		"Required Preflight" \
+		"Device Evidence Pack" \
+		"Representative Course Results" \
+		"Focused Device Gate Matrix" \
+		"Stage 31 Special Combo Evidence" \
+		"Rescue Buddy Stage Matrix" \
+		"Monetization And Analytics Evidence" \
+		"Failure Continue Gateway" \
+		"Analytics Gateway Local Buffer" \
+		"Alpha Blocker Log" \
+		"Device-Blocked Items" \
+		"Decision"; do
+		require_template_regex "section" "^#{2,3}[[:space:]]+${section}[[:space:]]*$"
+	done
+
+	require_template_text "device evidence header" "| Evidence | Result | Evidence path | Notes |"
+	require_template_text "representative course header" "| Course | Result | Capture path | 10s understanding | HUD/board readability | Overlay/action clarity | Save/unlock/star persistence | Sound | Haptics | Orientation | Notes |"
+	require_template_text "focused gate header" "| Scenario ID | Gate | Required scenario | Result | Evidence path | Notes |"
+	require_template_text "special combo header" "| Combo | combo_type | Result | Portrait evidence | Landscape evidence | cleared_count | obstacles_cleared | special_combo_trigger | VFX label distinct | SFX/haptic distinct | input recovers <2s | Notes |"
+	require_template_text "buddy header" "| Stage | Buddy focus | Result | Portrait evidence | Landscape evidence | HUD readable | VFX overlap acceptable | Analytics events | Notes |"
+	require_template_text "failure gateway request log" "request log source/stage_id/fail_reason/provider_id/status/result"
+
+	for course in \
+		"Home" \
+		"Stage 1" \
+		"Stage 11" \
+		"Stage 25" \
+		"Stage 50" \
+		"Stage 75" \
+		"Stage 100"; do
+		require_template_regex "representative course row" "^\\|[[:space:]]*${course}[[:space:]]*\\|"
+	done
+
+	for scenario_id in \
+		"PAM_QA_040_EXPRESSIONS" \
+		"PAM_QA_041_STAGE_POPUP" \
+		"STAGE_POPUP_BUDDY" \
+		"RESCUE_BOOK_UNLOCK" \
+		"SPECIAL_COMBO_6" \
+		"RESCUE_BUDDY_SMOKE" \
+		"NEAR_MISS_CONTINUE" \
+		"MONETIZATION_GATEWAY_PENDING" \
+		"ANALYTICS_GATEWAY_LOCAL_BUFFER"; do
+		require_template_regex "focused scenario row" "^\\|[[:space:]]*${scenario_id}[[:space:]]*\\|"
+	done
+
+	for gate_id in \
+		"PAM-QA-040" \
+		"PAM-QA-041" \
+		"PAM-DEV-051" \
+		"PAM-DEV-054" \
+		"PAM-ANA-090"; do
+		require_template_text "gate id" "$gate_id"
+	done
+
+	for combo in \
+		"row[+]column" \
+		"row[+]row" \
+		"column[+]column" \
+		"row[+]bomb" \
+		"column[+]bomb" \
+		"bomb[+]bomb"; do
+		require_template_regex "Stage 31 combo row" "^\\|[[:space:]]*${combo}[[:space:]]*\\|"
+	done
+
+	for buddy_stage in \
+		"Stage 4" \
+		"Stage 8" \
+		"Stage 18" \
+		"Stage 81" \
+		"Stages 4/5/8/16/18/20/24/25/31/41/51/81"; do
+		require_template_regex "Rescue Buddy row" "^\\|[[:space:]]*${buddy_stage}[[:space:]]*\\|"
+	done
+
+	for required_text in \
+		"rewarded_ad pending keeps overlay" \
+		"pending duplicate tap does not create second request" \
+		"invalid source rejected_invalid_source" \
+		"completed grants once" \
+		"failed/canceled preserves moves/wallet/objectives" \
+		"duplicate transaction_id grants once" \
+		"GameSession saved event" \
+		"AnalyticsGateway local_buffer queued" \
+		"disk reload preserves queue" \
+		"flush drains in order exactly once" \
+		"pending queue removed after flush" \
+		"contract violation rejected_contract not queued" \
+		"provider-neutral/no SDK selected"; do
+		require_template_text "evidence scenario" "$required_text"
+	done
+
+	for device_evidence in \
+		"Build source commit" \
+		"APK/AAB path" \
+		"Install result" \
+		"Device model and OS version" \
+		"Portrait screenshot" \
+		"Landscape screenshot" \
+		"10s video path" \
+		"sound ON/OFF" \
+		"haptics ON/OFF" \
+		"touch latency notes" \
+		"logcat or app log path"; do
+		require_template_text "device evidence" "$device_evidence"
+	done
+}
+
 for arg in "$@"; do
 	case "$arg" in
 		--dry-run)
@@ -31,6 +164,8 @@ if [ ! -f "$TEMPLATE_PATH" ]; then
 	echo "Missing template: $TEMPLATE_PATH"
 	exit 1
 fi
+
+validate_template_contract
 
 if [ "$DRY_RUN" = true ]; then
 	echo "Would create: $OUTPUT_ROOT"

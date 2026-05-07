@@ -17,7 +17,7 @@
 
 ## 수동 대표 코스
 
-대표 코스 결과는 [Alpha Lock Pass Manual QA Template](templates/alpha-lock-pass-manual-qa-template.md)로 기록하고, 캡처 경로와 Pass/Fail/Blocked 판정을 남긴다.
+대표 코스 결과는 [Alpha Lock Pass Manual QA Template](templates/alpha-lock-pass-manual-qa-template.md)로 기록하고, 캡처 경로와 Pass/Fail/Blocked 판정을 남긴다. `zsh scripts/create_alpha_qa_packet.sh --dry-run`은 아래 필수 증거 섹션이 빠지면 실패해야 한다.
 
 - 홈에서 `시작`, `스테이지 라인`, `설정`의 우선순위가 명확하다.
 - Stage 1에서 목표, 이동 수, 첫 행동이 10초 안에 이해된다.
@@ -26,6 +26,11 @@
 - 클리어 오버레이에서 별 등급, 다음 해금, 다음 행동이 명확하다.
 - 실패 오버레이에서 부족한 목표와 재도전 행동이 명확하다.
 - 저장/해금/별 수가 대표 스테이지 전환 후 유지된다.
+- Device Evidence Pack이 build source commit, APK/AAB, install result, device/OS, portrait/landscape screenshot, 10s video, sound/haptics/touch/log evidence를 기록한다.
+- Focused Device Gate Matrix가 PAM-QA-040 표정, PAM-QA-041 Stage Popup, Rescue Buddy, Stage 31 특수 조합, monetization gateway, analytics local buffer를 stable scenario ID와 evidence path로 기록한다.
+- Stage 31 Special Combo Evidence는 특수+특수 조합 6종을 각각 portrait/landscape evidence, `special_combo_trigger`, 보드 판독성, 사운드/햅틱, 낙하/리필 안정성과 함께 기록한다.
+- Rescue Buddy Stage Matrix는 Stage 4, 8, 18, 81 및 첫 등장 대표군 `4/5/8/16/18/20/24/25/31/41/51/81`을 evidence path와 analytics event로 기록한다.
+- Failure Continue Gateway와 Analytics Gateway Local Buffer는 rewarded/IAP pending, invalid source, duplicate transaction, local_buffer flush/reload, rejected_contract 격리를 Pass/Fail/Blocked로 기록한다.
 
 ## 차단 조건
 

@@ -69,25 +69,6 @@ if ! zsh scripts/create_alpha_qa_packet.sh --dry-run >"$alpha_packet_stdout" 2>&
   cat "$alpha_packet_stdout"
   exit 1
 fi
-alpha_template="docs/qa/templates/alpha-lock-pass-manual-qa-template.md"
-for required_pattern in \
-  "\\| Home \\|" \
-  "\\| Stage 1 \\|" \
-  "\\| Stage 11 \\|" \
-  "\\| Stage 25 \\|" \
-  "\\| Stage 50 \\|" \
-  "\\| Stage 75 \\|" \
-  "\\| Stage 100 \\|" \
-  "Alpha Blocker Log" \
-  "Device-Blocked Items" \
-  "sound" \
-  "haptics" \
-  "Orientation"; do
-  if ! validation_search "$required_pattern" "$alpha_template" >/dev/null 2>&1; then
-    echo "Alpha QA template missing required pattern: $required_pattern"
-    exit 1
-  fi
-done
 echo "Alpha QA packet template and dry-run passed."
 
 echo "[8/8] Manual smoke checklist"
