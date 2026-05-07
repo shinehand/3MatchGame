@@ -163,6 +163,33 @@
     ]
   },
   {
+    "name": "fail_offer_select",
+    "required_params": [
+      "session_id",
+      "stage_id",
+      "fail_type",
+      "offer_type",
+      "cost_type",
+      "cost_amount"
+    ],
+    "optional_params": [
+      "button_label"
+    ]
+  },
+  {
+    "name": "fail_offer_dismiss",
+    "required_params": [
+      "session_id",
+      "stage_id",
+      "fail_type",
+      "dismiss_action",
+      "elapsed_ms"
+    ],
+    "optional_params": [
+      "button_label"
+    ]
+  },
+  {
     "name": "combo_fever_start",
     "required_params": [
       "session_id",

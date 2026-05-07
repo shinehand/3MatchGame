@@ -170,6 +170,8 @@ var fever_turns_spent_current := 0
 var fever_score_at_start := 0
 var fever_target_bonus_collected := 0
 var result_overlay_event_impressions_sent := {}
+var active_fail_offer: Dictionary = {}
+var active_fail_offer_shown_msec := 0
 
 
 func _ready() -> void:
@@ -1686,6 +1688,43 @@ func _track_offer_impression_analytics(fail_offer: Dictionary) -> void:
 	GameSession.record_analytics_event("offer_impression", params)
 
 
+func _track_fail_offer_select_analytics(action: String, button_label: String) -> void:
+	if active_fail_offer.is_empty() or not ["continue_stage", "restart_stage"].has(action):
+		return
+	var params := _analytics_stage_base()
+	params["fail_type"] = String(active_fail_offer.get("type", "general_shortfall"))
+	params["offer_type"] = _offer_type_for_action(action)
+	params["cost_type"] = "rewarded_ad" if action == "continue_stage" else "none"
+	params["cost_amount"] = 1 if action == "continue_stage" else 0
+	params["button_label"] = button_label
+	GameSession.record_analytics_event("fail_offer_select", params)
+
+
+func _track_fail_offer_dismiss_analytics(action: String, button_label: String) -> void:
+	if active_fail_offer.is_empty() or not ["continue_stage", "restart_stage"].has(action):
+		return
+	var params := _analytics_stage_base()
+	params["fail_type"] = String(active_fail_offer.get("type", "general_shortfall"))
+	params["dismiss_action"] = _dismiss_action_for_overlay(action, button_label)
+	params["elapsed_ms"] = maxi(0, Time.get_ticks_msec() - active_fail_offer_shown_msec)
+	params["button_label"] = button_label
+	GameSession.record_analytics_event("fail_offer_dismiss", params)
+
+
+func _offer_type_for_action(action: String) -> String:
+	if action == "continue_stage":
+		return "rewarded_continue"
+	return "retry"
+
+
+func _dismiss_action_for_overlay(action: String, button_label: String) -> String:
+	if action == "continue_stage":
+		return "retry"
+	if button_label.contains("홈"):
+		return "home"
+	return "dismiss"
+
+
 func _track_booster_used_analytics(booster_id: String, source: String) -> void:
 	var params := _analytics_stage_base()
 	params["booster_id"] = booster_id
@@ -2454,6 +2493,8 @@ func _check_stage_state() -> void:
 		var fail_offer := _build_failure_offer(fail_count)
 		if fever_analytics_open:
 			_track_fever_end_analytics("stage_fail")
+		active_fail_offer = fail_offer.duplicate(true)
+		active_fail_offer_shown_msec = Time.get_ticks_msec()
 		_track_stage_fail_analytics(fail_offer)
 		_track_offer_impression_analytics(fail_offer)
 		var failure_action := "continue_stage" if bool(fail_offer.get("show_rewarded_ad", false)) else "restart_stage"
@@ -2920,6 +2961,8 @@ func _hide_overlay() -> void:
 	overlay.visible = false
 	overlay.modulate = Color(1, 1, 1, 1)
 	overlay_action = ""
+	active_fail_offer = {}
+	active_fail_offer_shown_msec = 0
 
 
 func _show_combo_banner(combo: int) -> void:
@@ -2959,6 +3002,7 @@ func _update_overlay_ribbon(action: String) -> void:
 func _on_overlay_primary_button_pressed() -> void:
 	Feedback.play_ui_tap()
 	var action: String = overlay_action
+	_track_fail_offer_select_analytics(action, overlay_primary_button.text)
 	_hide_overlay()
 
 	match action:
@@ -2988,6 +3032,7 @@ func _on_overlay_primary_button_pressed() -> void:
 func _on_overlay_secondary_button_pressed() -> void:
 	Feedback.play_ui_tap()
 	var action: String = overlay_action
+	_track_fail_offer_dismiss_analytics(action, overlay_secondary_button.text)
 	_hide_overlay()
 
 	if action == "clear_stage":

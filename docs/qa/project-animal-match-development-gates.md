@@ -117,7 +117,7 @@
 - 강제 실패 케이스에서 Near Miss와 Strategic Miss가 다르게 분기된다.
 - 실패 팝업에서 재도전, 지도, 닫기 같은 비구매 선택지가 항상 보인다.
 - Near Miss 실패 팝업의 `+3 이동 받고 계속` CTA는 실제로 overlay를 닫고 이동 3회를 지급해 플레이 상태로 복귀한다.
-- 결과/실패 overlay runtime smoke는 Stage 1 클리어 보상/CTA와 Stage 25 near-miss 실패 offer/analytics를 검증한다.
+- 결과/실패 overlay runtime smoke는 Stage 1 클리어 보상/CTA와 Stage 25 near-miss 실패 offer, 선택/닫기 analytics를 검증한다.
 - 광고 완료 후 추가 이동은 1회만 지급된다.
 - 광고 로드 실패/중단 시 하트, 코인, 이동 수가 잘못 소모되지 않는다.
 - 구매 취소/실패/복구가 게임 상태를 꼬이게 하지 않는다.

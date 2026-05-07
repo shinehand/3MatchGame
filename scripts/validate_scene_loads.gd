@@ -237,7 +237,7 @@ func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
 				_validate_live_event_impression_payload(params, live_events_by_id, errors)
 			"remote_config_exposure":
 				_validate_remote_config_exposure_payload(params, errors)
-	for required_event in ["rescue_book_open", "stage_start", "remote_config_exposure", "event_join", "event_progress", "event_reward_claim", "buddy_skill_charge", "buddy_skill_ready", "buddy_skill_trigger", "buddy_skill_blocked"]:
+	for required_event in ["rescue_book_open", "stage_start", "remote_config_exposure", "event_join", "event_progress", "event_reward_claim", "buddy_skill_charge", "buddy_skill_ready", "buddy_skill_trigger", "buddy_skill_blocked", "fail_offer_select", "fail_offer_dismiss"]:
 		if not seen_names.has(required_event):
 			errors.append("runtime analytics should emit %s during scene smoke." % required_event)
 	var active_current_live_events := false
@@ -1204,7 +1204,7 @@ func _validate_start_booster_runtime_rules(node: Node, errors: PackedStringArray
 
 
 func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> void:
-	for method_name in ["_start_stage", "_check_stage_state", "_on_overlay_primary_button_pressed"]:
+	for method_name in ["_start_stage", "_check_stage_state", "_on_overlay_primary_button_pressed", "_on_overlay_secondary_button_pressed"]:
 		if not node.has_method(method_name):
 			errors.append("%s should expose %s for result overlay runtime smoke." % [GAMEPLAY_SCENE_PATH, method_name])
 			return
@@ -1247,6 +1247,8 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	node.set("remaining_moves", 0)
 	var fail_events_before := _analytics_event_count("stage_fail")
 	var offer_events_before := _analytics_event_count("offer_impression")
+	var offer_select_events_before := _analytics_event_count("fail_offer_select")
+	var offer_dismiss_events_before := _analytics_event_count("fail_offer_dismiss")
 	await node.call("_check_stage_state")
 	if overlay == null or not overlay.visible:
 		errors.append("%s near-miss failure runtime smoke should show the result overlay." % GAMEPLAY_SCENE_PATH)
@@ -1278,6 +1280,30 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s continue_stage primary action should resume play with exactly 3 moves." % GAMEPLAY_SCENE_PATH)
 	if overlay != null and overlay.visible:
 		errors.append("%s continue_stage primary action should hide the failure overlay." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("fail_offer_select") <= offer_select_events_before:
+		errors.append("%s continue_stage primary action should emit fail_offer_select analytics." % GAMEPLAY_SCENE_PATH)
+	var select_event := _last_analytics_event_by_name("fail_offer_select")
+	var select_params: Dictionary = Dictionary(select_event.get("params", {}))
+	if int(select_params.get("stage_id", 0)) != 25 or String(select_params.get("fail_type", "")) != "near_miss" or String(select_params.get("offer_type", "")) != "rewarded_continue" or String(select_params.get("cost_type", "")) != "rewarded_ad" or int(select_params.get("cost_amount", -1)) != 1:
+		errors.append("%s fail_offer_select should identify Stage 25 rewarded continue selection." % GAMEPLAY_SCENE_PATH)
+
+	node.call("_start_stage", 25)
+	target_collect = Dictionary(node.call("_stage_collect_targets"))
+	near_miss_counts = {}
+	for animal_id in target_collect.keys():
+		near_miss_counts[String(animal_id)] = int(target_collect[animal_id])
+	node.set("collected_counts", near_miss_counts)
+	node.set("cleared_blockers", maxi(0, int(node.call("_target_blockers")) - 1))
+	node.set("score", int(node.call("_target_score")))
+	node.set("remaining_moves", 0)
+	await node.call("_check_stage_state")
+	node.call("_on_overlay_secondary_button_pressed")
+	if _analytics_event_count("fail_offer_dismiss") <= offer_dismiss_events_before:
+		errors.append("%s continue_stage secondary action should emit fail_offer_dismiss analytics." % GAMEPLAY_SCENE_PATH)
+	var dismiss_event := _last_analytics_event_by_name("fail_offer_dismiss")
+	var dismiss_params: Dictionary = Dictionary(dismiss_event.get("params", {}))
+	if int(dismiss_params.get("stage_id", 0)) != 26 or String(dismiss_params.get("fail_type", "")) != "near_miss" or String(dismiss_params.get("dismiss_action", "")) != "retry" or int(dismiss_params.get("elapsed_ms", -1)) < 0:
+		errors.append("%s fail_offer_dismiss should identify Stage 26 retry dismissal." % GAMEPLAY_SCENE_PATH)
 
 
 func _complete_current_stage_goals(node: Node) -> void:
