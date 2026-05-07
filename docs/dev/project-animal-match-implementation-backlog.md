@@ -153,7 +153,7 @@
 
 ### PAM-QA-040: 표정 애니메이션 QA 체크리스트 수행
 
-- 상태: no-device readiness 자동화됨. Scene load smoke가 idle blink 시작, `is_busy` 중 idle blink 차단, 동시 blink 4개 이하, 선택 `smile`, low-move `worried` 4개 이하, `match` 표정 우선순위 유지, 논리 캔버스 기준 홈/월드맵/게임 HUD/도감 레이아웃 앵커를 검증한다. 남은 최종 승인 조건은 실제 기기 또는 시뮬레이터에서 portrait/landscape 물리 viewport 수동 QA를 수행하고 결과를 문서화하는 것이다.
+- 상태: no-device readiness 자동화됨. Scene load smoke가 idle blink 시작, `is_busy` 중 idle blink 차단, 동시 blink 4개 이하, 선택 `smile`, low-move `worried` 4개 이하, `match` 표정 우선순위 유지, 논리 캔버스 기준 홈/월드맵/게임 HUD/도감 레이아웃 앵커를 검증한다. `docs/qa/project-animal-match-expression-qa-readiness-2026-05-08.md`는 실제 기기 또는 시뮬레이터 portrait/landscape 수동 QA 실행표, evidence path, 반려 기준을 포함한다. 남은 최종 승인 조건은 해당 실행표에 실제 결과를 기록하는 것이다.
 - 소유: QA Agent
 - 대상 파일:
   - `docs/qa/project-animal-match-development-gates.md`

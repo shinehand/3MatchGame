@@ -44,6 +44,7 @@
 - 블록 얼굴이 safe area, board scroll, HUD에 의해 잘리지 않는지 확인한다.
 - 빠른 연쇄 매치, 낙하, 리필 중 표정/VFX 겹침이 과하지 않은지 확인한다.
 - 터치감, UI 사운드, 햅틱 강도가 플레이 흐름을 방해하지 않는지 확인한다.
+- PAM-QA-040 최종 수동 QA는 `docs/qa/project-animal-match-expression-qa-readiness-2026-05-08.md`의 실행표와 반려 기준에 결과, 기기/OS, orientation, evidence path를 기록한다.
 
 ## No-device 홈/설정 readiness
 
@@ -147,6 +148,7 @@
 - `FxLayer` smoke는 매치 burst, 특수 생성, 특수 조합, 콤보 배너, 목표 완료, 덤불 제거, 이동 경고, 보너스 점수, 무지개 VFX를 동시에 호출한 뒤 child count 상한과 transient node cleanup을 확인한다.
 - Stage 31 실제 플레이에서 6종 특수 조합의 VFX 겹침, 낙하/리필 연결, 터치감을 수동 확인한다.
 - Stage 4/5/8/16/18/20/24/25/31/41/51/81 첫 등장 Rescue Buddy가 보드/게이지/장애물/점수/추천/구조 이동에 과한 지연 없이 반응한다.
+- PAM-QA-040 handoff는 Stage 4, Stage 8, Stage 18 또는 81, Stage 31을 우선 수동 진입점으로 사용한다.
 - 덤불 스테이지에서 장애물 오버레이, 목표 칩, 덤불 제거 전용 사운드/진동/VFX가 함께 보인다.
 - 클리어와 실패 오버레이가 각각 정상 표시된다.
 - 클리어/실패 시 피드백 사운드와 진동이 과하지 않은지 확인한다.

@@ -53,6 +53,7 @@
 - 이동 수 부족 또는 실패 직전 worried 반응이 과하지 않게 보인다.
 - 표정 연출이 스와이프, 낙하, 리필, 특수 블록 발동을 막지 않는다.
 - 목표 완료 피드백은 수집 동물명, 덤불 정리, 점수 달성을 구분해 표시한다.
+- 실제 기기 최종 QA는 `docs/qa/project-animal-match-expression-qa-readiness-2026-05-08.md` 실행표에 build commit, 기기/OS, orientation, evidence path, result를 남긴다.
 
 ## Gate 4A. 특수 블록 조합
 
@@ -66,6 +67,7 @@
 - 특수+특수 발동은 조합 타입별 VFX 라벨과 `special_combo_trigger` analytics로 6종 타입/제거 수/장애물 수를 기록한다.
 - 덤불/장애물 제거는 전용 VFX와 SFX/haptic 경로를 가져 일반 매치 피드백과 구분된다.
 - rainbow+special은 특수+특수 큐보다 rainbow resolution 경로를 우선한다.
+- 실제 기기 최종 QA는 Stage 31에서 특수+특수 조합 6종 모두를 portrait/landscape 증거 영상 또는 연속 캡처로 남기고, 보드 판독성 반려 여부를 기록한다.
 
 ## Gate 5. 모바일 UI
 
@@ -125,6 +127,7 @@
 - Stage 18 `leap_clear`와 Stage 81 `mighty_push`는 마지막 덤불 목표를 Buddy 단독으로 완료하려 할 때 발동하지 않고 `effect_unavailable` 차단 이벤트를 남긴다.
 - Stage 20 `loyal_fetch`는 실패 직전 구조 이동을 줄 때 `buddy_skill_trigger`를 남기며, `_check_stage_state()` 실패 판정 경로에서 실패 overlay와 `stage_fail`/`fail_offer_show`를 먼저 띄우지 않는다.
 - Stage 4/5/8/16/18/20/24/25/31/41/51/81 첫 등장 Buddy 스테이지는 `recommended_smoke`로 수동 QA 진입점을 유지한다.
+- 실제 기기 최종 QA는 Stage 4, Stage 8, Stage 18 또는 81에서 Buddy preview/HUD/ready/blocked/complete 판독성과 표정/VFX 겹침 여부를 기록한다.
 
 ## Gate 9. 실패/광고/IAP 공정성
 
@@ -179,6 +182,7 @@ QA 결과: 승인 또는 반려
 No-device readiness:
 Device-blocked items:
 Evidence logs:
+Manual QA matrix:
 반려 이슈:
 재확인 필요:
 ```
