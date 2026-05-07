@@ -58,6 +58,8 @@ validate_template_contract() {
 	require_template_text "android debug export preflight" "| Android debug APK export |"
 	require_template_text "android debug export command" "zsh scripts/export_android_debug.sh"
 	require_template_text "android debug export evidence" "android-debug-export.txt"
+	require_template_text "alpha qa report validation preflight" "| Alpha QA report validation |"
+	require_template_text "alpha qa report validation command" "zsh scripts/validate_alpha_qa_report.sh"
 	require_template_text "representative course header" "| Course | Result | Capture path | 10s understanding | HUD/board readability | Overlay/action clarity | Save/unlock/star persistence | Sound | Haptics | Orientation | Notes |"
 	require_template_text "stage data smoke header" "| Scenario ID | Stage | Stage data trigger | Result | Evidence path | Notes |"
 	require_template_text "focused gate header" "| Scenario ID | Gate | Required scenario | Result | Evidence path | Notes |"

@@ -21,6 +21,7 @@
 | Android debug APK export | `zsh scripts/export_android_debug.sh` | Pending | Writes `output/alpha-lock-pass/YYYY-MM-DD/captures/android-debug-export.txt` and verifies APK signature |
 | Release preflight | `GODOT_RELEASE_KEYSTORE_PATH=/path/to/release.keystore zsh scripts/check_android_setup.sh --release` | Pending | Required for release candidates |
 | Install/run evidence | APK path + install result | Pending | Device required |
+| Alpha QA report validation | `zsh scripts/validate_alpha_qa_report.sh --report=output/alpha-lock-pass/YYYY-MM-DD/alpha-lock-pass-manual-qa-YYYY-MM-DD.md` | Pending | Run only after all manual QA evidence is filled; fails on Pending/Blocked/Fail/Open placeholders |
 
 ## Device Evidence Pack
 

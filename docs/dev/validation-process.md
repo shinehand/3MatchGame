@@ -31,6 +31,8 @@
 
 `zsh scripts/export_android_debug.sh`는 Android debug export를 수행하고 `build/android/puzzle-mobile-starter-debug.apk`를 `apksigner`로 검증한 뒤 `output/alpha-lock-pass/YYYY-MM-DD/captures/android-debug-export.txt`에 commit, APK 경로, export 결과, signature verify 결과, ADB device 상태를 남긴다. 기기가 연결된 설치 검증은 `zsh scripts/export_android_debug.sh --install`로 실행하며, 연결 기기가 정확히 1대가 아니면 install evidence는 Blocked로 기록한다.
 
+`zsh scripts/validate_alpha_qa_report.sh --report=output/alpha-lock-pass/YYYY-MM-DD/alpha-lock-pass-manual-qa-YYYY-MM-DD.md`는 수동 QA 보고서의 최종 승인 직전 게이트다. 템플릿 placeholder, `Pending`/`Fail`/`Blocked`/`Open` 결과, `Overall result: Pass`와 `QA result: Approve` 불일치, 현재 HEAD와 맞지 않는 build commit, 비어 있거나 존재하지 않는 evidence path가 남아 있으면 실패한다. 이 검사는 작성 중인 보고서에는 의도적으로 실패하므로 일반 `validate_gameplay.sh`에는 포함하지 않는다.
+
 검증 스크립트는 임시 `HOME`을 사용해 `user://save_game.json`을 격리한다. 따라서 자동 검증은 로컬 플레이 진행도, 튜토리얼 확인 여부, 사운드/햅틱 설정을 변경하지 않는다.
 
 로그/소스 스캔은 `rg`가 있으면 사용하고, 없으면 `grep -R -E -n`으로 자동 대체한다. 검증 환경의 PATH에 `rg`가 없어도 위 절차가 실패하지 않아야 한다.
