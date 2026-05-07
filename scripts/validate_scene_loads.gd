@@ -256,7 +256,7 @@ func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
 			"remote_config_exposure":
 				_validate_remote_config_exposure_payload(params, errors)
 				remote_config_keys_seen[String(params.get("config_key", ""))] = true
-	for required_event in ["rescue_book_open", "stage_start", "remote_config_exposure", "event_join", "event_progress", "event_reward_claim", "buddy_skill_charge", "buddy_skill_ready", "buddy_skill_trigger", "buddy_skill_blocked", "fail_offer_show", "fail_offer_select", "fail_offer_dismiss", "ad_reward_complete", "ad_reward_fail", "iap_purchase_start", "iap_purchase_cancel", "iap_purchase_fail", "extra_moves_grant"]:
+	for required_event in ["rescue_book_open", "stage_start", "remote_config_exposure", "event_join", "event_progress", "event_reward_claim", "buddy_skill_charge", "buddy_skill_ready", "buddy_skill_trigger", "buddy_skill_blocked", "fail_offer_show", "fail_offer_select", "fail_offer_dismiss", "ad_reward_complete", "ad_reward_fail", "iap_purchase_start", "iap_purchase_complete", "iap_purchase_restore", "iap_purchase_cancel", "iap_purchase_fail", "extra_moves_grant"]:
 		if not seen_names.has(required_event):
 			errors.append("runtime analytics should emit %s during scene smoke." % required_event)
 	for placement in IMPLEMENTED_LIVE_EVENT_PLACEMENTS:
@@ -1564,6 +1564,8 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	var ad_complete_events_before := _analytics_event_count("ad_reward_complete")
 	var ad_fail_events_before := _analytics_event_count("ad_reward_fail")
 	var iap_start_events_before := _analytics_event_count("iap_purchase_start")
+	var iap_complete_events_before := _analytics_event_count("iap_purchase_complete")
+	var iap_restore_events_before := _analytics_event_count("iap_purchase_restore")
 	var iap_cancel_events_before := _analytics_event_count("iap_purchase_cancel")
 	var iap_fail_events_before := _analytics_event_count("iap_purchase_fail")
 	var extra_moves_events_before := _analytics_event_count("extra_moves_grant")
@@ -1625,14 +1627,29 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 
 	node.call("_resolve_fail_offer_continue_result", "iap", "cancelled", {"product_id": "validation_pack", "price": 1.99, "currency": "USD"})
 	node.call("_resolve_fail_offer_continue_result", "iap", "failed", {"product_id": "validation_pack", "price": 1.99, "currency": "USD", "error_code": "billing_failed"})
-	if _analytics_event_count("iap_purchase_start") < iap_start_events_before + 2:
-		errors.append("%s IAP cancel/fail smoke should emit iap_purchase_start for each purchase attempt." % GAMEPLAY_SCENE_PATH)
+	var iap_restore_result := bool(node.call("_resolve_fail_offer_continue_result", "iap", "restored", {"product_id": "validation_pack", "price": 1.99, "currency": "USD", "restored_transaction_id": "old-validation-transaction"}))
+	if iap_restore_result:
+		errors.append("%s IAP restore smoke should not grant current fail offer continue." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("iap_purchase_start") < iap_start_events_before + 3:
+		errors.append("%s IAP cancel/fail/restore smoke should emit iap_purchase_start for each purchase attempt." % GAMEPLAY_SCENE_PATH)
 	if _analytics_event_count("iap_purchase_cancel") <= iap_cancel_events_before:
 		errors.append("%s IAP cancel smoke should emit iap_purchase_cancel analytics." % GAMEPLAY_SCENE_PATH)
 	if _analytics_event_count("iap_purchase_fail") <= iap_fail_events_before:
 		errors.append("%s IAP failure smoke should emit iap_purchase_fail analytics." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("iap_purchase_restore") <= iap_restore_events_before:
+		errors.append("%s IAP restore smoke should emit iap_purchase_restore analytics." % GAMEPLAY_SCENE_PATH)
+	var iap_restore_event := _last_analytics_event_by_name("iap_purchase_restore")
+	var iap_restore_params: Dictionary = Dictionary(iap_restore_event.get("params", {}))
+	if String(iap_restore_params.get("product_id", "")) != "validation_pack" or String(iap_restore_params.get("placement", "")) != "fail_offer" or String(iap_restore_params.get("restore_result", "")) != "restored" or String(iap_restore_params.get("restored_transaction_id", "")) != "old-validation-transaction":
+		errors.append("%s iap_purchase_restore should identify restored fail offer purchase metadata." % GAMEPLAY_SCENE_PATH)
 	if String(node.get("stage_state")) != "failed" or int(node.get("remaining_moves")) != failed_continue_moves or int(GameSession.get_wallet().get("gold", 0)) != int(wallet_before_failed_continue.get("gold", 0)):
-		errors.append("%s IAP cancel/fail should preserve failed state, moves, and wallet." % GAMEPLAY_SCENE_PATH)
+		errors.append("%s IAP cancel/fail/restore should preserve failed state, moves, and wallet." % GAMEPLAY_SCENE_PATH)
+	if overlay == null or not overlay.visible or String(node.get("overlay_action")) != "continue_stage":
+		errors.append("%s IAP cancel/fail/restore should keep the continue offer overlay visible." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("extra_moves_grant") != extra_moves_events_before:
+		errors.append("%s IAP cancel/fail/restore should not emit extra_moves_grant." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("iap_purchase_complete") != iap_complete_events_before:
+		errors.append("%s IAP cancel/fail/restore should not emit iap_purchase_complete." % GAMEPLAY_SCENE_PATH)
 
 	node.call("_on_overlay_primary_button_pressed")
 	if String(node.get("stage_state")) != "playing" or int(node.get("remaining_moves")) != 3:
@@ -1663,6 +1680,39 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s duplicate rewarded continue callback after overlay close should be ignored." % GAMEPLAY_SCENE_PATH)
 	if _analytics_event_count("extra_moves_grant") != extra_moves_after_primary or int(node.get("remaining_moves")) != moves_after_primary:
 		errors.append("%s duplicate rewarded continue callback should not grant moves twice." % GAMEPLAY_SCENE_PATH)
+
+	node.call("_start_stage", 24)
+	GameSession.set_stage_fail_count_for_testing(25, 0)
+	target_collect = Dictionary(node.call("_stage_collect_targets"))
+	near_miss_counts = {}
+	for animal_id in target_collect.keys():
+		near_miss_counts[String(animal_id)] = int(target_collect[animal_id])
+	node.set("collected_counts", near_miss_counts)
+	node.set("cleared_blockers", maxi(0, int(node.call("_target_blockers")) - 1))
+	node.set("score", int(node.call("_target_score")))
+	node.set("remaining_moves", 0)
+	var iap_success_extra_moves_before := _analytics_event_count("extra_moves_grant")
+	var iap_success_complete_before := _analytics_event_count("iap_purchase_complete")
+	await node.call("_check_stage_state")
+	var iap_success_result := bool(node.call("_resolve_fail_offer_continue_result", "iap", "completed", {"product_id": "validation_pack", "price": 1.99, "currency": "USD", "transaction_id": "iap-validation-continue"}))
+	if not iap_success_result:
+		errors.append("%s IAP completed continue should grant extra moves." % GAMEPLAY_SCENE_PATH)
+	if String(node.get("stage_state")) != "playing" or int(node.get("remaining_moves")) != 3:
+		errors.append("%s IAP completed continue should resume play with exactly 3 moves." % GAMEPLAY_SCENE_PATH)
+	if overlay != null and overlay.visible:
+		errors.append("%s IAP completed continue should hide the failure overlay after success." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("iap_purchase_complete") <= iap_success_complete_before:
+		errors.append("%s IAP completed continue should emit iap_purchase_complete analytics." % GAMEPLAY_SCENE_PATH)
+	var iap_complete_event := _last_analytics_event_by_name("iap_purchase_complete")
+	var iap_complete_params: Dictionary = Dictionary(iap_complete_event.get("params", {}))
+	if String(iap_complete_params.get("product_id", "")) != "validation_pack" or String(iap_complete_params.get("transaction_id", "")) != "iap-validation-continue" or String(iap_complete_params.get("currency", "")) != "USD":
+		errors.append("%s iap_purchase_complete should identify the completed fail offer purchase." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("extra_moves_grant") <= iap_success_extra_moves_before:
+		errors.append("%s IAP completed continue should emit extra_moves_grant analytics." % GAMEPLAY_SCENE_PATH)
+	var iap_extra_event := _last_analytics_event_by_name("extra_moves_grant")
+	var iap_extra_params: Dictionary = Dictionary(iap_extra_event.get("params", {}))
+	if String(iap_extra_params.get("source", "")) != "iap_continue" or int(iap_extra_params.get("moves_amount", 0)) != 3 or String(iap_extra_params.get("transaction_id", "")) != "iap-validation-continue":
+		errors.append("%s IAP extra_moves_grant should share transaction_id and identify iap_continue." % GAMEPLAY_SCENE_PATH)
 
 	node.call("_start_stage", 24)
 	GameSession.set_stage_fail_count_for_testing(25, 0)

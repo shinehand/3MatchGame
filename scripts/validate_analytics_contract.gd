@@ -17,6 +17,8 @@ const REQUIRED_EVENTS := {
 	"ad_reward_complete": ["session_id", "stage_id", "placement", "reward_type", "reward_amount", "transaction_id"],
 	"ad_reward_fail": ["session_id", "stage_id", "placement", "reward_type", "ad_network", "error_code"],
 	"iap_purchase_start": ["session_id", "product_id", "price", "currency", "placement"],
+	"iap_purchase_complete": ["session_id", "product_id", "price", "currency", "transaction_id"],
+	"iap_purchase_restore": ["session_id", "product_id", "placement", "restore_result", "restored_transaction_id"],
 	"iap_purchase_cancel": ["session_id", "product_id", "placement", "price", "currency"],
 	"iap_purchase_fail": ["session_id", "product_id", "placement", "error_code", "price", "currency"],
 	"fail_offer_show": ["session_id", "stage_id", "fail_type", "attempt_count", "goals_remaining", "progress_ratio", "offer_type"],

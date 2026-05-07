@@ -200,6 +200,33 @@
     "optional_params": []
   },
   {
+    "name": "iap_purchase_complete",
+    "required_params": [
+      "session_id",
+      "product_id",
+      "price",
+      "currency",
+      "transaction_id"
+    ],
+    "optional_params": [
+      "placement"
+    ]
+  },
+  {
+    "name": "iap_purchase_restore",
+    "required_params": [
+      "session_id",
+      "product_id",
+      "placement",
+      "restore_result",
+      "restored_transaction_id"
+    ],
+    "optional_params": [
+      "price",
+      "currency"
+    ]
+  },
+  {
     "name": "iap_purchase_cancel",
     "required_params": [
       "session_id",

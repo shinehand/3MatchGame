@@ -132,11 +132,12 @@
 - Near Miss 실패 팝업의 `+3 이동 받고 계속` CTA는 실제로 overlay를 닫고 이동 3회를 지급해 플레이 상태로 복귀한다.
 - 실패 overlay는 수집 동물 미달, 점수 미달, 덤불 미달의 `놓친 핵심` 목표와 `다음 한 수` 재도전 힌트를 분리해 보여 준다.
 - Near Miss secondary 재도전은 같은 스테이지를 새 이동 수와 초기 점수/장애물 상태로 복구한다.
-- 결과/실패 overlay runtime smoke는 Stage 1 클리어 보상/CTA, Stage 1 FTUE 실패 CTA, Stage 25 near-miss 실패 offer 노출, 선택/닫기, 광고/IAP 결과, 코인 continue, 추가 이동 지급 analytics를 검증한다.
+- 결과/실패 overlay runtime smoke는 Stage 1 클리어 보상/CTA, Stage 1 FTUE 실패 CTA, Stage 25 near-miss 실패 offer 노출, 선택/닫기, 광고/IAP 성공·취소·실패·복구 결과, 코인 continue, 추가 이동 지급 analytics를 검증한다.
 - 광고 완료 후 추가 이동은 1회만 지급되고 `ad_reward_complete`와 `extra_moves_grant`는 같은 transaction을 공유한다.
+- IAP 성공 후 추가 이동은 `iap_purchase_complete`와 `extra_moves_grant`가 같은 transaction을 공유한다.
 - 광고 로드 실패/중단 시 wallet, 이동 수, 점수, 목표 진행이 잘못 소모되지 않는다.
 - 코인 continue는 충분한 gold가 있을 때만 차감하고, gold 부족 시 상태를 보존한다.
-- 구매 취소/실패/복구가 게임 상태를 꼬이게 하지 않는다. SDK 실연동 전 no-device smoke는 `iap_purchase_cancel`/`iap_purchase_fail` 상태 보존을 검증한다.
+- 구매 취소/실패/복구가 게임 상태를 꼬이게 하지 않는다. SDK 실연동 전 no-device smoke는 `iap_purchase_cancel`/`iap_purchase_fail`/`iap_purchase_restore` 상태 보존을 검증한다.
 - 같은 레벨 3회 실패 시 같은 IAP 팝업을 반복 강제하지 않는다.
 
 ## Gate 10. 라이브 운영/분석

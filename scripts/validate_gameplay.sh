@@ -129,8 +129,8 @@ cat <<'EOF'
 - Stage 1 같은 FTUE 실패 오버레이는 무료 재도전만 보이고 보상형 광고/IAP 문구가 없는지 확인
 - Near Miss 실패 오버레이에서 `놓친 핵심`, `다음 한 수`, `+3 이동 받고 계속`이 함께 보이고, 계속하기를 누르면 이동 3회로 실제 플레이가 재개되는지 확인
 - Near Miss 실패 오버레이에서 `재도전`을 누르면 같은 스테이지가 새 이동 수/점수 0 상태로 다시 시작되는지 확인
-- 보상형 광고 실패/취소와 IAP 취소/실패는 이동 수, 목표 진행, wallet을 바꾸지 않는지 확인
+- 보상형 광고 실패/취소와 IAP 취소/실패/복구는 이동 수, 목표 진행, wallet을 바꾸지 않는지 확인
 - 코인 continue는 충분한 gold가 있을 때만 차감 후 5회 이동으로 재개되고, gold 부족 시 실패 상태가 유지되는지 확인
 - 실패 오퍼 선택과 닫기 행동이 `fail_offer_select`, `fail_offer_dismiss`로 기록되는지 확인
-- 실패 오퍼 노출, 광고/IAP 결과, 추가 이동 지급이 `fail_offer_show`, `ad_reward_complete`, `ad_reward_fail`, `iap_purchase_cancel`, `iap_purchase_fail`, `extra_moves_grant`로 기록되는지 확인
+- 실패 오퍼 노출, 광고/IAP 결과, 추가 이동 지급이 `fail_offer_show`, `ad_reward_complete`, `ad_reward_fail`, `iap_purchase_complete`, `iap_purchase_restore`, `iap_purchase_cancel`, `iap_purchase_fail`, `extra_moves_grant`로 기록되는지 확인
 EOF

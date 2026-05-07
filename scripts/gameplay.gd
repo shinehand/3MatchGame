@@ -1765,6 +1765,19 @@ func _track_iap_purchase_start_analytics(details: Dictionary = {}) -> void:
 	GameSession.record_analytics_event("iap_purchase_start", _iap_purchase_base_params(details))
 
 
+func _track_iap_purchase_complete_analytics(details: Dictionary = {}, transaction_id: String = "") -> void:
+	var params := _iap_purchase_base_params(details)
+	params["transaction_id"] = transaction_id if not transaction_id.is_empty() else String(details.get("transaction_id", _make_continue_transaction_id("iap_continue")))
+	GameSession.record_analytics_event("iap_purchase_complete", params)
+
+
+func _track_iap_purchase_restore_analytics(details: Dictionary = {}) -> void:
+	var params := _iap_purchase_base_params(details)
+	params["restore_result"] = String(details.get("restore_result", "restored"))
+	params["restored_transaction_id"] = String(details.get("restored_transaction_id", details.get("transaction_id", "unknown_restore")))
+	GameSession.record_analytics_event("iap_purchase_restore", params)
+
+
 func _track_iap_purchase_fail_analytics(details: Dictionary = {}) -> void:
 	var params := _iap_purchase_base_params(details)
 	params["error_code"] = String(details.get("error_code", "purchase_failed"))
@@ -1818,17 +1831,27 @@ func _continue_moves_for_source(source: String) -> int:
 	return maxi(1, int(remote_config.get("rewarded_continue_moves", 3)))
 
 
+func _is_iap_restore_result(result: String) -> bool:
+	return ["restore", "restored", "restore_completed", "restoration_completed"].has(result)
+
+
 func _resolve_fail_offer_continue_result(source: String, result: String, details: Dictionary = {}) -> bool:
 	var normalized_source := source.strip_edges().to_lower()
 	var normalized_result := result.strip_edges().to_lower()
 	if overlay_action != "continue_stage" or active_fail_offer.is_empty():
 		return false
 
+	if normalized_source == "iap":
+		_track_iap_purchase_start_analytics(details)
+		if _is_iap_restore_result(normalized_result):
+			_track_iap_purchase_restore_analytics(details)
+			_set_status("구매 복구가 완료되었지만 현재 실패 이어하기 보상은 지급하지 않았습니다.")
+			return false
+
 	if normalized_result != "completed" and normalized_result != "success":
 		if normalized_source == "rewarded_ad":
 			_track_ad_reward_fail_analytics(details)
 		elif normalized_source == "iap":
-			_track_iap_purchase_start_analytics(details)
 			if normalized_result == "cancelled" or normalized_result == "canceled":
 				_track_iap_purchase_cancel_analytics(details)
 			else:
@@ -1853,7 +1876,10 @@ func _resolve_fail_offer_continue_result(source: String, result: String, details
 		_track_ad_reward_complete_analytics(moves_amount, transaction_id, details)
 	elif normalized_source == "iap":
 		grant_source = "iap_continue"
-		transaction_id = _make_continue_transaction_id(grant_source)
+		transaction_id = String(details.get("transaction_id", "")).strip_edges()
+		if transaction_id.is_empty():
+			transaction_id = _make_continue_transaction_id(grant_source)
+		_track_iap_purchase_complete_analytics(details, transaction_id)
 
 	active_fail_offer_continue_granted = true
 	stage_state = "playing"

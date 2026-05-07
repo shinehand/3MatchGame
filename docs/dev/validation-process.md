@@ -105,14 +105,15 @@
 - Stage 20 `loyal_fetch`는 `_check_stage_state()`의 실패 판정 경로에서 실패 overlay와 `stage_fail`/`fail_offer_show`를 띄우기 전에 구조 이동 1회를 지급하는지 검증한다.
 - `+3 이동 받고 계속` primary CTA는 overlay를 닫고 `remaining_moves = 3`, `stage_state = playing`으로 실제 재개한다.
 - `재도전` secondary CTA는 같은 Stage 25를 새 이동 수/점수 0/장애물 0/overlay hidden 상태로 다시 시작한다.
-- 광고 실패/IAP 취소·실패는 overlay, 이동 수, 점수, 목표 진행, wallet을 보존하고 추가 이동을 지급하지 않는다.
+- 광고 실패/IAP 취소·실패·복구는 overlay, 이동 수, 점수, 목표 진행, wallet을 보존하고 추가 이동을 지급하지 않는다.
+- IAP 성공형 continue는 `iap_purchase_complete`와 `extra_moves_grant`가 같은 `transaction_id`를 공유하고 추가 이동을 1회만 지급한다.
 - 코인 continue는 충분한 gold가 있을 때만 gold를 차감하고 `coin_continue_moves`만큼 재개하며, gold 부족 시 상태를 보존한다.
-- 실패 overlay 노출, 선택, 광고/IAP 결과, 추가 이동 지급은 `stage_fail`, `offer_impression`, `fail_offer_show`, `fail_offer_select`, `fail_offer_dismiss`, `ad_reward_complete`, `ad_reward_fail`, `iap_purchase_start`, `iap_purchase_cancel`, `iap_purchase_fail`, `extra_moves_grant` analytics에 near-miss 및 continue 정보를 기록한다.
+- 실패 overlay 노출, 선택, 광고/IAP 결과, 추가 이동 지급은 `stage_fail`, `offer_impression`, `fail_offer_show`, `fail_offer_select`, `fail_offer_dismiss`, `ad_reward_complete`, `ad_reward_fail`, `iap_purchase_start`, `iap_purchase_complete`, `iap_purchase_restore`, `iap_purchase_cancel`, `iap_purchase_fail`, `extra_moves_grant` analytics에 near-miss 및 continue 정보를 기록한다.
 - `FailOfferPolicy`는 near miss, strategic miss, first fail, repeat fail, hard fail, Level 1-10 수익화 차단을 분리 검증한다.
 
 아래 항목은 no-device readiness로 승인하지 않는다. 실제 기기 또는 시뮬레이터에서 수동 확인해야 한다.
 
-- 보상형 광고 SDK 로드/완료/중단/실패와 구매 취소/실패가 하트, 코인, 이동 수를 꼬이게 하지 않는지 확인한다.
+- 보상형 광고 SDK 로드/완료/중단/실패와 구매 성공/취소/실패/복구가 하트, 코인, 이동 수를 꼬이게 하지 않는지 확인한다.
 - 결과/실패 overlay 애니메이션, 사운드, 햅틱, 버튼 터치감이 모바일에서 자연스러운지 확인한다.
 
 ## 수동 체크리스트

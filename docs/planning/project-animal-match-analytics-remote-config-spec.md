@@ -67,6 +67,7 @@
 | `ad_reward_fail` | 광고 실패 | `placement`, `stage_id`, `reward_type`, `ad_network`, `error_code` |
 | `iap_purchase_start` | 구매 시작 | `product_id`, `price`, `currency`, `placement` |
 | `iap_purchase_complete` | 구매 완료 | `product_id`, `price`, `currency`, `transaction_id` |
+| `iap_purchase_restore` | 구매 복구 결과 | `product_id`, `placement`, `restore_result`, `restored_transaction_id` |
 | `iap_purchase_fail` | 구매 실패 | `product_id`, `placement`, `error_code`, `price`, `currency` |
 | `iap_purchase_cancel` | 구매 취소 | `product_id`, `placement`, `price`, `currency` |
 
@@ -107,6 +108,8 @@
 - 오프라인 이벤트는 로컬 큐에 저장하고 다음 세션에서 순서대로 전송한다.
 - `level_start`, `level_complete`, `level_fail`, `retry_start`의 `attempt_count`는 같은 stage 안에서 일관되어야 한다.
 - `ad_reward_complete`와 `extra_moves_grant`가 분리될 경우 같은 `transaction_id`를 공유한다.
+- IAP 성공형 continue는 `iap_purchase_complete`와 `extra_moves_grant`가 같은 `transaction_id`를 공유한다.
+- IAP restore 결과는 현재 실패 이어하기 보상을 지급하지 않고 `iap_purchase_restore`만 기록한다.
 - A/B 테스트 이벤트는 반드시 `variant_id`와 `remote_config_version`을 포함한다.
 
 ## 5. 롤백 기준
