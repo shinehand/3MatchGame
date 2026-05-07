@@ -540,7 +540,7 @@ func _refresh_home_events() -> void:
 		return
 	for child in home_event_strip.get_children():
 		child.queue_free()
-	var events := LiveEventService.active_events_for(GameSession.get_highest_unlocked_stage_id(), "home")
+	var events := LiveEventService.display_events_for(GameSession.get_highest_unlocked_stage_id(), "home")
 	home_event_strip.visible = not events.is_empty()
 	for index in range(mini(events.size(), 2)):
 		var event := Dictionary(events[index])
@@ -551,9 +551,9 @@ func _refresh_home_events() -> void:
 func _make_home_event_chip(event: Dictionary) -> Button:
 	var chip := Button.new()
 	chip.name = "LiveEventChip_%s" % String(event.get("id", "event"))
-	chip.text = "%s\n%s" % [String(event.get("title", "이벤트")), _event_type_label(String(event.get("type", "")))]
-	chip.custom_minimum_size = Vector2(230, 56)
-	chip.add_theme_font_size_override("font_size", 17)
+	chip.text = "%s\n%s · %s" % [String(event.get("title", "이벤트")), _event_status_label(_event_status(event)), _event_type_label(String(event.get("type", "")))]
+	chip.custom_minimum_size = Vector2(250, 60)
+	chip.add_theme_font_size_override("font_size", 16)
 	chip.add_theme_color_override("font_color", Color(0.14, 0.22, 0.31, 1))
 	chip.add_theme_stylebox_override("normal", _home_style(Color(1.0, 0.97, 0.72, 0.86), Color(0.96, 0.48, 0.16, 0.94), 22, 3))
 	chip.add_theme_stylebox_override("hover", _home_style(Color(1.0, 0.99, 0.82, 0.96), Color(1.0, 0.55, 0.19, 1), 22, 3))
@@ -566,7 +566,7 @@ func _show_event_detail(event: Dictionary) -> void:
 	_selected_event = Dictionary(event)
 	var event_id := String(_selected_event.get("id", ""))
 	var event_type := String(_selected_event.get("type", ""))
-	if not event_id.is_empty() and _game_session_has_method("join_live_event"):
+	if not event_id.is_empty() and _is_event_claimable(_selected_event) and _game_session_has_method("join_live_event"):
 		GameSession.join_live_event(event_id, event_type, "home")
 
 	stage_overlay.visible = false
@@ -584,7 +584,8 @@ func _on_event_claim_button_pressed() -> void:
 	Feedback.play_ui_tap()
 	var event_id := String(_selected_event.get("id", ""))
 	var event_type := String(_selected_event.get("type", ""))
-	if event_id.is_empty():
+	if event_id.is_empty() or not _is_event_claimable(_selected_event):
+		_refresh_event_claim_button()
 		return
 	var reward_id := "%s:main" % event_id
 	var claimed := false
@@ -607,6 +608,11 @@ func _on_event_detail_close_button_pressed() -> void:
 func _refresh_event_claim_button() -> void:
 	var event_id := String(_selected_event.get("id", ""))
 	var reward_id := "%s:main" % event_id
+	var status := _event_status(_selected_event)
+	if not _is_event_claimable(_selected_event):
+		event_claim_button.text = _event_unavailable_button_text(status)
+		event_claim_button.disabled = true
+		return
 	var reward := _event_claim_reward(_selected_event)
 	if reward.is_empty():
 		event_claim_button.text = "진행 보상 준비"
@@ -626,17 +632,22 @@ func _refresh_event_claim_button() -> void:
 func _build_event_detail_body(event: Dictionary) -> String:
 	var lines: Array[String] = []
 	lines.append("종류  %s" % _event_type_label(String(event.get("type", ""))))
+	lines.append("상태  %s" % _event_status_label(_event_status(event)))
 	lines.append("기간  %s" % _event_window_text(event))
 	lines.append("진행  %s" % _event_progress_text(event))
 	lines.append("보상  %s" % _event_reward_summary(event))
 	lines.append("")
-	lines.append("홈에서 참여 중인 구조 이벤트입니다. 조건을 달성하면 보상을 받을 수 있습니다.")
+	lines.append(_event_status_body_line(_event_status(event)))
 	return "\n".join(lines)
 
 
 func _event_window_text(event: Dictionary) -> String:
 	var start_text := String(event.get("start_at", event.get("start", "")))
 	var end_text := String(event.get("end_at", event.get("end", "")))
+	if start_text.is_empty() and int(event.get("starts_at_unix", 0)) > 0:
+		start_text = _event_unix_date_text(int(event.get("starts_at_unix", 0)))
+	if end_text.is_empty() and int(event.get("ends_at_unix", 0)) > 0:
+		end_text = _event_unix_date_text(int(event.get("ends_at_unix", 0)))
 	if not start_text.is_empty() and not end_text.is_empty():
 		return "%s ~ %s" % [start_text, end_text]
 	if not end_text.is_empty():
@@ -645,6 +656,15 @@ func _event_window_text(event: Dictionary) -> String:
 
 
 func _event_progress_text(event: Dictionary) -> String:
+	match _event_status(event):
+		"offline":
+			return "저장된 정보로 확인 가능"
+		"upcoming":
+			return "시작 후 진행 가능"
+		"ended":
+			return "이벤트 종료"
+		"disabled":
+			return "운영 중지"
 	var event_type := String(event.get("type", ""))
 	if event.has("missions"):
 		var missions: Array = event.get("missions", [])
@@ -678,6 +698,54 @@ func _event_reward_summary(event: Dictionary) -> String:
 			Array(event.get("premium_track_rewards", [])).size(),
 		]
 	return "이벤트 보상 준비 중"
+
+
+func _event_status(event: Dictionary) -> String:
+	var status := String(event.get("status", "")).strip_edges()
+	if status.is_empty():
+		status = LiveEventService.event_status(event)
+	return status
+
+
+func _event_status_label(status: String) -> String:
+	return LiveEventService.status_text({"status": status})
+
+
+func _event_status_body_line(status: String) -> String:
+	match status:
+		"active":
+			return "홈에서 참여 중인 구조 이벤트입니다. 조건을 달성하면 보상을 받을 수 있습니다."
+		"offline":
+			return "네트워크가 불안정해도 저장된 보상 정보로 이어서 확인할 수 있습니다."
+		"upcoming":
+			return "아직 시작 전인 이벤트입니다. 시작 후 참여와 보상 수령이 열립니다."
+		"ended":
+			return "종료된 이벤트입니다. 다음 구조 이벤트를 기다려 주세요."
+		"disabled":
+			return "현재 운영에서 잠시 내려간 이벤트입니다."
+	return "이벤트 상태를 확인하는 중입니다."
+
+
+func _event_unavailable_button_text(status: String) -> String:
+	match status:
+		"upcoming":
+			return "시작 전"
+		"ended":
+			return "종료됨"
+		"disabled":
+			return "운영 중지"
+	return "보상 대기"
+
+
+func _is_event_claimable(event: Dictionary) -> bool:
+	return ["active", "offline"].has(_event_status(event))
+
+
+func _event_unix_date_text(unix_time: int) -> String:
+	if unix_time <= 0:
+		return ""
+	var date := Time.get_datetime_dict_from_unix_time(unix_time)
+	return "%04d-%02d-%02d" % [int(date.get("year", 0)), int(date.get("month", 0)), int(date.get("day", 0))]
 
 
 func _event_claim_reward(event: Dictionary) -> Dictionary:

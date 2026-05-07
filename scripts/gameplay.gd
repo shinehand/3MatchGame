@@ -3202,7 +3202,7 @@ func _format_star_rating(star_count: int) -> String:
 
 
 func _result_overlay_live_event() -> Dictionary:
-	var events := LiveEventService.active_events_for(GameSession.get_highest_unlocked_stage_id(), RESULT_OVERLAY_PLACEMENT)
+	var events := LiveEventService.display_events_for(GameSession.get_highest_unlocked_stage_id(), RESULT_OVERLAY_PLACEMENT)
 	if events.is_empty():
 		return {}
 	return Dictionary(events[0])
@@ -3212,10 +3212,14 @@ func _result_overlay_live_event_line() -> String:
 	var event := _result_overlay_live_event()
 	if event.is_empty():
 		return ""
+	return _result_overlay_live_event_line_for_event(event)
+
+
+func _result_overlay_live_event_line_for_event(event: Dictionary) -> String:
 	var title := String(event.get("title", "이벤트")).strip_edges()
 	if title.length() > 14:
 		title = "%s..." % title.substr(0, 14)
-	return "이벤트  %s · %s" % [title, _live_event_type_label(String(event.get("type", "")))]
+	return "이벤트  %s · %s · %s" % [title, LiveEventService.status_text(event), _live_event_type_label(String(event.get("type", "")))]
 
 
 func _live_event_type_label(event_type: String) -> String:

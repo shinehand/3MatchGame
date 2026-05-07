@@ -158,7 +158,7 @@ func _track_rescue_book_open_analytics() -> void:
 
 
 func _track_collection_event_impressions() -> void:
-	for event in LiveEventService.active_events_for(GameSession.get_highest_unlocked_stage_id(), "collection"):
+	for event in LiveEventService.display_events_for(GameSession.get_highest_unlocked_stage_id(), "collection"):
 		var event_dict := Dictionary(event)
 		GameSession.record_analytics_event("live_event_impression", {
 			"session_id": GameSession.get_session_id(),
@@ -167,6 +167,7 @@ func _track_collection_event_impressions() -> void:
 			"placement": "collection",
 			"unlock_stage": int(event_dict.get("unlock_stage", 0)),
 			"enabled": bool(event_dict.get("enabled", false)),
+			"status": String(event_dict.get("status", "")),
 		})
 
 
@@ -261,20 +262,54 @@ func _update_detail_for_selected(animals: Array, state_animals: Dictionary) -> v
 		var entry: Dictionary = Dictionary(state_animals.get(animal_id, {}))
 		var unlocked := bool(entry.get("unlocked", false))
 		if unlocked:
-			detail_label.text = "%s · Lv.%d · 토큰 %d · %s" % [
+			detail_label.text = _detail_with_event_line("%s · Lv.%d · 토큰 %d · %s" % [
 				String(animal_dict.get("display_name", animal_id)),
 				int(entry.get("friendship_level", 1)),
 				int(entry.get("tokens", 0)),
 				String(animal_dict.get("personality", "구조 완료")),
-			]
+			])
 		else:
-			detail_label.text = "%s · Stage %d에서 해금 예정 · %s" % [
+			detail_label.text = _detail_with_event_line("%s · Stage %d에서 해금 예정 · %s" % [
 				String(animal_dict.get("display_name", animal_id)),
 				int(animal_dict.get("unlock_stage", 1)),
 				String(animal_dict.get("personality", "아직 구조 전")),
-			]
+			])
 		return
-	detail_label.text = "구조한 친구들의 해금 상태와 토큰, 우정 레벨을 확인합니다."
+	detail_label.text = _detail_with_event_line("구조한 친구들의 해금 상태와 토큰, 우정 레벨을 확인합니다.")
+
+
+func _detail_with_event_line(base_text: String) -> String:
+	var event_line := _collection_live_event_line()
+	if event_line.is_empty():
+		return base_text
+	return "%s\n%s" % [base_text, event_line]
+
+
+func _collection_live_event_line() -> String:
+	var events := LiveEventService.display_events_for(GameSession.get_highest_unlocked_stage_id(), "collection")
+	if events.is_empty():
+		return ""
+	return _collection_live_event_line_for_event(Dictionary(events[0]))
+
+
+func _collection_live_event_line_for_event(event: Dictionary) -> String:
+	var title := String(event.get("title", "이벤트")).strip_edges()
+	if title.length() > 14:
+		title = "%s..." % title.substr(0, 14)
+	return "이벤트  %s · %s · %s" % [title, LiveEventService.status_text(event), _event_type_label(String(event.get("type", "")))]
+
+
+func _event_type_label(event_type: String) -> String:
+	match event_type:
+		"daily_reward":
+			return "오늘 보급"
+		"starter_missions":
+			return "스타터 미션"
+		"collection_event":
+			return "도감 이벤트"
+		"season_pass":
+			return "시즌 패스"
+	return "라이브 이벤트"
 
 
 func _start_preview_motion() -> void:

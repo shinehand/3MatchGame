@@ -406,6 +406,44 @@ func _validate_main_event_detail_overlay(node: Node, errors: PackedStringArray) 
 		if claim_button.text != "수령 완료":
 			errors.append("%s EventClaimButton should show claimed state after reward claim." % MAIN_SCENE_PATH)
 
+	node.call("_show_event_detail", {
+		"id": "__validation_ended_event",
+		"type": "daily_reward",
+		"title": "종료 검증 이벤트",
+		"enabled": true,
+		"status": "ended",
+		"unlock_stage": 1,
+		"placements": ["home"],
+		"reward": {
+			"gold": 5,
+		},
+	})
+	if body_label != null:
+		if not body_label.text.contains("종료됨"):
+			errors.append("%s EventDetailBodyLabel should expose ended live event status." % MAIN_SCENE_PATH)
+		if body_label.text.contains("참여 가능"):
+			errors.append("%s EventDetailBodyLabel should not describe ended live events as claimable." % MAIN_SCENE_PATH)
+	if claim_button != null:
+		if not claim_button.disabled:
+			errors.append("%s EventClaimButton should disable ended live event rewards." % MAIN_SCENE_PATH)
+		if claim_button.text != "종료됨":
+			errors.append("%s EventClaimButton should explain ended live event rewards." % MAIN_SCENE_PATH)
+
+	if node.has_method("_make_home_event_chip"):
+		var offline_chip = node.call("_make_home_event_chip", {
+			"id": "__validation_offline_event",
+			"type": "daily_reward",
+			"title": "오프라인 검증",
+			"enabled": true,
+			"status": "offline",
+			"unlock_stage": 1,
+			"placements": ["home"],
+		}) as Button
+		if offline_chip == null or not offline_chip.text.contains("오프라인"):
+			errors.append("%s home live event chip should expose offline status text." % MAIN_SCENE_PATH)
+		if offline_chip != null:
+			offline_chip.queue_free()
+
 
 func _validate_gameplay_scene(node: Node, errors: PackedStringArray) -> void:
 	var board_grid := node.get_node_or_null("SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame/BoardSurfaceMargin/BoardScroll/BoardGrid")
@@ -425,6 +463,18 @@ func _validate_gameplay_scene(node: Node, errors: PackedStringArray) -> void:
 		errors.append("%s is missing result overlay." % GAMEPLAY_SCENE_PATH)
 	elif overlay.visible:
 		errors.append("%s should start with the board immediately playable, not blocked by an overlay." % GAMEPLAY_SCENE_PATH)
+	if node.has_method("_result_overlay_live_event_line_for_event"):
+		var result_line := String(node.call("_result_overlay_live_event_line_for_event", {
+			"id": "__validation_result_event",
+			"type": "daily_reward",
+			"title": "결과 검증",
+			"enabled": true,
+			"status": "offline",
+			"unlock_stage": 1,
+			"placements": ["result_overlay"],
+		}))
+		if not result_line.contains("오프라인"):
+			errors.append("%s result overlay live event line should expose offline status text." % GAMEPLAY_SCENE_PATH)
 
 	var juice_layer := node.get_node_or_null("GameplayJuiceLayer") as CanvasItem
 	if juice_layer == null:
@@ -672,6 +722,18 @@ func _validate_collection_scene(node: Node, errors: PackedStringArray) -> void:
 	for animal_id in collection_ids:
 		if node.find_child("AnimalCard_%s" % animal_id, true, false) == null:
 			errors.append("%s missing AnimalCard_%s." % [COLLECTION_SCENE_PATH, animal_id])
+	if node.has_method("_collection_live_event_line_for_event"):
+		var ended_line := String(node.call("_collection_live_event_line_for_event", {
+			"id": "__validation_collection_event",
+			"type": "collection_event",
+			"title": "도감 검증",
+			"enabled": true,
+			"status": "ended",
+			"unlock_stage": 1,
+			"placements": ["collection"],
+		}))
+		if not ended_line.contains("종료됨"):
+			errors.append("%s collection live event line should expose ended status text." % COLLECTION_SCENE_PATH)
 
 
 func _validate_stage_select_scene(node: Node, errors: PackedStringArray) -> void:
@@ -707,6 +769,22 @@ func _validate_stage_select_scene(node: Node, errors: PackedStringArray) -> void
 
 	if node.get_node_or_null("StageWorldLayer/LiveEventStrip") == null:
 		errors.append("%s is missing LiveEventStrip for stage_select live ops surface checks." % STAGE_SELECT_SCENE_PATH)
+	elif node.has_method("_make_stage_select_event_chip"):
+		var upcoming_chip = node.call("_make_stage_select_event_chip", {
+			"id": "__validation_upcoming_event",
+			"type": "starter_missions",
+			"title": "예정 검증",
+			"enabled": true,
+			"status": "upcoming",
+			"unlock_stage": 1,
+			"placements": ["stage_select"],
+		}) as PanelContainer
+		var labels := upcoming_chip.find_children("*", "Label", true, false) if upcoming_chip != null else []
+		var label := labels[0] as Label if not labels.is_empty() else null
+		if label == null or not label.text.contains("시작 전"):
+			errors.append("%s stage select live event chip should expose upcoming status text." % STAGE_SELECT_SCENE_PATH)
+		if upcoming_chip != null:
+			upcoming_chip.queue_free()
 
 	var world_play_button := node.find_child("WorldPlayButton", true, false) as Button
 	if world_play_button == null:
@@ -929,6 +1007,17 @@ func _validate_live_event_status_model(errors: PackedStringArray) -> void:
 		errors.append("LiveEventService should classify post-window events as ended.")
 	if LiveEventService.event_status({"enabled": false}, 1778198400) != "disabled":
 		errors.append("LiveEventService should classify disabled events as disabled.")
+	var expected_status_text := {
+		"active": "진행 중",
+		"offline": "오프라인",
+		"upcoming": "시작 전",
+		"ended": "종료됨",
+		"disabled": "중지됨",
+	}
+	for status in expected_status_text.keys():
+		var actual_text := LiveEventService.status_text({"status": String(status)})
+		if actual_text != String(expected_status_text[status]):
+			errors.append("LiveEventService.status_text(%s) expected %s, got %s." % [String(status), String(expected_status_text[status]), actual_text])
 
 	var inactive_home_events := LiveEventService.events_for(21, "home", 4102444800, true, false)
 	var saw_ended_event := false
@@ -945,6 +1034,14 @@ func _validate_live_event_status_model(errors: PackedStringArray) -> void:
 		for event in offline_events:
 			if String(Dictionary(event).get("status", "")) != "offline":
 				errors.append("LiveEventService offline fallback events should be marked offline.")
+	var forced_offline_display_events := LiveEventService.display_events_for(9, "home", 1778198400, false, true)
+	if forced_offline_display_events.is_empty():
+		errors.append("LiveEventService.display_events_for should expose offline fallback display events.")
+	else:
+		for event in forced_offline_display_events:
+			var event_dict := Dictionary(event)
+			if bool(event_dict.get("offline_fallback", false)) and String(event_dict.get("status", "")) != "offline":
+				errors.append("LiveEventService.display_events_for should mark offline fallback display events as offline.")
 
 	var exposure_count_before := _analytics_event_count("remote_config_exposure")
 	LiveEventService.active_events_for(9, "home", 1778198400, false)

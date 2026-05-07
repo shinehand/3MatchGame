@@ -3,6 +3,7 @@ extends RefCounted
 const EVENTS_PATH := "res://data/events/live_events.json"
 const REMOTE_CONFIG_PATH := "res://data/events/remote_config.json"
 const GameSession = preload("res://scripts/game_session.gd")
+const REMOTE_CONFIG_FALLBACK_REASON_KEY := "_remote_config_fallback_reason"
 const EVENT_UNLOCK_CONFIG_KEYS := {
 	"daily_reward": "daily_reward_unlock_level",
 	"starter_missions": "starter_missions_unlock_level",
@@ -54,9 +55,10 @@ static func load_events() -> Array:
 
 
 static func load_remote_config(record_exposure: bool = true) -> Dictionary:
-	var remote_config := DEFAULT_REMOTE_CONFIG.duplicate(true)
+	var remote_config := _default_remote_config()
 	if not FileAccess.file_exists(REMOTE_CONFIG_PATH):
 		push_warning("LiveEventService: missing remote config %s; using local defaults." % REMOTE_CONFIG_PATH)
+		remote_config[REMOTE_CONFIG_FALLBACK_REASON_KEY] = "missing"
 		if record_exposure:
 			_record_remote_config_exposures(remote_config)
 		return remote_config
@@ -64,6 +66,7 @@ static func load_remote_config(record_exposure: bool = true) -> Dictionary:
 	var parsed = JSON.parse_string(raw_text)
 	if not (parsed is Dictionary):
 		push_warning("LiveEventService: remote config must be a dictionary; using local defaults.")
+		remote_config[REMOTE_CONFIG_FALLBACK_REASON_KEY] = "invalid"
 		if record_exposure:
 			_record_remote_config_exposures(remote_config)
 		return remote_config
@@ -78,7 +81,27 @@ static func active_events_for(stage_id: int, placement: String, now_unix: int = 
 	return events_for(stage_id, placement, now_unix, false, record_exposure)
 
 
-static func events_for(stage_id: int, placement: String, now_unix: int = -1, include_inactive: bool = false, record_exposure: bool = true) -> Array:
+static func display_events_for(stage_id: int, placement: String, now_unix: int = -1, record_exposure: bool = true, force_offline_fallback: bool = false) -> Array:
+	var events := events_for(stage_id, placement, now_unix, true, record_exposure, force_offline_fallback)
+	var display_events: Array = []
+	for event in events:
+		var event_dict := Dictionary(event)
+		if String(event_dict.get("status", "")) == "disabled":
+			continue
+		display_events.append(event_dict)
+	if display_events.is_empty():
+		display_events = offline_events_for(stage_id, placement, now_unix)
+	display_events.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var rank_a := _status_rank(String(a.get("status", "")))
+		var rank_b := _status_rank(String(b.get("status", "")))
+		if rank_a == rank_b:
+			return int(a.get("unlock_stage", 0)) < int(b.get("unlock_stage", 0))
+		return rank_a < rank_b
+	)
+	return display_events
+
+
+static func events_for(stage_id: int, placement: String, now_unix: int = -1, include_inactive: bool = false, record_exposure: bool = true, force_offline_fallback: bool = false) -> Array:
 	var remote_config := load_remote_config(record_exposure)
 	var events: Array = []
 	for event in load_events():
@@ -86,6 +109,8 @@ static func events_for(stage_id: int, placement: String, now_unix: int = -1, inc
 			continue
 		var event_dict: Dictionary = event
 		var status := event_status(event_dict, now_unix)
+		if _should_show_offline_fallback(event_dict, status, remote_config, force_offline_fallback):
+			status = "offline"
 		if status != "active" and not include_inactive:
 			continue
 		if stage_id < _event_unlock_stage(event_dict, remote_config):
@@ -177,6 +202,24 @@ static func event_status(event_dict: Dictionary, now_unix: int = -1) -> String:
 	return "active"
 
 
+static func status_text(event_dict: Dictionary) -> String:
+	var status := String(event_dict.get("status", "")).strip_edges()
+	if status.is_empty():
+		status = event_status(event_dict)
+	match status:
+		"active":
+			return "진행 중"
+		"offline":
+			return "오프라인"
+		"upcoming":
+			return "시작 전"
+		"ended":
+			return "종료됨"
+		"disabled":
+			return "중지됨"
+	return "상태 확인 중"
+
+
 static func reset_remote_config_exposures_for_testing() -> void:
 	_remote_config_exposures_sent.clear()
 
@@ -201,6 +244,33 @@ static func _validate_remote_config(remote_config: Dictionary, errors: PackedStr
 		errors.append("remote config iap_offer_start_level must not precede rewarded_ad_start_level")
 	if int(remote_config.get("interstitial_min_level", 0)) < 11:
 		errors.append("remote config interstitial_min_level must respect FTUE monetization guardrail")
+
+
+static func _default_remote_config() -> Dictionary:
+	return DEFAULT_REMOTE_CONFIG.duplicate(true)
+
+
+static func _should_show_offline_fallback(event_dict: Dictionary, status: String, remote_config: Dictionary, force_offline_fallback: bool) -> bool:
+	if status != "active":
+		return false
+	if not bool(event_dict.get("offline_fallback", false)):
+		return false
+	return force_offline_fallback or not String(remote_config.get(REMOTE_CONFIG_FALLBACK_REASON_KEY, "")).is_empty()
+
+
+static func _status_rank(status: String) -> int:
+	match status:
+		"active":
+			return 0
+		"offline":
+			return 1
+		"upcoming":
+			return 2
+		"ended":
+			return 3
+		"disabled":
+			return 4
+	return 5
 
 
 static func _record_remote_config_exposures(remote_config: Dictionary) -> void:

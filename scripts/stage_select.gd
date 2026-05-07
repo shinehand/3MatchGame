@@ -733,7 +733,7 @@ func _refresh_stage_select_events() -> void:
 		return
 	for child in world_event_strip.get_children():
 		child.queue_free()
-	var events := LiveEventService.active_events_for(GameSession.get_highest_unlocked_stage_id(), "stage_select")
+	var events := LiveEventService.display_events_for(GameSession.get_highest_unlocked_stage_id(), "stage_select")
 	world_event_strip.visible = not events.is_empty()
 	var max_visible_events := 1 if MobileLayout.is_portrait(self) else 2
 	for index in range(mini(events.size(), max_visible_events)):
@@ -755,7 +755,7 @@ func _make_stage_select_event_chip(event: Dictionary) -> PanelContainer:
 	margin.add_theme_constant_override("margin_bottom", 7)
 	chip.add_child(margin)
 
-	var label := _make_world_label("%s\n%s" % [String(event.get("title", "이벤트")), _event_type_label(String(event.get("type", "")))], 16, Color("213a55"), HORIZONTAL_ALIGNMENT_CENTER)
+	var label := _make_world_label("%s\n%s · %s" % [String(event.get("title", "이벤트")), _event_status_label(_event_status(event)), _event_type_label(String(event.get("type", "")))], 16, Color("213a55"), HORIZONTAL_ALIGNMENT_CENTER)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	margin.add_child(label)
 	return chip
@@ -772,6 +772,17 @@ func _event_type_label(event_type: String) -> String:
 		"season_pass":
 			return "시즌 패스"
 	return "라이브 이벤트"
+
+
+func _event_status(event: Dictionary) -> String:
+	var status := String(event.get("status", "")).strip_edges()
+	if status.is_empty():
+		status = LiveEventService.event_status(event)
+	return status
+
+
+func _event_status_label(status: String) -> String:
+	return LiveEventService.status_text({"status": status})
 
 
 func _track_stage_select_live_event_impression(event: Dictionary) -> void:
