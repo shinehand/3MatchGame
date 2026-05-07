@@ -101,7 +101,8 @@
     "tags": ["recovery", "blocker_focus", "mixed_goal"],
     "tutorial": "분리된 공간을 연결하는 수를 먼저 찾으세요.",
     "difficulty_tag": ["recovery", "blocker_focus", "mixed_goal"],
-    "teaches": ["buddy_smart_hint"]
+    "teaches": ["buddy_smart_hint"],
+    "recommended_smoke": true
   },
   {
     "id": 17,
@@ -137,7 +138,8 @@
     "tags": ["blocker_focus", "mixed_goal"],
     "tutorial": "세 목표가 있을 때는 막힌 구역을 먼저 열어두는 편이 안전합니다.",
     "difficulty_tag": ["blocker_focus", "mixed_goal"],
-    "teaches": ["buddy_leap_clear"]
+    "teaches": ["buddy_leap_clear"],
+    "recommended_smoke": true
   },
   {
     "id": 19,

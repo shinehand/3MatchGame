@@ -527,7 +527,7 @@ func _validate_expression_animation_rules(node: Node, errors: PackedStringArray)
 
 
 func _validate_rescue_buddy_runtime_rules(node: Node, errors: PackedStringArray) -> void:
-	for method_name in ["_start_stage", "_charge_buddy_skill_for_match", "_trigger_buddy_skill", "_try_loyal_fetch_before_failure"]:
+	for method_name in ["_start_stage", "_charge_buddy_skill_for_match", "_charge_buddy_skill_for_combo", "_charge_buddy_skill_for_clear_blocker", "_charge_buddy_skill_for_cascade_step", "_trigger_buddy_skill", "_try_loyal_fetch_before_failure"]:
 		if not node.has_method(method_name):
 			errors.append("%s should expose %s for Rescue Buddy runtime smoke." % [GAMEPLAY_SCENE_PATH, method_name])
 			return
@@ -572,6 +572,70 @@ func _validate_rescue_buddy_runtime_rules(node: Node, errors: PackedStringArray)
 	if int(quick_refill_blocked_params.get("stage_id", 0)) != 4 or String(quick_refill_blocked_params.get("animal_id", "")) != "rabbit" or String(quick_refill_blocked_params.get("skill_id", "")) != "quick_refill" or String(quick_refill_blocked_params.get("reason", "")) != "max_uses":
 		errors.append("%s quick_refill blocked analytics should identify max_uses for Stage 4 rabbit quick_refill." % GAMEPLAY_SCENE_PATH)
 
+	node.call("_start_stage", 4)
+	node.set("board_data", _seed_plain_gameplay_board(node))
+	var bombs_before := _count_board_special(node, "bomb")
+	var soft_bomb_triggers_before := _analytics_event_count("buddy_skill_trigger")
+	for _index in range(4):
+		node.call("_charge_buddy_skill_for_match", "chick")
+	if not bool(node.get("buddy_trigger_pending")):
+		errors.append("%s soft_bomb_plus should become pending after four chick match charges." % GAMEPLAY_SCENE_PATH)
+	node.call("_trigger_buddy_skill")
+	if _count_board_special(node, "bomb") <= bombs_before:
+		errors.append("%s soft_bomb_plus should convert a board animal into a bomb special." % GAMEPLAY_SCENE_PATH)
+	if int(node.get("buddy_uses")) != 1:
+		errors.append("%s soft_bomb_plus should consume exactly one Buddy use." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_trigger") <= soft_bomb_triggers_before:
+		errors.append("%s soft_bomb_plus should emit buddy_skill_trigger analytics." % GAMEPLAY_SCENE_PATH)
+	var soft_bomb_event := _last_analytics_event_by_name("buddy_skill_trigger")
+	var soft_bomb_params: Dictionary = Dictionary(soft_bomb_event.get("params", {}))
+	if int(soft_bomb_params.get("stage_id", 0)) != 5 or String(soft_bomb_params.get("animal_id", "")) != "chick" or String(soft_bomb_params.get("effect_type", "")) != "soft_bomb_plus":
+		errors.append("%s soft_bomb_plus trigger analytics should identify Stage 5 chick soft_bomb_plus." % GAMEPLAY_SCENE_PATH)
+
+	node.call("_start_stage", 7)
+	node.set("board_data", _seed_plain_gameplay_board(node))
+	node.set("combo_gauge_points", 3)
+	var combo_peep_triggers_before := _analytics_event_count("buddy_skill_trigger")
+	node.call("_charge_buddy_skill_for_combo", 2)
+	if not bool(node.get("buddy_trigger_pending")):
+		errors.append("%s combo_peep should become pending from a combo 2 charge." % GAMEPLAY_SCENE_PATH)
+	node.call("_trigger_buddy_skill")
+	if int(node.get("combo_gauge_points")) != 5:
+		errors.append("%s combo_peep should add 2 Combo Gauge points, got %d." % [GAMEPLAY_SCENE_PATH, int(node.get("combo_gauge_points"))])
+	if bool(node.get("combo_gauge_ready")):
+		errors.append("%s combo_peep should not mark Combo Gauge ready before the gauge is full." % GAMEPLAY_SCENE_PATH)
+	if int(node.get("buddy_uses")) != 1:
+		errors.append("%s combo_peep should consume exactly one Buddy use." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_trigger") <= combo_peep_triggers_before:
+		errors.append("%s combo_peep should emit buddy_skill_trigger analytics." % GAMEPLAY_SCENE_PATH)
+	var combo_peep_event := _last_analytics_event_by_name("buddy_skill_trigger")
+	var combo_peep_params: Dictionary = Dictionary(combo_peep_event.get("params", {}))
+	if int(combo_peep_params.get("stage_id", 0)) != 8 or String(combo_peep_params.get("animal_id", "")) != "chick" or String(combo_peep_params.get("effect_type", "")) != "combo_peep":
+		errors.append("%s combo_peep trigger analytics should identify Stage 8 chick combo_peep." % GAMEPLAY_SCENE_PATH)
+
+	node.call("_start_stage", 17)
+	node.set("board_data", _seed_plain_gameplay_board(node))
+	var leap_obstacle_data: Array = node.get("obstacle_data")
+	leap_obstacle_data[2][2] = 1
+	node.set("obstacle_data", leap_obstacle_data)
+	var leap_clear_triggers_before := _analytics_event_count("buddy_skill_trigger")
+	for _index in range(3):
+		node.call("_charge_buddy_skill_for_match", "frog")
+	if not bool(node.get("buddy_trigger_pending")):
+		errors.append("%s leap_clear should become pending after three frog match charges." % GAMEPLAY_SCENE_PATH)
+	node.call("_trigger_buddy_skill")
+	leap_obstacle_data = node.get("obstacle_data")
+	if int(leap_obstacle_data[2][2]) != 0:
+		errors.append("%s leap_clear should clear the deterministic test blocker." % GAMEPLAY_SCENE_PATH)
+	if int(node.get("cleared_blockers")) <= 0:
+		errors.append("%s leap_clear should increase cleared_blockers." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_trigger") <= leap_clear_triggers_before:
+		errors.append("%s leap_clear should emit buddy_skill_trigger analytics." % GAMEPLAY_SCENE_PATH)
+	var leap_clear_event := _last_analytics_event_by_name("buddy_skill_trigger")
+	var leap_clear_params: Dictionary = Dictionary(leap_clear_event.get("params", {}))
+	if int(leap_clear_params.get("stage_id", 0)) != 18 or String(leap_clear_params.get("animal_id", "")) != "frog" or String(leap_clear_params.get("effect_type", "")) != "leap_clear":
+		errors.append("%s leap_clear trigger analytics should identify Stage 18 frog leap_clear." % GAMEPLAY_SCENE_PATH)
+
 	node.call("_start_stage", 19)
 	node.set("board_data", _seed_plain_gameplay_board(node))
 	var collected_counts: Dictionary = Dictionary(node.get("collected_counts"))
@@ -590,6 +654,49 @@ func _validate_rescue_buddy_runtime_rules(node: Node, errors: PackedStringArray)
 	var loyal_fetch_params: Dictionary = Dictionary(loyal_fetch_event.get("params", {}))
 	if int(loyal_fetch_params.get("stage_id", 0)) != 20 or String(loyal_fetch_params.get("animal_id", "")) != "dog" or String(loyal_fetch_params.get("effect_type", "")) != "loyal_fetch":
 		errors.append("%s loyal_fetch trigger analytics should identify Stage 20 dog loyal_fetch." % GAMEPLAY_SCENE_PATH)
+
+	node.call("_start_stage", 30)
+	node.set("board_data", _seed_plain_gameplay_board(node))
+	node.set("score", 1000)
+	var cascade_triggers_before := _analytics_event_count("buddy_skill_trigger")
+	node.call("_charge_buddy_skill_for_cascade_step", 2, 1000)
+	if not bool(node.get("buddy_trigger_pending")):
+		errors.append("%s cascade_slide should become pending from a combo 2 cascade score gain." % GAMEPLAY_SCENE_PATH)
+	node.call("_trigger_buddy_skill")
+	if int(node.get("score")) != 1100:
+		errors.append("%s cascade_slide should add a 10 percent score bonus, got %d." % [GAMEPLAY_SCENE_PATH, int(node.get("score"))])
+	if int(node.get("buddy_cascade_bonus_pending")) != 0:
+		errors.append("%s cascade_slide should consume the pending cascade bonus." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_trigger") <= cascade_triggers_before:
+		errors.append("%s cascade_slide should emit buddy_skill_trigger analytics." % GAMEPLAY_SCENE_PATH)
+	var cascade_event := _last_analytics_event_by_name("buddy_skill_trigger")
+	var cascade_params: Dictionary = Dictionary(cascade_event.get("params", {}))
+	if int(cascade_params.get("stage_id", 0)) != 31 or String(cascade_params.get("animal_id", "")) != "penguin" or String(cascade_params.get("effect_type", "")) != "cascade_slide":
+		errors.append("%s cascade_slide trigger analytics should identify Stage 31 penguin cascade_slide." % GAMEPLAY_SCENE_PATH)
+
+	node.call("_start_stage", 80)
+	node.set("board_data", _seed_plain_gameplay_board(node))
+	var mighty_obstacle_data: Array = node.get("obstacle_data")
+	mighty_obstacle_data[3][3] = 1
+	node.set("obstacle_data", mighty_obstacle_data)
+	node.set("cleared_blockers", 0)
+	var mighty_push_triggers_before := _analytics_event_count("buddy_skill_trigger")
+	node.call("_charge_buddy_skill_for_clear_blocker", 1)
+	mighty_obstacle_data = node.get("obstacle_data")
+	if int(mighty_obstacle_data[3][3]) != 0:
+		errors.append("%s mighty_push should clear the deterministic test blocker." % GAMEPLAY_SCENE_PATH)
+	if int(node.get("cleared_blockers")) != 1:
+		errors.append("%s mighty_push should count exactly one extra cleared blocker, got %d." % [GAMEPLAY_SCENE_PATH, int(node.get("cleared_blockers"))])
+	if int(node.get("buddy_uses")) != 1:
+		errors.append("%s mighty_push should consume exactly one Buddy use." % GAMEPLAY_SCENE_PATH)
+	if bool(node.get("buddy_trigger_pending")):
+		errors.append("%s mighty_push should not remain pending after immediate trigger." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_trigger") <= mighty_push_triggers_before:
+		errors.append("%s mighty_push should emit buddy_skill_trigger analytics." % GAMEPLAY_SCENE_PATH)
+	var mighty_push_event := _last_analytics_event_by_name("buddy_skill_trigger")
+	var mighty_push_params: Dictionary = Dictionary(mighty_push_event.get("params", {}))
+	if int(mighty_push_params.get("stage_id", 0)) != 81 or String(mighty_push_params.get("animal_id", "")) != "elephant" or String(mighty_push_params.get("effect_type", "")) != "mighty_push":
+		errors.append("%s mighty_push trigger analytics should identify Stage 81 elephant mighty_push." % GAMEPLAY_SCENE_PATH)
 
 
 func _validate_special_effect_rules(node: Node, errors: PackedStringArray) -> void:
@@ -770,6 +877,15 @@ func _seed_plain_gameplay_board(node: Node) -> Array:
 	node.set("obstacle_data", obstacle_data)
 	node.set("board_data", board_data)
 	return board_data
+
+
+func _count_board_special(node: Node, special_type: String) -> int:
+	var count := 0
+	for row in Array(node.get("board_data")):
+		for piece in Array(row):
+			if String(piece).ends_with("|%s" % special_type):
+				count += 1
+	return count
 
 
 func _validate_collection_scene(node: Node, errors: PackedStringArray) -> void:

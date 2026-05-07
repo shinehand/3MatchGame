@@ -105,6 +105,20 @@ const VALID_BUDDY_CHARGE_RULES := [
 	"fever_start",
 	"stage_start",
 ]
+const BUDDY_SKILL_TUNING := {
+	"quick_refill": {"animal": "rabbit", "charge_rule": "match_goal_animal", "charges_required": 3, "max_uses": 1, "min_stage": 4},
+	"soft_bomb_plus": {"animal": "chick", "charge_rule": "match_goal_animal", "charges_required": 4, "max_uses": 1, "min_stage": 5},
+	"smart_hint": {"animal": "cat", "charge_rule": "match_goal_animal", "charges_required": 3, "max_uses": 1, "min_stage": 16},
+	"combo_peep": {"animal": "chick", "charge_rule": "combo_2_plus", "charges_required": 2, "max_uses": 1, "min_stage": 8},
+	"leap_clear": {"animal": "frog", "charge_rule": "match_goal_animal", "charges_required": 3, "max_uses": 1, "min_stage": 18},
+	"loyal_fetch": {"animal": "dog", "charge_rule": "near_fail", "charges_required": 1, "max_uses": 1, "min_stage": 20},
+	"calm_fever": {"animal": "panda", "charge_rule": "fever_start", "charges_required": 1, "max_uses": 1, "min_stage": 24},
+	"coin_sniff": {"animal": "pig", "charge_rule": "stage_clear", "charges_required": 1, "max_uses": 1, "min_stage": 25},
+	"cascade_slide": {"animal": "penguin", "charge_rule": "cascade_step", "charges_required": 1, "max_uses": 1, "min_stage": 31},
+	"sly_route": {"animal": "fox", "charge_rule": "near_fail", "charges_required": 1, "max_uses": 1, "min_stage": 41},
+	"brave_start": {"animal": "lion", "charge_rule": "stage_start", "charges_required": 1, "max_uses": 1, "min_stage": 51},
+	"mighty_push": {"animal": "elephant", "charge_rule": "clear_blocker", "charges_required": 1, "max_uses": 1, "min_stage": 81},
+}
 
 
 static func validate_stages(stages: Array) -> PackedStringArray:
@@ -311,6 +325,18 @@ static func _validate_buddy_config(stage: Dictionary, stage_id: int, errors: Pac
 	var unlock_stage := int(ANIMAL_UNLOCK_STAGE.get(buddy_animal, 1))
 	if stage_id < unlock_stage:
 		errors.append("stage %d uses buddy %s before unlock stage %d" % [stage_id, buddy_animal, unlock_stage])
+	if BUDDY_SKILL_TUNING.has(buddy_skill_id):
+		var tuning: Dictionary = Dictionary(BUDDY_SKILL_TUNING[buddy_skill_id])
+		if buddy_animal != String(tuning.get("animal", "")):
+			errors.append("stage %d buddy skill %s must use animal %s, got %s" % [stage_id, buddy_skill_id, String(tuning.get("animal", "")), buddy_animal])
+		if buddy_charge_rule != String(tuning.get("charge_rule", "")):
+			errors.append("stage %d buddy skill %s must use charge_rule %s, got %s" % [stage_id, buddy_skill_id, String(tuning.get("charge_rule", "")), buddy_charge_rule])
+		if charges_required != int(tuning.get("charges_required", 0)):
+			errors.append("stage %d buddy skill %s must require %d charges, got %d" % [stage_id, buddy_skill_id, int(tuning.get("charges_required", 0)), charges_required])
+		if max_uses != int(tuning.get("max_uses", 0)):
+			errors.append("stage %d buddy skill %s must allow %d max uses, got %d" % [stage_id, buddy_skill_id, int(tuning.get("max_uses", 0)), max_uses])
+		if stage_id < int(tuning.get("min_stage", 1)):
+			errors.append("stage %d uses buddy skill %s before minimum stage %d" % [stage_id, buddy_skill_id, int(tuning.get("min_stage", 1))])
 
 
 static func _validate_mechanics_unlocks(stage_id: int, enabled_mechanics: Array, errors: PackedStringArray) -> void:

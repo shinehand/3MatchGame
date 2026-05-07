@@ -366,7 +366,8 @@
     ],
     "teaches": [
       "buddy_calm_fever"
-    ]
+    ],
+    "recommended_smoke": true
   },
   {
     "id": 25,
@@ -469,7 +470,8 @@
     ],
     "previews": [
       "cascade_slide"
-    ]
+    ],
+    "recommended_smoke": true
   },
   {
     "id": 26,

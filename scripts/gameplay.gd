@@ -1517,7 +1517,9 @@ func _charge_buddy_skill_for_combo(combo: int) -> void:
 		return
 	if String(_current_stage().get("buddy_charge_rule", "")) != "combo_2_plus":
 		return
-	_charge_buddy_skill(maxi(1, combo - 1))
+	if combo < 2:
+		return
+	_charge_buddy_skill(combo)
 
 
 func _charge_buddy_skill_for_fever_start() -> void:

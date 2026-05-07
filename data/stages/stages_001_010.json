@@ -81,7 +81,7 @@
     "difficulty_tag": ["blocker_focus", "mixed_goal"],
     "teaches": ["rescue_buddy", "blocker_bush"],
     "previews": ["chick_buddy"],
-    "recommended_smoke": false,
+    "recommended_smoke": true,
     "forbidden_monetization": true
   },
   {
@@ -167,7 +167,7 @@
     "difficulty_tag": ["score_focus", "blocker_focus", "mixed_goal"],
     "teaches": ["combo_gauge", "buddy_combo_peep"],
     "previews": [],
-    "recommended_smoke": false,
+    "recommended_smoke": true,
     "forbidden_monetization": true
   },
   {

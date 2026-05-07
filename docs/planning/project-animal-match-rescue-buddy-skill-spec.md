@@ -42,10 +42,10 @@ stage["buddy_max_uses"]
 | 동물 | Skill ID | 발동 조건 | 효과 | 제한 | 우선 해금 |
 | --- | --- | --- | --- | --- | --- |
 | 토끼 | `quick_refill` | 목표 동물 매치 3회 | 리필 후 목표 동물 1개 추가 생성 시도 | active pool 안에서만 | Stage 4+ |
-| 곰 | `soft_bomb_plus` | Paw Bomb 생성 또는 발동 | 다음 Paw Bomb 범위 내 장애물 1개 추가 피해 | 스테이지당 1회 | Stage 12+ |
-| 고양이 | `smart_hint` | 2턴 동안 매치 실패/무효 입력 없음 | 목표에 가까운 유효 수 1개 강조 | 보드 제거 없음 | Stage 15+ |
+| 병아리 | `soft_bomb_plus` | 목표 동물 매치 4회 | 목표 동물 1개를 Paw Bomb으로 강화 | 스테이지당 1회 | Stage 5+ |
+| 고양이 | `smart_hint` | 목표 동물 매치 3회 | 목표에 가까운 유효 수 1개 강조 | 보드 제거 없음 | Stage 16+ |
 | 병아리 | `combo_peep` | 콤보 2 이상 | 피버 게이지 소량 추가 | 피버 중 미발동 | Stage 8+ |
-| 개구리 | `leap_clear` | 덤불 인접 매치 | 인접 덤불 1개 추가 피해 | 덤불 없으면 미발동 | Stage 16+ |
+| 개구리 | `leap_clear` | 목표 동물 매치 3회 | 남은 덤불 1개 추가 제거 | 덤불 없으면 미발동 | Stage 18+ |
 | 강아지 | `loyal_fetch` | 목표 1-2개 남은 Near Miss | 목표 동물 1개를 보드에 우선 생성 | 실패 판정 전 1회 | Stage 20+ |
 | 판다 | `calm_fever` | 피버 시작 | 피버 종료 후 게이지 10 유지 | 연속 중첩 없음 | Stage 24+ |
 | 돼지 | `coin_sniff` | 클리어 | 코인 보상 +5% | 클리어 전 영향 없음 | Stage 25+ |
@@ -65,6 +65,9 @@ stage["buddy_max_uses"]
 | `cascade_step` | 연쇄 단계가 2 이상일 때 충전 |
 | `near_fail` | 이동 수 3 이하 또는 실패 직전 조건 |
 | `stage_clear` | 클리어 순간 1회 평가 |
+| `combo_2_plus` | 2연쇄 이상 발생 시 콤보 크기만큼 충전 |
+| `fever_start` | Fever 시작 시 1회 충전 |
+| `stage_start` | 하드/피날레 시작 시 1회 충전 |
 
 ## 5. UI/HUD
 
@@ -90,7 +93,7 @@ stage["buddy_max_uses"]
 | `buddy_skill_trigger` | 실제 발동 | `stage_id`, `animal_id`, `skill_id`, `effect_type`, `uses_left` |
 | `buddy_skill_blocked` | 조건 불충족 | `stage_id`, `animal_id`, `skill_id`, `reason` |
 
-자동 scene smoke는 Stage 4 `quick_refill`의 충전/준비/발동/차단 이벤트와 Stage 20 `loyal_fetch`의 실패 직전 구조 발동 이벤트를 실제 런타임 경로로 검증한다.
+자동 scene smoke는 Stage 4 `quick_refill`의 충전/준비/발동/차단 이벤트, Stage 5 `soft_bomb_plus`, Stage 8 `combo_peep`, Stage 18 `leap_clear`, Stage 20 `loyal_fetch`, Stage 31 `cascade_slide`, Stage 81 `mighty_push`의 실제 상태 변화와 발동 이벤트를 런타임 경로로 검증한다.
 
 ## 8. 구현 순서
 

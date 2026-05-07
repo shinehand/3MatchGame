@@ -3,6 +3,20 @@ extends SceneTree
 const StageCatalog = preload("res://scripts/stage_catalog.gd")
 
 const REQUIRED_SMOKE_STAGES := [1, 5, 10, 20, 31, 51, 81, 100]
+const RESCUE_BUDDY_SMOKE_STAGES := {
+	4: "quick_refill",
+	5: "soft_bomb_plus",
+	8: "combo_peep",
+	16: "smart_hint",
+	18: "leap_clear",
+	20: "loyal_fetch",
+	24: "calm_fever",
+	25: "coin_sniff",
+	31: "cascade_slide",
+	41: "sly_route",
+	51: "brave_start",
+	81: "mighty_push",
+}
 
 const BAND_RULES := {
 	"1-10": {"min_id": 1, "max_id": 10, "moves_min": 12, "moves_max": 13, "blockers_min": 0, "blockers_max": 2},
@@ -32,6 +46,7 @@ func _init() -> void:
 	_validate_difficulty_tag_streaks(stages, warnings)
 	_validate_roster_rotation(stages, warnings)
 	_validate_recommended_smoke_coverage(stages, errors)
+	_validate_rescue_buddy_smoke_coverage(stages, errors)
 
 	for band_name in BAND_RULES.keys():
 		var rule: Dictionary = BAND_RULES[band_name]
@@ -164,6 +179,22 @@ func _validate_recommended_smoke_coverage(stages: Array, errors: PackedStringArr
 			errors.append("stage %d must set recommended_smoke for QA smoke coverage" % stage_id)
 		if stage_id == 31 and not Array(stage.get("tags", [])).has("combo_focus"):
 			errors.append("stage 31 must keep combo_focus for special-combo smoke coverage")
+
+
+func _validate_rescue_buddy_smoke_coverage(stages: Array, errors: PackedStringArray) -> void:
+	var stages_by_id := {}
+	for stage in stages:
+		stages_by_id[int(stage.get("id", 0))] = stage
+	for stage_id in RESCUE_BUDDY_SMOKE_STAGES.keys():
+		if not stages_by_id.has(stage_id):
+			errors.append("Rescue Buddy smoke stage %d is missing" % stage_id)
+			continue
+		var stage: Dictionary = stages_by_id[stage_id]
+		var expected_skill := String(RESCUE_BUDDY_SMOKE_STAGES[stage_id])
+		if String(stage.get("buddy_skill_id", "")) != expected_skill:
+			errors.append("stage %d must keep Buddy skill %s for Rescue Buddy smoke coverage" % [stage_id, expected_skill])
+		if not bool(stage.get("recommended_smoke", false)):
+			errors.append("stage %d must set recommended_smoke for Rescue Buddy smoke coverage" % stage_id)
 
 
 func _validate_roster_rotation(stages: Array, warnings: PackedStringArray) -> void:

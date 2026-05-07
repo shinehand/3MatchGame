@@ -118,7 +118,8 @@
     ],
     "previews": [
       "brave_start"
-    ]
+    ],
+    "recommended_smoke": true
   },
   {
     "id": 42,
