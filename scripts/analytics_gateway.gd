@@ -77,6 +77,29 @@ static func clear_persisted_queue_for_testing() -> void:
 	_remove_queue_file()
 
 
+static func flush_queued_events(send_callback: Callable = Callable(), max_count: int = -1) -> Array:
+	_load_queue()
+	var sent_events: Array = []
+	var remaining_events: Array = []
+	var flush_limit := _dispatched_events.size() if max_count < 0 else max_count
+	var stop_flush := false
+	for event_value in _dispatched_events:
+		var event := Dictionary(event_value).duplicate(true)
+		if stop_flush or sent_events.size() >= flush_limit:
+			remaining_events.append(event)
+			continue
+		var send_event := event.duplicate(true)
+		send_event["dispatch_status"] = "sent"
+		if _send_callback_accepts_event(send_callback, send_event):
+			sent_events.append(send_event)
+		else:
+			remaining_events.append(event)
+			stop_flush = true
+	_dispatched_events = remaining_events
+	_save_queue()
+	return sent_events
+
+
 static func reset_for_testing() -> void:
 	_provider_id = DEFAULT_PROVIDER_ID
 	_dispatch_enabled = true
@@ -97,6 +120,17 @@ static func _append_bounded(events: Array, event: Dictionary) -> void:
 	events.append(event)
 	while events.size() > MAX_DISPATCHED_EVENTS:
 		events.pop_front()
+
+
+static func _send_callback_accepts_event(send_callback: Callable, event: Dictionary) -> bool:
+	if not send_callback.is_valid():
+		return true
+	var result = send_callback.call(event.duplicate(true))
+	if result is bool:
+		return bool(result)
+	if result is Dictionary:
+		return bool(Dictionary(result).get("accepted", true))
+	return true
 
 
 static func _load_queue() -> void:

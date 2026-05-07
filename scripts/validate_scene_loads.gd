@@ -469,6 +469,47 @@ func _validate_analytics_gateway_contract_gate(errors: PackedStringArray) -> voi
 	if AnalyticsGateway.get_dispatched_events_for_testing().size() != dispatched_before_unknown:
 		errors.append("AnalyticsGateway contract rejection should not persist unknown events.")
 
+	GameSession.record_analytics_event("stage_start", {
+		"stage_id": 1002,
+		"band": "validation",
+		"roster_group": "validation",
+		"moves": 1,
+	})
+	AnalyticsGateway.reload_queue_from_disk_for_testing()
+	var queued_before_flush := AnalyticsGateway.get_dispatched_events_for_testing()
+	var rejected_before_flush := AnalyticsGateway.get_rejected_events_for_testing().size()
+	var failed_flush_events := AnalyticsGateway.flush_queued_events(Callable(self, "_mutate_and_reject_gateway_flush_event"), 1)
+	if not failed_flush_events.is_empty():
+		errors.append("AnalyticsGateway failed provider callback should not report sent events.")
+	_validate_gateway_queue_matches(queued_before_flush, AnalyticsGateway.get_dispatched_events_for_testing(), "failed flush memory", errors)
+	AnalyticsGateway.reload_queue_from_disk_for_testing()
+	_validate_gateway_queue_matches(queued_before_flush, AnalyticsGateway.get_dispatched_events_for_testing(), "failed flush disk reload", errors)
+
+	var first_flushed_events := AnalyticsGateway.flush_queued_events(Callable(), 1)
+	if first_flushed_events.size() != min(1, queued_before_flush.size()):
+		errors.append("AnalyticsGateway partial flush should send exactly one pending event.")
+	var pending_after_partial_flush := AnalyticsGateway.get_dispatched_events_for_testing()
+	if pending_after_partial_flush.size() != max(queued_before_flush.size() - 1, 0):
+		errors.append("AnalyticsGateway partial flush should remove only the sent event from pending queue.")
+	AnalyticsGateway.reload_queue_from_disk_for_testing()
+	if AnalyticsGateway.get_dispatched_events_for_testing().size() != pending_after_partial_flush.size():
+		errors.append("AnalyticsGateway partial flush result should persist after disk reload.")
+	var remaining_flushed_events := AnalyticsGateway.flush_queued_events()
+	var flushed_events := first_flushed_events.duplicate(true)
+	flushed_events.append_array(remaining_flushed_events)
+	if flushed_events.size() != queued_before_flush.size():
+		errors.append("AnalyticsGateway flush should send every pending local_buffer event once, got %d for %d queued." % [flushed_events.size(), queued_before_flush.size()])
+	if AnalyticsGateway.get_dispatched_events_for_testing().size() != 0:
+		errors.append("AnalyticsGateway flush should remove sent events from the pending local_buffer queue.")
+	AnalyticsGateway.reload_queue_from_disk_for_testing()
+	if AnalyticsGateway.get_dispatched_events_for_testing().size() != 0:
+		errors.append("AnalyticsGateway flushed local_buffer queue should stay empty after disk reload.")
+	if AnalyticsGateway.flush_queued_events().size() != 0:
+		errors.append("AnalyticsGateway second flush should not resend already flushed events.")
+	if AnalyticsGateway.get_rejected_events_for_testing().size() != rejected_before_flush:
+		errors.append("AnalyticsGateway flush should not mutate rejected contract events.")
+	_validate_gateway_flush_order(queued_before_flush, flushed_events, errors)
+
 	AnalyticsGateway.set_provider_id_for_testing(AnalyticsGateway.DEFAULT_PROVIDER_ID)
 	AnalyticsGateway.set_dispatch_enabled_for_testing(true)
 
@@ -495,6 +536,39 @@ func _validate_gateway_rejection_reasons(gateway_event: Dictionary, expected_rea
 	for expected_reason in expected_reasons:
 		if not reasons.has(expected_reason):
 			errors.append("AnalyticsGateway %s should include rejection reason %s." % [context, expected_reason])
+
+
+func _validate_gateway_flush_order(queued_events: Array, flushed_events: Array, errors: PackedStringArray) -> void:
+	if queued_events.size() != flushed_events.size():
+		return
+	for index in range(queued_events.size()):
+		var queued_event := Dictionary(queued_events[index])
+		var flushed_event := Dictionary(flushed_events[index])
+		if String(flushed_event.get("dispatch_status", "")) != "sent":
+			errors.append("AnalyticsGateway flushed event %d should be marked sent." % index)
+		var queued_snapshot := queued_event.duplicate(true)
+		var flushed_snapshot := flushed_event.duplicate(true)
+		queued_snapshot.erase("dispatch_status")
+		flushed_snapshot.erase("dispatch_status")
+		if not _analytics_values_equivalent(flushed_snapshot, queued_snapshot):
+			errors.append("AnalyticsGateway flush should preserve queued event order and payload at index %d." % index)
+
+
+func _validate_gateway_queue_matches(expected_events: Array, actual_events: Array, context: String, errors: PackedStringArray) -> void:
+	if actual_events.size() != expected_events.size():
+		errors.append("AnalyticsGateway %s should preserve pending queue size, got %d for %d." % [context, actual_events.size(), expected_events.size()])
+		return
+	for index in range(expected_events.size()):
+		if not _analytics_values_equivalent(Dictionary(actual_events[index]), Dictionary(expected_events[index])):
+			errors.append("AnalyticsGateway %s should preserve pending event at index %d." % [context, index])
+
+
+func _mutate_and_reject_gateway_flush_event(event: Dictionary) -> bool:
+	event["name"] = "__mutated_gateway_validation_event"
+	var params := Dictionary(event.get("params", {}))
+	params["stage_id"] = -999
+	event["params"] = params
+	return false
 
 
 func _analytics_values_equivalent(left, right) -> bool:
