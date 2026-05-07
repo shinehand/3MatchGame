@@ -7,13 +7,13 @@ validation_require_godot
 
 blocking_log_patterns="SCRIPT ERROR:|Parse Error:|Invalid access to property|Cannot call method|Attempt to call function|Failed loading resource|Unable to open file:|GameSession: failed to open save file|Scene load validation error"
 
-echo "[1/7] Stage data structure validation"
+echo "[1/8] Stage data structure validation"
 zsh scripts/validate_stage_data.sh
 
-echo "[2/7] Stage balance validation"
+echo "[2/8] Stage balance validation"
 zsh scripts/validate_stage_balance.sh
 
-echo "[3/7] Godot import cache"
+echo "[3/8] Godot import cache"
 import_log="/tmp/puzzle-import-cache.log"
 import_stdout="/tmp/puzzle-import-cache.stdout"
 if ! godot --headless --quiet --path . --import --quit --log-file "$import_log" >"$import_stdout" 2>&1; then
@@ -24,7 +24,7 @@ fi
 validation_fail_on_matches "Godot import" "$blocking_log_patterns" "$import_log" "$import_stdout"
 echo "Godot import cache prepared."
 
-echo "[4/7] Focused scene load smoke"
+echo "[4/8] Focused scene load smoke"
 scene_log="/tmp/puzzle-scene-load-validate.log"
 scene_stdout="/tmp/puzzle-scene-load-validate.stdout"
 if ! godot --headless --quiet --path . --log-file "$scene_log" --script res://scripts/validate_scene_loads.gd >"$scene_stdout" 2>&1; then
@@ -39,7 +39,7 @@ else
   echo "Scene load validation passed."
 fi
 
-echo "[5/7] Headless main load"
+echo "[5/8] Headless main load"
 headless_log="/tmp/puzzle-headless-validate.log"
 headless_stdout="/tmp/puzzle-headless-validate.stdout"
 if ! godot --headless --quiet --path . --log-file "$headless_log" --quit >"$headless_stdout" 2>&1; then
@@ -50,7 +50,7 @@ fi
 validation_fail_on_matches "Headless main load" "$blocking_log_patterns" "$headless_log" "$headless_stdout"
 echo "No script/runtime errors reported in headless log."
 
-echo "[6/7] Texture loading anti-pattern scan"
+echo "[6/8] Texture loading anti-pattern scan"
 if validation_search "Image\.load_from_file|ProjectSettings\.globalize_path" scripts >/tmp/puzzle_texture_scan.log 2>&1; then
   echo "Direct file-based texture loading found:"
   cat /tmp/puzzle_texture_scan.log
@@ -62,7 +62,35 @@ elif [ "$?" -gt 1 ]; then
 fi
 echo "No direct file-based texture loading in scripts."
 
-echo "[7/7] Manual smoke checklist"
+echo "[7/8] Alpha QA packet integrity"
+alpha_packet_stdout="/tmp/puzzle-alpha-qa-packet-dry-run.stdout"
+if ! zsh scripts/create_alpha_qa_packet.sh --dry-run >"$alpha_packet_stdout" 2>&1; then
+  echo "Alpha QA packet dry-run failed."
+  cat "$alpha_packet_stdout"
+  exit 1
+fi
+alpha_template="docs/qa/templates/alpha-lock-pass-manual-qa-template.md"
+for required_pattern in \
+  "\\| Home \\|" \
+  "\\| Stage 1 \\|" \
+  "\\| Stage 11 \\|" \
+  "\\| Stage 25 \\|" \
+  "\\| Stage 50 \\|" \
+  "\\| Stage 75 \\|" \
+  "\\| Stage 100 \\|" \
+  "Alpha Blocker Log" \
+  "Device-Blocked Items" \
+  "sound" \
+  "haptics" \
+  "Orientation"; do
+  if ! validation_search "$required_pattern" "$alpha_template" >/dev/null 2>&1; then
+    echo "Alpha QA template missing required pattern: $required_pattern"
+    exit 1
+  fi
+done
+echo "Alpha QA packet template and dry-run passed."
+
+echo "[8/8] Manual smoke checklist"
 cat <<'EOF'
 - 앱 실행 직후 캔디 배경, 큰 `Zoo-Zoo Pop` 로고, 움직이는 동물 캔디, 진행바가 있는 로딩 화면이 먼저 보이는지 확인
 - 홈 화면에서 큰 `Zoo-Zoo Pop` 로고, 동물 마스코트, `PLAY`, `맵`, `도감`, `설정`이 게임 화면처럼 보이는지 확인
