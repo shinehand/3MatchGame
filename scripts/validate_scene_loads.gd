@@ -2363,8 +2363,27 @@ func _validate_start_booster_runtime_rules(node: Node, errors: PackedStringArray
 	GameSession.set_selected_pre_boosters([])
 
 
+func _validate_result_overlay_mascot_texture_fallbacks(node: Node, errors: PackedStringArray) -> void:
+	var overlay_mascot := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayMascot") as TextureRect
+	if overlay_mascot == null:
+		errors.append("%s result overlay mascot fallback smoke is missing OverlayMascot." % GAMEPLAY_SCENE_PATH)
+		return
+	var original_textures: Dictionary = Dictionary(node.get("animal_textures")).duplicate(true)
+	var missing_textures := original_textures.duplicate(true)
+	missing_textures["rabbit"] = null
+	missing_textures["bear"] = null
+	node.set("animal_textures", missing_textures)
+	node.call("_update_overlay_mascot", "일시정지", "resume_stage")
+	if overlay_mascot.texture == null:
+		errors.append("%s resume overlay mascot should fall back when bear texture is missing." % GAMEPLAY_SCENE_PATH)
+	node.call("_update_overlay_mascot", "시작", "start_stage")
+	if overlay_mascot.texture == null:
+		errors.append("%s default overlay mascot should fall back when rabbit texture is missing." % GAMEPLAY_SCENE_PATH)
+	node.set("animal_textures", original_textures)
+
+
 func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> void:
-	for method_name in ["_start_stage", "_check_stage_state", "_on_overlay_primary_button_pressed", "_on_overlay_secondary_button_pressed", "_resolve_fail_offer_continue_result", "_request_fail_offer_continue", "_current_stage", "_current_stage_id", "_build_failure_focus_summary", "_build_failure_retry_hint", "_build_failure_offer", "_overlay_expression_state_for_testing", "_overlay_expression_tween_active_for_testing"]:
+	for method_name in ["_start_stage", "_check_stage_state", "_on_overlay_primary_button_pressed", "_on_overlay_secondary_button_pressed", "_resolve_fail_offer_continue_result", "_request_fail_offer_continue", "_current_stage", "_current_stage_id", "_build_failure_focus_summary", "_build_failure_retry_hint", "_build_failure_offer", "_update_overlay_mascot", "_overlay_expression_state_for_testing", "_overlay_expression_tween_active_for_testing"]:
 		if not node.has_method(method_name):
 			errors.append("%s should expose %s for result overlay runtime smoke." % [GAMEPLAY_SCENE_PATH, method_name])
 			return
@@ -2372,6 +2391,7 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	_validate_failure_focus_hint_runtime(node, errors)
 	await _validate_loyal_fetch_failure_gate_runtime(node, errors)
 	node.call("_start_stage", 0)
+	_validate_result_overlay_mascot_texture_fallbacks(node, errors)
 	await _validate_gameplay_hud_text_stress(node, errors)
 	_complete_current_stage_goals(node)
 	node.set("remaining_moves", 0)

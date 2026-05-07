@@ -3535,9 +3535,9 @@ func _update_overlay_mascot(title: String, action: String) -> void:
 		overlay_mascot.texture = OVERLAY_FAIL_TEXTURE
 		return
 	if action == "resume_stage":
-		overlay_mascot.texture = animal_textures.get("bear")
+		overlay_mascot.texture = _overlay_animal_texture_or_fallback("bear", OVERLAY_FAIL_TEXTURE)
 		return
-	overlay_mascot.texture = animal_textures.get("rabbit")
+	overlay_mascot.texture = _overlay_animal_texture_or_fallback("rabbit", OVERLAY_SUCCESS_TEXTURE)
 
 
 func _overlay_expression_for_action(title: String, action: String) -> String:
@@ -3625,6 +3625,13 @@ func _overlay_expression_state_for_testing() -> String:
 
 func _overlay_expression_tween_active_for_testing() -> bool:
 	return _overlay_expression_tween != null and _overlay_expression_tween.is_valid()
+
+
+func _overlay_animal_texture_or_fallback(animal_id: String, fallback_texture: Texture2D) -> Texture2D:
+	var texture = animal_textures.get(animal_id)
+	if texture is Texture2D:
+		return texture
+	return fallback_texture
 
 
 func _make_piece(animal_id: String, special_type: String = "") -> String:
