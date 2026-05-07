@@ -94,6 +94,7 @@
 - Level 5 이내 첫 컬렉션 카드 또는 스타터 미션 보상을 경험한다.
 - 자동 scene smoke는 Level 1-5 순차 클리어 후 Stage 6 해금, Rescue Book 신규 카드 `frog`/`koala`/`hamster`의 `NEW`, `animal_unlock` analytics를 검증한다.
 - 한국어/영어/일본어 pseudo-localization에서 목표 칩과 버튼 텍스트가 겹치지 않는다.
+- 자동 scene smoke는 Stage Popup, Gameplay HUD, 실패 overlay에 장문 pseudo-localization title/body/CTA를 주입해 viewport, panel bounds, CTA vertical overlap을 검증한다.
 
 ## Gate 7A. Stage Popup / 시작 부스터
 
@@ -102,6 +103,7 @@
 - Rescue Buddy가 있는 스테이지는 Stage Popup에 Buddy 동물명, 스킬명, 충전 조건, 짧은 효과 설명을 보여 주고, Buddy가 없는 스테이지는 빈 Buddy 영역을 보여 주지 않는다.
 - 시작 부스터 3종은 아이콘과 선택 상태를 가지며, 선택 결과가 `GameSession.selected_pre_boosters`에 저장된다.
 - Stage Popup 닫기와 START 선택값 저장은 scene smoke에서 gameplay 전환 전 상태로 검증된다.
+- Stage 4 Stage Popup의 장문 목표/보상/Buddy/START 문구는 자동 scene smoke에서 panel 밖으로 넘치거나 START CTA와 겹치지 않는다.
 - Gameplay 시작 시 선택 부스터는 한 번만 소비되고 보드에는 `rainbow`, `row/col`, `bomb` 특수 블록이 각각 배치된다.
 - `stage_start`는 `selected_boosters`와 `start_boosters_applied`를 기록하고, 각 시작 부스터는 `booster_used`의 `source = pre_stage`로 기록된다.
 - Stage Popup 열기/닫기 애니메이션과 모바일 터치감은 실제 기기 또는 시뮬레이터에서 최종 확인한다.

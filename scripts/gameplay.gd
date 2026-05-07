@@ -418,7 +418,7 @@ func _apply_responsive_layout() -> void:
 
 	if gameplay_hud_layer:
 		gameplay_hud_layer.visible = portrait
-	board_margin.add_theme_constant_override("margin_top", 206 if portrait else 24)
+	board_margin.add_theme_constant_override("margin_top", 238 if portrait else 24)
 	tutorial_banner.custom_minimum_size = Vector2(0, 72) if portrait else Vector2.ZERO
 	tutorial_label.add_theme_font_size_override("font_size", 19 if portrait else 24)
 	tutorial_label.add_theme_constant_override("line_spacing", 4 if portrait else 0)

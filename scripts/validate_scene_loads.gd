@@ -37,6 +37,9 @@ const ANIMAL_TEXTURE_FALLBACKS := {
 const ANIMAL_PROFILE_PATH := "res://data/animal_animation_profiles.json"
 const IMPLEMENTED_LIVE_EVENT_PLACEMENTS := ["home", "stage_select", "result_overlay", "collection"]
 const SPECIAL_COMBO_MANUAL_ROWS := ["row+column", "row+row", "column+column", "row+bomb", "column+bomb", "bomb+bomb"]
+const CRITICAL_TEXT_STRESS_TITLE := "[長文QA] Rescue Ready SuperLongLocalizationToken"
+const CRITICAL_TEXT_STRESS_BODY := "[長文QA] 구조 목표가 길어져도 버튼과 본문이 겹치지 않아야 합니다 SuperLongUnbrokenLocalizationToken"
+const CRITICAL_TEXT_STRESS_CTA := "START 구조 시작"
 
 var representative_stage_ids: Array[int] = [1, 11, 25, 50, 75, 100]
 var tutorial_stage_ids: Array[int] = [1, 11, 25, 45, 65, 85, 95]
@@ -256,6 +259,28 @@ func _validate_control_in_viewport(candidate: Node, viewport_size: Vector2i, sce
 	var relaxed_rect := viewport_rect.grow(8.0)
 	if not relaxed_rect.encloses(rect):
 		errors.append("%s %s is clipped at %s: %s outside %s." % [scene_path, label, viewport_size, rect, viewport_rect])
+
+
+func _validate_control_inside_container(control: Control, container: Control, scene_path: String, label: String, errors: PackedStringArray) -> void:
+	if control == null or container == null:
+		return
+	if not control.is_visible_in_tree() or not container.is_visible_in_tree():
+		return
+	var control_rect := control.get_global_rect()
+	var container_rect := container.get_global_rect().grow(8.0)
+	if not container_rect.encloses(control_rect):
+		errors.append("%s critical text stress clipped/overflowed: %s rect %s outside parent %s." % [scene_path, label, control_rect, container_rect])
+
+
+func _validate_no_vertical_overlap(upper: Control, lower: Control, scene_path: String, label: String, errors: PackedStringArray) -> void:
+	if upper == null or lower == null:
+		return
+	if not upper.is_visible_in_tree() or not lower.is_visible_in_tree():
+		return
+	var upper_rect := upper.get_global_rect()
+	var lower_rect := lower.get_global_rect()
+	if upper_rect.end.y > lower_rect.position.y + 2.0:
+		errors.append("%s critical text stress overlapped: %s upper %s lower %s." % [scene_path, label, upper_rect, lower_rect])
 
 
 func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
@@ -2181,6 +2206,7 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	_validate_failure_focus_hint_runtime(node, errors)
 	await _validate_loyal_fetch_failure_gate_runtime(node, errors)
 	node.call("_start_stage", 0)
+	await _validate_gameplay_hud_text_stress(node, errors)
 	_complete_current_stage_goals(node)
 	node.set("remaining_moves", 0)
 	var complete_events_before := _analytics_event_count("stage_complete")
@@ -2260,6 +2286,7 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s near-miss failure body should show fail type, rewarded move offer, and booster recommendation." % GAMEPLAY_SCENE_PATH)
 	if overlay_body == null or not overlay_body.text.contains("놓친 핵심  덤불 1개 정리") or not overlay_body.text.contains("다음 한 수  덤불 옆에서 폭탄이나 줄무늬 특수 블록"):
 		errors.append("%s near-miss failure body should isolate missed goal and one actionable retry hint." % GAMEPLAY_SCENE_PATH)
+	await _validate_failure_overlay_text_stress(node, errors)
 	if _analytics_event_count("stage_fail") <= fail_events_before:
 		errors.append("%s near-miss failure runtime smoke should emit stage_fail analytics." % GAMEPLAY_SCENE_PATH)
 	if _analytics_event_count("offer_impression") <= offer_events_before:
@@ -2742,6 +2769,98 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s coin continue insufficient funds should not emit extra_moves_grant." % GAMEPLAY_SCENE_PATH)
 
 	await _validate_failure_overlay_focus_hint_variants(node, errors)
+
+
+func _validate_gameplay_hud_text_stress(node: Node, errors: PackedStringArray) -> void:
+	var restore_stage_index := int(node.get("current_stage_index"))
+	node.call("_start_stage", 3)
+	await process_frame
+	await process_frame
+	var viewport_size := Vector2i(root.get_visible_rect().size)
+	var goal_dock := node.find_child("HudGoalDock", true, false) as Control
+	var board_frame := node.get_node_or_null("SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame") as Control
+	var booster_dock := node.find_child("HudBoosterDock", true, false) as Control
+	var hud_goal_label := node.get("hud_goal_label") as Label
+	var hud_buddy_label := node.get("hud_buddy_label") as Label
+	var hud_buddy_gauge := node.find_child("HudBuddyGauge", true, false) as Control
+	var portrait_summary := node.get("portrait_goal_summary") as Label
+	var original_goal := "" if hud_goal_label == null else hud_goal_label.text
+	var original_buddy := "" if hud_buddy_label == null else hud_buddy_label.text
+	var original_summary := "" if portrait_summary == null else portrait_summary.text
+	if hud_goal_label != null:
+		hud_goal_label.text = "%s · 목표 토끼 99 / 덤불 12" % CRITICAL_TEXT_STRESS_BODY
+	if hud_buddy_label != null:
+		hud_buddy_label.text = "%s · Buddy Ready" % CRITICAL_TEXT_STRESS_TITLE
+	if portrait_summary != null:
+		portrait_summary.text = "%s · portrait HUD summary" % CRITICAL_TEXT_STRESS_BODY
+	await process_frame
+	_validate_control_in_viewport(goal_dock, viewport_size, GAMEPLAY_SCENE_PATH, "HudGoalDock text stress", errors)
+	if hud_goal_label != null:
+		_validate_control_inside_container(hud_goal_label, goal_dock, GAMEPLAY_SCENE_PATH, "HudGoalLabel text stress", errors)
+	if hud_buddy_label == null or not hud_buddy_label.is_visible_in_tree():
+		errors.append("%s critical text stress should run with Stage 4 Rescue Buddy HUD visible." % GAMEPLAY_SCENE_PATH)
+	if hud_buddy_label != null:
+		_validate_control_inside_container(hud_buddy_label, goal_dock, GAMEPLAY_SCENE_PATH, "HudBuddyLabel text stress", errors)
+	if hud_buddy_gauge != null:
+		_validate_control_inside_container(hud_buddy_gauge, goal_dock, GAMEPLAY_SCENE_PATH, "HudBuddyGauge text stress", errors)
+	if portrait_summary != null and portrait_summary.is_visible_in_tree():
+		_validate_control_inside_container(portrait_summary, goal_dock, GAMEPLAY_SCENE_PATH, "PortraitGoalSummary text stress", errors)
+	if goal_dock != null and board_frame != null and goal_dock.is_visible_in_tree() and board_frame.is_visible_in_tree():
+		var goal_rect := goal_dock.get_global_rect()
+		var board_rect := board_frame.get_global_rect()
+		if goal_rect.intersects(board_rect):
+			errors.append("%s critical text stress overlapped: HudGoalDock %s board %s." % [GAMEPLAY_SCENE_PATH, goal_rect, board_rect])
+	if booster_dock != null and board_frame != null and booster_dock.is_visible_in_tree() and board_frame.is_visible_in_tree():
+		var booster_rect := booster_dock.get_global_rect()
+		var booster_board_rect := board_frame.get_global_rect()
+		if booster_rect.intersects(booster_board_rect):
+			errors.append("%s critical text stress overlapped: HudBoosterDock %s board %s." % [GAMEPLAY_SCENE_PATH, booster_rect, booster_board_rect])
+	if hud_goal_label != null:
+		hud_goal_label.text = original_goal
+	if hud_buddy_label != null:
+		hud_buddy_label.text = original_buddy
+	if portrait_summary != null:
+		portrait_summary.text = original_summary
+	if int(node.get("current_stage_index")) != restore_stage_index:
+		node.call("_start_stage", restore_stage_index)
+		await process_frame
+
+
+func _validate_failure_overlay_text_stress(node: Node, errors: PackedStringArray) -> void:
+	var viewport_size := Vector2i(root.get_visible_rect().size)
+	var panel := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel") as Control
+	var title := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayTitle") as Label
+	var body := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayBody") as Label
+	var primary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlayPrimaryButton") as Button
+	var secondary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlaySecondaryButton") as Button
+	var original_title := "" if title == null else title.text
+	var original_body := "" if body == null else body.text
+	var original_primary := "" if primary == null else primary.text
+	var original_secondary := "" if secondary == null else secondary.text
+	if title != null:
+		title.text = CRITICAL_TEXT_STRESS_TITLE
+	if body != null:
+		body.text = "%s\n%s" % [CRITICAL_TEXT_STRESS_BODY, "놓친 핵심 · 다음 한 수 · SuperLongHintToken"]
+	if primary != null:
+		primary.text = "+3 이동 받고 계속"
+	if secondary != null:
+		secondary.text = "재도전"
+	await process_frame
+	_validate_control_in_viewport(panel, viewport_size, GAMEPLAY_SCENE_PATH, "OverlayPanel text stress", errors)
+	for control_info in [[title, "OverlayTitle"], [body, "OverlayBody"], [primary, "OverlayPrimaryButton"], [secondary, "OverlaySecondaryButton"]]:
+		var control := control_info[0] as Control
+		var label := String(control_info[1])
+		if control != null and control.is_visible_in_tree():
+			_validate_control_inside_container(control, panel, GAMEPLAY_SCENE_PATH, "%s text stress" % label, errors)
+	_validate_no_vertical_overlap(body, primary, GAMEPLAY_SCENE_PATH, "OverlayBody to primary CTA", errors)
+	if title != null:
+		title.text = original_title
+	if body != null:
+		body.text = original_body
+	if primary != null:
+		primary.text = original_primary
+	if secondary != null:
+		secondary.text = original_secondary
 
 
 func _prepare_stage_25_near_miss_failure(node: Node) -> void:
@@ -3287,6 +3406,8 @@ func _validate_stage_popup_runtime(node: Node, errors: PackedStringArray) -> voi
 	if committed_boosters.size() != 1 or not committed_boosters.has("rainbow_paw"):
 		errors.append("%s Stage Popup START bridge should commit selected booster rainbow_paw, got %s." % [STAGE_SELECT_SCENE_PATH, str(committed_boosters)])
 
+	await _validate_stage_popup_text_stress(node, errors)
+
 	node.call("_on_stage_popup_close_pressed")
 	await create_timer(0.25).timeout
 	await process_frame
@@ -3296,6 +3417,61 @@ func _validate_stage_popup_runtime(node: Node, errors: PackedStringArray) -> voi
 	if panel != null and panel.scale.distance_to(Vector2.ONE) > 0.01:
 		errors.append("%s Stage Popup close should restore panel scale to Vector2.ONE." % STAGE_SELECT_SCENE_PATH)
 	GameSession.set_selected_pre_boosters([])
+
+
+func _validate_stage_popup_text_stress(node: Node, errors: PackedStringArray) -> void:
+	node.call("_show_stage_popup", 4)
+	await create_timer(0.22).timeout
+	await process_frame
+	var viewport_size := Vector2i(root.get_visible_rect().size)
+	var panel := node.get("stage_popup_panel") as Control
+	var title_label := node.get("stage_popup_title_label") as Label
+	var goal_label := node.get("stage_popup_goal_label") as Label
+	var meta_label := node.get("stage_popup_meta_label") as Label
+	var reward_label := node.get("stage_popup_reward_label") as Label
+	var buddy_label := node.get("stage_popup_buddy_label") as Label
+	var start_button := _find_button_with_text(node, "START")
+	var original_title := "" if title_label == null else title_label.text
+	var original_goal := "" if goal_label == null else goal_label.text
+	var original_meta := "" if meta_label == null else meta_label.text
+	var original_reward := "" if reward_label == null else reward_label.text
+	var original_buddy := "" if buddy_label == null else buddy_label.text
+	var original_buddy_visible := false if buddy_label == null else buddy_label.visible
+	var original_start := "" if start_button == null else start_button.text
+	if title_label != null:
+		title_label.text = CRITICAL_TEXT_STRESS_TITLE
+	if goal_label != null:
+		goal_label.text = "%s · collect rabbit 99 / blockers 12" % CRITICAL_TEXT_STRESS_BODY
+	if meta_label != null:
+		meta_label.text = "이동 99회 · 난이도 SuperLongDifficultyToken · [疑似]"
+	if reward_label != null:
+		reward_label.text = "%s · reward breakdown gold tokens boosters" % CRITICAL_TEXT_STRESS_BODY
+	if buddy_label != null:
+		buddy_label.visible = true
+		buddy_label.text = "%s · rabbit quick_refill ready" % CRITICAL_TEXT_STRESS_BODY
+	if start_button != null:
+		start_button.text = CRITICAL_TEXT_STRESS_CTA
+	await process_frame
+	_validate_control_in_viewport(panel, viewport_size, STAGE_SELECT_SCENE_PATH, "StagePopupPanel text stress", errors)
+	for control_info in [[title_label, "StagePopupTitle"], [goal_label, "StagePopupGoal"], [meta_label, "StagePopupMeta"], [reward_label, "StagePopupReward"], [buddy_label, "StagePopupBuddy"], [start_button, "StagePopupStartButton"]]:
+		var control := control_info[0] as Control
+		var label := String(control_info[1])
+		if control != null and control.is_visible_in_tree():
+			_validate_control_inside_container(control, panel, STAGE_SELECT_SCENE_PATH, "%s text stress" % label, errors)
+	_validate_no_vertical_overlap(buddy_label, start_button, STAGE_SELECT_SCENE_PATH, "StagePopup buddy to START", errors)
+	if title_label != null:
+		title_label.text = original_title
+	if goal_label != null:
+		goal_label.text = original_goal
+	if meta_label != null:
+		meta_label.text = original_meta
+	if reward_label != null:
+		reward_label.text = original_reward
+	if buddy_label != null:
+		buddy_label.text = original_buddy
+		buddy_label.visible = original_buddy_visible
+	if start_button != null:
+		start_button.text = original_start
 
 
 func _find_button_with_text(parent: Node, text: String) -> Button:
