@@ -193,7 +193,7 @@ func _validate_viewport_resilience(scene_path: String, node: Node, errors: Packe
 		root.size = viewport_size_target
 		await _refresh_node_layout_for_viewport(node)
 		var viewport_size := Vector2i(root.get_visible_rect().size)
-		_validate_viewport_layout_for_scene(scene_path, node, viewport_size, errors)
+		await _validate_viewport_layout_for_scene(scene_path, node, viewport_size, errors)
 		await _validate_critical_runtime_viewport_state(scene_path, node, viewport_size, errors)
 	root.size = original_size
 	await _refresh_node_layout_for_viewport(node)
@@ -211,12 +211,14 @@ func _validate_viewport_layout_for_scene(scene_path: String, node: Node, viewpor
 	match scene_path:
 		MAIN_SCENE_PATH:
 			_validate_main_viewport_layout(node, viewport_size, errors)
+			await _validate_main_viewport_text_stress(node, viewport_size, errors)
 		STAGE_SELECT_SCENE_PATH:
 			_validate_stage_select_viewport_layout(node, viewport_size, errors)
 		GAMEPLAY_SCENE_PATH:
 			_validate_gameplay_viewport_layout(node, viewport_size, errors)
 		COLLECTION_SCENE_PATH:
 			_validate_collection_viewport_layout(node, viewport_size, errors)
+			await _validate_collection_viewport_text_stress(node, viewport_size, errors)
 
 
 func _validate_critical_runtime_viewport_state(scene_path: String, node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
@@ -236,6 +238,115 @@ func _validate_main_viewport_layout(node: Node, viewport_size: Vector2i, errors:
 	_validate_control_in_viewport(node.find_child("HomeMapButton", true, false), viewport_size, MAIN_SCENE_PATH, "HomeMapButton", errors)
 	_validate_control_in_viewport(node.find_child("HomeCollectionButton", true, false), viewport_size, MAIN_SCENE_PATH, "HomeCollectionButton", errors)
 	_validate_control_in_viewport(node.find_child("HomeSettingsButton", true, false), viewport_size, MAIN_SCENE_PATH, "HomeSettingsButton", errors)
+
+
+func _validate_main_viewport_text_stress(node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
+	var hero_stack := node.get_node_or_null("GameHomeLayer/HeroStack") as Control
+	var status_label := _get_control_property_or_child(node, "home_status_label", "HomeStatusLabel") as Label
+	var subtitle_label := _get_control_property_or_child(node, "home_subtitle_label", "HomeSubtitleLabel") as Label
+	var play_button := _get_control_property_or_child(node, "home_play_button", "HomePlayButton") as Button
+	var map_button := node.find_child("HomeMapButton", true, false) as Button
+	var collection_button := node.find_child("HomeCollectionButton", true, false) as Button
+	var settings_button := node.find_child("HomeSettingsButton", true, false) as Button
+	var original_status := "" if status_label == null else status_label.text
+	var original_subtitle := "" if subtitle_label == null else subtitle_label.text
+	var original_play := "" if play_button == null else play_button.text
+	var original_map := "" if map_button == null else map_button.text
+	var original_collection := "" if collection_button == null else collection_button.text
+	var original_settings := "" if settings_button == null else settings_button.text
+	if status_label != null:
+		status_label.text = "%s · Lv.999 해금 100/100 별 999" % CRITICAL_TEXT_STRESS_BODY
+	if subtitle_label != null:
+		subtitle_label.text = "%s · HOME" % CRITICAL_TEXT_STRESS_TITLE
+	if play_button != null:
+		play_button.text = "PLAY"
+	if map_button != null:
+		map_button.text = "월드맵"
+	if collection_button != null:
+		collection_button.text = "구조도감"
+	if settings_button != null:
+		settings_button.text = "설정"
+	await process_frame
+	for control_info in [[status_label, "HomeStatusLabel"], [subtitle_label, "HomeSubtitleLabel"], [play_button, "HomePlayButton"], [map_button, "HomeMapButton"], [collection_button, "HomeCollectionButton"], [settings_button, "HomeSettingsButton"]]:
+		var control := control_info[0] as Control
+		var label := String(control_info[1])
+		if control != null and control.is_visible_in_tree():
+			_validate_control_in_viewport(control, viewport_size, MAIN_SCENE_PATH, "%s text stress" % label, errors)
+			if hero_stack != null and [status_label, subtitle_label, play_button].has(control):
+				_validate_control_inside_container(control, hero_stack, MAIN_SCENE_PATH, "%s text stress" % label, errors)
+	if status_label != null and play_button != null:
+		_validate_no_vertical_overlap(play_button, status_label, MAIN_SCENE_PATH, "HomePlayButton to HomeStatusLabel text stress", errors)
+	if subtitle_label != null and play_button != null:
+		_validate_no_vertical_overlap(subtitle_label, play_button, MAIN_SCENE_PATH, "HomeSubtitleLabel to HomePlayButton text stress", errors)
+	if status_label != null:
+		status_label.text = original_status
+	if subtitle_label != null:
+		subtitle_label.text = original_subtitle
+	if play_button != null:
+		play_button.text = original_play
+	if map_button != null:
+		map_button.text = original_map
+	if collection_button != null:
+		collection_button.text = original_collection
+	if settings_button != null:
+		settings_button.text = original_settings
+	await _validate_main_event_detail_text_stress(node, viewport_size, errors)
+
+
+func _validate_main_event_detail_text_stress(node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
+	var overlay := node.get_node_or_null("EventDetailOverlay") as Control
+	if overlay == null:
+		return
+	var panel := overlay.find_child("OverlayPanel", true, false) as Control
+	var header := overlay.find_child("EventDetailHeader", true, false) as Control
+	var title_label := overlay.find_child("EventDetailTitleLabel", true, false) as Label
+	var body_label := overlay.find_child("EventDetailBodyLabel", true, false) as Label
+	var close_button := overlay.find_child("EventDetailCloseButton", true, false) as Button
+	var claim_button := overlay.find_child("EventClaimButton", true, false) as Button
+	var original_visible := overlay.visible
+	var original_title := "" if title_label == null else title_label.text
+	var original_body := "" if body_label == null else body_label.text
+	var original_close := "" if close_button == null else close_button.text
+	var original_claim := "" if claim_button == null else claim_button.text
+	overlay.visible = true
+	if title_label != null:
+		title_label.text = "%s · 홈 이벤트 보상" % CRITICAL_TEXT_STRESS_TITLE
+	if body_label != null:
+		body_label.text = "%s\n%s\n%s" % [CRITICAL_TEXT_STRESS_BODY, "남은 시간 99:59:59 · 보상 골드 999 · 토큰 99", "SuperLongRewardDescriptionToken"]
+	if close_button != null:
+		close_button.text = "닫기"
+	if claim_button != null:
+		claim_button.text = "보상 받기"
+	await process_frame
+	_validate_control_in_viewport(panel, viewport_size, MAIN_SCENE_PATH, "EventDetailPanel text stress", errors)
+	for control_info in [[title_label, "EventDetailTitleLabel"], [body_label, "EventDetailBodyLabel"], [close_button, "EventDetailCloseButton"], [claim_button, "EventClaimButton"]]:
+		var control := control_info[0] as Control
+		var label := String(control_info[1])
+		if control != null and control.is_visible_in_tree():
+			_validate_control_in_viewport(control, viewport_size, MAIN_SCENE_PATH, "%s text stress" % label, errors)
+			if panel != null:
+				_validate_control_inside_container(control, panel, MAIN_SCENE_PATH, "%s text stress" % label, errors)
+	if header != null:
+		_validate_control_inside_container(title_label, header, MAIN_SCENE_PATH, "EventDetailTitleLabel header text stress", errors)
+		_validate_control_inside_container(close_button, header, MAIN_SCENE_PATH, "EventDetailCloseButton header text stress", errors)
+	_validate_no_rect_overlap(title_label, close_button, MAIN_SCENE_PATH, "EventDetailTitleLabel to close text stress", errors)
+	_validate_no_vertical_overlap(body_label, claim_button, MAIN_SCENE_PATH, "EventDetailBodyLabel to claim CTA text stress", errors)
+	if title_label != null:
+		title_label.text = original_title
+	if body_label != null:
+		body_label.text = original_body
+	if close_button != null:
+		close_button.text = original_close
+	if claim_button != null:
+		claim_button.text = original_claim
+	overlay.visible = original_visible
+
+
+func _get_control_property_or_child(node: Node, property_name: String, child_name: String) -> Control:
+	var property_value: Variant = node.get(property_name)
+	if property_value is Control:
+		return property_value
+	return node.find_child(child_name, true, false) as Control
 
 
 func _validate_stage_select_viewport_layout(node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
@@ -373,6 +484,96 @@ func _validate_collection_viewport_layout(node: Node, viewport_size: Vector2i, e
 		errors.append("%s missing responsive layout target CollectionGrid at %s." % [COLLECTION_SCENE_PATH, viewport_size])
 
 
+func _validate_collection_viewport_text_stress(node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
+	var header := node.find_child("HeaderRow", true, false) as Control
+	var summary := node.find_child("SummaryLabel", true, false) as Label
+	var detail := node.find_child("DetailLabel", true, false) as Label
+	var back_button := node.find_child("BackButton", true, false) as Button
+	var grid := node.find_child("CollectionGrid", true, false) as GridContainer
+	var original_summary := "" if summary == null else summary.text
+	var original_detail := "" if detail == null else detail.text
+	var original_back := "" if back_button == null else back_button.text
+	if summary != null:
+		summary.text = "해금 100 / 100 · 최고 Stage 100 · %s" % CRITICAL_TEXT_STRESS_TITLE
+	if detail != null:
+		detail.text = "%s · Rescue Book detail line" % CRITICAL_TEXT_STRESS_BODY
+	if back_button != null:
+		back_button.text = "홈"
+	await process_frame
+	for control_info in [[header, "HeaderRow"], [summary, "SummaryLabel"], [detail, "DetailLabel"], [back_button, "BackButton"], [grid, "CollectionGrid"]]:
+		var control := control_info[0] as Control
+		var label := String(control_info[1])
+		if control != null and control.is_visible_in_tree():
+			_validate_control_in_viewport(control, viewport_size, COLLECTION_SCENE_PATH, "%s text stress" % label, errors)
+	if header != null:
+		for control_info in [[summary, "SummaryLabel"], [back_button, "BackButton"]]:
+			var child_control := control_info[0] as Control
+			var child_label := String(control_info[1])
+			if child_control != null and child_control.is_visible_in_tree():
+				_validate_control_inside_container(child_control, header, COLLECTION_SCENE_PATH, "%s text stress" % child_label, errors)
+	if summary != null and detail != null:
+		_validate_no_vertical_overlap(summary, detail, COLLECTION_SCENE_PATH, "SummaryLabel to DetailLabel text stress", errors)
+	if detail != null and grid != null:
+		_validate_no_vertical_overlap(detail, grid, COLLECTION_SCENE_PATH, "DetailLabel to CollectionGrid text stress", errors)
+	await _validate_collection_card_text_stress(node, viewport_size, errors)
+	if summary != null:
+		summary.text = original_summary
+	if detail != null:
+		detail.text = original_detail
+	if back_button != null:
+		back_button.text = original_back
+
+
+func _validate_collection_card_text_stress(node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
+	var card := _first_collection_card(node)
+	if card == null and node.has_method("_refresh_cards"):
+		node.call("_refresh_cards")
+		await process_frame
+		card = _first_collection_card(node)
+	if card == null:
+		return
+	var preview := card.find_child("AnimalPreview", true, false) as Control
+	var name_label := card.find_child("AnimalNameLabel", true, false) as Label
+	var status_label := card.find_child("AnimalStatusLabel", true, false) as Label
+	var cosmetic_label := card.find_child("AnimalCosmeticLabel", true, false) as Label
+	var original_name := "" if name_label == null else name_label.text
+	var original_status := "" if status_label == null else status_label.text
+	var original_cosmetic := "" if cosmetic_label == null else cosmetic_label.text
+	if name_label != null:
+		name_label.text = "%s · Friend" % CRITICAL_TEXT_STRESS_TITLE
+	if status_label != null:
+		status_label.text = "Lv.99 · 토큰 999 · NEW · %s" % CRITICAL_TEXT_STRESS_BODY
+	if cosmetic_label != null:
+		cosmetic_label.text = "코스메틱: SuperLongCosmeticToken · rescue_hat_gold_variant"
+	await process_frame
+	_validate_control_in_viewport(card, viewport_size, COLLECTION_SCENE_PATH, "AnimalCard text stress", errors)
+	for control_info in [[preview, "AnimalPreview"], [name_label, "AnimalNameLabel"], [status_label, "AnimalStatusLabel"], [cosmetic_label, "AnimalCosmeticLabel"]]:
+		var control := control_info[0] as Control
+		var label := String(control_info[1])
+		if control != null and control.is_visible_in_tree():
+			_validate_control_inside_container(control, card, COLLECTION_SCENE_PATH, "%s text stress" % label, errors)
+	_validate_no_vertical_overlap(preview, name_label, COLLECTION_SCENE_PATH, "AnimalPreview to AnimalNameLabel text stress", errors)
+	_validate_no_vertical_overlap(name_label, status_label, COLLECTION_SCENE_PATH, "AnimalNameLabel to AnimalStatusLabel text stress", errors)
+	_validate_no_vertical_overlap(status_label, cosmetic_label, COLLECTION_SCENE_PATH, "AnimalStatusLabel to AnimalCosmeticLabel text stress", errors)
+	if name_label != null:
+		name_label.text = original_name
+	if status_label != null:
+		status_label.text = original_status
+	if cosmetic_label != null:
+		cosmetic_label.text = original_cosmetic
+
+
+func _first_collection_card(node: Node) -> PanelContainer:
+	var grid := node.find_child("CollectionGrid", true, false) as GridContainer
+	if grid == null:
+		return null
+	for candidate in grid.get_children():
+		var card := candidate as PanelContainer
+		if card != null and String(card.name).begins_with("AnimalCard_"):
+			return card
+	return null
+
+
 func _validate_control_in_viewport(candidate: Node, viewport_size: Vector2i, scene_path: String, label: String, errors: PackedStringArray) -> void:
 	if not (candidate is Control):
 		errors.append("%s missing responsive layout target %s at %s." % [scene_path, label, viewport_size])
@@ -411,6 +612,17 @@ func _validate_no_vertical_overlap(upper: Control, lower: Control, scene_path: S
 	var lower_rect := lower.get_global_rect()
 	if upper_rect.end.y > lower_rect.position.y + 2.0:
 		errors.append("%s critical text stress overlapped: %s upper %s lower %s." % [scene_path, label, upper_rect, lower_rect])
+
+
+func _validate_no_rect_overlap(first: Control, second: Control, scene_path: String, label: String, errors: PackedStringArray) -> void:
+	if first == null or second == null:
+		return
+	if not first.is_visible_in_tree() or not second.is_visible_in_tree():
+		return
+	var first_rect := first.get_global_rect()
+	var second_rect := second.get_global_rect()
+	if first_rect.intersects(second_rect):
+		errors.append("%s critical text stress overlapped: %s first %s second %s." % [scene_path, label, first_rect, second_rect])
 
 
 func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
@@ -3287,13 +3499,12 @@ func _validate_collection_card_label_state(node: Node, errors: PackedStringArray
 	if grid == null:
 		errors.append("%s is missing CollectionGrid for Rescue Book card state smoke." % COLLECTION_SCENE_PATH)
 		return
-	var previous_card_count := grid.get_child_count()
 
 	GameSession.add_rescue_book_tokens("rabbit", 40)
 	GameSession.mark_rescue_book_seen("bear")
 	node.call("_refresh_cards")
 
-	var refreshed_card_texts := _collection_card_label_texts_after(grid, previous_card_count)
+	var refreshed_card_texts := _collection_card_label_texts_after(grid, 0)
 	var rabbit_text := _first_text_containing(refreshed_card_texts, "토끼")
 	if not rabbit_text.contains("Lv.3") or not rabbit_text.contains("토큰 40") or not rabbit_text.contains("NEW"):
 		errors.append("%s AnimalCard_rabbit should show Lv.3, token count, and NEW state after token fixture, got: %s." % [COLLECTION_SCENE_PATH, rabbit_text])
@@ -3324,7 +3535,6 @@ func _validate_collection_card_input_runtime(node: Node, grid: Node, errors: Pac
 
 	var state_animals: Dictionary = Dictionary(GameSession.get_rescue_book_state().get("animals", {}))
 	var rabbit_entry := Dictionary(state_animals.get("rabbit", {}))
-	var card_count_before_input_refresh := grid.get_child_count()
 	var press_event := InputEventMouseButton.new()
 	press_event.pressed = true
 	press_event.button_index = MOUSE_BUTTON_LEFT
@@ -3336,7 +3546,7 @@ func _validate_collection_card_input_runtime(node: Node, grid: Node, errors: Pac
 	if detail_label == null or not detail_label.text.contains("토끼") or not detail_label.text.contains("Lv.3") or not detail_label.text.contains("토큰 40"):
 		errors.append("%s Rescue Book card input should refresh DetailLabel with selected rabbit state." % COLLECTION_SCENE_PATH)
 
-	var after_input_texts := _collection_card_label_texts_after(grid, card_count_before_input_refresh)
+	var after_input_texts := _collection_card_label_texts_after(grid, 0)
 	var rabbit_after_input_text := _first_text_containing(after_input_texts, "토끼")
 	if rabbit_after_input_text.contains("NEW"):
 		errors.append("%s AnimalCard_rabbit should clear NEW after card input, got: %s." % [COLLECTION_SCENE_PATH, rabbit_after_input_text])

@@ -129,6 +129,7 @@ func _build_layout() -> void:
 
 func _refresh_cards() -> void:
 	for child in card_grid.get_children():
+		card_grid.remove_child(child)
 		child.queue_free()
 	preview_nodes.clear()
 
@@ -218,14 +219,22 @@ func _make_animal_card(animal: Dictionary, entry: Dictionary) -> PanelContainer:
 		preview_nodes[animal_id] = preview
 
 	var name_label := Label.new()
+	name_label.name = "AnimalNameLabel"
 	name_label.text = String(animal.get("display_name", animal_id))
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.add_theme_font_size_override("font_size", 20)
 	name_label.add_theme_color_override("font_color", Color("213d55") if unlocked else Color("7f8792"))
 	stack.add_child(name_label)
 
 	var status_label := Label.new()
+	status_label.name = "AnimalStatusLabel"
 	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	status_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	status_label.add_theme_font_size_override("font_size", 15)
 	status_label.add_theme_color_override("font_color", Color("3f6f5b") if unlocked else Color("8b93a0"))
 	if unlocked:
@@ -235,8 +244,12 @@ func _make_animal_card(animal: Dictionary, entry: Dictionary) -> PanelContainer:
 	stack.add_child(status_label)
 
 	var cosmetic_label := Label.new()
+	cosmetic_label.name = "AnimalCosmeticLabel"
 	cosmetic_label.text = "코스메틱: %s" % String(entry.get("equipped_cosmetic", animal.get("default_cosmetic", "none")))
 	cosmetic_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cosmetic_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	cosmetic_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	cosmetic_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	cosmetic_label.add_theme_font_size_override("font_size", 13)
 	cosmetic_label.add_theme_color_override("font_color", Color("6c7890"))
 	stack.add_child(cosmetic_label)
