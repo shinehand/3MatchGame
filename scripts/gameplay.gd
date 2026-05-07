@@ -3497,6 +3497,8 @@ func _build_failure_overlay_body(fail_offer: Dictionary = {}) -> String:
 		"조금만 더!",
 		"실패 유형  %s" % String(fail_offer.get("type", "general_shortfall")),
 		"남은 목표  %s" % _build_goal_remaining_summary(),
+		"놓친 핵심  %s" % _build_failure_focus_summary(),
+		"다음 한 수  %s" % _build_failure_retry_hint(fail_offer),
 		"현재 진행  %s" % _build_goal_result_summary(),
 		"점수  %d" % score,
 		"다음  %s / %s" % [String(fail_offer.get("primary_cta", "재도전")), String(fail_offer.get("secondary_cta", "홈으로"))],
@@ -3507,6 +3509,47 @@ func _build_failure_overlay_body(fail_offer: Dictionary = {}) -> String:
 	if not live_event_line.is_empty():
 		lines.append(live_event_line)
 	return "\n".join(lines)
+
+
+func _build_failure_focus_summary() -> String:
+	var collect_targets: Dictionary = _stage_collect_targets()
+	var best_collect_animal := ""
+	var best_collect_remaining := 0
+	for animal_id in collect_targets.keys():
+		var remaining_count := maxi(0, int(collect_targets[animal_id]) - int(collected_counts.get(animal_id, 0)))
+		if remaining_count > best_collect_remaining:
+			best_collect_remaining = remaining_count
+			best_collect_animal = String(animal_id)
+	if best_collect_remaining > 0:
+		return "%s %d개 더 구조" % [ANIMAL_NAMES.get(best_collect_animal, best_collect_animal), best_collect_remaining]
+
+	var blocker_remaining := maxi(0, _target_blockers() - cleared_blockers)
+	if blocker_remaining > 0:
+		return "덤불 %d개 정리" % blocker_remaining
+
+	var score_remaining := maxi(0, _target_score() - score)
+	if score_remaining > 0:
+		return "점수 %d점 더 획득" % score_remaining
+
+	return "목표 판정 확인"
+
+
+func _build_failure_retry_hint(fail_offer: Dictionary) -> String:
+	var blocker_remaining := maxi(0, _target_blockers() - cleared_blockers)
+	if blocker_remaining > 0:
+		return "덤불 옆에서 폭탄이나 줄무늬 특수 블록을 먼저 터뜨리세요."
+
+	var collect_targets: Dictionary = _stage_collect_targets()
+	for animal_id in collect_targets.keys():
+		var remaining_count := maxi(0, int(collect_targets[animal_id]) - int(collected_counts.get(animal_id, 0)))
+		if remaining_count > 0:
+			return "%s 주변 매치부터 만들고 무지개 발바닥은 마지막 목표에 쓰세요." % ANIMAL_NAMES.get(String(animal_id), String(animal_id))
+
+	if _target_score() > score:
+		return "4매치 이상과 연쇄를 노려 점수 배수를 먼저 키우세요."
+
+	var booster := String(fail_offer.get("booster_suggestion", "rainbow_paw"))
+	return "추천 부스터 %s로 같은 목표를 다시 노리세요." % booster
 
 
 func _build_failure_offer(fail_count: int = -1) -> Dictionary:

@@ -124,6 +124,7 @@
 - Stage 1 FTUE 실패 overlay는 무료 재도전 CTA와 수익화 문구 차단을 runtime smoke에서 검증한다.
 - 실패 팝업에서 재도전, 지도, 닫기 같은 비구매 선택지가 항상 보인다.
 - Near Miss 실패 팝업의 `+3 이동 받고 계속` CTA는 실제로 overlay를 닫고 이동 3회를 지급해 플레이 상태로 복귀한다.
+- 실패 overlay는 `놓친 핵심` 목표와 `다음 한 수` 재도전 힌트를 분리해 보여 준다.
 - Near Miss secondary 재도전은 같은 스테이지를 새 이동 수와 초기 점수/장애물 상태로 복구한다.
 - 결과/실패 overlay runtime smoke는 Stage 1 클리어 보상/CTA, Stage 1 FTUE 실패 CTA, Stage 25 near-miss 실패 offer 노출, 선택/닫기, 광고/IAP 결과, 코인 continue, 추가 이동 지급 analytics를 검증한다.
 - 광고 완료 후 추가 이동은 1회만 지급되고 `ad_reward_complete`와 `extra_moves_grant`는 같은 transaction을 공유한다.

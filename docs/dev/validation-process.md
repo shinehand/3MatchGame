@@ -83,7 +83,7 @@
 
 - Stage 1 클리어 판정 경로에서 결과 overlay가 표시되고, 보상/별/점수/다음 행동과 `다음 스테이지`/`홈으로` CTA를 보여 준다.
 - Stage 1 FTUE 실패 판정 경로에서 실패 overlay는 `무료 재도전` CTA를 보여 주고 보상형 광고/IAP 문구를 노출하지 않는다.
-- Stage 25 near-miss 실패 판정 경로에서 실패 overlay가 표시되고, 실패 유형, 남은 목표, 추천 부스터, `+3 이동 받고 계속`/`재도전` CTA를 보여 준다.
+- Stage 25 near-miss 실패 판정 경로에서 실패 overlay가 표시되고, 실패 유형, 남은 목표, `놓친 핵심`, `다음 한 수`, 추천 부스터, `+3 이동 받고 계속`/`재도전` CTA를 보여 준다.
 - `+3 이동 받고 계속` primary CTA는 overlay를 닫고 `remaining_moves = 3`, `stage_state = playing`으로 실제 재개한다.
 - `재도전` secondary CTA는 같은 Stage 25를 새 이동 수/점수 0/장애물 0/overlay hidden 상태로 다시 시작한다.
 - 광고 실패/IAP 취소·실패는 overlay, 이동 수, 점수, 목표 진행, wallet을 보존하고 추가 이동을 지급하지 않는다.

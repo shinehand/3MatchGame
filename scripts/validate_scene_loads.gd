@@ -1377,6 +1377,8 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s near-miss failure secondary CTA should offer retry." % GAMEPLAY_SCENE_PATH)
 	if overlay_body == null or not overlay_body.text.contains("near_miss") or not overlay_body.text.contains("보상형 +3 이동") or not overlay_body.text.contains("추천 부스터 rainbow_paw"):
 		errors.append("%s near-miss failure body should show fail type, rewarded move offer, and booster recommendation." % GAMEPLAY_SCENE_PATH)
+	if overlay_body == null or not overlay_body.text.contains("놓친 핵심  덤불 1개 정리") or not overlay_body.text.contains("다음 한 수  덤불 옆에서 폭탄이나 줄무늬 특수 블록"):
+		errors.append("%s near-miss failure body should isolate missed goal and one actionable retry hint." % GAMEPLAY_SCENE_PATH)
 	if _analytics_event_count("stage_fail") <= fail_events_before:
 		errors.append("%s near-miss failure runtime smoke should emit stage_fail analytics." % GAMEPLAY_SCENE_PATH)
 	if _analytics_event_count("offer_impression") <= offer_events_before:
