@@ -609,6 +609,19 @@ func _count_tile_expression(tiles: Array, expression_id: String) -> int:
 	return count
 
 
+func _count_selected_tiles(node: Node) -> int:
+	var count := 0
+	var tile_rows: Array = node.get("tile_nodes")
+	for row_tiles in tile_rows:
+		for tile in Array(row_tiles):
+			if tile == null:
+				continue
+			var selection_glow := tile.find_child("SelectionGlow", true, false) as CanvasItem
+			if selection_glow != null and selection_glow.visible:
+				count += 1
+	return count
+
+
 func _count_worried_target_expressions(node: Node, tiles: Array) -> int:
 	var target_animals: Dictionary = Dictionary(node.call("_stage_collect_targets"))
 	var board_data: Array = node.get("board_data")
@@ -628,6 +641,14 @@ func _count_worried_target_expressions(node: Node, tiles: Array) -> int:
 	return count
 
 
+func _clear_tile_selection_states(node: Node) -> void:
+	var tile_rows: Array = node.get("tile_nodes")
+	for row_tiles in tile_rows:
+		for tile in Array(row_tiles):
+			if tile != null and tile.has_method("set_selected"):
+				tile.set_selected(false)
+
+
 func _cell_for_tile(node: Node, target_tile) -> Vector2i:
 	var tile_rows: Array = node.get("tile_nodes")
 	for row in range(tile_rows.size()):
@@ -639,7 +660,7 @@ func _cell_for_tile(node: Node, target_tile) -> Vector2i:
 
 
 func _validate_rescue_buddy_runtime_rules(node: Node, errors: PackedStringArray) -> void:
-	for method_name in ["_start_stage", "_charge_buddy_skill_for_match", "_charge_buddy_skill_for_combo", "_charge_buddy_skill_for_clear_blocker", "_charge_buddy_skill_for_cascade_step", "_trigger_buddy_skill", "_try_loyal_fetch_before_failure"]:
+	for method_name in ["_start_stage", "_charge_buddy_skill_for_match", "_charge_buddy_skill_for_combo", "_charge_buddy_skill_for_clear_blocker", "_charge_buddy_skill_for_cascade_step", "_charge_buddy_skill_for_near_fail", "_charge_buddy_skill_for_stage_clear", "_trigger_buddy_skill", "_try_loyal_fetch_before_failure", "_activate_fever", "_consume_fever_turn_after_player_move", "_stage_gold_reward", "_active_visible_tiles"]:
 		if not node.has_method(method_name):
 			errors.append("%s should expose %s for Rescue Buddy runtime smoke." % [GAMEPLAY_SCENE_PATH, method_name])
 			return
@@ -725,6 +746,29 @@ func _validate_rescue_buddy_runtime_rules(node: Node, errors: PackedStringArray)
 	if int(combo_peep_params.get("stage_id", 0)) != 8 or String(combo_peep_params.get("animal_id", "")) != "chick" or String(combo_peep_params.get("effect_type", "")) != "combo_peep":
 		errors.append("%s combo_peep trigger analytics should identify Stage 8 chick combo_peep." % GAMEPLAY_SCENE_PATH)
 
+	node.call("_start_stage", 15)
+	node.set("board_data", _seed_smart_hint_gameplay_board(node, "cat"))
+	_clear_tile_selection_states(node)
+	_clear_expression_states(node.call("_active_visible_tiles"))
+	var smart_hint_triggers_before := _analytics_event_count("buddy_skill_trigger")
+	for _index in range(3):
+		node.call("_charge_buddy_skill_for_match", "cat")
+	if not bool(node.get("buddy_trigger_pending")):
+		errors.append("%s smart_hint should become pending after three cat match charges." % GAMEPLAY_SCENE_PATH)
+	node.call("_trigger_buddy_skill")
+	if _count_tile_expression(node.call("_active_visible_tiles"), "smile") < 2:
+		errors.append("%s smart_hint should mark a two-tile recommended move with smile expressions." % GAMEPLAY_SCENE_PATH)
+	if _count_selected_tiles(node) < 2:
+		errors.append("%s smart_hint should highlight a two-tile recommended move." % GAMEPLAY_SCENE_PATH)
+	if int(node.get("buddy_uses")) != 1:
+		errors.append("%s smart_hint should consume exactly one Buddy use." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_trigger") <= smart_hint_triggers_before:
+		errors.append("%s smart_hint should emit buddy_skill_trigger analytics." % GAMEPLAY_SCENE_PATH)
+	var smart_hint_event := _last_analytics_event_by_name("buddy_skill_trigger")
+	var smart_hint_params: Dictionary = Dictionary(smart_hint_event.get("params", {}))
+	if int(smart_hint_params.get("stage_id", 0)) != 16 or String(smart_hint_params.get("animal_id", "")) != "cat" or String(smart_hint_params.get("effect_type", "")) != "smart_hint":
+		errors.append("%s smart_hint trigger analytics should identify Stage 16 cat smart_hint." % GAMEPLAY_SCENE_PATH)
+
 	node.call("_start_stage", 17)
 	node.set("board_data", _seed_plain_gameplay_board(node))
 	var leap_obstacle_data: Array = node.get("obstacle_data")
@@ -767,6 +811,44 @@ func _validate_rescue_buddy_runtime_rules(node: Node, errors: PackedStringArray)
 	if int(loyal_fetch_params.get("stage_id", 0)) != 20 or String(loyal_fetch_params.get("animal_id", "")) != "dog" or String(loyal_fetch_params.get("effect_type", "")) != "loyal_fetch":
 		errors.append("%s loyal_fetch trigger analytics should identify Stage 20 dog loyal_fetch." % GAMEPLAY_SCENE_PATH)
 
+	node.call("_start_stage", 23)
+	node.set("board_data", _seed_plain_gameplay_board(node))
+	node.set("combo_gauge_points", 0)
+	var calm_fever_triggers_before := _analytics_event_count("buddy_skill_trigger")
+	node.call("_activate_fever")
+	if not bool(node.get("buddy_trigger_pending")):
+		errors.append("%s calm_fever should become pending when Fever starts." % GAMEPLAY_SCENE_PATH)
+	for _index in range(4):
+		node.call("_consume_fever_turn_after_player_move")
+	if int(node.get("fever_turns_remaining")) != 0:
+		errors.append("%s calm_fever smoke should expire Fever turns before triggering, got %d turns." % [GAMEPLAY_SCENE_PATH, int(node.get("fever_turns_remaining"))])
+	if int(node.get("combo_gauge_points")) != 2:
+		errors.append("%s calm_fever should preserve Combo Gauge by 2 points after Fever ends, got %d." % [GAMEPLAY_SCENE_PATH, int(node.get("combo_gauge_points"))])
+	if _analytics_event_count("buddy_skill_trigger") <= calm_fever_triggers_before:
+		errors.append("%s calm_fever should emit buddy_skill_trigger analytics after Fever ends." % GAMEPLAY_SCENE_PATH)
+	var calm_fever_event := _last_analytics_event_by_name("buddy_skill_trigger")
+	var calm_fever_params: Dictionary = Dictionary(calm_fever_event.get("params", {}))
+	if int(calm_fever_params.get("stage_id", 0)) != 24 or String(calm_fever_params.get("animal_id", "")) != "panda" or String(calm_fever_params.get("effect_type", "")) != "calm_fever":
+		errors.append("%s calm_fever trigger analytics should identify Stage 24 panda calm_fever." % GAMEPLAY_SCENE_PATH)
+
+	node.call("_start_stage", 24)
+	node.set("stage_state", "cleared")
+	var coin_sniff_base_reward := int(node.call("_stage_gold_reward", 3))
+	var coin_sniff_triggers_before := _analytics_event_count("buddy_skill_trigger")
+	node.call("_charge_buddy_skill_for_stage_clear")
+	var coin_sniff_reward := int(node.call("_stage_gold_reward", 3))
+	var expected_coin_sniff_reward := int(ceil(float(coin_sniff_base_reward) * 1.05))
+	if coin_sniff_reward != expected_coin_sniff_reward:
+		errors.append("%s coin_sniff should boost stage gold reward by 5 percent, got %d expected %d." % [GAMEPLAY_SCENE_PATH, coin_sniff_reward, expected_coin_sniff_reward])
+	if int(node.get("buddy_uses")) != 1:
+		errors.append("%s coin_sniff should consume exactly one Buddy use." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_trigger") <= coin_sniff_triggers_before:
+		errors.append("%s coin_sniff should emit buddy_skill_trigger analytics on stage clear." % GAMEPLAY_SCENE_PATH)
+	var coin_sniff_event := _last_analytics_event_by_name("buddy_skill_trigger")
+	var coin_sniff_params: Dictionary = Dictionary(coin_sniff_event.get("params", {}))
+	if int(coin_sniff_params.get("stage_id", 0)) != 25 or String(coin_sniff_params.get("animal_id", "")) != "pig" or String(coin_sniff_params.get("effect_type", "")) != "coin_sniff":
+		errors.append("%s coin_sniff trigger analytics should identify Stage 25 pig coin_sniff." % GAMEPLAY_SCENE_PATH)
+
 	node.call("_start_stage", 30)
 	node.set("board_data", _seed_plain_gameplay_board(node))
 	node.set("score", 1000)
@@ -785,6 +867,47 @@ func _validate_rescue_buddy_runtime_rules(node: Node, errors: PackedStringArray)
 	var cascade_params: Dictionary = Dictionary(cascade_event.get("params", {}))
 	if int(cascade_params.get("stage_id", 0)) != 31 or String(cascade_params.get("animal_id", "")) != "penguin" or String(cascade_params.get("effect_type", "")) != "cascade_slide":
 		errors.append("%s cascade_slide trigger analytics should identify Stage 31 penguin cascade_slide." % GAMEPLAY_SCENE_PATH)
+
+	node.call("_start_stage", 40)
+	node.set("board_data", _seed_smart_hint_gameplay_board(node, "fox"))
+	node.set("remaining_moves", 3)
+	_clear_tile_selection_states(node)
+	_clear_expression_states(node.call("_active_visible_tiles"))
+	var sly_route_triggers_before := _analytics_event_count("buddy_skill_trigger")
+	node.call("_charge_buddy_skill_for_near_fail")
+	if _count_selected_tiles(node) < 2:
+		errors.append("%s sly_route should highlight a two-tile near-fail route." % GAMEPLAY_SCENE_PATH)
+	if int(node.get("buddy_uses")) != 1:
+		errors.append("%s sly_route should consume exactly one Buddy use." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_trigger") <= sly_route_triggers_before:
+		errors.append("%s sly_route should emit buddy_skill_trigger analytics on near-fail route." % GAMEPLAY_SCENE_PATH)
+	var sly_route_event := _last_analytics_event_by_name("buddy_skill_trigger")
+	var sly_route_params: Dictionary = Dictionary(sly_route_event.get("params", {}))
+	if int(sly_route_params.get("stage_id", 0)) != 41 or String(sly_route_params.get("animal_id", "")) != "fox" or String(sly_route_params.get("effect_type", "")) != "sly_route":
+		errors.append("%s sly_route trigger analytics should identify Stage 41 fox sly_route." % GAMEPLAY_SCENE_PATH)
+
+	GameSession.set_selected_pre_boosters([])
+	var brave_start_triggers_before := _analytics_event_count("buddy_skill_trigger")
+	var brave_start_boosters_before := _analytics_event_count("booster_used")
+	node.call("_start_stage", 50)
+	if int(node.get("buddy_uses")) != 1:
+		errors.append("%s brave_start should consume exactly one Buddy use at Hard stage start." % GAMEPLAY_SCENE_PATH)
+	if bool(node.get("buddy_trigger_pending")):
+		errors.append("%s brave_start should not remain pending after immediate stage-start trigger." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_trigger") <= brave_start_triggers_before:
+		errors.append("%s brave_start should emit buddy_skill_trigger analytics at stage start." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("booster_used") != brave_start_boosters_before:
+		errors.append("%s brave_start should not grant or consume a free start booster." % GAMEPLAY_SCENE_PATH)
+	var brave_start_stage_event := _last_analytics_event_by_name("stage_start")
+	var brave_start_stage_params: Dictionary = Dictionary(brave_start_stage_event.get("params", {}))
+	if int(brave_start_stage_params.get("start_boosters_applied", -1)) != 0:
+		errors.append("%s brave_start should leave start_boosters_applied at 0 when none are selected." % GAMEPLAY_SCENE_PATH)
+	if _count_board_special(node, "row") + _count_board_special(node, "col") + _count_board_special(node, "bomb") + _count_board_special(node, "rainbow") != 0:
+		errors.append("%s brave_start should not place a free special block on the board." % GAMEPLAY_SCENE_PATH)
+	var brave_start_event := _last_analytics_event_by_name("buddy_skill_trigger")
+	var brave_start_params: Dictionary = Dictionary(brave_start_event.get("params", {}))
+	if int(brave_start_params.get("stage_id", 0)) != 51 or String(brave_start_params.get("animal_id", "")) != "lion" or String(brave_start_params.get("effect_type", "")) != "brave_start":
+		errors.append("%s brave_start trigger analytics should identify Stage 51 lion brave_start." % GAMEPLAY_SCENE_PATH)
 
 	node.call("_start_stage", 80)
 	node.set("board_data", _seed_plain_gameplay_board(node))
@@ -987,6 +1110,17 @@ func _seed_plain_gameplay_board(node: Node) -> Array:
 			board_data[row][col] = node.call("_make_piece", String(animals[(row * 2 + col) % animals.size()]))
 	node.set("active_mask", active_mask)
 	node.set("obstacle_data", obstacle_data)
+	node.set("board_data", board_data)
+	return board_data
+
+
+func _seed_smart_hint_gameplay_board(node: Node, target_animal: String) -> Array:
+	var board_data: Array = _seed_plain_gameplay_board(node)
+	var blocker_animal := "bear" if target_animal != "bear" else "rabbit"
+	board_data[0][0] = node.call("_make_piece", target_animal)
+	board_data[0][1] = node.call("_make_piece", blocker_animal)
+	board_data[0][2] = node.call("_make_piece", target_animal)
+	board_data[1][1] = node.call("_make_piece", target_animal)
 	node.set("board_data", board_data)
 	return board_data
 

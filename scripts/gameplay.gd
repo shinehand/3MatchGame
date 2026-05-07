@@ -2064,7 +2064,7 @@ func _buddy_trigger_status(skill_id: String) -> String:
 		"calm_fever":
 			return "Rescue Buddy %s 스킬 발동: Fever 종료 후 Combo Gauge를 보존했습니다." % _buddy_animal_name()
 		"coin_sniff":
-			return "Rescue Buddy %s 스킬 발동: 클리어 보상 골드를 5% 늘렸습니다." % _buddy_animal_name()
+			return "Rescue Buddy %s 스킬 발동: 클리어 보상 골드를 5%% 늘렸습니다." % _buddy_animal_name()
 		"cascade_slide":
 			return "Rescue Buddy %s 스킬 발동: 연쇄 점수 보너스를 더했습니다." % _buddy_animal_name()
 		"brave_start":

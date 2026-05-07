@@ -47,10 +47,10 @@ stage["buddy_max_uses"]
 | 병아리 | `combo_peep` | 콤보 2 이상 | 피버 게이지 소량 추가 | 피버 중 미발동 | Stage 8+ |
 | 개구리 | `leap_clear` | 목표 동물 매치 3회 | 남은 덤불 1개 추가 제거 | 덤불 없으면 미발동 | Stage 18+ |
 | 강아지 | `loyal_fetch` | 목표 1-2개 남은 Near Miss | 목표 동물 1개를 보드에 우선 생성 | 실패 판정 전 1회 | Stage 20+ |
-| 판다 | `calm_fever` | 피버 시작 | 피버 종료 후 게이지 10 유지 | 연속 중첩 없음 | Stage 24+ |
+| 판다 | `calm_fever` | 피버 시작 | 피버 종료 후 Combo Gauge 2칸 보존 | 연속 중첩 없음 | Stage 24+ |
 | 돼지 | `coin_sniff` | 클리어 | 코인 보상 +5% | 클리어 전 영향 없음 | Stage 25+ |
 | 펭귄 | `cascade_slide` | 낙하 후 연쇄 발생 | 해당 연쇄 점수 +10% | 1턴 1회 | Stage 31+ |
-| 여우 | `sly_route` | 이동 수 3 이하 | 목표 관련 추천 수 강조 | 자동 제거 없음 | Stage 41+ |
+| 여우 | `sly_route` | 이동 수 3 이하 | 목표 관련 추천 수 강조, 수집 목표가 없으면 유효 수 fallback | 자동 제거 없음 | Stage 41+ |
 | 사자 | `brave_start` | 하드/피날레 시작 | 시작 부스터 1개 후보 제안 | 무료 자동 지급 아님 | Stage 51+ |
 | 코끼리 | `mighty_push` | 피날레/덤불 고밀도 | 범위 효과가 덤불에 +1 피해 | 보스/피날레 제한 | Stage 81+ |
 
@@ -93,7 +93,7 @@ stage["buddy_max_uses"]
 | `buddy_skill_trigger` | 실제 발동 | `stage_id`, `animal_id`, `skill_id`, `effect_type`, `uses_left` |
 | `buddy_skill_blocked` | 조건 불충족 | `stage_id`, `animal_id`, `skill_id`, `reason` |
 
-자동 scene smoke는 Stage 4 `quick_refill`의 충전/준비/발동/차단 이벤트, Stage 5 `soft_bomb_plus`, Stage 8 `combo_peep`, Stage 18 `leap_clear`, Stage 20 `loyal_fetch`, Stage 31 `cascade_slide`, Stage 81 `mighty_push`의 실제 상태 변화와 발동 이벤트를 런타임 경로로 검증한다.
+자동 scene smoke는 Stage 4 `quick_refill`의 충전/준비/발동/차단 이벤트와 Stage 5 `soft_bomb_plus`, Stage 8 `combo_peep`, Stage 16 `smart_hint`, Stage 18 `leap_clear`, Stage 20 `loyal_fetch`, Stage 24 `calm_fever`, Stage 25 `coin_sniff`, Stage 31 `cascade_slide`, Stage 41 `sly_route`, Stage 51 `brave_start`, Stage 81 `mighty_push`의 실제 상태 변화와 발동 이벤트를 런타임 경로로 검증한다.
 
 ## 8. 구현 순서
 
