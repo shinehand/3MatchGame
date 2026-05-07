@@ -1386,6 +1386,31 @@ func _validate_stage_popup_flow(node: Node, errors: PackedStringArray) -> void:
 	var reward_label := node.get("stage_popup_reward_label") as Label
 	if reward_label == null or not reward_label.text.contains("보상"):
 		errors.append("%s Stage Popup should show reward text." % STAGE_SELECT_SCENE_PATH)
+	var buddy_label := node.get("stage_popup_buddy_label") as Label
+	if buddy_label == null:
+		errors.append("%s Stage Popup should expose StagePopupBuddyLabel for Rescue Buddy preview." % STAGE_SELECT_SCENE_PATH)
+	elif buddy_label.visible:
+		errors.append("%s Stage Popup should hide Rescue Buddy preview on Stage 1 without a Buddy." % STAGE_SELECT_SCENE_PATH)
+
+	node.call("_show_stage_popup", 4)
+	buddy_label = node.get("stage_popup_buddy_label") as Label
+	if buddy_label == null or not buddy_label.visible:
+		errors.append("%s Stage 4 Stage Popup should show Rescue Buddy preview." % STAGE_SELECT_SCENE_PATH)
+	else:
+		for required_text in ["Rescue Buddy", "토끼", "Quick Refill", "목표 동물 매치 3회", "목표 동물 1개"]:
+			if not buddy_label.text.contains(required_text):
+				errors.append("%s Stage 4 Rescue Buddy preview should include '%s'." % [STAGE_SELECT_SCENE_PATH, required_text])
+
+	node.call("_show_stage_popup", 51)
+	buddy_label = node.get("stage_popup_buddy_label") as Label
+	if buddy_label == null or not buddy_label.visible or not buddy_label.text.contains("사자") or not buddy_label.text.contains("Brave Start"):
+		errors.append("%s Stage 51 Rescue Buddy preview should localize lion Brave Start." % STAGE_SELECT_SCENE_PATH)
+
+	node.call("_show_stage_popup", 81)
+	buddy_label = node.get("stage_popup_buddy_label") as Label
+	if buddy_label == null or not buddy_label.visible or not buddy_label.text.contains("코끼리") or not buddy_label.text.contains("Mighty Push"):
+		errors.append("%s Stage 81 Rescue Buddy preview should localize elephant Mighty Push." % STAGE_SELECT_SCENE_PATH)
+	node.call("_show_stage_popup", 1)
 
 	var panel := node.get("stage_popup_panel") as PanelContainer
 	var start_button := _find_button_with_text(panel, "START")
@@ -1540,6 +1565,17 @@ func _validate_rescue_buddy_stage_config(stage_by_id: Dictionary, errors: Packed
 		errors.append("Stage 24 should normalize calm_fever as its Rescue Buddy skill.")
 	if String(stage_twenty_four.get("buddy_charge_rule", "")) != "fever_start":
 		errors.append("Stage 24 calm_fever should use fever_start charge rule.")
+
+	if not stage_by_id.has(25):
+		errors.append("Rescue Buddy smoke expected Stage 25 to exist.")
+		return
+	var stage_twenty_five: Dictionary = Dictionary(stage_by_id[25])
+	if String(stage_twenty_five.get("buddy_animal", "")) != "pig":
+		errors.append("Stage 25 should normalize pig as its Rescue Buddy animal.")
+	if String(stage_twenty_five.get("buddy_skill_id", "")) != "coin_sniff":
+		errors.append("Stage 25 should normalize coin_sniff as its Rescue Buddy skill.")
+	if String(stage_twenty_five.get("buddy_charge_rule", "")) != "stage_clear":
+		errors.append("Stage 25 coin_sniff should use stage_clear charge rule.")
 
 	if not stage_by_id.has(31):
 		errors.append("Rescue Buddy smoke expected Stage 31 to exist.")

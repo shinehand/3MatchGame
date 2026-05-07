@@ -147,6 +147,7 @@ var stage_popup_title_label: Label
 var stage_popup_goal_label: Label
 var stage_popup_meta_label: Label
 var stage_popup_reward_label: Label
+var stage_popup_buddy_label: Label
 var stage_popup_booster_buttons: Dictionary = {}
 var stage_select_event_impressions_sent := {}
 
@@ -542,6 +543,13 @@ func _build_stage_popup() -> void:
 	stage_popup_reward_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(stage_popup_reward_label)
 
+	stage_popup_buddy_label = _make_popup_label("", 23, Color("31506a"), HORIZONTAL_ALIGNMENT_CENTER)
+	stage_popup_buddy_label.name = "StagePopupBuddyLabel"
+	stage_popup_buddy_label.custom_minimum_size = Vector2(0, 92)
+	stage_popup_buddy_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	stage_popup_buddy_label.add_theme_stylebox_override("normal", _rounded_style(Color(0.90, 0.97, 1.0, 0.72), Color("86c3e5"), 24, 3))
+	column.add_child(stage_popup_buddy_label)
+
 	var booster_title := _make_popup_label("시작 부스터", 28, Color("213a55"), HORIZONTAL_ALIGNMENT_CENTER)
 	column.add_child(booster_title)
 
@@ -621,6 +629,9 @@ func _show_stage_popup(stage_id: int) -> void:
 		_theme_display_name(String(stage_def.get("theme_key", "meadow_1"))),
 	]
 	stage_popup_reward_label.text = "클리어 보상  골드 %d · 별 최대 3개 · 다음 구조 노드 해금" % _stage_gold_reward(stage_def)
+	var buddy_text := _build_stage_popup_buddy_text(stage_def)
+	stage_popup_buddy_label.visible = not buddy_text.is_empty()
+	stage_popup_buddy_label.text = buddy_text
 	_refresh_booster_buttons()
 	stage_popup_overlay.visible = true
 	stage_popup_overlay.modulate = Color(1, 1, 1, 0)
@@ -650,6 +661,103 @@ func _build_stage_popup_goal_text(stage_def: Dictionary) -> String:
 	if target_blockers > 0:
 		lines.append("덤불 %d개 제거" % target_blockers)
 	return "\n".join(lines)
+
+
+func _build_stage_popup_buddy_text(stage_def: Dictionary) -> String:
+	var animal_id := String(stage_def.get("buddy_animal", ""))
+	var skill_id := String(stage_def.get("buddy_skill_id", ""))
+	if animal_id.is_empty() or skill_id.is_empty():
+		return ""
+
+	var charges_required := int(stage_def.get("buddy_charges_required", 0))
+	var max_uses := int(stage_def.get("buddy_max_uses", 0))
+	var summary := "Rescue Buddy: %s · %s" % [_animal_name(animal_id), _buddy_skill_title(skill_id)]
+	var detail := "%s · %s" % [
+		_buddy_charge_rule_text(String(stage_def.get("buddy_charge_rule", "")), charges_required),
+		_buddy_skill_description(skill_id),
+	]
+	if max_uses > 0:
+		detail += " · 최대 %d회" % max_uses
+	return "%s\n%s" % [summary, detail]
+
+
+func _buddy_skill_title(skill_id: String) -> String:
+	match skill_id:
+		"quick_refill":
+			return "Quick Refill"
+		"soft_bomb_plus":
+			return "Paw Bomb Plus"
+		"smart_hint":
+			return "Smart Hint"
+		"combo_peep":
+			return "Combo Peep"
+		"leap_clear":
+			return "Leap Clear"
+		"loyal_fetch":
+			return "Loyal Fetch"
+		"calm_fever":
+			return "Calm Fever"
+		"coin_sniff":
+			return "Coin Sniff"
+		"cascade_slide":
+			return "Cascade Slide"
+		"sly_route":
+			return "Sly Route"
+		"brave_start":
+			return "Brave Start"
+		"mighty_push":
+			return "Mighty Push"
+	return skill_id.replace("_", " ").capitalize()
+
+
+func _buddy_charge_rule_text(charge_rule: String, charges_required: int) -> String:
+	match charge_rule:
+		"match_goal_animal":
+			return "목표 동물 매치 %d회 충전" % charges_required
+		"combo_2_plus":
+			return "콤보 2 이상에서 충전"
+		"near_fail":
+			return "실패 직전 자동 대기"
+		"fever_start":
+			return "Fever 시작 시 충전"
+		"stage_clear":
+			return "클리어 시 보상 강화"
+		"cascade_step":
+			return "연쇄 발생 시 충전"
+		"low_moves":
+			return "이동 수 3 이하에서 충전"
+		"stage_start":
+			return "스테이지 시작 시 안내"
+		"clear_blocker":
+			return "덤불 제거 시 충전"
+	return "조건 충족 시 자동 발동"
+
+
+func _buddy_skill_description(skill_id: String) -> String:
+	match skill_id:
+		"soft_bomb_plus":
+			return "목표 동물 1개를 폭발 특수 블록으로 강화"
+		"smart_hint":
+			return "목표에 가까운 추천 수 강조"
+		"sly_route":
+			return "이동 수가 적을 때 추천 경로 강조"
+		"leap_clear":
+			return "남은 덤불 1개 추가 제거"
+		"combo_peep":
+			return "Combo Gauge 추가 충전"
+		"loyal_fetch":
+			return "실패 직전 목표 동물과 이동 1회 구조"
+		"calm_fever":
+			return "Fever 종료 후 Combo Gauge 2칸 보존"
+		"coin_sniff":
+			return "클리어 보상 골드 5% 증가"
+		"cascade_slide":
+			return "연쇄 점수 보너스"
+		"brave_start":
+			return "하드 시작 추천 부스터 안내"
+		"mighty_push":
+			return "남은 덤불 1개 추가 밀어내기"
+	return "목표 동물 1개를 보드에 불러오기"
 
 
 func _stage_gold_reward(stage_def: Dictionary) -> int:
@@ -1373,6 +1481,10 @@ func _animal_name(animal_id: String) -> String:
 			return "펭귄"
 		"fox":
 			return "여우"
+		"lion":
+			return "사자"
+		"elephant":
+			return "코끼리"
 		_:
 			return animal_id
 
@@ -1444,7 +1556,7 @@ func _apply_responsive_layout() -> void:
 	stage_grid.add_theme_constant_override("h_separation", 14 if portrait else 18)
 	stage_grid.add_theme_constant_override("v_separation", 16 if portrait else 20)
 	if stage_popup_panel:
-		stage_popup_panel.custom_minimum_size = Vector2(700, 760) if portrait else Vector2(720, 720)
+		stage_popup_panel.custom_minimum_size = Vector2(700, 840) if portrait else Vector2(720, 800)
 	_layout_stage_world_layer(portrait)
 	_refresh_stage_select_events()
 	_layout_map_juice_layer(portrait)

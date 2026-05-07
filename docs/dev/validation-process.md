@@ -50,6 +50,8 @@
 
 - `WorldStageNode*` press 경로에서 바로 gameplay로 가지 않고 `StagePopupOverlay`가 표시된다.
 - Stage Popup은 Level 제목, 목표, 이동 수/난이도/테마, 보상, `START` 버튼을 가진다.
+- Buddy가 있는 스테이지의 Stage Popup은 Rescue Buddy 동물명, 스킬명, 충전 조건, 짧은 효과 설명을 보여 준다.
+- Buddy가 없는 스테이지의 Stage Popup은 빈 Buddy 영역을 보여 주지 않는다.
 - Stage Popup은 `rainbow_paw`, `striped`, `bomb` 시작 부스터 3종 버튼과 아이콘을 가진다.
 - 부스터 버튼 선택은 `selected_pre_boosters`와 버튼 pressed 상태에 즉시 반영된다.
 - Gameplay 시작 시 `GameSession.selected_pre_boosters`가 소비되고, 선택한 3종이 보드 특수 블록과 `stage_start`/`booster_used` analytics에 반영된다.
@@ -66,6 +68,7 @@
 - 스테이지 선택에서 잠금/해금/별 수가 정상 표시된다.
 - 스테이지 노드를 누르면 바로 게임으로 가지 않고 Stage Popup이 뜬다.
 - Stage Popup에서 목표, 이동 수, 보상, 아이콘이 있는 시작 부스터 3종, START 버튼이 정상 표시된다.
+- Stage 4 같은 Buddy 스테이지에서는 Stage Popup의 Buddy 문구와 Gameplay HUD Buddy 문구가 같은 동물/스킬을 가리킨다.
 - 부스터를 선택하고 START를 누르면 게임 시작 보드에 선택 부스터가 배치된다.
 - 홈 화면 버튼 탭 시 짧은 UI 사운드가 재생된다.
 - 앱 시작 후 보드 8x8 블록이 바로 보인다.
