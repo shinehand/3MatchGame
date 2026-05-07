@@ -93,6 +93,17 @@ if [ "$DRY_RUN" = true ]; then
 	exit 0
 fi
 
+write_capture_step_results() {
+	local result="$1"
+	{
+		echo "Launch result: $result"
+		echo "Portrait screenshot result: $result"
+		echo "Landscape screenshot result: $result"
+		echo "Screenrecord result: $result"
+		echo "Logcat result: $result"
+	} >>"$MANIFEST_PATH"
+}
+
 mkdir -p "$CAPTURE_DIR"
 rm -f "$MANIFEST_PATH" "$DEVICE_INFO_PATH" "$PORTRAIT_PATH" "$LANDSCAPE_PATH" "$VIDEO_PATH" "$LOGCAT_PATH"
 
@@ -120,6 +131,11 @@ rm -f "$MANIFEST_PATH" "$DEVICE_INFO_PATH" "$PORTRAIT_PATH" "$LANDSCAPE_PATH" "$
 } >"$MANIFEST_PATH"
 
 if [ ! -x "$ADB" ]; then
+	{
+		echo
+		echo "## Capture Step Results"
+	} >>"$MANIFEST_PATH"
+	write_capture_step_results "FAIL - adb missing or not executable"
 	echo "Capture result: FAIL - adb missing or not executable" >>"$MANIFEST_PATH"
 	echo "adb missing or not executable: $ADB"
 	exit 1
@@ -134,6 +150,10 @@ device_serial="$(awk 'NR > 1 && $2 == "device" { print $1; exit }' "$ADB_DEVICES
 if [ "$device_count" -ne 1 ]; then
 	{
 		echo
+		echo "## Capture Step Results"
+	} >>"$MANIFEST_PATH"
+	write_capture_step_results "BLOCKED - expected exactly one connected device, got $device_count"
+	{
 		echo "Capture result: BLOCKED - expected exactly one connected device, got $device_count"
 		echo "Connect one authorized Android device, then rerun this script."
 	} >>"$MANIFEST_PATH"

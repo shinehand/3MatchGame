@@ -217,7 +217,12 @@ validate_known_evidence_file() {
 			;;
 		android-device-evidence.txt)
 			require_evidence_text "$evidence_path" "$evidence_name" "Capture result: PASS"
-			reject_evidence_regex "$evidence_path" "$evidence_name" '(Capture|Launch|Portrait screenshot|Landscape screenshot|Screenrecord|Logcat) result: (FAIL|BLOCKED)'
+			require_evidence_text "$evidence_path" "$evidence_name" "Launch result: PASS"
+			require_evidence_text "$evidence_path" "$evidence_name" "Portrait screenshot result: PASS"
+			require_evidence_text "$evidence_path" "$evidence_name" "Landscape screenshot result: PASS"
+			require_evidence_text "$evidence_path" "$evidence_name" "Screenrecord result: PASS"
+			require_evidence_text "$evidence_path" "$evidence_name" "Logcat result: PASS"
+			reject_evidence_regex "$evidence_path" "$evidence_name" '(Capture|Launch|Portrait screenshot|Landscape screenshot|Screenrecord|Screenrecord pull|Logcat) result: (FAIL|BLOCKED|SKIPPED|NOT_REQUESTED)'
 			;;
 		device-info.txt)
 			require_evidence_field_value "$evidence_path" "ADB device id"
