@@ -5,6 +5,7 @@ const ANALYTICS_CONTRACT_PATH := "res://data/analytics_events.json"
 const CollectionState = preload("res://scripts/collection_state.gd")
 
 static var _loaded := false
+static var _save_path := SAVE_PATH
 static var _analytics_contract_cache: Dictionary = {}
 static var _save_data := {
 	"highest_unlocked_stage_id": 1,
@@ -18,6 +19,12 @@ static var _save_data := {
 	"seen_tutorial_stage_ids": [],
 	"selected_pre_boosters": [],
 	"rescue_book": {},
+	"live_events": {},
+	"wallet": {
+		"gold": 0,
+		"tokens": 0,
+		"boosters": {},
+	},
 	"analytics_events": [],
 	"session_id": "",
 }
@@ -28,10 +35,10 @@ static func load_state() -> void:
 		return
 	_loaded = true
 
-	if not FileAccess.file_exists(SAVE_PATH):
+	if not FileAccess.file_exists(_save_path):
 		return
 
-	var raw_text := FileAccess.get_file_as_string(SAVE_PATH)
+	var raw_text := FileAccess.get_file_as_string(_save_path)
 	var parsed = JSON.parse_string(raw_text)
 	if not (parsed is Dictionary):
 		return
@@ -47,6 +54,8 @@ static func load_state() -> void:
 	_save_data["seen_tutorial_stage_ids"] = Array(parsed.get("seen_tutorial_stage_ids", []))
 	_save_data["selected_pre_boosters"] = Array(parsed.get("selected_pre_boosters", []))
 	_save_data["rescue_book"] = CollectionState.normalize_state(Dictionary(parsed.get("rescue_book", {})))
+	_save_data["live_events"] = _normalize_live_events(Dictionary(parsed.get("live_events", {})))
+	_save_data["wallet"] = _normalize_wallet(Dictionary(parsed.get("wallet", {})))
 	_save_data["analytics_events"] = Array(parsed.get("analytics_events", []))
 	_save_data["session_id"] = String(parsed.get("session_id", ""))
 	if String(_save_data["session_id"]).is_empty():
@@ -57,9 +66,77 @@ static func _make_session_id() -> String:
 	return "session-%d" % int(Time.get_unix_time_from_system())
 
 
+static func use_save_path_for_testing(save_path: String) -> void:
+	_save_path = SAVE_PATH if save_path.is_empty() else save_path
+	_loaded = false
+	_reset_save_data_to_defaults()
+
+
+static func _reset_save_data_to_defaults() -> void:
+	_save_data = {
+		"highest_unlocked_stage_id": 1,
+		"last_selected_stage_id": 1,
+		"cleared_stage_ids": [],
+		"best_score_by_stage_id": {},
+		"best_star_by_stage_id": {},
+		"fail_count_by_stage_id": {},
+		"sound_enabled": true,
+		"haptics_enabled": true,
+		"seen_tutorial_stage_ids": [],
+		"selected_pre_boosters": [],
+		"rescue_book": {},
+		"live_events": {},
+		"wallet": {
+			"gold": 0,
+			"tokens": 0,
+			"boosters": {},
+		},
+		"analytics_events": [],
+		"session_id": "",
+	}
+
+
+static func _normalize_live_events(live_events: Dictionary) -> Dictionary:
+	var normalized := {}
+	for event_id_value in live_events.keys():
+		var event_id := String(event_id_value)
+		if event_id.is_empty():
+			continue
+		normalized[event_id] = _normalize_live_event_state(Dictionary(live_events[event_id_value]))
+	return normalized
+
+
+static func _normalize_live_event_state(state: Dictionary) -> Dictionary:
+	var claimed_reward_ids := []
+	for reward_id_value in Array(state.get("claimed_reward_ids", [])):
+		var reward_id := String(reward_id_value)
+		if not reward_id.is_empty() and not claimed_reward_ids.has(reward_id):
+			claimed_reward_ids.append(reward_id)
+	return {
+		"joined": bool(state.get("joined", false)),
+		"joined_at": int(state.get("joined_at", 0)),
+		"progress": Dictionary(state.get("progress", {})),
+		"claimed_reward_ids": claimed_reward_ids,
+	}
+
+
+static func _normalize_wallet(wallet: Dictionary) -> Dictionary:
+	var boosters := {}
+	for booster_id_value in Dictionary(wallet.get("boosters", {})).keys():
+		var booster_id := String(booster_id_value)
+		if booster_id.is_empty():
+			continue
+		boosters[booster_id] = max(0, int(Dictionary(wallet.get("boosters", {}))[booster_id_value]))
+	return {
+		"gold": max(0, int(wallet.get("gold", 0))),
+		"tokens": max(0, int(wallet.get("tokens", 0))),
+		"boosters": boosters,
+	}
+
+
 static func save_state() -> void:
 	DirAccess.make_dir_recursive_absolute("user://")
-	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	var file := FileAccess.open(_save_path, FileAccess.WRITE)
 	if file == null:
 		push_error("GameSession: failed to open save file.")
 		return
@@ -118,6 +195,8 @@ static func analytics_event_missing_required_params(event_name: String, params: 
 		if param.is_empty():
 			continue
 		if not params.has(param):
+			missing.append(param)
+		elif params[param] is String and String(params[param]).strip_edges().is_empty():
 			missing.append(param)
 	return missing
 
@@ -314,3 +393,239 @@ static func mark_rescue_book_seen(animal_id: String) -> void:
 		state["animals"] = animals
 		_save_data["rescue_book"] = state
 		save_state()
+
+
+static func get_live_event_state(event_id: String) -> Dictionary:
+	load_state()
+	var live_events := _normalized_live_events_from_save()
+	if not live_events.has(event_id):
+		return _normalize_live_event_state({})
+	return Dictionary(live_events[event_id]).duplicate(true)
+
+
+static func join_live_event(event_id: String, event_type: String, placement: String) -> bool:
+	load_state()
+	if event_id.is_empty():
+		return false
+	var normalized_event_type := _analytics_dimension(event_type)
+	var normalized_placement := _analytics_dimension(placement)
+	var live_events := _normalized_live_events_from_save()
+	var state := _live_event_state_for_write(live_events, event_id)
+	if bool(state.get("joined", false)):
+		return false
+
+	var joined_at := int(Time.get_unix_time_from_system())
+	state["joined"] = true
+	state["joined_at"] = joined_at
+	live_events[event_id] = state
+	_save_data["live_events"] = live_events
+	save_state()
+	record_analytics_event("event_join", {
+		"session_id": get_session_id(),
+		"event_id": event_id,
+		"event_type": normalized_event_type,
+		"placement": normalized_placement,
+		"joined_at": joined_at,
+	})
+	return true
+
+
+static func set_live_event_progress(event_id: String, progress_key: String, value: int, event_type: String = "", placement: String = "") -> void:
+	load_state()
+	if event_id.is_empty() or progress_key.is_empty():
+		return
+	var live_events := _normalized_live_events_from_save()
+	var state := _live_event_state_for_write(live_events, event_id)
+	var progress: Dictionary = state.get("progress", {})
+	var previous_value := int(progress.get(progress_key, 0))
+	if previous_value == value:
+		return
+
+	progress[progress_key] = value
+	state["progress"] = progress
+	live_events[event_id] = state
+	_save_data["live_events"] = live_events
+	save_state()
+	_record_live_event_progress(event_id, progress_key, value, event_type, placement)
+
+
+static func increment_live_event_progress(event_id: String, progress_key: String, delta: int = 1, event_type: String = "", placement: String = "") -> int:
+	load_state()
+	if event_id.is_empty() or progress_key.is_empty():
+		return 0
+	var live_events := _normalized_live_events_from_save()
+	var state := _live_event_state_for_write(live_events, event_id)
+	var progress: Dictionary = state.get("progress", {})
+	var next_value := int(progress.get(progress_key, 0)) + delta
+	if delta == 0:
+		return next_value
+
+	progress[progress_key] = next_value
+	state["progress"] = progress
+	live_events[event_id] = state
+	_save_data["live_events"] = live_events
+	save_state()
+	_record_live_event_progress(event_id, progress_key, next_value, event_type, placement)
+	return next_value
+
+
+static func is_live_event_reward_claimed(event_id: String, reward_id: String) -> bool:
+	load_state()
+	if event_id.is_empty() or reward_id.is_empty():
+		return false
+	var state := get_live_event_state(event_id)
+	return Array(state.get("claimed_reward_ids", [])).has(reward_id)
+
+
+static func claim_live_event_reward(event_id: String, reward_id: String, event_type: String, placement: String, reward: Dictionary) -> bool:
+	load_state()
+	if event_id.is_empty() or reward_id.is_empty():
+		return false
+	var normalized_event_type := _analytics_dimension(event_type)
+	var normalized_placement := _analytics_dimension(placement)
+	var live_events := _normalized_live_events_from_save()
+	var state := _live_event_state_for_write(live_events, event_id)
+	var claimed_reward_ids: Array = state.get("claimed_reward_ids", [])
+	if claimed_reward_ids.has(reward_id):
+		return false
+
+	claimed_reward_ids.append(reward_id)
+	state["claimed_reward_ids"] = claimed_reward_ids
+	live_events[event_id] = state
+	_save_data["live_events"] = live_events
+	_save_data["wallet"] = _apply_live_event_reward_to_wallet(Dictionary(_save_data.get("wallet", {})), reward)
+	save_state()
+
+	record_analytics_event("event_reward_claim", {
+		"session_id": get_session_id(),
+		"event_id": event_id,
+		"event_type": normalized_event_type,
+		"placement": normalized_placement,
+		"reward_id": reward_id,
+		"reward_type": _reward_type(reward),
+		"reward_amount": _reward_amount(reward),
+		"reward_breakdown": _reward_breakdown(reward),
+	})
+	return true
+
+
+static func get_wallet() -> Dictionary:
+	load_state()
+	var wallet := _normalize_wallet(Dictionary(_save_data.get("wallet", {})))
+	_save_data["wallet"] = wallet
+	return wallet.duplicate(true)
+
+
+static func _normalized_live_events_from_save() -> Dictionary:
+	var live_events := _normalize_live_events(Dictionary(_save_data.get("live_events", {})))
+	_save_data["live_events"] = live_events
+	return live_events
+
+
+static func _live_event_state_for_write(live_events: Dictionary, event_id: String) -> Dictionary:
+	if live_events.has(event_id):
+		return Dictionary(live_events[event_id])
+	return _normalize_live_event_state({})
+
+
+static func _record_live_event_progress(event_id: String, progress_key: String, progress_value: int, event_type: String, placement: String) -> void:
+	record_analytics_event("event_progress", {
+		"session_id": get_session_id(),
+		"event_id": event_id,
+		"event_type": _analytics_dimension(event_type),
+		"placement": _analytics_dimension(placement),
+		"progress_key": progress_key,
+		"progress_value": progress_value,
+	})
+
+
+static func _analytics_dimension(value: String, fallback: String = "unknown") -> String:
+	var normalized := value.strip_edges()
+	if normalized.is_empty():
+		return fallback
+	return normalized
+
+
+static func _apply_live_event_reward_to_wallet(wallet_data: Dictionary, reward: Dictionary) -> Dictionary:
+	var wallet := _normalize_wallet(wallet_data)
+	var gold_delta := int(reward.get("gold", 0))
+	if String(reward.get("reward_type", "")) == "gold":
+		gold_delta = max(gold_delta, int(reward.get("reward_amount", reward.get("amount", 0))))
+	wallet["gold"] = max(0, int(wallet.get("gold", 0)) + gold_delta)
+	wallet["tokens"] = max(0, int(wallet.get("tokens", 0)) + int(reward.get("tokens", 0)))
+
+	var boosters: Dictionary = wallet.get("boosters", {})
+	var single_booster_id := String(reward.get("booster", reward.get("booster_id", "")))
+	if String(reward.get("reward_type", "")) == "booster" and single_booster_id.is_empty():
+		single_booster_id = String(reward.get("reward_id", ""))
+	if not single_booster_id.is_empty():
+		var booster_count: int = max(1, int(reward.get("booster_count", reward.get("reward_amount", reward.get("amount", 1)))))
+		boosters[single_booster_id] = max(0, int(boosters.get(single_booster_id, 0)) + booster_count)
+
+	for booster_id_value in Dictionary(reward.get("boosters", {})).keys():
+		var booster_id := String(booster_id_value)
+		if booster_id.is_empty():
+			continue
+		boosters[booster_id] = max(0, int(boosters.get(booster_id, 0)) + int(Dictionary(reward.get("boosters", {}))[booster_id_value]))
+	wallet["boosters"] = boosters
+	return wallet
+
+
+static func _reward_type(reward: Dictionary) -> String:
+	var explicit_type := String(reward.get("reward_type", ""))
+	if not explicit_type.is_empty():
+		return explicit_type
+	var types: Array[String] = []
+	if int(reward.get("gold", 0)) > 0:
+		types.append("gold")
+	if int(reward.get("tokens", 0)) > 0:
+		types.append("tokens")
+	if reward.has("booster") or reward.has("booster_id") or reward.has("boosters"):
+		types.append("booster")
+	if types.size() > 1:
+		return "mixed"
+	if types.size() == 1:
+		return types[0]
+	return "unknown"
+
+
+static func _reward_amount(reward: Dictionary) -> int:
+	if reward.has("reward_amount"):
+		return int(reward.get("reward_amount", 0))
+	if reward.has("amount"):
+		return int(reward.get("amount", 0))
+	var total := 0
+	var breakdown := _reward_breakdown(reward)
+	for value in breakdown.values():
+		if value is Dictionary:
+			for nested_value in Dictionary(value).values():
+				total += int(nested_value)
+		else:
+			total += int(value)
+	return total
+
+
+static func _reward_breakdown(reward: Dictionary) -> Dictionary:
+	var breakdown := {}
+	if int(reward.get("gold", 0)) > 0:
+		breakdown["gold"] = int(reward.get("gold", 0))
+	if int(reward.get("tokens", 0)) > 0:
+		breakdown["tokens"] = int(reward.get("tokens", 0))
+
+	var boosters := {}
+	var single_booster_id := String(reward.get("booster", reward.get("booster_id", "")))
+	if String(reward.get("reward_type", "")) == "booster" and single_booster_id.is_empty():
+		single_booster_id = String(reward.get("reward_id", ""))
+	if not single_booster_id.is_empty():
+		boosters[single_booster_id] = max(1, int(reward.get("booster_count", reward.get("reward_amount", reward.get("amount", 1)))))
+	for booster_id_value in Dictionary(reward.get("boosters", {})).keys():
+		var booster_id := String(booster_id_value)
+		if booster_id.is_empty():
+			continue
+		boosters[booster_id] = int(boosters.get(booster_id, 0)) + int(Dictionary(reward.get("boosters", {}))[booster_id_value])
+	if not boosters.is_empty():
+		breakdown["boosters"] = boosters
+
+	if breakdown.is_empty() and not String(reward.get("reward_type", "")).is_empty():
+		breakdown[String(reward.get("reward_type", ""))] = int(reward.get("reward_amount", reward.get("amount", 0)))
+	return breakdown

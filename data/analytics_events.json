@@ -91,6 +91,49 @@
     ]
   },
   {
+    "name": "event_join",
+    "required_params": [
+      "session_id",
+      "event_id",
+      "event_type",
+      "placement"
+    ],
+    "optional_params": [
+      "joined_at"
+    ]
+  },
+  {
+    "name": "event_progress",
+    "required_params": [
+      "session_id",
+      "event_id",
+      "event_type",
+      "placement",
+      "progress_key",
+      "progress_value"
+    ],
+    "optional_params": [
+      "progress_target",
+      "source"
+    ]
+  },
+  {
+    "name": "event_reward_claim",
+    "required_params": [
+      "session_id",
+      "event_id",
+      "event_type",
+      "placement",
+      "reward_id",
+      "reward_type",
+      "reward_amount"
+    ],
+    "optional_params": [
+      "transaction_id",
+      "reward_breakdown"
+    ]
+  },
+  {
     "name": "offer_impression",
     "required_params": [
       "session_id",

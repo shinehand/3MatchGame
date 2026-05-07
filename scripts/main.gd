@@ -64,7 +64,13 @@ var home_animal_strip: HBoxContainer
 var home_event_strip: HBoxContainer
 var home_nav_row: HBoxContainer
 var home_path_root: Control
+var event_detail_overlay: ColorRect
+var event_detail_panel: PanelContainer
+var event_detail_title_label: Label
+var event_detail_body_label: Label
+var event_claim_button: Button
 var _home_event_impressions_sent := {}
+var _selected_event: Dictionary = {}
 
 
 func _ready() -> void:
@@ -74,6 +80,7 @@ func _ready() -> void:
 	resized.connect(_queue_layout_refresh)
 	get_window().size_changed.connect(_queue_layout_refresh)
 	_build_game_home_layer()
+	_build_event_detail_overlay()
 	_apply_home_art_direction()
 	_update_home_status()
 	call_deferred("_start_home_animations")
@@ -84,6 +91,8 @@ func _on_play_button_pressed() -> void:
 	Feedback.play_ui_tap()
 	stage_overlay.visible = false
 	settings_overlay.visible = false
+	if event_detail_overlay:
+		event_detail_overlay.visible = false
 	GameSession.set_selected_stage_id(GameSession.get_continue_stage_id())
 	get_tree().change_scene_to_file("res://scenes/stage_select.tscn")
 
@@ -92,6 +101,8 @@ func _on_stage_button_pressed() -> void:
 	Feedback.play_ui_tap()
 	settings_overlay.visible = false
 	stage_overlay.visible = false
+	if event_detail_overlay:
+		event_detail_overlay.visible = false
 	get_tree().change_scene_to_file("res://scenes/stage_select.tscn")
 
 
@@ -99,6 +110,8 @@ func _on_ranking_button_pressed() -> void:
 	Feedback.play_ui_tap()
 	stage_overlay.visible = false
 	settings_overlay.visible = false
+	if event_detail_overlay:
+		event_detail_overlay.visible = false
 	get_tree().change_scene_to_file("res://scenes/collection_screen.tscn")
 
 
@@ -111,6 +124,8 @@ func _on_stage_overlay_close_button_pressed() -> void:
 func _on_settings_button_pressed() -> void:
 	Feedback.play_ui_tap()
 	stage_overlay.visible = false
+	if event_detail_overlay:
+		event_detail_overlay.visible = false
 	_refresh_settings_overlay()
 	settings_overlay.visible = true
 
@@ -364,6 +379,87 @@ func _build_game_home_layer() -> void:
 	home_nav_row.add_child(settings_nav_button)
 
 
+func _build_event_detail_overlay() -> void:
+	if event_detail_overlay:
+		return
+
+	event_detail_overlay = ColorRect.new()
+	event_detail_overlay.name = "EventDetailOverlay"
+	event_detail_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	event_detail_overlay.color = Color(0.05, 0.13, 0.24, 0.70)
+	event_detail_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	event_detail_overlay.visible = false
+	add_child(event_detail_overlay)
+
+	var overlay_center := CenterContainer.new()
+	overlay_center.name = "OverlayCenter"
+	overlay_center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay_center.mouse_filter = Control.MOUSE_FILTER_STOP
+	event_detail_overlay.add_child(overlay_center)
+
+	event_detail_panel = PanelContainer.new()
+	event_detail_panel.name = "OverlayPanel"
+	event_detail_panel.custom_minimum_size = Vector2(760, 640)
+	event_detail_panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	event_detail_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	event_detail_panel.add_theme_stylebox_override("panel", _home_style(Color(1.0, 0.98, 0.90, 0.98), Color(1.0, 0.63, 0.18, 1), 30, 5))
+	overlay_center.add_child(event_detail_panel)
+
+	var margin := MarginContainer.new()
+	margin.name = "OverlayMargin"
+	margin.add_theme_constant_override("margin_left", 34)
+	margin.add_theme_constant_override("margin_top", 30)
+	margin.add_theme_constant_override("margin_right", 34)
+	margin.add_theme_constant_override("margin_bottom", 30)
+	event_detail_panel.add_child(margin)
+
+	var column := VBoxContainer.new()
+	column.name = "OverlayColumn"
+	column.alignment = BoxContainer.ALIGNMENT_CENTER
+	column.add_theme_constant_override("separation", 18)
+	margin.add_child(column)
+
+	var top_row := HBoxContainer.new()
+	top_row.name = "EventDetailHeader"
+	top_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	top_row.add_theme_constant_override("separation", 12)
+	column.add_child(top_row)
+
+	event_detail_title_label = _make_home_label("라이브 이벤트", 36, Color(0.12, 0.23, 0.34, 1), HORIZONTAL_ALIGNMENT_LEFT)
+	event_detail_title_label.name = "EventDetailTitleLabel"
+	event_detail_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top_row.add_child(event_detail_title_label)
+
+	var close_button := _make_home_icon_button("닫기")
+	close_button.name = "EventDetailCloseButton"
+	close_button.custom_minimum_size = Vector2(122, 64)
+	close_button.pressed.connect(_on_event_detail_close_button_pressed)
+	top_row.add_child(close_button)
+
+	event_detail_body_label = _make_home_label("", 24, Color(0.22, 0.26, 0.30, 1), HORIZONTAL_ALIGNMENT_LEFT)
+	event_detail_body_label.name = "EventDetailBodyLabel"
+	event_detail_body_label.custom_minimum_size = Vector2(0, 340)
+	event_detail_body_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	event_detail_body_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	event_detail_body_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	column.add_child(event_detail_body_label)
+
+	event_claim_button = Button.new()
+	event_claim_button.name = "EventClaimButton"
+	event_claim_button.text = "보상 받기"
+	event_claim_button.custom_minimum_size = Vector2(0, 88)
+	event_claim_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	event_claim_button.add_theme_font_size_override("font_size", 30)
+	event_claim_button.add_theme_color_override("font_color", Color(0.40, 0.22, 0.02, 1))
+	event_claim_button.add_theme_color_override("font_disabled_color", Color(0.36, 0.39, 0.42, 0.74))
+	event_claim_button.add_theme_stylebox_override("normal", _home_style(Color(1.0, 0.84, 0.22, 1), Color(0.98, 0.46, 0.10, 1), 26, 5))
+	event_claim_button.add_theme_stylebox_override("hover", _home_style(Color(1.0, 0.91, 0.34, 1), Color(0.98, 0.46, 0.10, 1), 26, 5))
+	event_claim_button.add_theme_stylebox_override("pressed", _home_style(Color(1.0, 0.65, 0.18, 1), Color(0.86, 0.30, 0.08, 1), 26, 5))
+	event_claim_button.add_theme_stylebox_override("disabled", _home_style(Color(0.82, 0.85, 0.86, 0.92), Color(0.62, 0.68, 0.72, 0.9), 26, 4))
+	event_claim_button.pressed.connect(_on_event_claim_button_pressed)
+	column.add_child(event_claim_button)
+
+
 func _make_mascot(node_name: String, texture: Texture2D) -> TextureRect:
 	var mascot := TextureRect.new()
 	mascot.name = node_name
@@ -452,21 +548,175 @@ func _refresh_home_events() -> void:
 		_track_live_event_impression(event, "home")
 
 
-func _make_home_event_chip(event: Dictionary) -> PanelContainer:
-	var chip := PanelContainer.new()
+func _make_home_event_chip(event: Dictionary) -> Button:
+	var chip := Button.new()
 	chip.name = "LiveEventChip_%s" % String(event.get("id", "event"))
+	chip.text = "%s\n%s" % [String(event.get("title", "이벤트")), _event_type_label(String(event.get("type", "")))]
 	chip.custom_minimum_size = Vector2(230, 56)
-	chip.add_theme_stylebox_override("panel", _home_style(Color(1.0, 0.97, 0.72, 0.86), Color(0.96, 0.48, 0.16, 0.94), 22, 3))
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 14)
-	margin.add_theme_constant_override("margin_top", 7)
-	margin.add_theme_constant_override("margin_right", 14)
-	margin.add_theme_constant_override("margin_bottom", 7)
-	chip.add_child(margin)
-	var label := _make_home_label("%s\n%s" % [String(event.get("title", "이벤트")), _event_type_label(String(event.get("type", "")))], 17, Color(0.14, 0.22, 0.31, 1), HORIZONTAL_ALIGNMENT_CENTER)
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	margin.add_child(label)
+	chip.add_theme_font_size_override("font_size", 17)
+	chip.add_theme_color_override("font_color", Color(0.14, 0.22, 0.31, 1))
+	chip.add_theme_stylebox_override("normal", _home_style(Color(1.0, 0.97, 0.72, 0.86), Color(0.96, 0.48, 0.16, 0.94), 22, 3))
+	chip.add_theme_stylebox_override("hover", _home_style(Color(1.0, 0.99, 0.82, 0.96), Color(1.0, 0.55, 0.19, 1), 22, 3))
+	chip.add_theme_stylebox_override("pressed", _home_style(Color(1.0, 0.86, 0.48, 0.96), Color(0.92, 0.38, 0.11, 1), 22, 3))
+	chip.pressed.connect(_show_event_detail.bind(event))
 	return chip
+
+
+func _show_event_detail(event: Dictionary) -> void:
+	_selected_event = Dictionary(event)
+	var event_id := String(_selected_event.get("id", ""))
+	var event_type := String(_selected_event.get("type", ""))
+	if not event_id.is_empty() and _game_session_has_method("join_live_event"):
+		GameSession.join_live_event(event_id, event_type, "home")
+
+	stage_overlay.visible = false
+	settings_overlay.visible = false
+	event_detail_title_label.text = String(_selected_event.get("title", "라이브 이벤트"))
+	event_detail_body_label.text = _build_event_detail_body(_selected_event)
+	_refresh_event_claim_button()
+	event_detail_overlay.visible = true
+	Feedback.play_ui_tap()
+
+
+func _on_event_claim_button_pressed() -> void:
+	if _selected_event.is_empty():
+		return
+	Feedback.play_ui_tap()
+	var event_id := String(_selected_event.get("id", ""))
+	var event_type := String(_selected_event.get("type", ""))
+	if event_id.is_empty():
+		return
+	var reward_id := "%s:main" % event_id
+	var claimed := false
+	var reward := _event_claim_reward(_selected_event)
+	if reward.is_empty():
+		_refresh_event_claim_button()
+		return
+	if _game_session_has_method("claim_live_event_reward"):
+		claimed = GameSession.claim_live_event_reward(event_id, reward_id, event_type, "home", reward)
+	if claimed:
+		_refresh_event_claim_button()
+
+
+func _on_event_detail_close_button_pressed() -> void:
+	Feedback.play_ui_tap()
+	event_detail_overlay.visible = false
+	_update_home_status()
+
+
+func _refresh_event_claim_button() -> void:
+	var event_id := String(_selected_event.get("id", ""))
+	var reward_id := "%s:main" % event_id
+	var reward := _event_claim_reward(_selected_event)
+	if reward.is_empty():
+		event_claim_button.text = "진행 보상 준비"
+		event_claim_button.disabled = true
+		return
+	var claimed := false
+	if not event_id.is_empty() and _game_session_has_method("is_live_event_reward_claimed"):
+		claimed = GameSession.is_live_event_reward_claimed(event_id, reward_id)
+	if not _game_session_has_method("claim_live_event_reward"):
+		event_claim_button.text = "보상 준비 중"
+		event_claim_button.disabled = true
+		return
+	event_claim_button.text = "수령 완료" if claimed else "보상 받기"
+	event_claim_button.disabled = claimed
+
+
+func _build_event_detail_body(event: Dictionary) -> String:
+	var lines: Array[String] = []
+	lines.append("종류  %s" % _event_type_label(String(event.get("type", ""))))
+	lines.append("기간  %s" % _event_window_text(event))
+	lines.append("진행  %s" % _event_progress_text(event))
+	lines.append("보상  %s" % _event_reward_summary(event))
+	lines.append("")
+	lines.append("홈에서 참여 중인 구조 이벤트입니다. 조건을 달성하면 보상을 받을 수 있습니다.")
+	return "\n".join(lines)
+
+
+func _event_window_text(event: Dictionary) -> String:
+	var start_text := String(event.get("start_at", event.get("start", "")))
+	var end_text := String(event.get("end_at", event.get("end", "")))
+	if not start_text.is_empty() and not end_text.is_empty():
+		return "%s ~ %s" % [start_text, end_text]
+	if not end_text.is_empty():
+		return "%s까지" % end_text
+	return "상시 진행"
+
+
+func _event_progress_text(event: Dictionary) -> String:
+	var event_type := String(event.get("type", ""))
+	if event.has("missions"):
+		var missions: Array = event.get("missions", [])
+		return "미션 %d개 준비" % missions.size()
+	if event.has("featured_animals"):
+		var animals: Array = event.get("featured_animals", [])
+		return "추천 동물 %d종 구조 보너스" % animals.size()
+	if event_type == "season_pass":
+		return "무료/프리미엄 트랙 진행"
+	return "참여 가능"
+
+
+func _event_reward_summary(event: Dictionary) -> String:
+	if event.has("reward"):
+		return _reward_dictionary_summary(Dictionary(event.get("reward", {})))
+	if event.has("missions"):
+		var rewards: Array[String] = []
+		for mission_value in Array(event.get("missions", [])):
+			if not (mission_value is Dictionary):
+				continue
+			var mission := Dictionary(mission_value)
+			if mission.has("reward_gold"):
+				rewards.append("골드 %d" % int(mission.get("reward_gold", 0)))
+			if mission.has("reward_booster"):
+				rewards.append("%s x%d" % [String(mission.get("reward_booster", "부스터")), int(mission.get("reward_booster_count", 1))])
+		if not rewards.is_empty():
+			return " · ".join(rewards)
+	if event.has("free_track_rewards"):
+		return "무료 트랙 %d개 · 프리미엄 트랙 %d개" % [
+			Array(event.get("free_track_rewards", [])).size(),
+			Array(event.get("premium_track_rewards", [])).size(),
+		]
+	return "이벤트 보상 준비 중"
+
+
+func _event_claim_reward(event: Dictionary) -> Dictionary:
+	if event.has("reward"):
+		return Dictionary(event.get("reward", {}))
+	if not event.has("missions"):
+		return {}
+
+	var reward := {}
+	var boosters := {}
+	for mission_value in Array(event.get("missions", [])):
+		if not (mission_value is Dictionary):
+			continue
+		var mission := Dictionary(mission_value)
+		if mission.has("reward_gold"):
+			reward["gold"] = int(reward.get("gold", 0)) + int(mission.get("reward_gold", 0))
+		var booster_id := String(mission.get("reward_booster", ""))
+		if not booster_id.is_empty():
+			boosters[booster_id] = int(boosters.get(booster_id, 0)) + max(1, int(mission.get("reward_booster_count", 1)))
+	if not boosters.is_empty():
+		reward["boosters"] = boosters
+	return reward
+
+
+func _reward_dictionary_summary(reward: Dictionary) -> String:
+	var parts: Array[String] = []
+	if reward.has("gold"):
+		parts.append("골드 %d" % int(reward.get("gold", 0)))
+	if reward.has("tokens"):
+		parts.append("토큰 %d" % int(reward.get("tokens", 0)))
+	if reward.has("booster"):
+		parts.append("%s x%d" % [String(reward.get("booster", "부스터")), int(reward.get("booster_count", 1))])
+	if parts.is_empty():
+		return "이벤트 보상"
+	return " · ".join(parts)
+
+
+func _game_session_has_method(method_name: String) -> bool:
+	return GameSession.new().has_method(method_name)
 
 
 func _event_type_label(event_type: String) -> String:
@@ -670,6 +920,10 @@ func _apply_responsive_layout() -> void:
 	stage_grid.columns = 2 if portrait else 3
 	stage_overlay_panel.custom_minimum_size = Vector2(760, 1040) if portrait else Vector2(1120, 760)
 	settings_overlay_panel.custom_minimum_size = Vector2(760, 780) if portrait else Vector2(920, 620)
+	if event_detail_panel:
+		event_detail_panel.custom_minimum_size = Vector2(700, 760) if portrait else Vector2(820, 620)
+	if event_detail_body_label:
+		event_detail_body_label.custom_minimum_size = Vector2(0, 400) if portrait else Vector2(0, 320)
 
 
 func _layout_game_home(portrait: bool) -> void:

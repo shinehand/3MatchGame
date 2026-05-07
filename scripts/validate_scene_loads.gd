@@ -14,6 +14,8 @@ const GAMEPLAY_SCENE_PATH: String = "res://scenes/gameplay.tscn"
 const STAGE_CARD_SCENE_PATH: String = "res://scenes/stage_card.tscn"
 const BLOCK_TILE_SCENE_PATH: String = "res://scenes/block_tile.tscn"
 const GOAL_CHIP_SCENE_PATH: String = "res://scenes/goal_chip.tscn"
+const SESSION_VALIDATION_SAVE_PATH := "user://scene_validation_save_game.json"
+const SESSION_VALIDATION_SAVE_FILE_NAME := "scene_validation_save_game.json"
 const ANIMAL_IDS := ["rabbit", "bear", "cat", "chick", "frog", "dog", "panda", "pig", "penguin", "fox", "lion", "elephant"]
 const ANIMAL_TEXTURE_FALLBACKS := {
 	"lion": "fox",
@@ -37,6 +39,8 @@ func _init() -> void:
 
 
 func _run() -> void:
+	GameSession.use_save_path_for_testing(SESSION_VALIDATION_SAVE_PATH)
+	_remove_validation_save()
 	var errors: PackedStringArray = PackedStringArray()
 	GameSession.clear_analytics_events()
 	_validate_alpha_gate_data(errors)
@@ -78,11 +82,24 @@ func _run() -> void:
 	if not errors.is_empty():
 		for error_text in errors:
 			push_error("Scene load validation error: %s" % error_text)
+		_remove_validation_save()
 		quit(1)
 		return
 
 	print("Scene load validation passed: %d scenes parsed and instantiated." % scene_paths.size())
+	_remove_validation_save()
 	quit()
+
+
+func _remove_validation_save() -> void:
+	if FileAccess.file_exists(SESSION_VALIDATION_SAVE_PATH):
+		var user_dir := DirAccess.open("user://")
+		if user_dir == null:
+			push_warning("Scene validation could not open user:// to remove temporary validation save.")
+			return
+		var remove_error := user_dir.remove(SESSION_VALIDATION_SAVE_FILE_NAME)
+		if remove_error != OK:
+			push_warning("Scene validation could not remove temporary %s." % SESSION_VALIDATION_SAVE_PATH)
 
 
 func _validate_scene_specifics(scene_path: String, node: Node) -> PackedStringArray:
@@ -204,7 +221,7 @@ func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
 			errors.append("runtime analytics event %s missing required params: %s" % [event_name, ", ".join(Array(missing_params))])
 		if event_name == "live_event_impression":
 			_validate_live_event_impression_payload(params, live_events_by_id, errors)
-	for required_event in ["rescue_book_open", "stage_start"]:
+	for required_event in ["rescue_book_open", "stage_start", "event_join", "event_progress", "event_reward_claim"]:
 		if not seen_names.has(required_event):
 			errors.append("runtime analytics should emit %s during scene smoke." % required_event)
 	var active_current_live_events := false
@@ -213,6 +230,15 @@ func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
 			active_current_live_events = true
 	if active_current_live_events and not seen_names.has("live_event_impression"):
 		errors.append("runtime analytics should emit live_event_impression when active live events are visible.")
+
+
+func _last_analytics_event_by_name(event_name: String) -> Dictionary:
+	var events := GameSession.get_analytics_events()
+	for index in range(events.size() - 1, -1, -1):
+		var event = events[index]
+		if event is Dictionary and String(Dictionary(event).get("name", "")) == event_name:
+			return Dictionary(event)
+	return {}
 
 
 func _live_events_by_id() -> Dictionary:
@@ -297,6 +323,58 @@ func _validate_main_scene(node: Node, errors: PackedStringArray) -> void:
 		errors.append("%s AnimalStrip should show all %d board animals, got %d." % [MAIN_SCENE_PATH, ANIMAL_IDS.size(), animal_strip.get_child_count()])
 	if node.get_node_or_null("GameHomeLayer/HeroStack/LiveEventStrip") == null:
 		errors.append("%s is missing LiveEventStrip for live ops surface checks." % MAIN_SCENE_PATH)
+	_validate_main_event_detail_overlay(node, errors)
+
+
+func _validate_main_event_detail_overlay(node: Node, errors: PackedStringArray) -> void:
+	var overlay := node.get_node_or_null("EventDetailOverlay") as ColorRect
+	if overlay == null:
+		errors.append("%s is missing EventDetailOverlay for home live event details." % MAIN_SCENE_PATH)
+		return
+	if overlay.visible:
+		errors.append("%s EventDetailOverlay should start hidden." % MAIN_SCENE_PATH)
+
+	var title_label := overlay.find_child("EventDetailTitleLabel", true, false) as Label
+	if title_label == null:
+		errors.append("%s EventDetailOverlay is missing EventDetailTitleLabel." % MAIN_SCENE_PATH)
+	var body_label := overlay.find_child("EventDetailBodyLabel", true, false) as Label
+	if body_label == null:
+		errors.append("%s EventDetailOverlay is missing EventDetailBodyLabel." % MAIN_SCENE_PATH)
+	var claim_button := overlay.find_child("EventClaimButton", true, false) as Button
+	if claim_button == null:
+		errors.append("%s EventDetailOverlay is missing EventClaimButton." % MAIN_SCENE_PATH)
+
+	if not node.has_method("_show_event_detail") or not node.has_method("_on_event_claim_button_pressed"):
+		errors.append("%s should expose home live event detail and claim handlers." % MAIN_SCENE_PATH)
+		return
+
+	var validation_event_id := "__validation_home_event"
+	node.call("_show_event_detail", {
+		"id": validation_event_id,
+		"type": "daily_reward",
+		"title": "검증 라이브 이벤트",
+		"enabled": true,
+		"unlock_stage": 1,
+		"placements": ["home"],
+		"reward": {
+			"gold": 5,
+		},
+	})
+	if not overlay.visible:
+		errors.append("%s EventDetailOverlay should become visible after a home event chip is opened." % MAIN_SCENE_PATH)
+	if title_label != null and title_label.text != "검증 라이브 이벤트":
+		errors.append("%s EventDetailTitleLabel should reflect the selected event title." % MAIN_SCENE_PATH)
+	if body_label != null and body_label.text.is_empty():
+		errors.append("%s EventDetailBodyLabel should describe the selected event." % MAIN_SCENE_PATH)
+	if claim_button != null and claim_button.disabled:
+		errors.append("%s EventClaimButton should be enabled for a claimable reward." % MAIN_SCENE_PATH)
+
+	node.call("_on_event_claim_button_pressed")
+	if claim_button != null:
+		if not claim_button.disabled:
+			errors.append("%s EventClaimButton should disable after successful reward claim." % MAIN_SCENE_PATH)
+		if claim_button.text != "수령 완료":
+			errors.append("%s EventClaimButton should show claimed state after reward claim." % MAIN_SCENE_PATH)
 
 
 func _validate_gameplay_scene(node: Node, errors: PackedStringArray) -> void:
@@ -462,9 +540,15 @@ func _validate_special_effect_rules(node: Node, errors: PackedStringArray) -> vo
 func _seed_plain_gameplay_board(node: Node) -> Array:
 	var animals := ["rabbit", "bear", "cat", "chick", "frog"]
 	var board_data: Array = node.get("board_data")
+	var obstacle_data: Array = node.get("obstacle_data")
+	var active_mask: Array = node.get("active_mask")
 	for row in range(8):
 		for col in range(8):
+			active_mask[row][col] = true
+			obstacle_data[row][col] = 0
 			board_data[row][col] = node.call("_make_piece", String(animals[(row * 2 + col) % animals.size()]))
+	node.set("active_mask", active_mask)
+	node.set("obstacle_data", obstacle_data)
 	node.set("board_data", board_data)
 	return board_data
 
@@ -555,6 +639,7 @@ func _validate_alpha_gate_data(errors: PackedStringArray) -> void:
 	_validate_rescue_book_model(errors)
 	_validate_fail_offer_policy(errors)
 	_validate_live_event_config(errors)
+	_validate_live_event_state_model(errors)
 
 	var stages: Array = StageCatalog.get_stages()
 	if stages.size() < 100:
@@ -730,6 +815,63 @@ func _validate_live_event_config(errors: PackedStringArray) -> void:
 			var placement := String(placement_value)
 			if not IMPLEMENTED_LIVE_EVENT_PLACEMENTS.has(placement):
 				errors.append("enabled live event %s uses placement %s without an implemented surface." % [String(event_dict.get("id", "")), placement])
+
+
+func _validate_live_event_state_model(errors: PackedStringArray) -> void:
+	var event_id := "__validation_live_event"
+	var event_type := "validation"
+	var placement := "validator"
+	var wallet_before := GameSession.get_wallet()
+	if not GameSession.join_live_event(event_id, event_type, placement):
+		errors.append("GameSession should join a new live event once.")
+	if GameSession.join_live_event(event_id, event_type, placement):
+		errors.append("GameSession should not emit duplicate live event joins.")
+
+	var progress_value := GameSession.increment_live_event_progress(event_id, "checks", 2, event_type, placement)
+	if progress_value != 2:
+		errors.append("GameSession live event progress increment expected 2, got %d." % progress_value)
+	GameSession.set_live_event_progress(event_id, "checks", 5, event_type, placement)
+	var state := GameSession.get_live_event_state(event_id)
+	if not bool(state.get("joined", false)):
+		errors.append("GameSession live event state should persist joined=true.")
+	var progress: Dictionary = Dictionary(state.get("progress", {}))
+	if int(progress.get("checks", 0)) != 5:
+		errors.append("GameSession live event state should persist latest progress value.")
+
+	var reward_id := "%s:reward" % event_id
+	var reward := {
+		"gold": 25,
+		"tokens": 3,
+		"boosters": {
+			"striped": 1,
+		},
+	}
+	if not GameSession.claim_live_event_reward(event_id, reward_id, event_type, placement, reward):
+		errors.append("GameSession should claim a new live event reward once.")
+	if GameSession.claim_live_event_reward(event_id, reward_id, event_type, placement, reward):
+		errors.append("GameSession should not claim the same live event reward twice.")
+	if not GameSession.is_live_event_reward_claimed(event_id, reward_id):
+		errors.append("GameSession should report claimed live event rewards.")
+
+	var wallet_after := GameSession.get_wallet()
+	if int(wallet_after.get("gold", 0)) != int(wallet_before.get("gold", 0)) + 25:
+		errors.append("GameSession live event reward should add gold once.")
+	if int(wallet_after.get("tokens", 0)) != int(wallet_before.get("tokens", 0)) + 3:
+		errors.append("GameSession live event reward should add event tokens once.")
+	var boosters_before: Dictionary = Dictionary(wallet_before.get("boosters", {}))
+	var boosters_after: Dictionary = Dictionary(wallet_after.get("boosters", {}))
+	if int(boosters_after.get("striped", 0)) != int(boosters_before.get("striped", 0)) + 1:
+		errors.append("GameSession live event reward should add booster inventory once.")
+	var reward_claim_event := _last_analytics_event_by_name("event_reward_claim")
+	var reward_params: Dictionary = Dictionary(reward_claim_event.get("params", {}))
+	if String(reward_params.get("reward_type", "")) != "mixed":
+		errors.append("GameSession mixed live event rewards should emit reward_type=mixed.")
+	var reward_breakdown: Dictionary = Dictionary(reward_params.get("reward_breakdown", {}))
+	if int(reward_breakdown.get("gold", 0)) != 25 or int(reward_breakdown.get("tokens", 0)) != 3:
+		errors.append("GameSession mixed live event rewards should include gold and token breakdown.")
+	var booster_breakdown: Dictionary = Dictionary(reward_breakdown.get("boosters", {}))
+	if int(booster_breakdown.get("striped", 0)) != 1:
+		errors.append("GameSession mixed live event rewards should include booster breakdown.")
 
 
 func _validate_fail_offer_policy(errors: PackedStringArray) -> void:

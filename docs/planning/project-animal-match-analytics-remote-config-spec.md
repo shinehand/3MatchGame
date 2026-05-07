@@ -73,11 +73,13 @@
 | 이벤트 | 트리거 | 필수 파라미터 |
 | --- | --- | --- |
 | `remote_config_exposure` | 설정 적용 | `config_key`, `variant_id`, `config_value_hash` |
-| `event_impression` | 이벤트 노출 | `event_id`, `event_type`, `placement`, `featured_animal_id` |
-| `event_join` | 이벤트 참여 | `event_id`, `event_type`, `entry_point` |
-| `event_progress` | 이벤트 진행 | `event_id`, `progress_before`, `progress_after`, `source` |
-| `event_reward_claim` | 보상 수령 | `event_id`, `reward_id`, `reward_type`, `reward_amount`, `transaction_id` |
+| `live_event_impression` | 이벤트 노출 | `session_id`, `event_id`, `event_type`, `placement` |
+| `event_join` | 이벤트 참여 | `session_id`, `event_id`, `event_type`, `placement` |
+| `event_progress` | 이벤트 진행 | `session_id`, `event_id`, `event_type`, `placement`, `progress_key`, `progress_value` |
+| `event_reward_claim` | 보상 수령 | `session_id`, `event_id`, `event_type`, `placement`, `reward_id`, `reward_type`, `reward_amount` |
 | `starter_mission_complete` | 스타터 미션 완료 | `mission_id`, `day_index`, `reward_id`, `elapsed_since_install_hours` |
+
+혼합 보상은 `reward_type=mixed`로 기록하고, 선택 파라미터 `reward_breakdown`에 `gold`, `tokens`, `boosters` 구성 요소를 함께 남긴다.
 
 ## 3. 원격 설정 키
 
