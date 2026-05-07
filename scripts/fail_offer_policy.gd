@@ -22,10 +22,12 @@ static func classify(stage: Dictionary, progress: Dictionary) -> String:
 		return TYPE_REPEAT_FAIL
 	if _is_near_miss(stage, progress):
 		return TYPE_NEAR_MISS
-	if fail_count <= 1:
+	if stage_id <= 10 and fail_count <= 1:
 		return TYPE_FIRST_FAIL
 	if _primary_shortfall(stage, progress) != TYPE_GENERAL:
 		return TYPE_STRATEGIC
+	if fail_count <= 1:
+		return TYPE_FIRST_FAIL
 	return TYPE_GENERAL
 
 

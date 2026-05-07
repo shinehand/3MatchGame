@@ -2456,10 +2456,11 @@ func _check_stage_state() -> void:
 			_track_fever_end_analytics("stage_fail")
 		_track_stage_fail_analytics(fail_offer)
 		_track_offer_impression_analytics(fail_offer)
+		var failure_action := "continue_stage" if bool(fail_offer.get("show_rewarded_ad", false)) else "restart_stage"
 		_show_overlay(
 			"%s 재도전 필요" % _current_stage()["name"],
 			_build_failure_overlay_body(fail_offer),
-			"restart_stage",
+			failure_action,
 			String(fail_offer.get("primary_cta", "재도전")),
 			String(fail_offer.get("secondary_cta", "홈으로")),
 			true
@@ -2977,6 +2978,11 @@ func _on_overlay_primary_button_pressed() -> void:
 			get_tree().change_scene_to_file("res://scenes/main.tscn")
 		"restart_stage":
 			_start_stage(current_stage_index)
+		"continue_stage":
+			stage_state = "playing"
+			remaining_moves = maxi(remaining_moves, 0) + 3
+			_set_status("추가 이동 3회를 받아 계속 진행합니다.")
+			_update_hud()
 
 
 func _on_overlay_secondary_button_pressed() -> void:
@@ -2995,6 +3001,8 @@ func _on_overlay_secondary_button_pressed() -> void:
 	elif action == "restart_stage":
 		GameSession.save_state()
 		get_tree().change_scene_to_file("res://scenes/main.tscn")
+	elif action == "continue_stage":
+		_start_stage(current_stage_index)
 
 
 func _load_animal_textures() -> void:

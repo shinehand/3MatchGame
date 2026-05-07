@@ -130,6 +130,7 @@ func _validate_scene_runtime_specifics(scene_path: String, node: Node, errors: P
 	match scene_path:
 		GAMEPLAY_SCENE_PATH:
 			await _validate_special_combo_swap_runtime(node, errors)
+			await _validate_result_overlay_runtime(node, errors)
 
 
 func _validate_viewport_resilience(scene_path: String, node: Node, errors: PackedStringArray) -> void:
@@ -1202,6 +1203,92 @@ func _validate_start_booster_runtime_rules(node: Node, errors: PackedStringArray
 	GameSession.set_selected_pre_boosters([])
 
 
+func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> void:
+	for method_name in ["_start_stage", "_check_stage_state", "_on_overlay_primary_button_pressed"]:
+		if not node.has_method(method_name):
+			errors.append("%s should expose %s for result overlay runtime smoke." % [GAMEPLAY_SCENE_PATH, method_name])
+			return
+
+	node.call("_start_stage", 0)
+	_complete_current_stage_goals(node)
+	node.set("remaining_moves", 0)
+	var complete_events_before := _analytics_event_count("stage_complete")
+	await node.call("_check_stage_state")
+	var overlay := node.get_node_or_null("Overlay") as CanvasItem
+	var overlay_title := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayTitle") as Label
+	var overlay_body := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayBody") as Label
+	var overlay_primary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlayPrimaryButton") as Button
+	var overlay_secondary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlaySecondaryButton") as Button
+	if overlay == null or not overlay.visible:
+		errors.append("%s clear overlay runtime smoke should show the result overlay." % GAMEPLAY_SCENE_PATH)
+	if String(node.get("stage_state")) != "cleared":
+		errors.append("%s clear overlay runtime smoke should leave Stage 1 cleared, got %s." % [GAMEPLAY_SCENE_PATH, String(node.get("stage_state"))])
+	if String(node.get("overlay_action")) != "clear_stage":
+		errors.append("%s clear overlay runtime smoke should use clear_stage overlay action." % GAMEPLAY_SCENE_PATH)
+	if overlay_title == null or not overlay_title.text.contains("구조 완료"):
+		errors.append("%s clear overlay should show a clear title." % GAMEPLAY_SCENE_PATH)
+	if overlay_body == null or not overlay_body.text.contains("보상") or not overlay_body.text.contains("별") or not overlay_body.text.contains("다음"):
+		errors.append("%s clear overlay body should show reward, stars, and next action text." % GAMEPLAY_SCENE_PATH)
+	if overlay_primary == null or overlay_primary.text != "다음 스테이지":
+		errors.append("%s clear overlay primary CTA should be 다음 스테이지." % GAMEPLAY_SCENE_PATH)
+	if overlay_secondary == null or not overlay_secondary.visible or overlay_secondary.text != "홈으로":
+		errors.append("%s clear overlay secondary CTA should be visible 홈으로." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("stage_complete") <= complete_events_before:
+		errors.append("%s clear overlay runtime smoke should emit stage_complete analytics." % GAMEPLAY_SCENE_PATH)
+
+	node.call("_start_stage", 24)
+	var target_collect: Dictionary = Dictionary(node.call("_stage_collect_targets"))
+	var near_miss_counts := {}
+	for animal_id in target_collect.keys():
+		near_miss_counts[String(animal_id)] = int(target_collect[animal_id])
+	node.set("collected_counts", near_miss_counts)
+	node.set("cleared_blockers", maxi(0, int(node.call("_target_blockers")) - 1))
+	node.set("score", int(node.call("_target_score")))
+	node.set("remaining_moves", 0)
+	var fail_events_before := _analytics_event_count("stage_fail")
+	var offer_events_before := _analytics_event_count("offer_impression")
+	await node.call("_check_stage_state")
+	if overlay == null or not overlay.visible:
+		errors.append("%s near-miss failure runtime smoke should show the result overlay." % GAMEPLAY_SCENE_PATH)
+	if String(node.get("stage_state")) != "failed":
+		errors.append("%s near-miss failure runtime smoke should leave Stage 25 failed, got %s." % [GAMEPLAY_SCENE_PATH, String(node.get("stage_state"))])
+	if String(node.get("overlay_action")) != "continue_stage":
+		errors.append("%s near-miss failure overlay should use continue_stage action for +3 move CTA." % GAMEPLAY_SCENE_PATH)
+	if overlay_primary == null or overlay_primary.text != "+3 이동 받고 계속":
+		errors.append("%s near-miss failure primary CTA should offer +3 move continue." % GAMEPLAY_SCENE_PATH)
+	if overlay_secondary == null or not overlay_secondary.visible or overlay_secondary.text != "재도전":
+		errors.append("%s near-miss failure secondary CTA should offer retry." % GAMEPLAY_SCENE_PATH)
+	if overlay_body == null or not overlay_body.text.contains("near_miss") or not overlay_body.text.contains("보상형 +3 이동") or not overlay_body.text.contains("추천 부스터 rainbow_paw"):
+		errors.append("%s near-miss failure body should show fail type, rewarded move offer, and booster recommendation." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("stage_fail") <= fail_events_before:
+		errors.append("%s near-miss failure runtime smoke should emit stage_fail analytics." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("offer_impression") <= offer_events_before:
+		errors.append("%s near-miss failure runtime smoke should emit offer_impression analytics." % GAMEPLAY_SCENE_PATH)
+	var stage_fail_event := _last_analytics_event_by_name("stage_fail")
+	var stage_fail_params: Dictionary = Dictionary(stage_fail_event.get("params", {}))
+	if int(stage_fail_params.get("stage_id", 0)) != 25 or String(stage_fail_params.get("fail_type", "")) != "near_miss" or String(stage_fail_params.get("offer_type", "")) != "rewarded_continue":
+		errors.append("%s stage_fail analytics should identify Stage 25 near_miss rewarded_continue." % GAMEPLAY_SCENE_PATH)
+	var offer_event := _last_analytics_event_by_name("offer_impression")
+	var offer_params: Dictionary = Dictionary(offer_event.get("params", {}))
+	if int(offer_params.get("stage_id", 0)) != 25 or String(offer_params.get("fail_type", "")) != "near_miss" or String(offer_params.get("primary_cta", "")) != "+3 이동 받고 계속" or not bool(offer_params.get("show_rewarded_ad", false)):
+		errors.append("%s offer_impression analytics should identify Stage 25 near_miss +3 CTA." % GAMEPLAY_SCENE_PATH)
+
+	node.call("_on_overlay_primary_button_pressed")
+	if String(node.get("stage_state")) != "playing" or int(node.get("remaining_moves")) != 3:
+		errors.append("%s continue_stage primary action should resume play with exactly 3 moves." % GAMEPLAY_SCENE_PATH)
+	if overlay != null and overlay.visible:
+		errors.append("%s continue_stage primary action should hide the failure overlay." % GAMEPLAY_SCENE_PATH)
+
+
+func _complete_current_stage_goals(node: Node) -> void:
+	var collected := {}
+	for animal_id in Dictionary(node.call("_stage_collect_targets")).keys():
+		collected[String(animal_id)] = int(Dictionary(node.call("_stage_collect_targets"))[animal_id])
+	node.set("collected_counts", collected)
+	node.set("cleared_blockers", int(node.call("_target_blockers")))
+	node.set("score", int(node.call("_target_score")))
+
+
 func _seed_plain_gameplay_board(node: Node) -> Array:
 	var animals := ["rabbit", "bear", "cat", "chick", "frog"]
 	var board_data: Array = node.get("board_data")
@@ -1772,7 +1859,25 @@ func _validate_fail_offer_policy(errors: PackedStringArray) -> void:
 	if repeat_offer.get("type") != FailOfferPolicy.TYPE_REPEAT_FAIL:
 		errors.append("FailOfferPolicy should classify repeated failures before strategic shortfall.")
 
+	var strategic_offer := FailOfferPolicy.build_offer({"id": 25, "target_collect": {"rabbit": 10}, "target_blockers": 4}, {"collected_counts": {"rabbit": 1}, "cleared_blockers": 0, "fail_count": 1})
+	if strategic_offer.get("type") != FailOfferPolicy.TYPE_STRATEGIC:
+		errors.append("FailOfferPolicy should classify a severe midgame first failure as strategic_miss.")
+	if String(strategic_offer.get("primary_cta", "")) != "재도전" or String(strategic_offer.get("secondary_cta", "")) != "홈으로":
+		errors.append("FailOfferPolicy strategic_miss should keep non-purchase retry/home CTAs.")
+	if bool(strategic_offer.get("show_rewarded_ad", false)) or bool(strategic_offer.get("show_iap", false)):
+		errors.append("FailOfferPolicy strategic_miss should not offer ad/iap monetization by default.")
+
+	var hard_offer := FailOfferPolicy.build_offer({"id": 51, "difficulty": "Hard", "target_blockers": 9}, {"cleared_blockers": 0, "fail_count": 1})
+	if hard_offer.get("type") != FailOfferPolicy.TYPE_HARD_FAIL:
+		errors.append("FailOfferPolicy should classify hard midgame failures as hard_level_fail.")
+	if String(hard_offer.get("primary_cta", "")) != "+3 이동 받고 계속" or String(hard_offer.get("secondary_cta", "")) != "재도전":
+		errors.append("FailOfferPolicy hard_level_fail should expose continue/retry CTAs.")
+	if not bool(hard_offer.get("show_rewarded_ad", false)) or not bool(hard_offer.get("show_iap", false)):
+		errors.append("FailOfferPolicy hard_level_fail should allow eligible ad/iap offers after Stage 16.")
+
 	var early_offer := FailOfferPolicy.build_offer({"id": 3, "target_score": 1000}, {"score": 300, "fail_count": 1})
+	if early_offer.get("type") != FailOfferPolicy.TYPE_FIRST_FAIL:
+		errors.append("FailOfferPolicy should preserve first_fail classification for early tutorial stages.")
 	if bool(early_offer.get("show_rewarded_ad", false)) or bool(early_offer.get("show_iap", false)):
 		errors.append("FailOfferPolicy should suppress monetization offers in early tutorial stages.")
 

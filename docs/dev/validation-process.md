@@ -62,6 +62,21 @@
 - 시작 부스터가 배치된 첫 보드가 목표 칩, Buddy HUD, 특수 배지와 겹쳐 읽기 어렵지 않은지 확인한다.
 - Stage Popup에 표시될 Rescue Buddy 정보 문구와 실제 Gameplay HUD 문구의 톤이 일관적인지 확인한다.
 
+## No-device 결과/실패 오버레이 readiness
+
+`./scripts/validate_gameplay.sh`의 scene load smoke는 기기 없이 아래 항목을 먼저 막는다.
+
+- Stage 1 클리어 판정 경로에서 결과 overlay가 표시되고, 보상/별/점수/다음 행동과 `다음 스테이지`/`홈으로` CTA를 보여 준다.
+- Stage 25 near-miss 실패 판정 경로에서 실패 overlay가 표시되고, 실패 유형, 남은 목표, 추천 부스터, `+3 이동 받고 계속`/`재도전` CTA를 보여 준다.
+- `+3 이동 받고 계속` primary CTA는 overlay를 닫고 `remaining_moves = 3`, `stage_state = playing`으로 실제 재개한다.
+- 실패 overlay 노출은 `stage_fail`과 `offer_impression` analytics에 near-miss 및 보상형 continue 정보를 기록한다.
+- `FailOfferPolicy`는 near miss, strategic miss, first fail, repeat fail, hard fail, Level 1-10 수익화 차단을 분리 검증한다.
+
+아래 항목은 no-device readiness로 승인하지 않는다. 실제 기기 또는 시뮬레이터에서 수동 확인해야 한다.
+
+- 보상형 광고 SDK 로드/완료/중단/실패와 구매 취소/실패가 하트, 코인, 이동 수를 꼬이게 하지 않는지 확인한다.
+- 결과/실패 overlay 애니메이션, 사운드, 햅틱, 버튼 터치감이 모바일에서 자연스러운지 확인한다.
+
 ## 수동 체크리스트
 
 - 홈 화면에서 이어하기 정보와 스테이지 선택 오버레이가 정상 표시된다.
