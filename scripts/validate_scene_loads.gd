@@ -1541,6 +1541,44 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	if _analytics_event_count("extra_moves_grant") != coin_insufficient_extra_before:
 		errors.append("%s coin continue insufficient funds should not emit extra_moves_grant." % GAMEPLAY_SCENE_PATH)
 
+	await _validate_failure_overlay_focus_hint_variants(node, errors)
+
+
+func _validate_failure_overlay_focus_hint_variants(node: Node, errors: PackedStringArray) -> void:
+	node.call("_start_stage", 11)
+	GameSession.set_stage_fail_count_for_testing(12, 0)
+	_complete_current_stage_goals(node)
+	var missing_collect_counts := Dictionary(node.get("collected_counts"))
+	missing_collect_counts["bear"] = 5
+	node.set("collected_counts", missing_collect_counts)
+	node.set("score", int(node.call("_target_score")))
+	node.set("cleared_blockers", int(node.call("_target_blockers")))
+	node.set("remaining_moves", 0)
+	await node.call("_check_stage_state")
+	var overlay := node.get_node_or_null("Overlay") as CanvasItem
+	var overlay_body := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayBody") as Label
+	if overlay == null or not overlay.visible:
+		errors.append("%s collection failure hint smoke should show the result overlay." % GAMEPLAY_SCENE_PATH)
+	if String(node.get("stage_state")) != "failed":
+		errors.append("%s collection failure hint smoke should leave Stage 12 failed, got %s." % [GAMEPLAY_SCENE_PATH, String(node.get("stage_state"))])
+	if overlay_body == null or not overlay_body.text.contains("놓친 핵심  곰 3개 더 구조") or not overlay_body.text.contains("다음 한 수  곰 주변 매치부터 만들고 무지개 발바닥은 마지막 목표에 쓰세요."):
+		errors.append("%s collection failure overlay should show the missed collection focus and retry hint." % GAMEPLAY_SCENE_PATH)
+
+	node.call("_start_stage", 11)
+	GameSession.set_stage_fail_count_for_testing(12, 0)
+	_complete_current_stage_goals(node)
+	node.set("score", int(node.call("_target_score")) - 300)
+	node.set("remaining_moves", 0)
+	await node.call("_check_stage_state")
+	overlay = node.get_node_or_null("Overlay") as CanvasItem
+	overlay_body = node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayBody") as Label
+	if overlay == null or not overlay.visible:
+		errors.append("%s score failure hint smoke should show the result overlay." % GAMEPLAY_SCENE_PATH)
+	if String(node.get("stage_state")) != "failed":
+		errors.append("%s score failure hint smoke should leave Stage 12 failed, got %s." % [GAMEPLAY_SCENE_PATH, String(node.get("stage_state"))])
+	if overlay_body == null or not overlay_body.text.contains("놓친 핵심  점수 300점 더 획득") or not overlay_body.text.contains("다음 한 수  4매치 이상과 연쇄를 노려 점수 배수를 먼저 키우세요."):
+		errors.append("%s score failure overlay should show the missed score focus and retry hint." % GAMEPLAY_SCENE_PATH)
+
 
 func _validate_failure_focus_hint_runtime(node: Node, errors: PackedStringArray) -> void:
 	node.call("_start_stage", 0)
