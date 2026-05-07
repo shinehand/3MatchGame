@@ -85,6 +85,12 @@
 - 비활성 탭에서는 표정 미리보기가 정지한다.
 - 홈, 결과 화면, 이벤트에서 컬렉션 진입과 복귀가 가능하다.
 
+## Gate 8A. Rescue Buddy 분석
+
+- Buddy 충전, 준비, 발동, 차단은 `buddy_skill_charge`, `buddy_skill_ready`, `buddy_skill_trigger`, `buddy_skill_blocked`로 실제 런타임에서 기록된다.
+- Stage 4 `quick_refill`은 목표 동물 매치 충전 후 1회 발동하고, max use 이후 차단 이벤트를 남긴다.
+- Stage 20 `loyal_fetch`는 실패 직전 구조 이동을 줄 때 `buddy_skill_trigger`를 남긴다.
+
 ## Gate 9. 실패/광고/IAP 공정성
 
 - 강제 실패 케이스에서 Near Miss와 Strategic Miss가 다르게 분기된다.

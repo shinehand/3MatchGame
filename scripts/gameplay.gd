@@ -1991,6 +1991,11 @@ func _try_loyal_fetch_before_failure() -> bool:
 	buddy_uses += 1
 	buddy_charge_count = 0
 	remaining_moves = 1
+	_track_buddy_analytics("buddy_skill_trigger", {
+		"effect_type": "loyal_fetch",
+		"uses_left": maxi(0, int(_current_stage().get("buddy_max_uses", 0)) - buddy_uses),
+		"trigger_source": "near_fail_rescue",
+	})
 	_set_status(_buddy_trigger_status("loyal_fetch"))
 	return true
 

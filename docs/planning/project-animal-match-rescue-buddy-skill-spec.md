@@ -90,6 +90,8 @@ stage["buddy_max_uses"]
 | `buddy_skill_trigger` | 실제 발동 | `stage_id`, `animal_id`, `skill_id`, `effect_type`, `uses_left` |
 | `buddy_skill_blocked` | 조건 불충족 | `stage_id`, `animal_id`, `skill_id`, `reason` |
 
+자동 scene smoke는 Stage 4 `quick_refill`의 충전/준비/발동/차단 이벤트와 Stage 20 `loyal_fetch`의 실패 직전 구조 발동 이벤트를 실제 런타임 경로로 검증한다.
+
 ## 8. 구현 순서
 
 1. `StageCatalog`가 `buddy` 필드를 정규화한다.

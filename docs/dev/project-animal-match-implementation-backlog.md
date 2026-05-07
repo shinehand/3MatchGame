@@ -219,7 +219,7 @@
 
 ### PAM-DEV-053: Rescue Buddy 동물 스킬 시스템
 
-- 상태: 완료됨. StageCatalog/validator가 `buddy` 설정을 정규화·검증하고, Stage 4의 `rabbit/quick_refill` 자동 1회 스킬이 목표 동물 매치 충전 후 보드에 목표 동물 1개를 생성한다. Stage 5의 `chick/soft_bomb_plus`는 목표 동물을 폭발 특수 블록으로 강화하고, Stage 8의 `chick/combo_peep`은 콤보 2+에서 Combo Gauge를 추가 충전한다. Stage 16의 `cat/smart_hint`는 목표에 가까운 유효 수를 강조하며, Stage 18의 `frog/leap_clear`는 남은 덤불 1개를 추가 제거한다. Stage 20의 `dog/loyal_fetch`는 실패 직전 Near Miss에서 목표 동물을 불러오고 이동 1회를 구한다. Stage 24의 `panda/calm_fever`는 Fever 시작을 감지해 Fever 종료 후 Combo Gauge를 일부 보존한다. Stage 25의 `pig/coin_sniff`는 클리어 보상 골드를 5% 늘리고, Stage 31의 `penguin/cascade_slide`는 첫 연쇄 단계에서 해당 연쇄 점수 10% 보너스를 더한다. Stage 41의 `fox/sly_route`는 이동 수 3 이하 Near Fail에서 추천 경로를 표시한다. Stage 51의 `lion/brave_start`는 하드 스테이지 시작 시 추천 부스터 방향을 알려준다. Stage 81의 `elephant/mighty_push`는 장애물 제거 흐름에서 남은 덤불 1개를 추가로 밀어낸다. 전용 HUD 충전 라벨/게이지와 scene smoke 검증이 추가됐다. 후속은 수동 플레이 QA와 밸런스 튜닝으로 분리한다.
+- 상태: 완료됨. StageCatalog/validator가 `buddy` 설정을 정규화·검증하고, Stage 4의 `rabbit/quick_refill` 자동 1회 스킬이 목표 동물 매치 충전 후 보드에 목표 동물 1개를 생성한다. Stage 5의 `chick/soft_bomb_plus`는 목표 동물을 폭발 특수 블록으로 강화하고, Stage 8의 `chick/combo_peep`은 콤보 2+에서 Combo Gauge를 추가 충전한다. Stage 16의 `cat/smart_hint`는 목표에 가까운 유효 수를 강조하며, Stage 18의 `frog/leap_clear`는 남은 덤불 1개를 추가 제거한다. Stage 20의 `dog/loyal_fetch`는 실패 직전 Near Miss에서 목표 동물을 불러오고 이동 1회를 구한다. Stage 24의 `panda/calm_fever`는 Fever 시작을 감지해 Fever 종료 후 Combo Gauge를 일부 보존한다. Stage 25의 `pig/coin_sniff`는 클리어 보상 골드를 5% 늘리고, Stage 31의 `penguin/cascade_slide`는 첫 연쇄 단계에서 해당 연쇄 점수 10% 보너스를 더한다. Stage 41의 `fox/sly_route`는 이동 수 3 이하 Near Fail에서 추천 경로를 표시한다. Stage 51의 `lion/brave_start`는 하드 스테이지 시작 시 추천 부스터 방향을 알려준다. Stage 81의 `elephant/mighty_push`는 장애물 제거 흐름에서 남은 덤불 1개를 추가로 밀어낸다. 전용 HUD 충전 라벨/게이지와 scene smoke 검증이 추가됐다. scene smoke는 Stage 4 `quick_refill`의 `buddy_skill_charge/ready/trigger/blocked` 실제 발생과 Stage 20 `loyal_fetch`의 실패 직전 `buddy_skill_trigger` 분석 기록을 검증한다. 후속은 수동 플레이 QA와 밸런스 튜닝으로 분리한다.
 - 소유: Development Agent + Planning Agent
 - 대상 파일:
   - `scripts/gameplay.gd`
@@ -423,6 +423,6 @@
 다음 고가치 순서:
 
 1. `PAM-QA-040` - 실제 기기/수동 플레이 표정·Buddy·특수조합 QA
-2. `PAM-DEV-053` 후속 - Rescue Buddy 분석 이벤트 실제 발생 smoke와 `loyal_fetch` 경로 커버리지
-3. `PAM-DEV-051` - 특수 조합 수동 플레이 QA 및 밸런스 튜닝
-4. `PAM-DEV-080` 후속 - 이벤트 종료/오프라인 상태별 사용자-facing UI 문구 확장
+2. `PAM-DEV-051` - 특수 조합 수동 플레이 QA 및 밸런스 튜닝
+3. `PAM-DEV-080` 후속 - 이벤트 종료/오프라인 상태별 사용자-facing UI 문구 확장
+4. `PAM-DEV-053` 후속 - Rescue Buddy 수치 튜닝과 실제 기기 플레이 감각 QA

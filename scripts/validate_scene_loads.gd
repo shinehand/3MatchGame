@@ -229,7 +229,7 @@ func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
 				_validate_live_event_impression_payload(params, live_events_by_id, errors)
 			"remote_config_exposure":
 				_validate_remote_config_exposure_payload(params, errors)
-	for required_event in ["rescue_book_open", "stage_start", "remote_config_exposure", "event_join", "event_progress", "event_reward_claim"]:
+	for required_event in ["rescue_book_open", "stage_start", "remote_config_exposure", "event_join", "event_progress", "event_reward_claim", "buddy_skill_charge", "buddy_skill_ready", "buddy_skill_trigger", "buddy_skill_blocked"]:
 		if not seen_names.has(required_event):
 			errors.append("runtime analytics should emit %s during scene smoke." % required_event)
 	var active_current_live_events := false
@@ -445,6 +445,7 @@ func _validate_gameplay_scene(node: Node, errors: PackedStringArray) -> void:
 
 	_validate_special_effect_rules(node, errors)
 	_validate_expression_animation_rules(node, errors)
+	_validate_rescue_buddy_runtime_rules(node, errors)
 
 
 func _validate_expression_animation_rules(node: Node, errors: PackedStringArray) -> void:
@@ -473,6 +474,72 @@ func _validate_expression_animation_rules(node: Node, errors: PackedStringArray)
 		priority_tile.set_expression("blink")
 		if String(priority_tile.get("expression_state")) != "match":
 			errors.append("%s match expression priority should not be overwritten by blink." % GAMEPLAY_SCENE_PATH)
+
+
+func _validate_rescue_buddy_runtime_rules(node: Node, errors: PackedStringArray) -> void:
+	for method_name in ["_start_stage", "_charge_buddy_skill_for_match", "_trigger_buddy_skill", "_try_loyal_fetch_before_failure"]:
+		if not node.has_method(method_name):
+			errors.append("%s should expose %s for Rescue Buddy runtime smoke." % [GAMEPLAY_SCENE_PATH, method_name])
+			return
+
+	node.call("_start_stage", 3)
+	node.set("board_data", _seed_plain_gameplay_board(node))
+	var charge_events_before := _analytics_event_count("buddy_skill_charge")
+	var ready_events_before := _analytics_event_count("buddy_skill_ready")
+	var trigger_events_before := _analytics_event_count("buddy_skill_trigger")
+	var blocked_events_before := _analytics_event_count("buddy_skill_blocked")
+
+	for _index in range(3):
+		node.call("_charge_buddy_skill_for_match", "rabbit")
+	if _analytics_event_count("buddy_skill_charge") <= charge_events_before:
+		errors.append("%s Rescue Buddy smoke should emit buddy_skill_charge for Stage 4 quick_refill." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_ready") <= ready_events_before:
+		errors.append("%s Rescue Buddy smoke should emit buddy_skill_ready when quick_refill reaches full charge." % GAMEPLAY_SCENE_PATH)
+	if not bool(node.get("buddy_trigger_pending")):
+		errors.append("%s Rescue Buddy smoke should leave quick_refill pending after full charge." % GAMEPLAY_SCENE_PATH)
+	var quick_refill_charge_event := _last_analytics_event_by_name("buddy_skill_charge")
+	var quick_refill_charge_params: Dictionary = Dictionary(quick_refill_charge_event.get("params", {}))
+	if int(quick_refill_charge_params.get("stage_id", 0)) != 4 or String(quick_refill_charge_params.get("animal_id", "")) != "rabbit" or String(quick_refill_charge_params.get("skill_id", "")) != "quick_refill" or int(quick_refill_charge_params.get("charge_count", 0)) != 3:
+		errors.append("%s quick_refill charge analytics should identify Stage 4 rabbit quick_refill at full charge." % GAMEPLAY_SCENE_PATH)
+	var quick_refill_ready_event := _last_analytics_event_by_name("buddy_skill_ready")
+	var quick_refill_ready_params: Dictionary = Dictionary(quick_refill_ready_event.get("params", {}))
+	if int(quick_refill_ready_params.get("stage_id", 0)) != 4 or String(quick_refill_ready_params.get("animal_id", "")) != "rabbit" or String(quick_refill_ready_params.get("skill_id", "")) != "quick_refill" or int(quick_refill_ready_params.get("turn_index", -1)) < 0:
+		errors.append("%s quick_refill ready analytics should identify Stage 4 rabbit quick_refill." % GAMEPLAY_SCENE_PATH)
+
+	node.call("_trigger_buddy_skill")
+	if _analytics_event_count("buddy_skill_trigger") <= trigger_events_before:
+		errors.append("%s Rescue Buddy smoke should emit buddy_skill_trigger when quick_refill fires." % GAMEPLAY_SCENE_PATH)
+	var quick_refill_event := _last_analytics_event_by_name("buddy_skill_trigger")
+	var quick_refill_params: Dictionary = Dictionary(quick_refill_event.get("params", {}))
+	if int(quick_refill_params.get("stage_id", 0)) != 4 or String(quick_refill_params.get("animal_id", "")) != "rabbit" or String(quick_refill_params.get("effect_type", "")) != "quick_refill":
+		errors.append("%s quick_refill trigger analytics should identify Stage 4 rabbit quick_refill." % GAMEPLAY_SCENE_PATH)
+
+	node.call("_trigger_buddy_skill")
+	if _analytics_event_count("buddy_skill_blocked") <= blocked_events_before:
+		errors.append("%s Rescue Buddy smoke should emit buddy_skill_blocked after quick_refill max uses." % GAMEPLAY_SCENE_PATH)
+	var quick_refill_blocked_event := _last_analytics_event_by_name("buddy_skill_blocked")
+	var quick_refill_blocked_params: Dictionary = Dictionary(quick_refill_blocked_event.get("params", {}))
+	if int(quick_refill_blocked_params.get("stage_id", 0)) != 4 or String(quick_refill_blocked_params.get("animal_id", "")) != "rabbit" or String(quick_refill_blocked_params.get("skill_id", "")) != "quick_refill" or String(quick_refill_blocked_params.get("reason", "")) != "max_uses":
+		errors.append("%s quick_refill blocked analytics should identify max_uses for Stage 4 rabbit quick_refill." % GAMEPLAY_SCENE_PATH)
+
+	node.call("_start_stage", 19)
+	node.set("board_data", _seed_plain_gameplay_board(node))
+	var collected_counts: Dictionary = Dictionary(node.get("collected_counts"))
+	collected_counts["bear"] = 9
+	collected_counts["rabbit"] = 4
+	node.set("collected_counts", collected_counts)
+	node.set("remaining_moves", 0)
+	var loyal_fetch_events_before := _analytics_event_count("buddy_skill_trigger")
+	if not bool(node.call("_try_loyal_fetch_before_failure")):
+		errors.append("%s loyal_fetch should rescue a near-fail Stage 20 state before failure." % GAMEPLAY_SCENE_PATH)
+	if int(node.get("remaining_moves")) != 1:
+		errors.append("%s loyal_fetch should restore one rescue move before failure." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("buddy_skill_trigger") <= loyal_fetch_events_before:
+		errors.append("%s loyal_fetch should emit buddy_skill_trigger analytics on near-fail rescue." % GAMEPLAY_SCENE_PATH)
+	var loyal_fetch_event := _last_analytics_event_by_name("buddy_skill_trigger")
+	var loyal_fetch_params: Dictionary = Dictionary(loyal_fetch_event.get("params", {}))
+	if int(loyal_fetch_params.get("stage_id", 0)) != 20 or String(loyal_fetch_params.get("animal_id", "")) != "dog" or String(loyal_fetch_params.get("effect_type", "")) != "loyal_fetch":
+		errors.append("%s loyal_fetch trigger analytics should identify Stage 20 dog loyal_fetch." % GAMEPLAY_SCENE_PATH)
 
 
 func _validate_special_effect_rules(node: Node, errors: PackedStringArray) -> void:
