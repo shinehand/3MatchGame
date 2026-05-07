@@ -190,7 +190,7 @@
 
 ### PAM-DEV-051: SpecialEffectQueue와 조합 테스트
 
-- 상태: 부분 완료. 인접한 non-rainbow 특수 블록끼리 교환하면 일반 매치가 없어도 유효 이동으로 처리되어 공통 특수 효과 큐를 먼저 해결한다. scene load smoke가 row+column 15칸 제거, row 경로 위 bomb 연쇄 21칸 제거, clear 경로 인접 장애물 피해, rainbow+special 우선순위 라우팅, row+row 8칸 중복 제거, bomb+bomb 12칸 합집합, T/L 교차 bomb 생성까지 검증한다. 남은 작업은 수동 플레이 QA다.
+- 상태: 부분 완료. 인접한 non-rainbow 특수 블록끼리 교환하면 일반 매치가 없어도 유효 이동으로 처리되어 공통 특수 효과 큐를 먼저 해결한다. scene load smoke가 row+column 15칸 제거, row 경로 위 bomb 연쇄 21칸 제거, clear 경로 인접 장애물 피해, rainbow+special 우선순위 라우팅, row+row/column+column 8칸 중복 제거, row+bomb/column+bomb 14칸 합집합, bomb+bomb 12칸 합집합, 4매치 row/column 특수 생성, 5매치 rainbow 생성, T/L 교차 bomb 생성까지 검증한다. Stage 31은 `combo_focus` + `recommended_smoke`로 31-40 특수 조합 밴드의 수동 smoke 진입점이 되며, balance validator가 이를 강제한다. 남은 작업은 실제 기기 수동 플레이 QA와 VFX 체감 튜닝이다.
 - 소유: Development Agent
 - 대상 파일:
   - `scripts/gameplay.gd`
@@ -200,7 +200,7 @@
   - 처리 순서를 `특수+특수 조합 -> 단일 특수 발동 -> 일반 매치 제거`로 고정한다.
   - 4매치, L/T매치, 5매치, 특수+특수 조합, 장애물 피해를 검증 케이스로 만든다.
 - 완료 기준:
-  - 특수 조합이 중복 제거 없이 1회씩 처리된다.
+  - 특수 조합 6종이 중복 제거 없이 1회씩 처리된다.
 
 ### PAM-DEV-052: FeverController MVP 구현
 

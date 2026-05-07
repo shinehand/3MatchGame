@@ -53,6 +53,14 @@
 - 이동 수 부족 또는 실패 직전 worried 반응이 과하지 않게 보인다.
 - 표정 연출이 스와이프, 낙하, 리필, 특수 블록 발동을 막지 않는다.
 
+## Gate 4A. 특수 블록 조합
+
+- 특수+특수 조합은 일반 매치보다 먼저 처리된다.
+- 4매치는 방향에 맞는 row/column 특수를 만들고, 5매치는 rainbow 특수를 만든다.
+- row+column, row+row, column+column, row+bomb, column+bomb, bomb+bomb 6종은 중복 제거 없이 1회씩 처리된다.
+- 특수 조합 경로 위의 chained special과 인접 장애물 피해가 scene smoke에서 검증된다.
+- rainbow+special은 특수+특수 큐보다 rainbow resolution 경로를 우선한다.
+
 ## Gate 5. 모바일 UI
 
 - portrait와 landscape에서 보드가 잘리지 않는다.

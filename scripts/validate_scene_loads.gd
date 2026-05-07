@@ -674,6 +674,48 @@ func _validate_special_effect_rules(node: Node, errors: PackedStringArray) -> vo
 		errors.append("%s bomb+bomb special combo should include the far corners of both blast areas." % GAMEPLAY_SCENE_PATH)
 
 	board_data = _seed_plain_gameplay_board(node)
+	var col_combo_a := Vector2i(2, 6)
+	var col_combo_b := Vector2i(3, 6)
+	board_data[col_combo_a.x][col_combo_a.y] = node.call("_make_piece", "rabbit", "col")
+	board_data[col_combo_b.x][col_combo_b.y] = node.call("_make_piece", "bear", "col")
+	node.set("board_data", board_data)
+	if not bool(node.call("_is_special_combo_swap", col_combo_a, col_combo_b)):
+		errors.append("%s should treat adjacent column+column special blocks as a valid special combo swap." % GAMEPLAY_SCENE_PATH)
+	var col_combo_cells: Array = node.call("_special_combo_clear_cells", col_combo_a, col_combo_b)
+	if col_combo_cells.size() != 8:
+		errors.append("%s column+column special combo should clear one full column without duplicates, got %d." % [GAMEPLAY_SCENE_PATH, col_combo_cells.size()])
+	if not col_combo_cells.has(Vector2i(0, 6)) or not col_combo_cells.has(Vector2i(7, 6)):
+		errors.append("%s column+column special combo should include both ends of the target column." % GAMEPLAY_SCENE_PATH)
+
+	board_data = _seed_plain_gameplay_board(node)
+	var row_bomb_a := Vector2i(2, 3)
+	var row_bomb_b := Vector2i(2, 4)
+	board_data[row_bomb_a.x][row_bomb_a.y] = node.call("_make_piece", "rabbit", "row")
+	board_data[row_bomb_b.x][row_bomb_b.y] = node.call("_make_piece", "bear", "bomb")
+	node.set("board_data", board_data)
+	if not bool(node.call("_is_special_combo_swap", row_bomb_a, row_bomb_b)):
+		errors.append("%s should treat adjacent row+bomb special blocks as a valid special combo swap." % GAMEPLAY_SCENE_PATH)
+	var row_bomb_cells: Array = node.call("_special_combo_clear_cells", row_bomb_a, row_bomb_b)
+	if row_bomb_cells.size() != 14:
+		errors.append("%s row+bomb special combo should clear a row plus one 3x3 splash without duplicates, got %d." % [GAMEPLAY_SCENE_PATH, row_bomb_cells.size()])
+	if not row_bomb_cells.has(Vector2i(2, 0)) or not row_bomb_cells.has(Vector2i(2, 7)) or not row_bomb_cells.has(Vector2i(1, 3)) or not row_bomb_cells.has(Vector2i(3, 5)):
+		errors.append("%s row+bomb special combo should include row ends and bomb splash fringe." % GAMEPLAY_SCENE_PATH)
+
+	board_data = _seed_plain_gameplay_board(node)
+	var col_bomb_a := Vector2i(4, 1)
+	var col_bomb_b := Vector2i(4, 2)
+	board_data[col_bomb_a.x][col_bomb_a.y] = node.call("_make_piece", "rabbit", "col")
+	board_data[col_bomb_b.x][col_bomb_b.y] = node.call("_make_piece", "bear", "bomb")
+	node.set("board_data", board_data)
+	if not bool(node.call("_is_special_combo_swap", col_bomb_a, col_bomb_b)):
+		errors.append("%s should treat adjacent column+bomb special blocks as a valid special combo swap." % GAMEPLAY_SCENE_PATH)
+	var col_bomb_cells: Array = node.call("_special_combo_clear_cells", col_bomb_a, col_bomb_b)
+	if col_bomb_cells.size() != 14:
+		errors.append("%s column+bomb special combo should clear a column plus one 3x3 splash without duplicates, got %d." % [GAMEPLAY_SCENE_PATH, col_bomb_cells.size()])
+	if not col_bomb_cells.has(Vector2i(0, 1)) or not col_bomb_cells.has(Vector2i(7, 1)) or not col_bomb_cells.has(Vector2i(3, 3)) or not col_bomb_cells.has(Vector2i(5, 3)):
+		errors.append("%s column+bomb special combo should include column ends and bomb splash fringe." % GAMEPLAY_SCENE_PATH)
+
+	board_data = _seed_plain_gameplay_board(node)
 	var intersection := Vector2i(5, 5)
 	for cell in [Vector2i(5, 4), intersection, Vector2i(5, 6), Vector2i(3, 5), Vector2i(4, 5)]:
 		board_data[cell.x][cell.y] = node.call("_make_piece", "rabbit")
@@ -682,6 +724,36 @@ func _validate_special_effect_rules(node: Node, errors: PackedStringArray) -> vo
 	var special_spawns: Dictionary = Dictionary(match_outcome.get("special_spawns", {}))
 	if String(special_spawns.get(intersection, "")) != "bomb":
 		errors.append("%s T/L intersection match should spawn a bomb at the preferred intersection, got %s." % [GAMEPLAY_SCENE_PATH, String(special_spawns.get(intersection, ""))])
+
+	board_data = _seed_plain_gameplay_board(node)
+	var row_four_spawn := Vector2i(0, 2)
+	for cell in [Vector2i(0, 1), row_four_spawn, Vector2i(0, 3), Vector2i(0, 4)]:
+		board_data[cell.x][cell.y] = node.call("_make_piece", "frog")
+	node.set("board_data", board_data)
+	var row_four_outcome: Dictionary = node.call("_analyze_match_outcome", [row_four_spawn])
+	var row_four_spawns: Dictionary = Dictionary(row_four_outcome.get("special_spawns", {}))
+	if String(row_four_spawns.get(row_four_spawn, "")) != "row":
+		errors.append("%s 4-match row run should spawn a row special at the preferred cell, got %s." % [GAMEPLAY_SCENE_PATH, String(row_four_spawns.get(row_four_spawn, ""))])
+
+	board_data = _seed_plain_gameplay_board(node)
+	var col_four_spawn := Vector2i(2, 6)
+	for cell in [Vector2i(1, 6), col_four_spawn, Vector2i(3, 6), Vector2i(4, 6)]:
+		board_data[cell.x][cell.y] = node.call("_make_piece", "dog")
+	node.set("board_data", board_data)
+	var col_four_outcome: Dictionary = node.call("_analyze_match_outcome", [col_four_spawn])
+	var col_four_spawns: Dictionary = Dictionary(col_four_outcome.get("special_spawns", {}))
+	if String(col_four_spawns.get(col_four_spawn, "")) != "col":
+		errors.append("%s 4-match column run should spawn a column special at the preferred cell, got %s." % [GAMEPLAY_SCENE_PATH, String(col_four_spawns.get(col_four_spawn, ""))])
+
+	board_data = _seed_plain_gameplay_board(node)
+	var rainbow_spawn := Vector2i(6, 3)
+	for cell in [Vector2i(6, 1), Vector2i(6, 2), rainbow_spawn, Vector2i(6, 4), Vector2i(6, 5)]:
+		board_data[cell.x][cell.y] = node.call("_make_piece", "panda")
+	node.set("board_data", board_data)
+	var rainbow_outcome_spawn: Dictionary = node.call("_analyze_match_outcome", [rainbow_spawn])
+	var rainbow_spawns: Dictionary = Dictionary(rainbow_outcome_spawn.get("special_spawns", {}))
+	if String(rainbow_spawns.get(rainbow_spawn, "")) != "rainbow":
+		errors.append("%s 5-match run should spawn a rainbow special at the preferred cell, got %s." % [GAMEPLAY_SCENE_PATH, String(rainbow_spawns.get(rainbow_spawn, ""))])
 
 
 func _seed_plain_gameplay_board(node: Node) -> Array:

@@ -2,7 +2,7 @@ extends SceneTree
 
 const StageCatalog = preload("res://scripts/stage_catalog.gd")
 
-const REQUIRED_SMOKE_STAGES := [1, 5, 10, 20, 51, 81, 100]
+const REQUIRED_SMOKE_STAGES := [1, 5, 10, 20, 31, 51, 81, 100]
 
 const BAND_RULES := {
 	"1-10": {"min_id": 1, "max_id": 10, "moves_min": 12, "moves_max": 13, "blockers_min": 0, "blockers_max": 2},
@@ -117,6 +117,8 @@ func _validate_band_tag_wave(band_name: String, tag_counts: Dictionary, errors: 
 		errors.append("%s band must include blocker_focus stages" % band_name)
 	if int(tag_counts.get("score_focus", 0)) <= 0:
 		warnings.append("%s band has no score_focus stages" % band_name)
+	if band_name == "31-40" and int(tag_counts.get("combo_focus", 0)) <= 0:
+		errors.append("31-40 band must include combo_focus stages for special-combo QA coverage")
 	if band_name == "91-100" and int(tag_counts.get("finale", 0)) <= 0:
 		errors.append("91-100 band must include finale tags")
 	if band_name != "91-100" and int(tag_counts.get("finale", 0)) > 0:
@@ -160,6 +162,8 @@ func _validate_recommended_smoke_coverage(stages: Array, errors: PackedStringArr
 		var stage: Dictionary = stages_by_id[stage_id]
 		if not bool(stage.get("recommended_smoke", false)):
 			errors.append("stage %d must set recommended_smoke for QA smoke coverage" % stage_id)
+		if stage_id == 31 and not Array(stage.get("tags", [])).has("combo_focus"):
+			errors.append("stage 31 must keep combo_focus for special-combo smoke coverage")
 
 
 func _validate_roster_rotation(stages: Array, warnings: PackedStringArray) -> void:

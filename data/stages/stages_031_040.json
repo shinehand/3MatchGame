@@ -89,14 +89,17 @@
     "tags": [
       "recovery",
       "blocker_focus",
+      "combo_focus",
       "mixed_goal"
     ],
     "tutorial": "구멍이 있는 중앙을 기준으로 낙하 경로를 먼저 읽으세요.",
     "difficulty_tag": [
       "recovery",
       "blocker_focus",
+      "combo_focus",
       "mixed_goal"
     ],
+    "recommended_smoke": true,
     "buddy": {
       "animal": "penguin",
       "skill_id": "cascade_slide",

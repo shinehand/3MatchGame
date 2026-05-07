@@ -84,6 +84,7 @@ cat <<'EOF'
 - 4매치 후 줄 제거 특수 블록 배지가 생기는지 확인
 - 5매치 후 무지개 구슬 특수 블록이 생기는지 확인
 - L/T자 매치 후 폭발 특수 블록이 생기는지 확인
+- Stage 31 smoke에서 row+column, row+row, column+column, row+bomb, column+bomb, bomb+bomb 6종 조합이 중복 제거 없이 한 번씩 처리되는지 확인
 - Combo Gauge가 차면 일반 블록 3개가 특수 블록으로 변환되는지 확인
 - 덤불 스테이지에서 덤불 목표 칩과 보드 오버레이가 함께 보이는지 확인
 - 스테이지 클리어 후 남은 이동 수가 있으면 Zoo-Zoo Time 보너스 폭발이 먼저 재생되는지 확인
