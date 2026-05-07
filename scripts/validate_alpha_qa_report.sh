@@ -138,7 +138,10 @@ append_evidence_path() {
 	local evidence_path="$1"
 	case "$evidence_path" in
 		output/alpha-lock-pass/*|build/android/*)
-			evidence_paths+=("$evidence_path")
+			if [ -z "${evidence_seen[$evidence_path]:-}" ]; then
+				evidence_paths+=("$evidence_path")
+				evidence_seen[$evidence_path]=1
+			fi
 			;;
 	esac
 }
@@ -180,7 +183,7 @@ require_evidence_field_value() {
 	local value
 	value="$(evidence_field_value "$evidence_path" "$field_label")"
 	case "$value" in
-		""|unknown|null)
+		""|unknown|null|Pending|PENDING|pending|TBD|tbd|TODO|todo|N/A|n/a|"-")
 			add_failure "${evidence_path##*/} field '${field_label}' is unresolved: ${value:-empty}"
 			;;
 	esac
@@ -210,6 +213,27 @@ validate_known_evidence_file() {
 			;;
 		install-log.txt)
 			require_evidence_text "$evidence_path" "$evidence_name" "Success"
+			;;
+		manual-device-checks.txt)
+			require_evidence_text "$evidence_path" "$evidence_name" "Manual checks result: PASS"
+			require_evidence_field_value "$evidence_path" "Test timestamp"
+			require_evidence_field_value "$evidence_path" "Build source commit"
+			require_evidence_field_value "$evidence_path" "Build artifact"
+			require_evidence_field_value "$evidence_path" "Tester"
+			require_evidence_field_value "$evidence_path" "Device"
+			require_evidence_field_value "$evidence_path" "OS version"
+			reject_evidence_regex "$evidence_path" "$evidence_name" '(Sound|Haptics|Touch|Manual checks) result: (FAIL|BLOCKED)'
+			;;
+		sound-toggle-notes.md|haptics-toggle-notes.md|touch-latency-notes.md)
+			require_evidence_text "$evidence_path" "$evidence_name" "Manual result: PASS"
+			require_evidence_field_value "$evidence_path" "Test timestamp"
+			require_evidence_field_value "$evidence_path" "Build source commit"
+			require_evidence_field_value "$evidence_path" "Build artifact"
+			require_evidence_field_value "$evidence_path" "Tester"
+			require_evidence_field_value "$evidence_path" "Device"
+			require_evidence_field_value "$evidence_path" "OS version"
+			require_evidence_field_value "$evidence_path" "Scenario checked"
+			require_evidence_field_value "$evidence_path" "Note"
 			;;
 	esac
 }
@@ -287,6 +311,7 @@ for device_blocker in \
 done
 
 evidence_paths=()
+typeset -A evidence_seen
 while IFS= read -r path_token; do
 	path_token="${path_token#\`}"
 	path_token="${path_token%\`}"

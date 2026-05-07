@@ -3708,7 +3708,7 @@ func _validate_alpha_manual_qa_template_coverage(stages: Array, errors: PackedSt
 			errors
 		)
 
-	for scenario_id in ["Mobile viewport matrix", "390x844", "844x390", "Android debug APK export", "zsh scripts/export_android_debug.sh", "android-debug-export.txt", "Android device evidence capture", "zsh scripts/capture_android_device_evidence.sh", "--allow-orientation-change", "android-device-evidence.txt", "device-info.txt", "Alpha QA report validation", "validate_alpha_qa_report.sh", "SPECIAL_COMBO_6", "MONETIZATION_GATEWAY_PENDING", "ANALYTICS_GATEWAY_LOCAL_BUFFER"]:
+	for scenario_id in ["Mobile viewport matrix", "390x844", "844x390", "Android debug APK export", "zsh scripts/export_android_debug.sh", "android-debug-export.txt", "Android device evidence capture", "zsh scripts/capture_android_device_evidence.sh", "--allow-orientation-change", "android-device-evidence.txt", "device-info.txt", "Manual device checks", "zsh scripts/record_manual_device_checks.sh", "manual-device-checks.txt", "sound-toggle-notes.md", "haptics-toggle-notes.md", "touch-latency-notes.md", "Alpha QA report validation", "validate_alpha_qa_report.sh", "SPECIAL_COMBO_6", "MONETIZATION_GATEWAY_PENDING", "ANALYTICS_GATEWAY_LOCAL_BUFFER"]:
 		_require_alpha_template_text(
 			template_text,
 			scenario_id,

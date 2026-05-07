@@ -20,6 +20,7 @@
 | Android debug environment | `zsh scripts/check_android_setup.sh` | Pending |  |
 | Android debug APK export | `zsh scripts/export_android_debug.sh` | Pending | Writes `output/alpha-lock-pass/YYYY-MM-DD/captures/android-debug-export.txt` and verifies APK signature |
 | Android device evidence capture | `zsh scripts/capture_android_device_evidence.sh --allow-orientation-change` | Pending | Writes device-info, portrait/landscape screenshots, 10s video, logcat, and `output/alpha-lock-pass/YYYY-MM-DD/captures/android-device-evidence.txt`; sound/haptics/touch remain manual |
+| Manual device checks | `zsh scripts/record_manual_device_checks.sh --tester=name --device=model --os=version --sound=PASS --haptics=PASS --touch=PASS --sound-note='...' --haptics-note='...' --touch-note='...'` | Pending | Writes `output/alpha-lock-pass/YYYY-MM-DD/captures/sound-toggle-notes.md`, `output/alpha-lock-pass/YYYY-MM-DD/captures/haptics-toggle-notes.md`, `output/alpha-lock-pass/YYYY-MM-DD/captures/touch-latency-notes.md`, and `output/alpha-lock-pass/YYYY-MM-DD/captures/manual-device-checks.txt` |
 | Release preflight | `GODOT_RELEASE_KEYSTORE_PATH=/path/to/release.keystore zsh scripts/check_android_setup.sh --release` | Pending | Required for release candidates |
 | Install/run evidence | APK path + install result | Pending | Device required |
 | Alpha QA report validation | `zsh scripts/validate_alpha_qa_report.sh --report=output/alpha-lock-pass/YYYY-MM-DD/alpha-lock-pass-manual-qa-YYYY-MM-DD.md` | Pending | Run only after all manual QA evidence is filled; fails on Pending/Blocked/Fail/Open placeholders |
@@ -35,9 +36,9 @@
 | Portrait screenshot | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/device-portrait.png` | Safe area/notch/home indicator visible |
 | Landscape screenshot | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/device-landscape.png` | Safe area/notch/home indicator visible |
 | 10s video path | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/device-10s.mp4` | First-look readability |
-| sound ON/OFF | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/sound-toggle.*` | Android real-device playback |
-| haptics ON/OFF | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/haptics-toggle.*` | Android real-device feedback |
-| touch latency notes | Pending |  | Drag, tap, popup close/start |
+| sound ON/OFF | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/sound-toggle-notes.md` | Android real-device playback |
+| haptics ON/OFF | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/haptics-toggle-notes.md` | Android real-device feedback |
+| touch latency notes | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/touch-latency-notes.md` | Drag, tap, popup close/start |
 | logcat or app log path | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/device-log.txt` | Attach any crash/runtime warnings |
 
 ## Representative Course Results
