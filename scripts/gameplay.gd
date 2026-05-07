@@ -48,6 +48,7 @@ const COMBO_GAUGE_MAX := 6
 const FEVER_TURN_COUNT := 3
 const FEVER_SCORE_MULTIPLIER := 2
 const FEVER_TARGET_BONUS := 1
+const FAIL_OFFER_COIN_CONTINUE_COST := 120
 const SPECIAL_PRIORITY := {
 	"": 0,
 	"row": 1,
@@ -172,6 +173,7 @@ var fever_target_bonus_collected := 0
 var result_overlay_event_impressions_sent := {}
 var active_fail_offer: Dictionary = {}
 var active_fail_offer_shown_msec := 0
+var active_fail_offer_continue_granted := false
 
 
 func _ready() -> void:
@@ -286,6 +288,7 @@ func _start_stage(stage_index: int) -> void:
 	fever_score_at_start = 0
 	fever_target_bonus_collected = 0
 	stage_state = "playing"
+	active_fail_offer_continue_granted = false
 	cleared_blockers = 0
 	_last_moves_warning = -1
 	_last_worried_moves = -1
@@ -1727,12 +1730,55 @@ func _track_fail_offer_dismiss_analytics(action: String, button_label: String) -
 	GameSession.record_analytics_event("fail_offer_dismiss", params)
 
 
-func _track_extra_moves_grant_analytics(source: String, moves_amount: int) -> void:
+func _track_extra_moves_grant_analytics(source: String, moves_amount: int, transaction_id: String = "") -> void:
 	var params := _analytics_stage_base()
 	params["source"] = source
 	params["moves_amount"] = moves_amount
-	params["transaction_id"] = "%s-%d-%d" % [source, _current_stage_id(), Time.get_ticks_msec()]
+	params["transaction_id"] = transaction_id if not transaction_id.is_empty() else _make_continue_transaction_id(source)
 	GameSession.record_analytics_event("extra_moves_grant", params)
+
+
+func _track_ad_reward_complete_analytics(moves_amount: int, transaction_id: String, details: Dictionary = {}) -> void:
+	var params := _analytics_stage_base()
+	params["placement"] = "fail_offer"
+	params["reward_type"] = "extra_moves"
+	params["reward_amount"] = moves_amount
+	params["transaction_id"] = transaction_id
+	params["ad_network"] = String(details.get("ad_network", "validation"))
+	GameSession.record_analytics_event("ad_reward_complete", params)
+
+
+func _track_ad_reward_fail_analytics(details: Dictionary = {}) -> void:
+	var params := _analytics_stage_base()
+	params["placement"] = "fail_offer"
+	params["reward_type"] = "extra_moves"
+	params["ad_network"] = String(details.get("ad_network", "validation"))
+	params["error_code"] = String(details.get("error_code", "ad_failed"))
+	GameSession.record_analytics_event("ad_reward_fail", params)
+
+
+func _track_iap_purchase_start_analytics(details: Dictionary = {}) -> void:
+	GameSession.record_analytics_event("iap_purchase_start", _iap_purchase_base_params(details))
+
+
+func _track_iap_purchase_fail_analytics(details: Dictionary = {}) -> void:
+	var params := _iap_purchase_base_params(details)
+	params["error_code"] = String(details.get("error_code", "purchase_failed"))
+	GameSession.record_analytics_event("iap_purchase_fail", params)
+
+
+func _track_iap_purchase_cancel_analytics(details: Dictionary = {}) -> void:
+	GameSession.record_analytics_event("iap_purchase_cancel", _iap_purchase_base_params(details))
+
+
+func _iap_purchase_base_params(details: Dictionary = {}) -> Dictionary:
+	var params := {
+		"product_id": String(details.get("product_id", "fail_offer_continue_pack")),
+		"placement": "fail_offer",
+		"price": float(details.get("price", 0.99)),
+		"currency": String(details.get("currency", "USD")),
+	}
+	return params
 
 
 func _offer_type_for_fail_offer(fail_offer: Dictionary) -> String:
@@ -1755,6 +1801,64 @@ func _dismiss_action_for_overlay(action: String, button_label: String) -> String
 	if button_label.contains("홈"):
 		return "home"
 	return "dismiss"
+
+
+func _make_continue_transaction_id(source: String) -> String:
+	return "%s-%d-%d" % [source, _current_stage_id(), Time.get_ticks_msec()]
+
+
+func _continue_moves_for_source(source: String) -> int:
+	var remote_config := LiveEventService.load_remote_config(false)
+	if source == "coins":
+		return maxi(1, int(remote_config.get("coin_continue_moves", 5)))
+	return maxi(1, int(remote_config.get("rewarded_continue_moves", 3)))
+
+
+func _resolve_fail_offer_continue_result(source: String, result: String, details: Dictionary = {}) -> bool:
+	var normalized_source := source.strip_edges().to_lower()
+	var normalized_result := result.strip_edges().to_lower()
+	if overlay_action != "continue_stage" or active_fail_offer.is_empty():
+		return false
+
+	if normalized_result != "completed" and normalized_result != "success":
+		if normalized_source == "rewarded_ad":
+			_track_ad_reward_fail_analytics(details)
+		elif normalized_source == "iap":
+			_track_iap_purchase_start_analytics(details)
+			if normalized_result == "cancelled" or normalized_result == "canceled":
+				_track_iap_purchase_cancel_analytics(details)
+			else:
+				_track_iap_purchase_fail_analytics(details)
+		_set_status("추가 이동 지급이 완료되지 않았습니다. 재도전 또는 다른 선택지를 고를 수 있습니다.")
+		return false
+
+	if active_fail_offer_continue_granted:
+		return false
+
+	var moves_amount := _continue_moves_for_source(normalized_source)
+	var grant_source := "fail_offer_continue"
+	var transaction_id := _make_continue_transaction_id(grant_source)
+	if normalized_source == "coins":
+		grant_source = "coin_continue"
+		transaction_id = _make_continue_transaction_id(grant_source)
+		var cost_amount := int(details.get("cost_amount", FAIL_OFFER_COIN_CONTINUE_COST))
+		if not GameSession.spend_gold(cost_amount):
+			_set_status("코인이 부족해 추가 이동을 받을 수 없습니다.")
+			return false
+	elif normalized_source == "rewarded_ad":
+		_track_ad_reward_complete_analytics(moves_amount, transaction_id, details)
+	elif normalized_source == "iap":
+		grant_source = "iap_continue"
+		transaction_id = _make_continue_transaction_id(grant_source)
+
+	active_fail_offer_continue_granted = true
+	stage_state = "playing"
+	remaining_moves = maxi(remaining_moves, 0) + moves_amount
+	_track_extra_moves_grant_analytics(grant_source, moves_amount, transaction_id)
+	_set_status("추가 이동 %d회를 받아 계속 진행합니다." % moves_amount)
+	_update_hud()
+	_hide_overlay()
+	return true
 
 
 func _track_booster_used_analytics(booster_id: String, source: String) -> void:
@@ -2548,6 +2652,7 @@ func _check_stage_state() -> void:
 			_track_fever_end_analytics("stage_fail")
 		active_fail_offer = fail_offer.duplicate(true)
 		active_fail_offer_shown_msec = Time.get_ticks_msec()
+		active_fail_offer_continue_granted = false
 		_track_stage_fail_analytics(fail_offer)
 		_track_offer_impression_analytics(fail_offer)
 		_track_fail_offer_show_analytics(fail_offer, fail_count)
@@ -3017,6 +3122,7 @@ func _hide_overlay() -> void:
 	overlay_action = ""
 	active_fail_offer = {}
 	active_fail_offer_shown_msec = 0
+	active_fail_offer_continue_granted = false
 
 
 func _show_combo_banner(combo: int) -> void:
@@ -3057,6 +3163,10 @@ func _on_overlay_primary_button_pressed() -> void:
 	Feedback.play_ui_tap()
 	var action: String = overlay_action
 	_track_fail_offer_select_analytics(action, overlay_primary_button.text)
+	if action == "continue_stage":
+		_resolve_fail_offer_continue_result("rewarded_ad", "completed")
+		return
+
 	_hide_overlay()
 
 	match action:
@@ -3076,12 +3186,6 @@ func _on_overlay_primary_button_pressed() -> void:
 			get_tree().change_scene_to_file("res://scenes/main.tscn")
 		"restart_stage":
 			_start_stage(current_stage_index)
-		"continue_stage":
-			stage_state = "playing"
-			remaining_moves = maxi(remaining_moves, 0) + 3
-			_track_extra_moves_grant_analytics("fail_offer_continue", 3)
-			_set_status("추가 이동 3회를 받아 계속 진행합니다.")
-			_update_hud()
 
 
 func _on_overlay_secondary_button_pressed() -> void:

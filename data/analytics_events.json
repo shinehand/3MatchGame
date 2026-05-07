@@ -163,6 +163,66 @@
     ]
   },
   {
+    "name": "ad_reward_complete",
+    "required_params": [
+      "session_id",
+      "stage_id",
+      "placement",
+      "reward_type",
+      "reward_amount",
+      "transaction_id"
+    ],
+    "optional_params": [
+      "ad_network"
+    ]
+  },
+  {
+    "name": "ad_reward_fail",
+    "required_params": [
+      "session_id",
+      "stage_id",
+      "placement",
+      "reward_type",
+      "ad_network",
+      "error_code"
+    ],
+    "optional_params": []
+  },
+  {
+    "name": "iap_purchase_start",
+    "required_params": [
+      "session_id",
+      "product_id",
+      "price",
+      "currency",
+      "placement"
+    ],
+    "optional_params": []
+  },
+  {
+    "name": "iap_purchase_cancel",
+    "required_params": [
+      "session_id",
+      "product_id",
+      "placement",
+      "price",
+      "currency"
+    ],
+    "optional_params": []
+  },
+  {
+    "name": "iap_purchase_fail",
+    "required_params": [
+      "session_id",
+      "product_id",
+      "placement",
+      "error_code",
+      "price",
+      "currency"
+    ],
+    "optional_params": []
+  },
+  {
     "name": "fail_offer_show",
     "required_params": [
       "session_id",

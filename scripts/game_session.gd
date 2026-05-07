@@ -2,6 +2,7 @@ extends RefCounted
 
 const SAVE_PATH := "user://save_game.json"
 const ANALYTICS_CONTRACT_PATH := "res://data/analytics_events.json"
+const MAX_ANALYTICS_EVENTS := 200
 const CollectionState = preload("res://scripts/collection_state.gd")
 
 static var _loaded := false
@@ -166,7 +167,7 @@ static func record_analytics_event(event_name: String, params: Dictionary) -> vo
 		"params": event_params,
 	}
 	events.append(entry)
-	while events.size() > 100:
+	while events.size() > MAX_ANALYTICS_EVENTS:
 		events.pop_front()
 	_save_data["analytics_events"] = events
 	save_state()
@@ -526,6 +527,27 @@ static func get_wallet() -> Dictionary:
 	var wallet := _normalize_wallet(Dictionary(_save_data.get("wallet", {})))
 	_save_data["wallet"] = wallet
 	return wallet.duplicate(true)
+
+
+static func set_wallet_for_testing(wallet: Dictionary) -> void:
+	load_state()
+	_save_data["wallet"] = _normalize_wallet(wallet)
+	save_state()
+
+
+static func spend_gold(amount: int) -> bool:
+	load_state()
+	var spend_amount: int = max(0, amount)
+	var wallet := _normalize_wallet(Dictionary(_save_data.get("wallet", {})))
+	var current_gold := int(wallet.get("gold", 0))
+	if current_gold < spend_amount:
+		_save_data["wallet"] = wallet
+		save_state()
+		return false
+	wallet["gold"] = current_gold - spend_amount
+	_save_data["wallet"] = wallet
+	save_state()
+	return true
 
 
 static func _normalized_live_events_from_save() -> Dictionary:
