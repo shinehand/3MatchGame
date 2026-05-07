@@ -50,6 +50,7 @@ Godot 4 기반 모바일 3매치 퍼즐 게임 프로젝트입니다.
 - 자동 점검: `./scripts/validate_gameplay.sh`
 - 스테이지 데이터 점검: `zsh scripts/validate_stage_data.sh`
 - 스테이지 밸런스 점검: `zsh scripts/validate_stage_balance.sh`
+- Android export 설정 점검: `zsh scripts/validate_android_export_config.sh`
 - Android debug 환경 점검: `zsh scripts/check_android_setup.sh`
 - Android debug APK 생성/서명 검증: `zsh scripts/export_android_debug.sh`
 - Android 실기기 증거 수집: `zsh scripts/capture_android_device_evidence.sh --allow-orientation-change`
@@ -68,7 +69,7 @@ Godot 4 기반 모바일 3매치 퍼즐 게임 프로젝트입니다.
 - 실기기 수동 소리/햅틱/터치 판정 기록: `zsh scripts/record_manual_device_checks.sh --tester=name --device=model --os=version --sound=PASS --haptics=PASS --touch=PASS --sound-note='...' --haptics-note='...' --touch-note='...'`
 - Release APK 프리플라이트: `GODOT_ANDROID_KEYSTORE_RELEASE_PATH=/path/to/release.keystore GODOT_ANDROID_KEYSTORE_RELEASE_USER=alias GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=password zsh scripts/check_android_setup.sh --release`
 - Release APK 생성/서명/설치 evidence 기록: `GODOT_ANDROID_KEYSTORE_RELEASE_PATH=/path/to/release.keystore GODOT_ANDROID_KEYSTORE_RELEASE_USER=alias GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=password zsh scripts/export_android_release.sh --install`
-- 기기 설치: `adb install -r build/android/puzzle-mobile-starter-debug.apk`
+- 기기 설치: `adb install -r build/android/zoo-zoo-pop-debug.apk`
 
 ## Codex 멀티 에이전트
 

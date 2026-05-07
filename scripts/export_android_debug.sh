@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
-OUTPUT_APK="build/android/puzzle-mobile-starter-debug.apk"
+OUTPUT_APK="build/android/zoo-zoo-pop-debug.apk"
 INSTALL=false
 DRY_RUN=false
 

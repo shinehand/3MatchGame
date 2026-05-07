@@ -179,6 +179,15 @@
 - atlas/overlay 에셋 누락 시 게임이 멈추지 않고 기본 블록 텍스처로 fallback한다.
 - 컬렉션 표정 미리보기는 화면 밖 카드 또는 비활성/숨김 상태에서 재생되지 않는다.
 
+## Gate 12. Android Export Identity
+
+- `export_presets.cfg`의 Android preset은 `Zoo-Zoo Pop` 앱명과 `com.shinehandmac.zoozoopop` package id를 사용한다.
+- debug export path는 `build/android/zoo-zoo-pop-debug.apk`, release export evidence path는 `build/android/zoo-zoo-pop-release.apk`를 기준으로 한다.
+- `version/code`는 양의 정수, `version/name`은 SemVer 형태여야 한다.
+- Android preset은 signed package, vibrate permission, arm64 ABI를 유지해야 한다.
+- `zsh scripts/validate_android_export_config.sh`와 `zsh scripts/validate_gameplay.sh`가 starter placeholder 회귀를 차단한다.
+- 이 gate는 release keystore, APK export, 설치, 실행을 증명하지 않으며 해당 항목은 Android evidence script와 alpha QA report validator로 승인한다.
+
 ## 승인 보고 형식
 
 ```text

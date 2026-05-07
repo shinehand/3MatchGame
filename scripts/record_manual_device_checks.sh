@@ -12,7 +12,7 @@ MANIFEST_PATH="$CAPTURE_DIR/manual-device-checks.txt"
 SOUND_PATH="$CAPTURE_DIR/sound-toggle-notes.md"
 HAPTICS_PATH="$CAPTURE_DIR/haptics-toggle-notes.md"
 TOUCH_PATH="$CAPTURE_DIR/touch-latency-notes.md"
-BUILD_ARTIFACT_PATH="build/android/puzzle-mobile-starter-debug.apk"
+BUILD_ARTIFACT_PATH="build/android/zoo-zoo-pop-debug.apk"
 
 TESTER=""
 DEVICE_NAME=""
@@ -26,7 +26,7 @@ TOUCH_NOTE=""
 DRY_RUN=false
 
 usage() {
-	echo "Usage: $SCRIPT_NAME --tester=name --device='model' --os='version' --sound=PASS --haptics=PASS --touch=PASS --sound-note='...' --haptics-note='...' --touch-note='...' [--artifact=build/android/puzzle-mobile-starter-debug.apk] [--output-dir=output/alpha-lock-pass/YYYY-MM-DD/captures] [--dry-run]"
+	echo "Usage: $SCRIPT_NAME --tester=name --device='model' --os='version' --sound=PASS --haptics=PASS --touch=PASS --sound-note='...' --haptics-note='...' --touch-note='...' [--artifact=build/android/zoo-zoo-pop-debug.apk] [--output-dir=output/alpha-lock-pass/YYYY-MM-DD/captures] [--dry-run]"
 	echo "Records human-judged Android sound, haptics, and touch evidence for the alpha QA packet."
 }
 

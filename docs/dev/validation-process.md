@@ -41,14 +41,17 @@
 zsh scripts/validate_stage_data.sh
 zsh scripts/validate_stage_balance.sh
 zsh scripts/validate_analytics_contract.sh
+zsh scripts/validate_android_export_config.sh
 zsh scripts/validate_gameplay.sh
 ```
 
 이 CI는 Android 실기기 설치, release keystore 서명 증거, 실제 광고/IAP/analytics SDK provider 연동을 증명하지 않는다. 해당 항목은 아래 Android evidence script와 최종 Alpha QA report validator로 별도 승인해야 한다. workflow는 성공/실패와 관계없이 `/tmp/puzzle-*` 검증 로그와 caveat 문서를 `no-device-alpha-gate-logs` artifact로 업로드한다.
 
-`zsh scripts/export_android_debug.sh`는 Android debug export를 수행하고 `build/android/puzzle-mobile-starter-debug.apk`를 `apksigner`로 검증한 뒤 `output/alpha-lock-pass/YYYY-MM-DD/captures/android-debug-export.txt`에 commit, APK 경로, export 결과, signature verify 결과, ADB device 상태를 남긴다. `--dry-run`은 CLI 계약과 evidence path만 확인하며 APK export, signature verify, install, device evidence를 증명하지 않는다. 기기가 연결된 설치 검증은 `zsh scripts/export_android_debug.sh --install`로 실행하며, 연결 기기가 정확히 1대가 아니면 install evidence는 Blocked로 기록한다.
+`zsh scripts/validate_android_export_config.sh`는 Android export preset이 `Zoo-Zoo Pop`, `com.shinehandmac.zoozoopop`, `build/android/zoo-zoo-pop-debug.apk`, SemVer `version/name`, 양수 `version/code`, signed package, vibrate permission, arm64 ABI를 유지하는지 검사한다. 이 preflight는 release keystore나 실제 APK 생성을 요구하지 않지만 starter placeholder가 export 설정으로 되돌아가는 것은 차단한다. alpha evidence path의 APK 이름은 `create_alpha_qa_packet.sh`와 `validate_alpha_qa_report.sh` 계약으로 별도 고정한다.
 
-`zsh scripts/export_android_release.sh --install`은 `GODOT_ANDROID_KEYSTORE_RELEASE_PATH`, `GODOT_ANDROID_KEYSTORE_RELEASE_USER`, `GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD`로 Godot Android release signing 값을 주입해 `build/android/puzzle-mobile-starter-release.apk`를 생성하고 `apksigner` 검증, SHA-256 checksum, install/launch evidence를 `output/alpha-lock-pass/YYYY-MM-DD/captures/android-release-export.txt`, `release-install-log.txt`, `release-run-log.txt`에 남긴다. legacy alias `GODOT_RELEASE_KEYSTORE_PATH/USER/PASSWORD`도 허용하지만, 비밀번호 값은 evidence에 기록하지 않는다.
+`zsh scripts/export_android_debug.sh`는 Android debug export를 수행하고 `build/android/zoo-zoo-pop-debug.apk`를 `apksigner`로 검증한 뒤 `output/alpha-lock-pass/YYYY-MM-DD/captures/android-debug-export.txt`에 commit, APK 경로, export 결과, signature verify 결과, ADB device 상태를 남긴다. `--dry-run`은 CLI 계약과 evidence path만 확인하며 APK export, signature verify, install, device evidence를 증명하지 않는다. 기기가 연결된 설치 검증은 `zsh scripts/export_android_debug.sh --install`로 실행하며, 연결 기기가 정확히 1대가 아니면 install evidence는 Blocked로 기록한다.
+
+`zsh scripts/export_android_release.sh --install`은 `GODOT_ANDROID_KEYSTORE_RELEASE_PATH`, `GODOT_ANDROID_KEYSTORE_RELEASE_USER`, `GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD`로 Godot Android release signing 값을 주입해 `build/android/zoo-zoo-pop-release.apk`를 생성하고 `apksigner` 검증, SHA-256 checksum, install/launch evidence를 `output/alpha-lock-pass/YYYY-MM-DD/captures/android-release-export.txt`, `release-install-log.txt`, `release-run-log.txt`에 남긴다. legacy alias `GODOT_RELEASE_KEYSTORE_PATH/USER/PASSWORD`도 허용하지만, 비밀번호 값은 evidence에 기록하지 않는다.
 
 `zsh scripts/capture_android_device_evidence.sh --allow-orientation-change`는 연결된 Android 실기기가 정확히 1대일 때 앱을 실행하고 `device-info.txt`, `device-portrait.png`, `device-landscape.png`, `device-10s.mp4`, `device-log.txt`, `android-device-evidence.txt`를 `output/alpha-lock-pass/YYYY-MM-DD/captures/`에 남긴다. 기본 실행은 기기 회전 설정을 바꾸지 않으며, `--allow-orientation-change`를 줄 때만 현재 회전 설정을 저장한 뒤 portrait/landscape 캡처를 시도하고 종료 시 복원한다. 소리, 햅틱, 터치감은 자동 판정하지 않고 manifest의 수동 후속 항목으로 남긴다. 기기가 없거나 unauthorized/offline이면 capture는 Blocked로 실패하며 일반 `validate_gameplay.sh`에는 포함하지 않는다.
 

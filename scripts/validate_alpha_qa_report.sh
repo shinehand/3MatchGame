@@ -293,6 +293,9 @@ validate_report_contract() {
 		"Mobile viewport matrix" \
 		"390x844" \
 		"844x390" \
+		"Android export config" \
+		"zsh scripts/validate_android_export_config.sh" \
+		"com.shinehandmac.zoozoopop" \
 		"Android debug APK export" \
 		"zsh scripts/export_android_debug.sh" \
 		"Android device evidence capture" \
@@ -312,8 +315,8 @@ validate_report_contract() {
 	done
 
 	for evidence_anchor in \
-		"puzzle-mobile-starter-debug.apk" \
-		"puzzle-mobile-starter-release.apk" \
+		"zoo-zoo-pop-debug.apk" \
+		"zoo-zoo-pop-release.apk" \
 		"android-debug-export.txt" \
 		"android-device-evidence.txt" \
 		"manual-device-checks.txt" \
@@ -334,6 +337,7 @@ validate_report_contract() {
 
 	for preflight_gate in \
 		"Gameplay validation" \
+		"Android export config" \
 		"Mobile viewport matrix" \
 		"Android debug environment" \
 		"Android debug APK export" \

@@ -16,6 +16,7 @@
 | Gate | Command or Evidence | Result | Notes |
 | --- | --- | --- | --- |
 | Gameplay validation | `zsh scripts/validate_gameplay.sh` | Pending |  |
+| Android export config | `zsh scripts/validate_android_export_config.sh` | Pending | Verifies `Zoo-Zoo Pop`, `com.shinehandmac.zoozoopop`, version, signing flag, vibrate permission, arm64 ABI, and APK path naming |
 | Mobile viewport matrix | `zsh scripts/validate_gameplay.sh` includes 1080x1920, 720x1280, 390x844, 1920x1080, 1280x720, 844x390 requested windows | Pending | Verifies logical viewport bounds for Home, Stage Select, Collection, Stage 4 HUD, Stage Popup, Stage 25 failure overlay |
 | Android debug environment | `zsh scripts/check_android_setup.sh` | Pending |  |
 | Android debug APK export | `zsh scripts/export_android_debug.sh` | Pending | Writes `output/alpha-lock-pass/YYYY-MM-DD/captures/android-debug-export.txt` and verifies APK signature |
@@ -31,9 +32,9 @@
 | Evidence | Result | Evidence path | Notes |
 | --- | --- | --- | --- |
 | Build source commit | Pending |  | Must match Run Metadata |
-| APK/AAB path | Pending | `build/android/puzzle-mobile-starter-debug.apk` | Include debug/release label and signature verify evidence |
+| APK/AAB path | Pending | `build/android/zoo-zoo-pop-debug.apk` | Include debug/release label and signature verify evidence |
 | Install result | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/install-log.txt` | Device required |
-| Release APK path | Pending | `build/android/puzzle-mobile-starter-release.apk` | Signed with release keystore |
+| Release APK path | Pending | `build/android/zoo-zoo-pop-release.apk` | Signed with release keystore |
 | Release install result | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/release-install-log.txt` | Device required |
 | Release launch/run result | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/release-run-log.txt` | Device required; no fatal/crash log lines |
 | Device model and OS version | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/device-info.txt` | Include screen size if known |

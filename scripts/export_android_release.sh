@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
-OUTPUT_APK="build/android/puzzle-mobile-starter-release.apk"
+OUTPUT_APK="build/android/zoo-zoo-pop-release.apk"
 INSTALL=false
 DRY_RUN=false
 EXPORT_PRESET_NAME="Android"
@@ -24,7 +24,7 @@ for arg in "$@"; do
 			DRY_RUN=true
 			;;
 		-h|--help)
-			echo "Usage: $0 [--install] [--output=build/android/puzzle-mobile-starter-release.apk] [--preset=Android] [--dry-run]"
+			echo "Usage: $0 [--install] [--output=build/android/zoo-zoo-pop-release.apk] [--preset=Android] [--dry-run]"
 			echo "Requires GODOT_ANDROID_KEYSTORE_RELEASE_PATH, GODOT_ANDROID_KEYSTORE_RELEASE_USER, and GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD."
 			echo "Legacy aliases GODOT_RELEASE_KEYSTORE_PATH/USER/PASSWORD are also accepted."
 			exit 0

@@ -443,9 +443,30 @@
   - 레벨 데이터 수정 에이전트가 밴드별 기획 의도를 보면서 stage JSON을 조정할 수 있다.
   - 밸런스 검증이 해금 순서와 hard/recovery 파형 위반을 잡을 수 있다.
 
+## P7. 릴리즈 준비도
+
+### PAM-REL-101: Android Export Identity / Release Preflight Validator
+
+- 상태: 완료됨. Android export preset을 `Zoo-Zoo Pop`, `com.shinehandmac.zoozoopop`, `build/android/zoo-zoo-pop-debug.apk`로 고정했고, `scripts/validate_android_export_config.sh`가 앱명/package id/export path/version/signed/vibrate/arm64 및 starter placeholder 회귀를 검증한다. `validate_gameplay.sh`와 no-device alpha CI가 이 preflight를 실행하며, alpha QA template/report validator와 Android export helper의 기본 APK path도 `zoo-zoo-pop` 기준으로 맞췄다. 남은 승인 조건은 release keystore로 실제 release APK를 생성하고 Android 실기기 설치/실행 evidence를 기록하는 것이다.
+- 소유: PM Lead + Development Agent + QA Agent
+- 대상 파일:
+  - `export_presets.cfg`
+  - `scripts/validate_android_export_config.sh`
+  - `scripts/validate_gameplay.sh`
+  - `.github/workflows/no-device-alpha-gate.yml`
+  - `scripts/export_android_debug.sh`
+  - `scripts/export_android_release.sh`
+  - `scripts/record_manual_device_checks.sh`
+  - `docs/dev/validation-process.md`
+  - `docs/qa/project-animal-match-development-gates.md`
+- 완료 기준:
+  - Android preset placeholder가 자동 검증에서 실패한다.
+  - no-device CI와 로컬 gameplay gate가 같은 export identity 기준을 사용한다.
+  - 실제 keystore, APK export, 실기기 install/run은 별도 device evidence gate로 남는다.
+
 ## 추천 구현 순서
 
-완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`)는 회귀 검증 대상으로 유지한다.
+완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`)는 회귀 검증 대상으로 유지한다.
 
 다음 고가치 순서:
 

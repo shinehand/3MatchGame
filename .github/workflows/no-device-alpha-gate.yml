@@ -51,6 +51,9 @@ jobs:
       - name: Analytics contract validation
         run: zsh scripts/validate_analytics_contract.sh
 
+      - name: Android export config validation
+        run: zsh scripts/validate_android_export_config.sh
+
       - name: Full no-device gameplay gate
         run: zsh scripts/validate_gameplay.sh
 
