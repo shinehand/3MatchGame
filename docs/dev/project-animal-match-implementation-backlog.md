@@ -464,9 +464,24 @@
   - no-device CI와 로컬 gameplay gate가 같은 export identity 기준을 사용한다.
   - 실제 keystore, APK export, 실기기 install/run은 별도 device evidence gate로 남는다.
 
+### PAM-QA-102: Alpha QA Report Validator Contract Smoke
+
+- 상태: 완료됨. `scripts/validate_alpha_qa_report_contract.sh`가 임시 alpha report/evidence fixture를 생성해 `validate_alpha_qa_report.sh`의 PASS 계약과 negative fixture 실패 계약을 자동 검증한다. PASS fixture는 현재 HEAD, `Overall result: Pass`, `QA result: Approve`, 필수 evidence content를 채우고, negative fixture는 `Pending` 잔존, evidence 누락, wrong commit, `Capture result: BLOCKED`, release `Install result: NOT_REQUESTED`가 반드시 실패하는지 확인한다. `validate_gameplay.sh`와 no-device CI는 이 contract smoke를 포함한다.
+- 소유: QA Agent + Development Agent
+- 대상 파일:
+  - `scripts/validate_alpha_qa_report_contract.sh`
+  - `scripts/validate_gameplay.sh`
+  - `scripts/validate_alpha_qa_report.sh`
+  - `docs/qa/templates/alpha-lock-pass-manual-qa-template.md`
+  - `docs/dev/validation-process.md`
+  - `docs/qa/project-animal-match-development-gates.md`
+- 완료 기준:
+  - 최종 alpha report validator가 허술해져 unresolved 결과나 빈 evidence를 통과시키는 회귀가 no-device에서 잡힌다.
+  - 실제 기기/keystore/SDK evidence는 여전히 최종 report와 device evidence gate에서 별도 승인한다.
+
 ## 추천 구현 순서
 
-완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`)는 회귀 검증 대상으로 유지한다.
+완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`)는 회귀 검증 대상으로 유지한다.
 
 다음 고가치 순서:
 

@@ -58,6 +58,7 @@ Godot 4 기반 모바일 3매치 퍼즐 게임 프로젝트입니다.
 - Android release 프리플라이트: `GODOT_ANDROID_KEYSTORE_RELEASE_PATH=/path/to/release.keystore GODOT_ANDROID_KEYSTORE_RELEASE_USER=alias GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=password zsh scripts/check_android_setup.sh --release`
 - Android release APK 생성/서명/설치 증거: `GODOT_ANDROID_KEYSTORE_RELEASE_PATH=/path/to/release.keystore GODOT_ANDROID_KEYSTORE_RELEASE_USER=alias GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=password zsh scripts/export_android_release.sh --install`
 - Alpha 수동 QA 패킷 생성: `zsh scripts/create_alpha_qa_packet.sh`
+- Alpha QA 보고서 validator 계약 점검: `zsh scripts/validate_alpha_qa_report_contract.sh`
 - Alpha 수동 QA 보고서 최종 검증: `zsh scripts/validate_alpha_qa_report.sh --report=output/alpha-lock-pass/YYYY-MM-DD/alpha-lock-pass-manual-qa-YYYY-MM-DD.md`
 - 검증 문서: [validation-process.md](/Users/shinehandmac/Github/3MatchGame/docs/dev/validation-process.md)
 

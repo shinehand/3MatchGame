@@ -5,6 +5,7 @@
 ## 자동 게이트
 
 - `zsh scripts/validate_gameplay.sh` 통과
+- `zsh scripts/validate_alpha_qa_report_contract.sh` 통과
 - `zsh scripts/check_android_setup.sh` 통과
 - `zsh scripts/export_android_debug.sh` 통과 및 `output/alpha-lock-pass/YYYY-MM-DD/captures/android-debug-export.txt` evidence 생성
 - 실기기 QA 시 `zsh scripts/export_android_debug.sh --install` 및 `zsh scripts/capture_android_device_evidence.sh --allow-orientation-change` 통과
