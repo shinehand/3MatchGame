@@ -84,6 +84,7 @@
 `./scripts/validate_gameplay.sh`의 scene load smoke는 기기 없이 아래 항목을 먼저 막는다.
 
 - Rescue Book 카드가 토큰 수, 우정 레벨, `NEW`, 잠김 해금 스테이지 문구를 실제 UI 라벨로 표시한다.
+- 첫 세션 Level 1-5 순차 클리어가 Stage 6과 `frog`/`koala`/`hamster` Rescue Book 신규 카드를 해금하고 `animal_unlock` analytics를 남긴다.
 - Rescue Book 카드 입력 경로가 선택 상세, `NEW` 제거, 토큰/우정 레벨 저장 상태를 유지하는지 확인한다.
 - Rescue Book 표정/미리보기 Tween은 화면에 보이는 해금 카드에서 최대 4개만 실행되고, 컬렉션 화면이 숨겨지면 모두 정지한다.
 - 라이브 이벤트 노출은 `home`, `stage_select`, `result_overlay`, `collection` placement별 `live_event_impression`을 남긴다.

@@ -103,6 +103,7 @@ cat <<'EOF'
 - Stage Popup을 닫으면 overlay가 사라지고, START 직전 선택 스테이지/부스터가 저장되는지 확인
 - Stage 4 같은 Buddy 스테이지에서는 Stage Popup에 Rescue Buddy 동물/스킬/조건 요약이 보이고 Gameplay HUD Buddy 문구와 같은 대상을 가리키는지 확인
 - 부스터를 선택하고 START를 누르면 게임 시작 보드에 선택 부스터가 배치되는지 확인
+- 첫 세션 Level 1-5 순차 클리어 후 Stage 6, `frog`/`koala`/`hamster` Rescue Book `NEW`, `animal_unlock` 기록이 유지되는지 확인
 - Rescue Book 카드에서 해금 동물의 토큰/우정 레벨/NEW 상태와 잠김 동물의 해금 스테이지 문구가 정상 표시되는지 확인
 - 라이브 이벤트 노출이 홈, 스테이지 선택, 결과 오버레이, 컬렉션에서 각각 `live_event_impression`으로 기록되는지 확인
 - 앱 실행 후 보드 8x8 블록이 즉시 보이는지 확인

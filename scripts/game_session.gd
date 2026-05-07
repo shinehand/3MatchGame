@@ -76,6 +76,16 @@ static func use_save_path_for_testing(save_path: String) -> void:
 	_reset_save_data_to_defaults()
 
 
+static func reset_progress_for_testing_preserving_analytics() -> void:
+	load_state()
+	var analytics_events := Array(_save_data.get("analytics_events", [])).duplicate(true)
+	var session_id := String(_save_data.get("session_id", ""))
+	_reset_save_data_to_defaults()
+	_save_data["analytics_events"] = analytics_events
+	_save_data["session_id"] = session_id
+	_loaded = true
+
+
 static func _reset_save_data_to_defaults() -> void:
 	_save_data = {
 		"highest_unlocked_stage_id": 1,
@@ -264,6 +274,7 @@ static func is_stage_unlocked(stage_id: int) -> bool:
 
 static func record_stage_result(stage_id: int, final_score: int, star_count: int) -> void:
 	load_state()
+	var previous_rescue_book := CollectionState.normalize_state(Dictionary(_save_data.get("rescue_book", {})))
 
 	var cleared_stage_ids: Array = _save_data["cleared_stage_ids"]
 	if not cleared_stage_ids.has(stage_id):
@@ -283,6 +294,7 @@ static func record_stage_result(stage_id: int, final_score: int, star_count: int
 	_save_data["last_selected_stage_id"] = stage_id
 	_save_data["rescue_book"] = CollectionState.unlock_by_stage(Dictionary(_save_data.get("rescue_book", {})), get_highest_unlocked_stage_id())
 	save_state()
+	_track_rescue_book_unlocks(previous_rescue_book, Dictionary(_save_data.get("rescue_book", {})), stage_id)
 
 
 static func record_stage_failure(stage_id: int) -> int:
@@ -299,6 +311,42 @@ static func record_stage_failure(stage_id: int) -> int:
 static func get_stage_fail_count(stage_id: int) -> int:
 	load_state()
 	return int(Dictionary(_save_data.get("fail_count_by_stage_id", {})).get(str(stage_id), 0))
+
+
+static func _track_rescue_book_unlocks(previous_state: Dictionary, next_state: Dictionary, stage_id: int) -> void:
+	var previous_animals: Dictionary = Dictionary(previous_state.get("animals", {}))
+	var next_animals: Dictionary = Dictionary(next_state.get("animals", {}))
+	var unlock_stage_by_animal_id := _collection_unlock_stages_by_animal_id()
+	for animal_id_value in next_animals.keys():
+		var animal_id := String(animal_id_value)
+		if animal_id.is_empty():
+			continue
+		var previous_entry := Dictionary(previous_animals.get(animal_id, {}))
+		var next_entry := Dictionary(next_animals.get(animal_id, {}))
+		if bool(previous_entry.get("unlocked", false)) or not bool(next_entry.get("unlocked", false)):
+			continue
+		var event_params := {
+			"animal_id": animal_id,
+			"source": "stage_clear",
+			"stage_id": stage_id,
+			"token_balance": int(next_entry.get("tokens", 0)),
+		}
+		if unlock_stage_by_animal_id.has(animal_id):
+			event_params["unlock_stage"] = int(unlock_stage_by_animal_id[animal_id])
+		record_analytics_event("animal_unlock", event_params)
+
+
+static func _collection_unlock_stages_by_animal_id() -> Dictionary:
+	var unlock_stages := {}
+	for animal in CollectionState.load_animal_definitions():
+		if not (animal is Dictionary):
+			continue
+		var animal_dict: Dictionary = animal
+		var animal_id := String(animal_dict.get("id", ""))
+		if animal_id.is_empty():
+			continue
+		unlock_stages[animal_id] = int(animal_dict.get("unlock_stage", 1))
+	return unlock_stages
 
 
 static func set_stage_fail_count_for_testing(stage_id: int, fail_count: int) -> void:

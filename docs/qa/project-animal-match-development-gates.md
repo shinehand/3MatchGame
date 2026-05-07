@@ -89,6 +89,7 @@
 - 완료한 튜토리얼 설명이 같은 계정/기기에서 반복 노출되지 않는다.
 - Level 1-10에서 하트 소모, 전면 광고, IAP 팝업이 나오지 않는다.
 - Level 5 이내 첫 컬렉션 카드 또는 스타터 미션 보상을 경험한다.
+- 자동 scene smoke는 Level 1-5 순차 클리어 후 Stage 6 해금, Rescue Book 신규 카드 `frog`/`koala`/`hamster`의 `NEW`, `animal_unlock` analytics를 검증한다.
 - 한국어/영어/일본어 pseudo-localization에서 목표 칩과 버튼 텍스트가 겹치지 않는다.
 
 ## Gate 7A. Stage Popup / 시작 부스터

@@ -8,6 +8,7 @@ const REQUIRED_EVENTS := {
 	"stage_fail": ["session_id", "stage_id", "fail_type", "score", "remaining_goals"],
 	"booster_used": ["session_id", "stage_id", "booster_id", "source"],
 	"rescue_book_open": ["session_id", "highest_unlocked_stage", "unlocked_animal_count"],
+	"animal_unlock": ["session_id", "animal_id", "source", "stage_id", "token_balance"],
 	"live_event_impression": ["session_id", "event_id", "event_type", "placement"],
 	"remote_config_exposure": ["session_id", "config_key", "variant_id", "config_value_hash"],
 	"event_join": ["session_id", "event_id", "event_type", "placement"],

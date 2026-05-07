@@ -55,6 +55,8 @@
 | `animal_friendship_level_up` | 우정 레벨 상승 | `animal_id`, `level_before`, `level_after`, `reward_id` |
 | `animal_cosmetic_equip` | 장착 변경 | `animal_id`, `cosmetic_id`, `cosmetic_type`, `entry_point` |
 
+현재 Godot 런타임은 stage clear로 Rescue Book 카드가 신규 해금될 때 `animal_unlock`을 기록한다. `source=stage_clear`, 방금 클리어한 `stage_id`, 해금 직후 `token_balance`를 필수로 남기고, 선택 파라미터 `unlock_stage`에 동물 데이터의 해금 스테이지를 함께 남긴다.
+
 ### 2.4 Fail Offer / Ads / IAP
 
 | 이벤트 | 트리거 | 필수 파라미터 |
@@ -111,6 +113,7 @@
 - IAP 성공형 continue는 `iap_purchase_complete`와 `extra_moves_grant`가 같은 `transaction_id`를 공유한다.
 - IAP restore 결과는 현재 실패 이어하기 보상을 지급하지 않고 `iap_purchase_restore`만 기록한다.
 - 같은 `transaction_id`가 반복 수신되면 보상형 광고/IAP continue의 추가 이동과 완료 analytics를 다시 지급하지 않는다.
+- stage clear로 같은 Rescue Book 카드가 이미 해금된 상태라면 `animal_unlock`을 중복 기록하지 않는다.
 - A/B 테스트 이벤트는 반드시 `variant_id`와 `remote_config_version`을 포함한다.
 
 ## 5. 롤백 기준

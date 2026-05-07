@@ -18,6 +18,8 @@ const GOAL_CHIP_SCENE_PATH: String = "res://scenes/goal_chip.tscn"
 const SESSION_VALIDATION_SAVE_PATH := "user://scene_validation_save_game.json"
 const SESSION_VALIDATION_SAVE_FILE_NAME := "scene_validation_save_game.json"
 const ANIMAL_IDS := ["rabbit", "bear", "cat", "chick", "frog", "dog", "panda", "pig", "penguin", "fox", "lion", "elephant"]
+const FIRST_SESSION_COLLECTION_UNLOCK_IDS := ["frog", "koala", "hamster"]
+const FIRST_SESSION_COLLECTION_UNLOCK_STAGES := {"frog": 4, "koala": 5, "hamster": 6}
 const ANIMAL_TEXTURE_FALLBACKS := {
 	"lion": "fox",
 	"elephant": "panda",
@@ -46,6 +48,9 @@ func _run() -> void:
 	var errors: PackedStringArray = PackedStringArray()
 	GameSession.clear_analytics_events()
 	_validate_alpha_gate_data(errors)
+	_reset_validation_save_only()
+	_validate_first_session_collection_unlock_flow(errors)
+	_reset_validation_save_only()
 	var scene_paths: PackedStringArray = PackedStringArray([
 		LOADING_SCENE_PATH,
 		MAIN_SCENE_PATH,
@@ -93,6 +98,11 @@ func _run() -> void:
 	print("Scene load validation passed: %d scenes parsed and instantiated." % scene_paths.size())
 	_remove_validation_save()
 	quit()
+
+
+func _reset_validation_save_only() -> void:
+	_remove_validation_save()
+	GameSession.reset_progress_for_testing_preserving_analytics()
 
 
 func _remove_validation_save() -> void:
@@ -256,7 +266,7 @@ func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
 			"remote_config_exposure":
 				_validate_remote_config_exposure_payload(params, errors)
 				remote_config_keys_seen[String(params.get("config_key", ""))] = true
-	for required_event in ["rescue_book_open", "stage_start", "remote_config_exposure", "event_join", "event_progress", "event_reward_claim", "buddy_skill_charge", "buddy_skill_ready", "buddy_skill_trigger", "buddy_skill_blocked", "fail_offer_show", "fail_offer_select", "fail_offer_dismiss", "ad_reward_complete", "ad_reward_fail", "iap_purchase_start", "iap_purchase_complete", "iap_purchase_restore", "iap_purchase_cancel", "iap_purchase_fail", "extra_moves_grant"]:
+	for required_event in ["rescue_book_open", "animal_unlock", "stage_start", "remote_config_exposure", "event_join", "event_progress", "event_reward_claim", "buddy_skill_charge", "buddy_skill_ready", "buddy_skill_trigger", "buddy_skill_blocked", "fail_offer_show", "fail_offer_select", "fail_offer_dismiss", "ad_reward_complete", "ad_reward_fail", "iap_purchase_start", "iap_purchase_complete", "iap_purchase_restore", "iap_purchase_cancel", "iap_purchase_fail", "extra_moves_grant"]:
 		if not seen_names.has(required_event):
 			errors.append("runtime analytics should emit %s during scene smoke." % required_event)
 	for placement in IMPLEMENTED_LIVE_EVENT_PLACEMENTS:
@@ -2444,6 +2454,49 @@ func _validate_alpha_gate_data(errors: PackedStringArray) -> void:
 			errors.append("Alpha gate tutorial checkpoint stage %d is missing tutorial text." % stage_id)
 
 	_validate_rescue_buddy_stage_config(stage_by_id, errors)
+
+
+func _validate_first_session_collection_unlock_flow(errors: PackedStringArray) -> void:
+	var animal_unlock_events_before := _analytics_event_count("animal_unlock")
+	for stage_id in range(1, 6):
+		GameSession.record_stage_result(stage_id, stage_id * 1000, 3)
+
+	if GameSession.get_highest_unlocked_stage_id() < 6:
+		errors.append("First session smoke should unlock Stage 6 after clearing Level 5, got highest stage %d." % GameSession.get_highest_unlocked_stage_id())
+
+	var state_animals: Dictionary = Dictionary(GameSession.get_rescue_book_state().get("animals", {}))
+	for animal_id in FIRST_SESSION_COLLECTION_UNLOCK_IDS:
+		var entry := Dictionary(state_animals.get(animal_id, {}))
+		if not bool(entry.get("unlocked", false)):
+			errors.append("First session smoke should unlock Rescue Book card %s by Level 5." % animal_id)
+		if not bool(entry.get("is_new", false)):
+			errors.append("First session smoke should leave newly unlocked %s marked NEW for collection motivation." % animal_id)
+
+	var unlocked_animals_from_events := {}
+	for event in GameSession.get_analytics_events():
+		if not (event is Dictionary):
+			continue
+		var event_dict: Dictionary = event
+		if String(event_dict.get("name", "")) != "animal_unlock":
+			continue
+		var params: Dictionary = Dictionary(event_dict.get("params", {}))
+		if String(params.get("source", "")) == "stage_clear" and int(params.get("stage_id", 0)) <= 5:
+			var animal_id := String(params.get("animal_id", ""))
+			unlocked_animals_from_events[animal_id] = params
+			if not params.has("token_balance"):
+				errors.append("animal_unlock should include token_balance for %s." % animal_id)
+			var expected_unlock_stage := int(FIRST_SESSION_COLLECTION_UNLOCK_STAGES.get(animal_id, 0))
+			if expected_unlock_stage > 0:
+				if int(params.get("unlock_stage", 0)) != expected_unlock_stage:
+					errors.append("animal_unlock for %s should include unlock_stage %d." % [animal_id, expected_unlock_stage])
+				var expected_trigger_stage := expected_unlock_stage - 1
+				if int(params.get("stage_id", 0)) != expected_trigger_stage:
+					errors.append("animal_unlock for %s should be triggered by clearing Level %d, got Level %d." % [animal_id, expected_trigger_stage, int(params.get("stage_id", 0))])
+	if _analytics_event_count("animal_unlock") <= animal_unlock_events_before:
+		errors.append("First session smoke should emit animal_unlock analytics while clearing Levels 1-5.")
+	for animal_id in FIRST_SESSION_COLLECTION_UNLOCK_IDS:
+		if not unlocked_animals_from_events.has(animal_id):
+			errors.append("First session smoke should emit animal_unlock for %s by Level 5." % animal_id)
 
 
 func _validate_rescue_buddy_stage_config(stage_by_id: Dictionary, errors: PackedStringArray) -> void:

@@ -79,6 +79,19 @@
     ]
   },
   {
+    "name": "animal_unlock",
+    "required_params": [
+      "session_id",
+      "animal_id",
+      "source",
+      "stage_id",
+      "token_balance"
+    ],
+    "optional_params": [
+      "unlock_stage"
+    ]
+  },
+  {
     "name": "live_event_impression",
     "required_params": [
       "session_id",
