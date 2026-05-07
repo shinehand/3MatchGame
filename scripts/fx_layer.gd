@@ -132,9 +132,11 @@ func play_combo_banner(combo: int) -> void:
 
 func play_goal_rescue(global_position: Vector2, label_text: String = "목표 완료!") -> void:
 	var ring := _spawn_texture(hud_fx_root, GOAL_RING_TEXTURE, global_position, Vector2(168, 168))
+	ring.name = "GoalRescueRing"
 	ring.modulate = Color(0.38, 1.0, 0.55, 0.94)
 	ring.scale = Vector2(0.52, 0.52)
 	var label := _spawn_label(hud_fx_root, label_text, global_position + Vector2(0, -70), 32, Color(0.25, 0.92, 0.42, 1.0))
+	label.name = "GoalRescueLabel"
 
 	var tween := create_tween()
 	tween.set_parallel(true)
@@ -144,6 +146,31 @@ func play_goal_rescue(global_position: Vector2, label_text: String = "목표 완
 	tween.tween_property(ring, "modulate:a", 0.0, 0.42)
 	tween.tween_property(label, "position:y", label.position.y - 34.0, 0.36)
 	tween.tween_property(label, "modulate:a", 0.0, 0.4).set_delay(0.1)
+	await tween.finished
+	ring.queue_free()
+	label.queue_free()
+
+
+func play_blocker_clear_at(global_position: Vector2, cleared_count: int = 1) -> void:
+	var ring := _spawn_texture(board_fx_root, GOAL_RING_TEXTURE, global_position, Vector2(128, 128))
+	ring.name = "BlockerClearRing"
+	ring.modulate = Color(0.46, 0.9, 0.34, 0.88)
+	ring.scale = Vector2(0.42, 0.42)
+
+	var label_text := "덤불 정리!" if cleared_count <= 1 else "덤불 x%d!" % cleared_count
+	var label := _spawn_label(board_fx_root, label_text, global_position + Vector2(0, -54), 25, Color(0.39, 0.92, 0.34, 1.0))
+	label.name = "BlockerClearLabel"
+	label.scale = Vector2(0.78, 0.78)
+
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.set_trans(Tween.TRANS_BACK)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(ring, "scale", Vector2(1.08, 1.08), 0.2)
+	tween.tween_property(ring, "modulate:a", 0.0, 0.34)
+	tween.tween_property(label, "scale", Vector2(1.0, 1.0), 0.14)
+	tween.tween_property(label, "position:y", label.position.y - 28.0, 0.32)
+	tween.tween_property(label, "modulate:a", 0.0, 0.28).set_delay(0.1)
 	await tween.finished
 	ring.queue_free()
 	label.queue_free()

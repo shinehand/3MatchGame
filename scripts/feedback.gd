@@ -64,6 +64,11 @@ func play_goal_complete() -> void:
 	_vibrate(28)
 
 
+func play_blocker_clear(count: int = 1) -> void:
+	_play_stream("blocker_clear")
+	_vibrate(24 + mini(maxi(count, 1), 4) * 5)
+
+
 func play_rainbow_clear() -> void:
 	_play_stream("rainbow_clear")
 	_vibrate(48)
@@ -135,6 +140,11 @@ func _build_streams() -> void:
 		{"freq": 1040.0, "duration_ms": 22, "gain": 0.15, "wave": "triangle"},
 		{"freq": 1380.0, "duration_ms": 28, "gain": 0.14, "wave": "sine"},
 		{"freq": 1720.0, "duration_ms": 44, "gain": 0.12, "wave": "sine"},
+	])
+	_streams["blocker_clear"] = _make_stream([
+		{"freq": 360.0, "duration_ms": 24, "gain": 0.14, "wave": "triangle"},
+		{"freq": 540.0, "duration_ms": 28, "gain": 0.15, "wave": "triangle"},
+		{"freq": 720.0, "duration_ms": 42, "gain": 0.12, "wave": "sine"},
 	])
 	_streams["rainbow_clear"] = _make_stream([
 		{"freq": 760.0, "duration_ms": 20, "gain": 0.15, "wave": "triangle"},

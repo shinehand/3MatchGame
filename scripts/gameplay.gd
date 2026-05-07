@@ -2446,7 +2446,17 @@ func _damage_obstacles(clear_cells: Array) -> Array:
 		_refresh_tile(cell.x, cell.y)
 		tile_nodes[cell.x][cell.y].play_obstacle_clear_effect()
 
+	if not cleared_cells.is_empty():
+		_play_blocker_clear_feedback(cleared_cells)
 	return cleared_cells
+
+
+func _play_blocker_clear_feedback(cleared_cells: Array) -> void:
+	Feedback.play_blocker_clear(cleared_cells.size())
+	var fx_limit := mini(cleared_cells.size(), 4)
+	for index in range(fx_limit):
+		var cell: Vector2i = cleared_cells[index]
+		_play_fx_method("play_blocker_clear_at", [_tile_global_center(cell), cleared_cells.size()])
 
 
 func _special_clear_cells(cell: Vector2i, special_type: String) -> Array:
@@ -2845,13 +2855,15 @@ func _moves_warning_color() -> Color:
 	return Color(0.32, 0.24, 0.19, 1)
 
 
-func _notify_goal_complete_if_new(key: String, is_complete: bool) -> void:
+func _notify_goal_complete_if_new(key: String, is_complete: bool, label_text: String = "구출!", origin_control: Control = null) -> void:
 	if is_complete and not _prev_complete_set.get(key, false):
 		Feedback.play_goal_complete()
 		var fx_origin := goal_card.get_global_rect().get_center()
+		if origin_control != null:
+			fx_origin = origin_control.get_global_rect().get_center()
 		if MobileLayout.is_portrait(self) and hud_goal_label != null:
 			fx_origin = hud_goal_label.get_global_rect().get_center()
-		_play_fx_method("play_goal_rescue", [fx_origin, "구출!"])
+		_play_fx_method("play_goal_rescue", [fx_origin, label_text])
 	_prev_complete_set[key] = is_complete
 
 
@@ -2870,7 +2882,9 @@ func _refresh_goal_chips() -> void:
 		)
 		_notify_goal_complete_if_new(
 			"collect_%s" % animal_id,
-			int(collected_counts.get(animal_id, 0)) >= int(collect_targets[animal_id])
+			int(collected_counts.get(animal_id, 0)) >= int(collect_targets[animal_id]),
+			"%s 구출!" % ANIMAL_NAMES[String(animal_id)],
+			chip
 		)
 		chip_index += 1
 
@@ -2879,7 +2893,7 @@ func _refresh_goal_chips() -> void:
 		var score_chip = goal_list.get_child(chip_index)
 		score_chip.visible = true
 		score_chip.set_score_goal("점수 달성", score, target_score)
-		_notify_goal_complete_if_new("score", score >= target_score)
+		_notify_goal_complete_if_new("score", score >= target_score, "점수 달성!", score_chip)
 		chip_index += 1
 
 	var target_blockers: int = _target_blockers()
@@ -2887,7 +2901,7 @@ func _refresh_goal_chips() -> void:
 		var blocker_chip = goal_list.get_child(chip_index)
 		blocker_chip.visible = true
 		blocker_chip.set_icon_goal(ui_textures.get("bush"), "덤불 제거", cleared_blockers, target_blockers)
-		_notify_goal_complete_if_new("blockers", cleared_blockers >= target_blockers)
+		_notify_goal_complete_if_new("blockers", cleared_blockers >= target_blockers, "덤불 정리!", blocker_chip)
 		chip_index += 1
 
 	for index in range(chip_index, goal_list.get_child_count()):

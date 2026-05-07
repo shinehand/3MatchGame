@@ -52,6 +52,7 @@
 - 매치 제거 직전 match 반응이 보인다.
 - 이동 수 부족 또는 실패 직전 worried 반응이 과하지 않게 보인다.
 - 표정 연출이 스와이프, 낙하, 리필, 특수 블록 발동을 막지 않는다.
+- 목표 완료 피드백은 수집 동물명, 덤불 정리, 점수 달성을 구분해 표시한다.
 
 ## Gate 4A. 특수 블록 조합
 
@@ -61,6 +62,7 @@
 - 특수 조합 경로 위의 chained special과 인접 장애물 피해가 scene smoke에서 검증된다.
 - Stage 31 특수 조합 6종은 실제 `_resolve_swap` runtime smoke에서 이동 수 1회 소모, 점수 증가, 장애물 제거, `is_busy` 복귀를 검증한다.
 - 특수+특수 발동 시작점은 `FxLayer.play_special_combo` 전용 flash/ring/label VFX로 일반 매치 burst와 구분된다.
+- 덤불/장애물 제거는 전용 VFX와 SFX/haptic 경로를 가져 일반 매치 피드백과 구분된다.
 - rainbow+special은 특수+특수 큐보다 rainbow resolution 경로를 우선한다.
 
 ## Gate 5. 모바일 UI
