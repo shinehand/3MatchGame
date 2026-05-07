@@ -625,6 +625,48 @@ func _validate_no_rect_overlap(first: Control, second: Control, scene_path: Stri
 		errors.append("%s critical text stress overlapped: %s first %s second %s." % [scene_path, label, first_rect, second_rect])
 
 
+func _validate_button_pressed_connection(candidate: Node, receiver: Object, method_name: String, scene_path: String, label: String, errors: PackedStringArray) -> void:
+	if not (candidate is Button):
+		errors.append("%s missing CTA button %s for pressed signal wiring." % [scene_path, label])
+		return
+	var button := candidate as Button
+	if not _button_pressed_connects_to_method(button, receiver, method_name):
+		errors.append("%s CTA button %s pressed signal should connect to %s, got [%s]." % [scene_path, label, method_name, _button_pressed_connection_summary(button)])
+
+
+func _button_pressed_connects_to_method(button: Button, receiver: Object, method_name: String) -> bool:
+	if button == null or receiver == null:
+		return false
+	var exact_callable := Callable(receiver, method_name)
+	if button.pressed.is_connected(exact_callable):
+		return true
+	for connection in button.get_signal_connection_list(&"pressed"):
+		if not (connection is Dictionary):
+			continue
+		var callable_value = Dictionary(connection).get("callable", Callable())
+		if callable_value is Callable:
+			var connected_callable: Callable = callable_value
+			if connected_callable.get_object() == receiver and String(connected_callable.get_method()) == method_name:
+				return true
+	return false
+
+
+func _button_pressed_connection_summary(button: Button) -> String:
+	if button == null:
+		return "missing"
+	var parts: Array[String] = []
+	for connection in button.get_signal_connection_list(&"pressed"):
+		if not (connection is Dictionary):
+			continue
+		var callable_value = Dictionary(connection).get("callable", Callable())
+		if callable_value is Callable:
+			var connected_callable: Callable = callable_value
+			parts.append(String(connected_callable.get_method()))
+	if parts.is_empty():
+		return "none"
+	return ", ".join(parts)
+
+
 func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
 	var events := GameSession.get_analytics_events()
 	var gateway_events := AnalyticsGateway.get_dispatched_events_for_testing()
@@ -1266,7 +1308,17 @@ func _validate_main_scene(node: Node, errors: PackedStringArray) -> void:
 		errors.append("%s AnimalStrip should show all %d board animals, got %d." % [MAIN_SCENE_PATH, ANIMAL_IDS.size(), animal_strip.get_child_count()])
 	if node.get_node_or_null("GameHomeLayer/HeroStack/LiveEventStrip") == null:
 		errors.append("%s is missing LiveEventStrip for live ops surface checks." % MAIN_SCENE_PATH)
+	_validate_main_cta_signal_wiring(node, errors)
 	_validate_main_event_detail_overlay(node, errors)
+
+
+func _validate_main_cta_signal_wiring(node: Node, errors: PackedStringArray) -> void:
+	_validate_button_pressed_connection(_get_control_property_or_child(node, "home_play_button", "HomePlayButton"), node, "_on_play_button_pressed", MAIN_SCENE_PATH, "HomePlayButton", errors)
+	_validate_button_pressed_connection(node.find_child("HomeMapButton", true, false), node, "_on_stage_button_pressed", MAIN_SCENE_PATH, "HomeMapButton", errors)
+	_validate_button_pressed_connection(node.find_child("HomeCollectionButton", true, false), node, "_on_ranking_button_pressed", MAIN_SCENE_PATH, "HomeCollectionButton", errors)
+	_validate_button_pressed_connection(node.find_child("HomeSettingsButton", true, false), node, "_on_settings_button_pressed", MAIN_SCENE_PATH, "HomeSettingsButton", errors)
+	_validate_button_pressed_connection(node.find_child("EventDetailCloseButton", true, false), node, "_on_event_detail_close_button_pressed", MAIN_SCENE_PATH, "EventDetailCloseButton", errors)
+	_validate_button_pressed_connection(node.find_child("EventClaimButton", true, false), node, "_on_event_claim_button_pressed", MAIN_SCENE_PATH, "EventClaimButton", errors)
 
 
 func _validate_main_event_detail_overlay(node: Node, errors: PackedStringArray) -> void:
@@ -1484,10 +1536,20 @@ func _validate_gameplay_scene(node: Node, errors: PackedStringArray) -> void:
 	elif node.find_child("HudBuddyGauge", true, false) == null:
 		errors.append("%s GameplayHudLayer is missing the Rescue Buddy charge gauge." % GAMEPLAY_SCENE_PATH)
 
+	_validate_gameplay_cta_signal_wiring(node, errors)
 	_validate_special_effect_rules(node, errors)
 	_validate_expression_animation_rules(node, errors)
 	_validate_rescue_buddy_runtime_rules(node, errors)
 	_validate_start_booster_runtime_rules(node, errors)
+
+
+func _validate_gameplay_cta_signal_wiring(node: Node, errors: PackedStringArray) -> void:
+	_validate_button_pressed_connection(node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlayPrimaryButton"), node, "_on_overlay_primary_button_pressed", GAMEPLAY_SCENE_PATH, "OverlayPrimaryButton", errors)
+	_validate_button_pressed_connection(node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlaySecondaryButton"), node, "_on_overlay_secondary_button_pressed", GAMEPLAY_SCENE_PATH, "OverlaySecondaryButton", errors)
+	_validate_button_pressed_connection(node.get("hud_home_button") as Button, node, "_on_quit_button_pressed", GAMEPLAY_SCENE_PATH, "HudHomeButton", errors)
+	_validate_button_pressed_connection(node.get("hud_retry_button") as Button, node, "_on_retry_button_pressed", GAMEPLAY_SCENE_PATH, "HudRetryButton", errors)
+	_validate_button_pressed_connection(node.get("hud_pause_button") as Button, node, "_on_pause_button_pressed", GAMEPLAY_SCENE_PATH, "HudPauseButton", errors)
+	_validate_button_pressed_connection(node.get_node_or_null("SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/TopBar/PauseButton"), node, "_on_pause_button_pressed", GAMEPLAY_SCENE_PATH, "TopBarPauseButton", errors)
 
 
 func _validate_fx_layer_scene(node: Node, errors: PackedStringArray) -> void:
@@ -3463,6 +3525,7 @@ func _validate_collection_scene(node: Node, errors: PackedStringArray) -> void:
 		errors.append("%s is missing SummaryLabel." % COLLECTION_SCENE_PATH)
 	elif not summary.text.contains("해금"):
 		errors.append("%s SummaryLabel should show unlock progress." % COLLECTION_SCENE_PATH)
+	_validate_collection_cta_signal_wiring(node, errors)
 
 	for animal_id in collection_ids:
 		if node.find_child("AnimalCard_%s" % animal_id, true, false) == null:
@@ -3489,6 +3552,10 @@ func _validate_collection_scene(node: Node, errors: PackedStringArray) -> void:
 		GameSession.record_stage_result(9, 0, 1)
 		node.call("_track_collection_event_impressions")
 		GameSession.set_selected_stage_id(selected_stage_before)
+
+
+func _validate_collection_cta_signal_wiring(node: Node, errors: PackedStringArray) -> void:
+	_validate_button_pressed_connection(node.find_child("BackButton", true, false), node, "_on_back_pressed", COLLECTION_SCENE_PATH, "BackButton", errors)
 
 
 func _validate_collection_card_label_state(node: Node, errors: PackedStringArray) -> void:
@@ -3693,6 +3760,7 @@ func _validate_stage_select_scene(node: Node, errors: PackedStringArray) -> void
 	var world_play_button := node.find_child("WorldPlayButton", true, false) as Button
 	if world_play_button == null:
 		errors.append("%s is missing the world-map action button." % STAGE_SELECT_SCENE_PATH)
+	_validate_stage_select_cta_signal_wiring(node, errors)
 
 	var stage_grid := node.get_node_or_null("SafeMargin/LayoutRoot/ContentRoot/StagePanel/StageFrame/StageMargin/StageColumn/StageScroll/StageGrid")
 	if stage_grid == null:
@@ -3713,6 +3781,19 @@ func _validate_stage_select_scene(node: Node, errors: PackedStringArray) -> void
 	var map_juice_layer := node.get_node_or_null("StageMapJuiceLayer") as CanvasItem
 	if map_juice_layer == null:
 		errors.append("%s is missing StageMapJuiceLayer ambient mascots." % STAGE_SELECT_SCENE_PATH)
+
+
+func _validate_stage_select_cta_signal_wiring(node: Node, errors: PackedStringArray) -> void:
+	_validate_button_pressed_connection(node.find_child("WorldPlayButton", true, false), node, "_on_world_play_button_pressed", STAGE_SELECT_SCENE_PATH, "WorldPlayButton", errors)
+	var stage_node := node.find_child("WorldStageNode1", true, false) as Button
+	if stage_node != null:
+		_validate_button_pressed_connection(stage_node, node, "_on_band_route_node_pressed", STAGE_SELECT_SCENE_PATH, "WorldStageNode1", errors)
+	var panel := node.get("stage_popup_panel") as Control
+	_validate_button_pressed_connection(_find_button_with_text(panel, "×"), node, "_on_stage_popup_close_pressed", STAGE_SELECT_SCENE_PATH, "StagePopupCloseButton", errors)
+	_validate_button_pressed_connection(_find_button_with_text(panel, "START"), node, "_on_stage_popup_start_pressed", STAGE_SELECT_SCENE_PATH, "StagePopupStartButton", errors)
+	var booster_buttons: Dictionary = Dictionary(node.get("stage_popup_booster_buttons"))
+	for booster_id in ["rainbow_paw", "striped", "bomb"]:
+		_validate_button_pressed_connection(booster_buttons.get(booster_id) as Button, node, "_on_booster_button_pressed", STAGE_SELECT_SCENE_PATH, "StagePopupBoosterButton %s" % booster_id, errors)
 
 
 func _validate_stage_popup_flow(node: Node, errors: PackedStringArray) -> void:
