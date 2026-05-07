@@ -4,6 +4,7 @@ const StageCatalog = preload("res://scripts/stage_catalog.gd")
 const GameSession = preload("res://scripts/game_session.gd")
 const STAGE_CARD_SCENE = preload("res://scenes/stage_card.tscn")
 const MobileLayout = preload("res://scripts/mobile_layout.gd")
+const LiveEventService = preload("res://scripts/live_event_service.gd")
 const HOME_RABBIT_TEXTURE := preload("res://assets/generated/polish/home_mascot_rabbit_clean.png")
 const HOME_CHICK_TEXTURE := preload("res://assets/generated/polish/home_mascot_chick_clean.png")
 const ANIMAL_PREVIEW_TEXTURES := [
@@ -17,6 +18,8 @@ const ANIMAL_PREVIEW_TEXTURES := [
 	preload("res://assets/generated/candy/pig_candy_block.png"),
 	preload("res://assets/generated/candy/penguin_candy_block.png"),
 	preload("res://assets/generated/candy/fox_candy_block.png"),
+	preload("res://assets/generated/candy/lion_candy_block.png"),
+	preload("res://assets/generated/candy/elephant_candy_block.png"),
 ]
 
 @onready var background_texture: TextureRect = $BackgroundTexture
@@ -58,8 +61,10 @@ var home_subtitle_label: Label
 var home_rabbit: TextureRect
 var home_chick: TextureRect
 var home_animal_strip: HBoxContainer
+var home_event_strip: HBoxContainer
 var home_nav_row: HBoxContainer
 var home_path_root: Control
+var _home_event_impressions_sent := {}
 
 
 func _ready() -> void:
@@ -166,6 +171,7 @@ func _update_home_status() -> void:
 			GameSession.get_cleared_count(),
 			GameSession.get_total_stars(),
 		]
+	_refresh_home_events()
 
 
 func _best_score_stage_id() -> int:
@@ -331,6 +337,12 @@ func _build_game_home_layer() -> void:
 	for texture in ANIMAL_PREVIEW_TEXTURES:
 		home_animal_strip.add_child(_make_animal_token(texture))
 
+	home_event_strip = HBoxContainer.new()
+	home_event_strip.name = "LiveEventStrip"
+	home_event_strip.alignment = BoxContainer.ALIGNMENT_CENTER
+	home_event_strip.add_theme_constant_override("separation", 8)
+	hero_stack.add_child(home_event_strip)
+
 	home_nav_row = HBoxContainer.new()
 	home_nav_row.name = "BottomNav"
 	home_nav_row.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
@@ -425,6 +437,67 @@ func _make_home_icon_button(text: String) -> Button:
 	button.add_theme_stylebox_override("hover", _home_style(Color(0.91, 0.98, 1.0, 0.92), Color(0.36, 0.76, 0.97, 1), 26, 4))
 	button.add_theme_stylebox_override("pressed", _home_style(Color(1.0, 0.78, 0.90, 0.95), Color(0.96, 0.38, 0.61, 1), 26, 4))
 	return button
+
+
+func _refresh_home_events() -> void:
+	if home_event_strip == null:
+		return
+	for child in home_event_strip.get_children():
+		child.queue_free()
+	var events := LiveEventService.active_events_for(GameSession.get_highest_unlocked_stage_id(), "home")
+	home_event_strip.visible = not events.is_empty()
+	for index in range(mini(events.size(), 2)):
+		var event := Dictionary(events[index])
+		home_event_strip.add_child(_make_home_event_chip(event))
+		_track_live_event_impression(event, "home")
+
+
+func _make_home_event_chip(event: Dictionary) -> PanelContainer:
+	var chip := PanelContainer.new()
+	chip.name = "LiveEventChip_%s" % String(event.get("id", "event"))
+	chip.custom_minimum_size = Vector2(230, 56)
+	chip.add_theme_stylebox_override("panel", _home_style(Color(1.0, 0.97, 0.72, 0.86), Color(0.96, 0.48, 0.16, 0.94), 22, 3))
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 14)
+	margin.add_theme_constant_override("margin_top", 7)
+	margin.add_theme_constant_override("margin_right", 14)
+	margin.add_theme_constant_override("margin_bottom", 7)
+	chip.add_child(margin)
+	var label := _make_home_label("%s\n%s" % [String(event.get("title", "이벤트")), _event_type_label(String(event.get("type", "")))], 17, Color(0.14, 0.22, 0.31, 1), HORIZONTAL_ALIGNMENT_CENTER)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	margin.add_child(label)
+	return chip
+
+
+func _event_type_label(event_type: String) -> String:
+	match event_type:
+		"daily_reward":
+			return "오늘 보급"
+		"starter_missions":
+			return "스타터 미션"
+		"collection_event":
+			return "도감 이벤트"
+		"season_pass":
+			return "시즌 패스"
+	return "라이브 이벤트"
+
+
+func _track_live_event_impression(event: Dictionary, placement: String) -> void:
+	var event_id := String(event.get("id", ""))
+	if event_id.is_empty():
+		return
+	var impression_key := "%s:%s" % [placement, event_id]
+	if _home_event_impressions_sent.has(impression_key):
+		return
+	_home_event_impressions_sent[impression_key] = true
+	GameSession.record_analytics_event("live_event_impression", {
+		"session_id": GameSession.get_session_id(),
+		"event_id": event_id,
+		"event_type": String(event.get("type", "")),
+		"placement": placement,
+		"unlock_stage": int(event.get("unlock_stage", 0)),
+		"enabled": bool(event.get("enabled", false)),
+	})
 
 
 func _make_home_label(text: String, font_size: int, color: Color, alignment: HorizontalAlignment) -> Label:

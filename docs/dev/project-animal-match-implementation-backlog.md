@@ -358,7 +358,7 @@
 
 ### PAM-DEV-080: 라이브 이벤트 템플릿과 원격 설정 연결
 
-- 상태: 완료됨. `data/events/live_events.json` 템플릿과 `data/events/remote_config.json`을 `LiveEventService`에 연결해 이벤트 해금 레벨/노출 위치를 원격 설정값으로 검증·조회한다.
+- 상태: 완료됨. `data/events/live_events.json` 템플릿과 `data/events/remote_config.json`을 `LiveEventService`에 연결해 이벤트 해금 레벨/노출 위치를 원격 설정값으로 검증·조회한다. 홈에는 `LiveEventStrip` 노출면을 두고, 홈/컬렉션 이벤트 노출은 `live_event_impression`으로 기록한다.
 - 소유: Development Agent + Ops Agent
 - 대상 파일 후보:
   - 신규 `data/events/*.json`
@@ -423,4 +423,4 @@
 1. `PAM-QA-040` - 실제 기기/수동 플레이 표정·Buddy·특수조합 QA
 2. `PAM-DEV-051` - 특수 조합 수동 플레이 QA 및 밸런스 튜닝
 3. `PAM-DEV-053` 후속 - Rescue Buddy 수치 튜닝과 분석 이벤트 추가 커버리지
-4. `PAM-DEV-080` 후속 - 홈/컬렉션 이벤트 노출 UI와 `live_event_impression` 실제 기록 연결
+4. `PAM-DEV-080` 후속 - 결과 오버레이와 스테이지 선택 화면의 라이브 이벤트 노출 UI 확장

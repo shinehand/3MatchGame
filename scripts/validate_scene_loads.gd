@@ -248,6 +248,14 @@ func _validate_main_scene(node: Node, errors: PackedStringArray) -> void:
 	elif info_card.visible:
 		errors.append("%s should not show a developer-style info card by default." % MAIN_SCENE_PATH)
 
+	var animal_strip := node.get_node_or_null("GameHomeLayer/HeroStack/AnimalStrip") as HBoxContainer
+	if animal_strip == null:
+		errors.append("%s is missing the 12-animal home preview strip." % MAIN_SCENE_PATH)
+	elif animal_strip.get_child_count() < ANIMAL_IDS.size():
+		errors.append("%s AnimalStrip should show all %d board animals, got %d." % [MAIN_SCENE_PATH, ANIMAL_IDS.size(), animal_strip.get_child_count()])
+	if node.get_node_or_null("GameHomeLayer/HeroStack/LiveEventStrip") == null:
+		errors.append("%s is missing LiveEventStrip for live ops surface checks." % MAIN_SCENE_PATH)
+
 
 func _validate_gameplay_scene(node: Node, errors: PackedStringArray) -> void:
 	var board_grid := node.get_node_or_null("SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame/BoardSurfaceMargin/BoardScroll/BoardGrid")

@@ -3,6 +3,7 @@ extends Control
 const CollectionState = preload("res://scripts/collection_state.gd")
 const GameSession = preload("res://scripts/game_session.gd")
 const MobileLayout = preload("res://scripts/mobile_layout.gd")
+const LiveEventService = preload("res://scripts/live_event_service.gd")
 const ANIMAL_TEXTURE_FALLBACKS := {
 	"lion": "fox",
 	"elephant": "panda",
@@ -28,6 +29,7 @@ func _ready() -> void:
 	_build_layout()
 	_refresh_cards()
 	_track_rescue_book_open_analytics()
+	_track_collection_event_impressions()
 	resized.connect(_apply_responsive_layout)
 	get_window().size_changed.connect(_apply_responsive_layout)
 	call_deferred("_apply_responsive_layout")
@@ -153,6 +155,19 @@ func _track_rescue_book_open_analytics() -> void:
 		"unlocked_animal_count": unlocked_count,
 		"entry_point": "collection_screen",
 	})
+
+
+func _track_collection_event_impressions() -> void:
+	for event in LiveEventService.active_events_for(GameSession.get_highest_unlocked_stage_id(), "collection"):
+		var event_dict := Dictionary(event)
+		GameSession.record_analytics_event("live_event_impression", {
+			"session_id": GameSession.get_session_id(),
+			"event_id": String(event_dict.get("id", "")),
+			"event_type": String(event_dict.get("type", "")),
+			"placement": "collection",
+			"unlock_stage": int(event_dict.get("unlock_stage", 0)),
+			"enabled": bool(event_dict.get("enabled", false)),
+		})
 
 
 func _make_animal_card(animal: Dictionary, entry: Dictionary) -> PanelContainer:
