@@ -4,6 +4,7 @@ const SOURCE_REWARDED_AD := "rewarded_ad"
 const SOURCE_IAP := "iap"
 const SOURCE_COINS := "coins"
 const RESULT_COMPLETED := "completed"
+const RESULT_FAILED := "failed"
 const RESULT_PENDING := "pending"
 const DEFAULT_PLACEMENT := "fail_offer"
 const DEFAULT_REWARD_TYPE := "extra_moves"
@@ -15,6 +16,7 @@ const DEFAULT_PROVIDER_ID := "local_simulator"
 const MAX_REQUEST_LOG := 120
 
 static var _provider_id := DEFAULT_PROVIDER_ID
+static var _continue_adapter: Callable = Callable()
 static var _queued_results: Array = []
 static var _request_log: Array = []
 
@@ -36,14 +38,21 @@ static func request_continue(source: String, stage_id: int, fail_offer: Dictiona
 		}
 		_log_request(normalized_source, stage_id, fail_offer, rejected_result)
 		return rejected_result
-	var queued_result := _pop_queued_result(normalized_source)
 	var merged_details := _default_details(normalized_source, stage_id, fail_offer)
+	var queued_result := _pop_queued_result(normalized_source)
+	var result := RESULT_COMPLETED
 	if not queued_result.is_empty():
 		_merge_details(merged_details, Dictionary(queued_result.get("details", {})))
-	_merge_details(merged_details, details)
-	var result := String(queued_result.get("result", details.get("result", RESULT_COMPLETED))).strip_edges().to_lower()
-	if result.is_empty():
-		result = RESULT_COMPLETED
+		_merge_details(merged_details, details)
+		result = _normalize_result(queued_result.get("result", details.get("result", RESULT_COMPLETED)), RESULT_COMPLETED)
+	elif _continue_adapter.is_valid():
+		var adapter_result := _request_continue_from_adapter(normalized_source, stage_id, fail_offer, merged_details, details)
+		_merge_details(merged_details, details)
+		_merge_details(merged_details, Dictionary(adapter_result.get("details", {})))
+		result = _normalize_result(adapter_result.get("result", RESULT_FAILED), RESULT_FAILED)
+	else:
+		_merge_details(merged_details, details)
+		result = _normalize_result(details.get("result", RESULT_COMPLETED), RESULT_COMPLETED)
 	var gateway_result := {
 		"source": normalized_source,
 		"result": result,
@@ -62,6 +71,15 @@ static func queue_continue_result_for_testing(source: String, result: String, de
 	})
 
 
+static func configure_continue_adapter(provider_id: String, adapter: Callable) -> void:
+	_set_provider_id(provider_id)
+	_continue_adapter = adapter
+
+
+static func clear_continue_adapter_for_testing() -> void:
+	_continue_adapter = Callable()
+
+
 static func clear_continue_results_for_testing() -> void:
 	_queued_results.clear()
 
@@ -75,12 +93,17 @@ static func clear_request_log_for_testing() -> void:
 
 
 static func set_provider_id_for_testing(provider_id: String) -> void:
+	_set_provider_id(provider_id)
+
+
+static func _set_provider_id(provider_id: String) -> void:
 	var normalized_provider := provider_id.strip_edges()
 	_provider_id = DEFAULT_PROVIDER_ID if normalized_provider.is_empty() else normalized_provider
 
 
 static func reset_for_testing() -> void:
 	_provider_id = DEFAULT_PROVIDER_ID
+	_continue_adapter = Callable()
 	_queued_results.clear()
 	_request_log.clear()
 
@@ -93,6 +116,43 @@ static func _pop_queued_result(source: String) -> Dictionary:
 			_queued_results.remove_at(index)
 			return queued_result
 	return {}
+
+
+static func _request_continue_from_adapter(source: String, stage_id: int, fail_offer: Dictionary, default_details: Dictionary, request_details: Dictionary) -> Dictionary:
+	var payload_details := default_details.duplicate(true)
+	_merge_details(payload_details, request_details)
+	var request_payload := {
+		"source": source,
+		"stage_id": stage_id,
+		"fail_type": String(fail_offer.get("type", fail_offer.get("fail_type", ""))),
+		"offer_type": String(fail_offer.get("offer_type", "")),
+		"placement": String(payload_details.get("placement", DEFAULT_PLACEMENT)),
+		"provider_id": _provider_id,
+		"details": payload_details,
+		"fail_offer": fail_offer.duplicate(true),
+	}
+	var adapter_response = _continue_adapter.call(request_payload.duplicate(true))
+	return _normalize_adapter_response(adapter_response)
+
+
+static func _normalize_adapter_response(adapter_response) -> Dictionary:
+	if adapter_response is Dictionary:
+		var response: Dictionary = Dictionary(adapter_response).duplicate(true)
+		response["details"] = Dictionary(response.get("details", {})).duplicate(true)
+		return response
+	if adapter_response is String:
+		return {"result": String(adapter_response)}
+	if adapter_response is bool:
+		return {"result": RESULT_COMPLETED if bool(adapter_response) else RESULT_FAILED}
+	return {
+		"result": RESULT_FAILED,
+		"details": {"error_code": "adapter_invalid_result"},
+	}
+
+
+static func _normalize_result(result_value, default_result: String) -> String:
+	var result := String(result_value).strip_edges().to_lower()
+	return default_result if result.is_empty() else result
 
 
 static func _default_details(source: String, stage_id: int, fail_offer: Dictionary) -> Dictionary:

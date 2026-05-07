@@ -40,6 +40,7 @@ const SPECIAL_COMBO_MANUAL_ROWS := ["row+column", "row+row", "column+column", "r
 
 var representative_stage_ids: Array[int] = [1, 11, 25, 50, 75, 100]
 var tutorial_stage_ids: Array[int] = [1, 11, 25, 45, 65, 85, 95]
+var monetization_adapter_requests: Array = []
 
 
 func _init() -> void:
@@ -711,6 +712,22 @@ func _validate_monetization_request_log(log_entry: Dictionary, expected_source: 
 		errors.append("MonetizationGateway request log should preserve request_status %s." % expected_status)
 	if String(log_entry.get("provider_id", "")) != expected_provider_id:
 		errors.append("MonetizationGateway request log should preserve provider_id %s." % expected_provider_id)
+
+
+func _monetization_adapter_pending_response(request: Dictionary) -> Dictionary:
+	monetization_adapter_requests.append(request.duplicate(true))
+	var details_value = request.get("details", {})
+	if details_value is Dictionary:
+		var request_details: Dictionary = details_value
+		request_details["transaction_id"] = "mutated-request-transaction"
+	request["fail_offer"] = {"type": "mutated_by_adapter"}
+	return {
+		"result": MonetizationGateway.RESULT_PENDING,
+		"details": {
+			"ad_network": "adapter_validation",
+			"transaction_id": "adapter-pending-validation",
+		},
+	}
 
 
 func _live_events_by_id() -> Dictionary:
@@ -2216,6 +2233,43 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	if _analytics_event_count("extra_moves_grant") != invalid_source_extra_before:
 		errors.append("%s invalid fail offer continue source should not emit extra_moves_grant." % GAMEPLAY_SCENE_PATH)
 
+	MonetizationGateway.reset_for_testing()
+	monetization_adapter_requests.clear()
+	MonetizationGateway.configure_continue_adapter("adapter_validation_provider", Callable(self, "_monetization_adapter_pending_response"))
+	var adapter_invalid_result := MonetizationGateway.request_continue("mystery_sdk", 25, Dictionary(node.get("active_fail_offer")), {"transaction_id": "adapter-invalid-source"})
+	if String(adapter_invalid_result.get("request_status", "")) != "rejected_invalid_source":
+		errors.append("%s MonetizationGateway adapter should still reject invalid sources before provider dispatch." % GAMEPLAY_SCENE_PATH)
+	if not monetization_adapter_requests.is_empty():
+		errors.append("%s MonetizationGateway should not invoke continue adapter for unsupported sources." % GAMEPLAY_SCENE_PATH)
+
+	MonetizationGateway.clear_request_log_for_testing()
+	MonetizationGateway.queue_continue_result_for_testing("rewarded_ad", "completed", {"transaction_id": "queued-adapter-priority", "ad_network": "queued_priority"})
+	var queued_adapter_result := MonetizationGateway.request_continue("rewarded_ad", 25, Dictionary(node.get("active_fail_offer")), {"transaction_id": "request-detail-should-not-win"})
+	if not monetization_adapter_requests.is_empty():
+		errors.append("%s MonetizationGateway queued result should take priority over continue adapter." % GAMEPLAY_SCENE_PATH)
+	if String(queued_adapter_result.get("result", "")) != "completed":
+		errors.append("%s MonetizationGateway queued result should preserve queued result precedence." % GAMEPLAY_SCENE_PATH)
+
+	MonetizationGateway.clear_request_log_for_testing()
+	var adapter_gateway_result := MonetizationGateway.request_continue("rewarded_ad", 25, Dictionary(node.get("active_fail_offer")), {"transaction_id": "request-detail-transaction", "ad_network": "request_detail_network"})
+	if monetization_adapter_requests.size() != 1:
+		errors.append("%s MonetizationGateway should invoke continue adapter exactly once for supported unqueued requests." % GAMEPLAY_SCENE_PATH)
+	if String(adapter_gateway_result.get("result", "")) != MonetizationGateway.RESULT_PENDING:
+		errors.append("%s MonetizationGateway continue adapter should normalize pending provider results." % GAMEPLAY_SCENE_PATH)
+	var adapter_gateway_details := Dictionary(adapter_gateway_result.get("details", {}))
+	if String(adapter_gateway_details.get("transaction_id", "")) != "adapter-pending-validation" or String(adapter_gateway_details.get("ad_network", "")) != "adapter_validation":
+		errors.append("%s MonetizationGateway continue adapter result details should win over request payload mutations." % GAMEPLAY_SCENE_PATH)
+	var adapter_gateway_log := _last_monetization_request_log()
+	_validate_monetization_request_log(adapter_gateway_log, "rewarded_ad", 25, "near_miss", MonetizationGateway.RESULT_PENDING, "resolved", "adapter_validation_provider", errors)
+	if not monetization_adapter_requests.is_empty():
+		var adapter_request: Dictionary = Dictionary(monetization_adapter_requests[0])
+		var adapter_request_details := Dictionary(adapter_request.get("details", {}))
+		if String(adapter_request.get("source", "")) != "rewarded_ad" or int(adapter_request.get("stage_id", 0)) != 25 or String(adapter_request.get("provider_id", "")) != "adapter_validation_provider":
+			errors.append("%s MonetizationGateway continue adapter request should include normalized source, stage, and provider metadata." % GAMEPLAY_SCENE_PATH)
+		if String(adapter_request.get("fail_type", "")) != "near_miss" or String(adapter_request_details.get("transaction_id", "")) != "request-detail-transaction":
+			errors.append("%s MonetizationGateway continue adapter request should include fail offer and request details." % GAMEPLAY_SCENE_PATH)
+	MonetizationGateway.reset_for_testing()
+
 	var wallet_before_failed_continue := GameSession.get_wallet()
 	var failed_continue_score := int(node.get("score"))
 	var failed_continue_blockers := int(node.get("cleared_blockers"))
@@ -2263,6 +2317,29 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s IAP cancel/fail/restore should not emit extra_moves_grant." % GAMEPLAY_SCENE_PATH)
 	if _analytics_event_count("iap_purchase_complete") != iap_complete_events_before:
 		errors.append("%s IAP cancel/fail/restore should not emit iap_purchase_complete." % GAMEPLAY_SCENE_PATH)
+
+	MonetizationGateway.reset_for_testing()
+	monetization_adapter_requests.clear()
+	MonetizationGateway.configure_continue_adapter("adapter_pending_provider", Callable(self, "_monetization_adapter_pending_response"))
+	var adapter_pending_extra_before := _analytics_event_count("extra_moves_grant")
+	var adapter_pending_ad_fail_before := _analytics_event_count("ad_reward_fail")
+	var adapter_pending_ad_complete_before := _analytics_event_count("ad_reward_complete")
+	node.call("_on_overlay_primary_button_pressed")
+	if monetization_adapter_requests.size() != 1:
+		errors.append("%s pending rewarded ad adapter request should invoke one provider request." % GAMEPLAY_SCENE_PATH)
+	if not bool(node.get("active_fail_offer_continue_pending")) or String(node.get("active_fail_offer_continue_pending_source")) != "rewarded_ad":
+		errors.append("%s pending rewarded ad adapter request should set pending state." % GAMEPLAY_SCENE_PATH)
+	var adapter_pending_log := _last_monetization_request_log()
+	_validate_monetization_request_log(adapter_pending_log, "rewarded_ad", 25, "near_miss", MonetizationGateway.RESULT_PENDING, "resolved", "adapter_pending_provider", errors)
+	node.call("_on_overlay_primary_button_pressed")
+	if monetization_adapter_requests.size() != 1:
+		errors.append("%s duplicate pending rewarded ad adapter primary tap should not create a second provider request." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("extra_moves_grant") != adapter_pending_extra_before or _analytics_event_count("ad_reward_fail") != adapter_pending_ad_fail_before or _analytics_event_count("ad_reward_complete") != adapter_pending_ad_complete_before:
+		errors.append("%s pending rewarded ad adapter request should not emit grant, failure, or completion analytics before callback." % GAMEPLAY_SCENE_PATH)
+	node.call("_resolve_fail_offer_continue_result", "rewarded_ad", "failed", {"ad_network": "adapter_validation", "error_code": "adapter_pending_failed"})
+	MonetizationGateway.reset_for_testing()
+	await _prepare_stage_25_near_miss_failure(node)
+	failed_continue_moves = int(node.get("remaining_moves"))
 
 	MonetizationGateway.clear_request_log_for_testing()
 	MonetizationGateway.set_provider_id_for_testing("gateway_pending_provider")
