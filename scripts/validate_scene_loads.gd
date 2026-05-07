@@ -1557,11 +1557,19 @@ func _validate_failure_overlay_focus_hint_variants(node: Node, errors: PackedStr
 	await node.call("_check_stage_state")
 	var overlay := node.get_node_or_null("Overlay") as CanvasItem
 	var overlay_body := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayBody") as Label
+	var overlay_primary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlayPrimaryButton") as Button
+	var overlay_secondary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlaySecondaryButton") as Button
 	if overlay == null or not overlay.visible:
 		errors.append("%s collection failure hint smoke should show the result overlay." % GAMEPLAY_SCENE_PATH)
 	if String(node.get("stage_state")) != "failed":
 		errors.append("%s collection failure hint smoke should leave Stage 12 failed, got %s." % [GAMEPLAY_SCENE_PATH, String(node.get("stage_state"))])
-	if overlay_body == null or not overlay_body.text.contains("놓친 핵심  곰 3개 더 구조") or not overlay_body.text.contains("다음 한 수  곰 주변 매치부터 만들고 무지개 발바닥은 마지막 목표에 쓰세요."):
+	if int(node.call("_current_stage_id")) != 12 or String(node.get("overlay_action")) != "restart_stage":
+		errors.append("%s collection failure hint smoke should keep Stage 12 on restart_stage action." % GAMEPLAY_SCENE_PATH)
+	if overlay_primary == null or overlay_primary.text != "재도전":
+		errors.append("%s collection failure hint smoke should expose 재도전 primary CTA." % GAMEPLAY_SCENE_PATH)
+	if overlay_secondary == null or not overlay_secondary.visible or overlay_secondary.text != "홈으로":
+		errors.append("%s collection failure hint smoke should expose 홈으로 secondary CTA." % GAMEPLAY_SCENE_PATH)
+	if overlay_body == null or not overlay_body.text.contains("실패 유형  strategic_miss") or not overlay_body.text.contains("남은 목표  곰 3개") or not overlay_body.text.contains("놓친 핵심  곰 3개 더 구조") or not overlay_body.text.contains("다음 한 수  곰 주변 매치부터 만들고 무지개 발바닥은 마지막 목표에 쓰세요."):
 		errors.append("%s collection failure overlay should show the missed collection focus and retry hint." % GAMEPLAY_SCENE_PATH)
 
 	node.call("_start_stage", 11)
@@ -1572,11 +1580,19 @@ func _validate_failure_overlay_focus_hint_variants(node: Node, errors: PackedStr
 	await node.call("_check_stage_state")
 	overlay = node.get_node_or_null("Overlay") as CanvasItem
 	overlay_body = node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayBody") as Label
+	overlay_primary = node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlayPrimaryButton") as Button
+	overlay_secondary = node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlaySecondaryButton") as Button
 	if overlay == null or not overlay.visible:
 		errors.append("%s score failure hint smoke should show the result overlay." % GAMEPLAY_SCENE_PATH)
 	if String(node.get("stage_state")) != "failed":
 		errors.append("%s score failure hint smoke should leave Stage 12 failed, got %s." % [GAMEPLAY_SCENE_PATH, String(node.get("stage_state"))])
-	if overlay_body == null or not overlay_body.text.contains("놓친 핵심  점수 300점 더 획득") or not overlay_body.text.contains("다음 한 수  4매치 이상과 연쇄를 노려 점수 배수를 먼저 키우세요."):
+	if int(node.call("_current_stage_id")) != 12 or String(node.get("overlay_action")) != "restart_stage":
+		errors.append("%s score failure hint smoke should keep Stage 12 on restart_stage action." % GAMEPLAY_SCENE_PATH)
+	if overlay_primary == null or overlay_primary.text != "재도전":
+		errors.append("%s score failure hint smoke should expose 재도전 primary CTA." % GAMEPLAY_SCENE_PATH)
+	if overlay_secondary == null or not overlay_secondary.visible or overlay_secondary.text != "홈으로":
+		errors.append("%s score failure hint smoke should expose 홈으로 secondary CTA." % GAMEPLAY_SCENE_PATH)
+	if overlay_body == null or not overlay_body.text.contains("실패 유형  strategic_miss") or not overlay_body.text.contains("남은 목표  점수 300점") or not overlay_body.text.contains("놓친 핵심  점수 300점 더 획득") or not overlay_body.text.contains("다음 한 수  4매치 이상과 연쇄를 노려 점수 배수를 먼저 키우세요."):
 		errors.append("%s score failure overlay should show the missed score focus and retry hint." % GAMEPLAY_SCENE_PATH)
 
 
