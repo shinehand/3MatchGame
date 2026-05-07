@@ -23,6 +23,8 @@ const DEFAULT_REMOTE_CONFIG := {
 	"collection_event_unlock_level": 9,
 	"rewarded_continue_moves": 3,
 	"coin_continue_moves": 5,
+	"near_miss_goal_threshold": 2,
+	"near_miss_progress_threshold": 0.8,
 }
 const REMOTE_CONFIG_EXPOSURE_KEYS := [
 	"heart_spend_start_level",
@@ -35,6 +37,8 @@ const REMOTE_CONFIG_EXPOSURE_KEYS := [
 	"collection_event_unlock_level",
 	"rewarded_continue_moves",
 	"coin_continue_moves",
+	"near_miss_goal_threshold",
+	"near_miss_progress_threshold",
 ]
 const VALID_EVENT_TYPES := ["daily_reward", "starter_missions", "collection_event", "season_pass"]
 const VALID_PLACEMENTS := ["home", "stage_select", "result_overlay", "collection"]
@@ -235,11 +239,17 @@ static func _event_unlock_stage(event_dict: Dictionary, remote_config: Dictionar
 static func _validate_remote_config(remote_config: Dictionary, errors: PackedStringArray) -> void:
 	if String(remote_config.get("variant_id", "")).strip_edges().is_empty():
 		errors.append("remote config missing variant_id")
-	for key in ["heart_spend_start_level", "rewarded_ad_start_level", "iap_offer_start_level", "interstitial_min_level", "season_pass_unlock_level", "daily_reward_unlock_level", "starter_missions_unlock_level", "collection_event_unlock_level", "rewarded_continue_moves", "coin_continue_moves"]:
+	for key in ["heart_spend_start_level", "rewarded_ad_start_level", "iap_offer_start_level", "interstitial_min_level", "season_pass_unlock_level", "daily_reward_unlock_level", "starter_missions_unlock_level", "collection_event_unlock_level", "rewarded_continue_moves", "coin_continue_moves", "near_miss_goal_threshold"]:
 		if not remote_config.has(key):
 			errors.append("remote config missing %s" % key)
 		elif int(remote_config.get(key, 0)) <= 0:
 			errors.append("remote config %s must be positive" % key)
+	if not remote_config.has("near_miss_progress_threshold"):
+		errors.append("remote config missing near_miss_progress_threshold")
+	else:
+		var progress_threshold := float(remote_config.get("near_miss_progress_threshold", 0.0))
+		if progress_threshold < 0.5 or progress_threshold > 0.98:
+			errors.append("remote config near_miss_progress_threshold must be between 0.5 and 0.98")
 	if int(remote_config.get("iap_offer_start_level", 0)) < int(remote_config.get("rewarded_ad_start_level", 0)):
 		errors.append("remote config iap_offer_start_level must not precede rewarded_ad_start_level")
 	if int(remote_config.get("interstitial_min_level", 0)) < 11:

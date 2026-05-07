@@ -22,12 +22,12 @@
 | DEC-013 | 첫 Rescue Buddy 대상은 Stage 4의 rabbit `quick_refill` | Locked | PAM-DEV-053 1차 구현 완료. 목표 동물 매치 3회 충전 후 1회 자동 발동 | Planning/Tech |
 | DEC-014 | Rescue Book 첫 해금 동물은 rabbit 고정 | Locked | FTUE 표와 Level 4 첫 카드 해금 기준 확정 | UX |
 | DEC-015 | 우정 레벨 보상은 MVP에서 cosmetic 중심 | Accepted | 초반 pay-to-win 방지. booster/event XP는 소프트 런칭 이후 실험 | BM/UX |
+| DEC-016 | Near Miss 기준은 남은 목표 2개 이하 또는 목표 진행률 80% 이상 | Locked | `FailOfferPolicy` 기본값과 remote config `near_miss_goal_threshold`, `near_miss_progress_threshold`로 조정 가능 | UX/Balance/Tech |
 
 ## 2. 아직 열려 있는 결정
 
 | ID | 질문 | 후보 | 결정 필요 시점 | 소유 |
 | --- | --- | --- | --- | --- |
-| OPEN-005 | 실패 Near Miss 기준 | 남은 목표 1-2개, 진행률 80%, 장애물 hp 총합 기준 | PAM-DEV-070 전 | UX/Balance |
 | OPEN-006 | 시즌 패스 해금 레벨 | 20 고정 또는 원격 설정 | PAM-DEV-080 전 | BM |
 | OPEN-007 | 분석 SDK 실제 공급자 | Firebase, GameAnalytics, custom adapter | Analytics 구현 전 | Tech/PM |
 | OPEN-008 | 최종 `lion`, `elephant` 전용 에셋 제작 시점 | MVP 전, 소프트 런칭 전, 이벤트 전 | PAM-DEV-011 후속 | Art/PM |
@@ -49,8 +49,7 @@
 
 ## 5. 다음 회의 안건
 
-1. `OPEN-005`: Near Miss 판정 기준.
-2. `OPEN-007`: 분석 SDK 추상화 범위.
-3. `OPEN-009`: 컬렉션 전용 동물의 보드 투입 우선순위.
-4. `OPEN-006`: 시즌 패스 해금 레벨 원격 설정 여부.
-5. `OPEN-008`: lion/elephant 전용 에셋 제작 시점.
+1. `OPEN-007`: 분석 SDK 추상화 범위.
+2. `OPEN-009`: 컬렉션 전용 동물의 보드 투입 우선순위.
+3. `OPEN-006`: 시즌 패스 해금 레벨 원격 설정 여부.
+4. `OPEN-008`: lion/elephant 전용 에셋 제작 시점.

@@ -9,6 +9,8 @@ const TYPE_BLOCKERS := "blockers_remaining"
 const TYPE_SCORE := "score_shortfall"
 const TYPE_COLLECTION := "collection_shortfall"
 const TYPE_GENERAL := "general_shortfall"
+const DEFAULT_NEAR_MISS_GOAL_THRESHOLD := 2
+const DEFAULT_NEAR_MISS_PROGRESS_THRESHOLD := 0.8
 
 
 static func classify(stage: Dictionary, progress: Dictionary) -> String:
@@ -92,13 +94,15 @@ static func format_offer_line(offer: Dictionary) -> String:
 
 
 static func _is_near_miss(stage: Dictionary, progress: Dictionary) -> bool:
+	var goal_threshold := clampi(int(progress.get("near_miss_goal_threshold", DEFAULT_NEAR_MISS_GOAL_THRESHOLD)), 1, 5)
+	var progress_threshold := clampf(float(progress.get("near_miss_progress_threshold", DEFAULT_NEAR_MISS_PROGRESS_THRESHOLD)), 0.5, 0.98)
 	var remaining_units := _remaining_goal_units(stage, progress)
-	if remaining_units <= 2:
+	if remaining_units <= goal_threshold:
 		return true
 	var total_units := _total_goal_units(stage)
 	if total_units <= 0:
 		return false
-	return float(total_units - remaining_units) / float(total_units) >= 0.8
+	return float(total_units - remaining_units) / float(total_units) >= progress_threshold
 
 
 static func _primary_shortfall(stage: Dictionary, progress: Dictionary) -> String:

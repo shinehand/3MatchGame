@@ -81,7 +81,7 @@ QA 기준:
 | 실패 유형 | 조건 | 1순위 CTA | 2순위 CTA | 금지 |
 | --- | --- | --- | --- | --- |
 | First Fail | 해당 stage 첫 실패 | 무료 재도전 | 힌트 | IAP 강제 |
-| Near Miss | 남은 목표 1-2 또는 진행률 80%+ | 광고 +3 moves | 코인 +5 moves | 자동 광고 |
+| Near Miss | 남은 목표 1-2 또는 진행률 80%+; `near_miss_goal_threshold`/`near_miss_progress_threshold`로 조정 | 광고 +3 moves | 코인 +5 moves | 자동 광고 |
 | Strategic Miss | 남은 목표 많음 | 재도전 | 추천 부스터 설명 | 결제 압박 |
 | Repeat Fail | 같은 stage 2회+ 실패 | 무료 부스터/힌트 | 재도전 | 같은 IAP 반복 |
 | Hard Fail | hard/master/finale 실패 | 재도전 | 부스터 번들 | 닫기 숨김 |

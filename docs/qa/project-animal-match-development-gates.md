@@ -129,6 +129,7 @@
 ## Gate 9. 실패/광고/IAP 공정성
 
 - 강제 실패 케이스에서 Near Miss와 Strategic Miss가 다르게 분기된다.
+- Near Miss 기준은 `near_miss_goal_threshold`와 `near_miss_progress_threshold` remote config 기본값으로 튜닝 가능하고 scene smoke에서 분기 검증을 통과한다.
 - Stage 1 FTUE 실패 overlay는 무료 재도전 CTA와 수익화 문구 차단을 runtime smoke에서 검증한다.
 - 실패 팝업에서 재도전, 지도, 닫기 같은 비구매 선택지가 항상 보인다.
 - Near Miss 실패 팝업의 `+3 이동 받고 계속` CTA는 실제로 overlay를 닫고 이동 3회를 지급해 플레이 상태로 복귀한다.

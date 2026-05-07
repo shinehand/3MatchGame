@@ -3671,11 +3671,14 @@ func _build_failure_retry_hint(fail_offer: Dictionary) -> String:
 func _build_failure_offer(fail_count: int = -1) -> Dictionary:
 	if fail_count < 0:
 		fail_count = GameSession.get_stage_fail_count(_current_stage_id())
+	var remote_config := LiveEventService.load_remote_config(false)
 	return FailOfferPolicy.build_offer(_current_stage(), {
 		"score": score,
 		"cleared_blockers": cleared_blockers,
 		"collected_counts": collected_counts,
 		"fail_count": fail_count,
+		"near_miss_goal_threshold": int(remote_config.get("near_miss_goal_threshold", FailOfferPolicy.DEFAULT_NEAR_MISS_GOAL_THRESHOLD)),
+		"near_miss_progress_threshold": float(remote_config.get("near_miss_progress_threshold", FailOfferPolicy.DEFAULT_NEAR_MISS_PROGRESS_THRESHOLD)),
 	})
 
 

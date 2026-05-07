@@ -10,5 +10,7 @@
   "starter_missions_unlock_level": 3,
   "collection_event_unlock_level": 9,
   "rewarded_continue_moves": 3,
-  "coin_continue_moves": 5
+  "coin_continue_moves": 5,
+  "near_miss_goal_threshold": 2,
+  "near_miss_progress_threshold": 0.8
 }

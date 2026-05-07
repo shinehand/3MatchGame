@@ -2815,6 +2815,12 @@ func _validate_fail_offer_policy(errors: PackedStringArray) -> void:
 		errors.append("FailOfferPolicy should classify 1-2 remaining goals as near_miss.")
 	if not bool(near_miss_offer.get("show_rewarded_ad", false)) or not bool(near_miss_offer.get("show_iap", false)):
 		errors.append("FailOfferPolicy should enable ad/iap offers for eligible midgame near miss failure.")
+	var tuned_near_miss_offer := FailOfferPolicy.build_offer({"id": 25, "target_collect": {"rabbit": 10}}, {"collected_counts": {"rabbit": 7}, "fail_count": 1, "near_miss_goal_threshold": 3, "near_miss_progress_threshold": 0.95})
+	if tuned_near_miss_offer.get("type") != FailOfferPolicy.TYPE_NEAR_MISS:
+		errors.append("FailOfferPolicy should respect remote-config near_miss_goal_threshold tuning.")
+	var strict_progress_offer := FailOfferPolicy.build_offer({"id": 25, "target_collect": {"rabbit": 10}}, {"collected_counts": {"rabbit": 8}, "fail_count": 1, "near_miss_goal_threshold": 1, "near_miss_progress_threshold": 0.95})
+	if strict_progress_offer.get("type") == FailOfferPolicy.TYPE_NEAR_MISS:
+		errors.append("FailOfferPolicy should respect strict remote-config near_miss_progress_threshold tuning.")
 
 	var repeat_offer := FailOfferPolicy.build_offer({"id": 25, "target_blockers": 4}, {"cleared_blockers": 1, "score": 0, "fail_count": 2})
 	if repeat_offer.get("type") != FailOfferPolicy.TYPE_REPEAT_FAIL:

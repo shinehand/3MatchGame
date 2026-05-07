@@ -256,7 +256,7 @@
 
 ### PAM-DEV-054: 결과/실패 near-miss 플로우
 
-- 상태: 부분 완료. `FailOfferPolicy`가 Near Miss, Strategic Miss, First Fail, Repeat Fail, Hard Level Fail을 분류하고 Level 1-10 광고/IAP 제안을 차단한다. Scene load smoke는 정책 단위에서 near miss, strategic miss, first fail, repeat fail, hard fail, 초반 수익화 차단을 검증하고, 실제 Gameplay runtime에서 Stage 1 클리어 오버레이의 보상/별/다음 CTA, Stage 1 FTUE 실패 오버레이의 무료 재도전/수익화 문구 차단, Stage 25 near-miss 실패 오버레이의 `+3 이동 받고 계속`/`재도전` CTA, `stage_fail`, `offer_impression`, `fail_offer_show`, `fail_offer_select`, `fail_offer_dismiss`, `ad_reward_complete`, `ad_reward_fail`, `iap_purchase_start`, `iap_purchase_complete`, `iap_purchase_restore`, `iap_purchase_cancel`, `iap_purchase_fail`, `extra_moves_grant`, `continue_stage` +3 이동 재개, 보조 CTA 재시도 복구, 광고 실패/IAP 취소·실패·복구/코인 continue 성공·부족 상태 보존, IAP 성공형 continue transaction 공유, 보상형 광고/IAP continue transaction idempotency를 검증한다. 남은 작업은 실제 광고 SDK/IAP SDK 연결과 실제 상품/영수증 복구 QA다.
+- 상태: 부분 완료. `FailOfferPolicy`가 Near Miss, Strategic Miss, First Fail, Repeat Fail, Hard Level Fail을 분류하고 Level 1-10 광고/IAP 제안을 차단한다. Near Miss 기준은 `near_miss_goal_threshold`와 `near_miss_progress_threshold` remote config 기본값으로 조정 가능하며 scene smoke가 튜닝 분기를 검증한다. Scene load smoke는 정책 단위에서 near miss, strategic miss, first fail, repeat fail, hard fail, 초반 수익화 차단을 검증하고, 실제 Gameplay runtime에서 Stage 1 클리어 오버레이의 보상/별/다음 CTA, Stage 1 FTUE 실패 오버레이의 무료 재도전/수익화 문구 차단, Stage 25 near-miss 실패 오버레이의 `+3 이동 받고 계속`/`재도전` CTA, `stage_fail`, `offer_impression`, `fail_offer_show`, `fail_offer_select`, `fail_offer_dismiss`, `ad_reward_complete`, `ad_reward_fail`, `iap_purchase_start`, `iap_purchase_complete`, `iap_purchase_restore`, `iap_purchase_cancel`, `iap_purchase_fail`, `extra_moves_grant`, `continue_stage` +3 이동 재개, 보조 CTA 재시도 복구, 광고 실패/IAP 취소·실패·복구/코인 continue 성공·부족 상태 보존, IAP 성공형 continue transaction 공유, 보상형 광고/IAP continue transaction idempotency를 검증한다. 남은 작업은 실제 광고 SDK/IAP SDK 연결과 실제 상품/영수증 복구 QA다.
 - 소유: Development Agent + UX Planning Agent
 - 대상 파일:
   - `scripts/gameplay.gd`
@@ -325,7 +325,7 @@
 
 ### PAM-PLAN-061: 결정 레지스터 운영
 
-- 상태: 완료됨. 구현 완료된 피버 충전, 첫 Rescue Buddy, 첫 Rescue Book 해금, 우정 보상 범위를 DEC-012~015로 승격하고 남은 OPEN 안건을 Near Miss/SDK/시즌/에셋/확장 동물 순서로 정리했다.
+- 상태: 완료됨. 구현 완료된 피버 충전, 첫 Rescue Buddy, 첫 Rescue Book 해금, 우정 보상, Near Miss 기준을 DEC-012~016으로 승격하고 남은 OPEN 안건을 SDK/시즌/에셋/확장 동물 순서로 정리했다.
 - 소유: PM Lead + Planning Lead
 - 대상 문서:
   - `docs/planning/project-animal-match-decision-register.md`
