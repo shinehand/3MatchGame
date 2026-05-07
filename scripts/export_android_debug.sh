@@ -6,6 +6,7 @@ cd "$ROOT_DIR"
 
 OUTPUT_APK="build/android/puzzle-mobile-starter-debug.apk"
 INSTALL=false
+DRY_RUN=false
 
 for arg in "$@"; do
 	case "$arg" in
@@ -15,14 +16,17 @@ for arg in "$@"; do
 		--output=*)
 			OUTPUT_APK="${arg#--output=}"
 			;;
+		--dry-run)
+			DRY_RUN=true
+			;;
 		-h|--help)
-			echo "Usage: $0 [--install] [--output=path/to/app.apk]"
+			echo "Usage: $0 [--install] [--output=path/to/app.apk] [--dry-run]"
 			echo "Exports the Android debug APK, verifies its signature, and writes alpha QA evidence."
 			exit 0
 			;;
 		*)
 			echo "Unknown option: $arg"
-			echo "Usage: $0 [--install] [--output=path/to/app.apk]"
+			echo "Usage: $0 [--install] [--output=path/to/app.apk] [--dry-run]"
 			exit 2
 			;;
 	esac
@@ -40,9 +44,25 @@ SDK_PATH="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
 BUILD_TOOLS_VERSION="${ANDROID_BUILD_TOOLS_VERSION:-35.0.1}"
 APKSIGNER="$SDK_PATH/build-tools/$BUILD_TOOLS_VERSION/apksigner"
 ADB="$SDK_PATH/platform-tools/adb"
-GODOT_VERSION="$(godot --version)"
 DEBUG_KEYSTORE_PATH="$HOME/Library/Application Support/Godot/keystores/debug.keystore"
 EXPORT_PRESET_NAME="Android"
+
+if [ "$DRY_RUN" = true ]; then
+	echo "Android debug export dry-run"
+	echo "Output APK: $OUTPUT_APK"
+	echo "Preset: $EXPORT_PRESET_NAME"
+	echo "Install requested: $INSTALL"
+	echo "Evidence: $EVIDENCE_PATH"
+	echo "SDK path: $SDK_PATH"
+	echo "Build tools version: $BUILD_TOOLS_VERSION"
+	echo "apksigner: $APKSIGNER"
+	echo "adb: $ADB"
+	echo "Debug keystore path: $DEBUG_KEYSTORE_PATH"
+	echo "Dry-run scope: CLI contract only; no APK export, signature verification, install, or device evidence."
+	exit 0
+fi
+
+GODOT_VERSION="$(godot --version)"
 
 mkdir -p "$(dirname "$OUTPUT_APK")" "$CAPTURE_DIR"
 rm -f "$OUTPUT_APK" "$EXPORT_LOG" "$VERIFY_LOG" "$ADB_LOG" "$EVIDENCE_PATH"

@@ -28,10 +28,11 @@
 - Godot 헤드리스 로드
 - 파일 직접 읽기 안티패턴 스캔
 - Alpha QA packet dry-run 및 템플릿 계약 검증. 대표 코스, Device Evidence Pack, Stage Data Smoke Coverage, Focused Device Gate Matrix, Stage 31 Special Combo Evidence, Rescue Buddy Stage Matrix, Failure Continue Gateway, Analytics Gateway Local Buffer가 빠지면 실패한다.
+- Android QA helper script dry-run 계약 검증. Debug export, device evidence capture, manual device checks, release export CLI가 실기기/서명 도구 실행 없이 인자와 evidence path를 해석하는지 확인한다.
 - Scene smoke는 `StageCatalog`의 `recommended_smoke`/Buddy 스테이지를 Alpha QA 템플릿의 `STAGE_SMOKE_###`/`BUDDY_STAGE_###` 행과 대조해 stage data와 수동 QA packet이 어긋나면 실패한다.
 - 수동 스모크 체크리스트 출력
 
-`zsh scripts/export_android_debug.sh`는 Android debug export를 수행하고 `build/android/puzzle-mobile-starter-debug.apk`를 `apksigner`로 검증한 뒤 `output/alpha-lock-pass/YYYY-MM-DD/captures/android-debug-export.txt`에 commit, APK 경로, export 결과, signature verify 결과, ADB device 상태를 남긴다. 기기가 연결된 설치 검증은 `zsh scripts/export_android_debug.sh --install`로 실행하며, 연결 기기가 정확히 1대가 아니면 install evidence는 Blocked로 기록한다.
+`zsh scripts/export_android_debug.sh`는 Android debug export를 수행하고 `build/android/puzzle-mobile-starter-debug.apk`를 `apksigner`로 검증한 뒤 `output/alpha-lock-pass/YYYY-MM-DD/captures/android-debug-export.txt`에 commit, APK 경로, export 결과, signature verify 결과, ADB device 상태를 남긴다. `--dry-run`은 CLI 계약과 evidence path만 확인하며 APK export, signature verify, install, device evidence를 증명하지 않는다. 기기가 연결된 설치 검증은 `zsh scripts/export_android_debug.sh --install`로 실행하며, 연결 기기가 정확히 1대가 아니면 install evidence는 Blocked로 기록한다.
 
 `zsh scripts/export_android_release.sh --install`은 `GODOT_ANDROID_KEYSTORE_RELEASE_PATH`, `GODOT_ANDROID_KEYSTORE_RELEASE_USER`, `GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD`로 Godot Android release signing 값을 주입해 `build/android/puzzle-mobile-starter-release.apk`를 생성하고 `apksigner` 검증, SHA-256 checksum, install/launch evidence를 `output/alpha-lock-pass/YYYY-MM-DD/captures/android-release-export.txt`, `release-install-log.txt`, `release-run-log.txt`에 남긴다. legacy alias `GODOT_RELEASE_KEYSTORE_PATH/USER/PASSWORD`도 허용하지만, 비밀번호 값은 evidence에 기록하지 않는다.
 
