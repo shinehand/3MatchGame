@@ -64,6 +64,19 @@
 - 시작 부스터가 배치된 첫 보드가 목표 칩, Buddy HUD, 특수 배지와 겹쳐 읽기 어렵지 않은지 확인한다.
 - Stage Popup에 표시될 Rescue Buddy 정보 문구와 실제 Gameplay HUD 문구의 톤이 일관적인지 확인한다.
 
+## No-device Rescue Book / 라이브 운영 readiness
+
+`./scripts/validate_gameplay.sh`의 scene load smoke는 기기 없이 아래 항목을 먼저 막는다.
+
+- Rescue Book 카드가 토큰 수, 우정 레벨, `NEW`, 잠김 해금 스테이지 문구를 실제 UI 라벨로 표시한다.
+- 라이브 이벤트 노출은 `home`, `stage_select`, `result_overlay`, `collection` placement별 `live_event_impression`을 남긴다.
+- 현재 로드된 remote config key는 `remote_config_exposure`로 `variant_id`, `config_key`, `config_value_hash`를 비우지 않고 기록한다.
+
+아래 항목은 no-device readiness로 승인하지 않는다. 실제 기기 또는 시뮬레이터에서 수동 확인해야 한다.
+
+- Rescue Book 스크롤과 카드 탭 반응, 홈/결과/이벤트 진입 복귀 흐름이 모바일에서 자연스러운지 확인한다.
+- 라이브 이벤트 칩, 상세 overlay, 결과/컬렉션 이벤트 문구가 실제 해상도에서 잘리지 않는지 확인한다.
+
 ## No-device 결과/실패 오버레이 readiness
 
 `./scripts/validate_gameplay.sh`의 scene load smoke는 기기 없이 아래 항목을 먼저 막는다.
@@ -91,6 +104,8 @@
 - Stage Popup에서 목표, 이동 수, 보상, 아이콘이 있는 시작 부스터 3종, START 버튼이 정상 표시된다.
 - Stage 4 같은 Buddy 스테이지에서는 Stage Popup의 Buddy 문구와 Gameplay HUD Buddy 문구가 같은 동물/스킬을 가리킨다.
 - 부스터를 선택하고 START를 누르면 게임 시작 보드에 선택 부스터가 배치된다.
+- Rescue Book 카드에서 해금 동물의 토큰/우정 레벨/NEW 상태와 잠김 동물의 해금 스테이지 문구가 정상 표시되는지 확인한다.
+- 라이브 이벤트 노출이 홈, 스테이지 선택, 결과 오버레이, 컬렉션에서 각각 `live_event_impression`으로 기록되는지 확인한다.
 - 홈 화면 버튼 탭 시 짧은 UI 사운드가 재생된다.
 - 앱 시작 후 보드 8x8 블록이 바로 보인다.
 - 첫 매치 후 화면 전체가 사라지거나 과하게 깜빡이지 않는다.

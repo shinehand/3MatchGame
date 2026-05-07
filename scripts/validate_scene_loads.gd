@@ -228,6 +228,8 @@ func _validate_control_in_viewport(candidate: Node, viewport_size: Vector2i, sce
 func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
 	var events := GameSession.get_analytics_events()
 	var seen_names := {}
+	var live_event_placements_seen := {}
+	var remote_config_keys_seen := {}
 	var live_events_by_id := _live_events_by_id()
 	for event in events:
 		if not (event is Dictionary):
@@ -243,11 +245,19 @@ func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
 		match event_name:
 			"live_event_impression":
 				_validate_live_event_impression_payload(params, live_events_by_id, errors)
+				live_event_placements_seen[String(params.get("placement", ""))] = true
 			"remote_config_exposure":
 				_validate_remote_config_exposure_payload(params, errors)
+				remote_config_keys_seen[String(params.get("config_key", ""))] = true
 	for required_event in ["rescue_book_open", "stage_start", "remote_config_exposure", "event_join", "event_progress", "event_reward_claim", "buddy_skill_charge", "buddy_skill_ready", "buddy_skill_trigger", "buddy_skill_blocked", "fail_offer_show", "fail_offer_select", "fail_offer_dismiss", "ad_reward_complete", "ad_reward_fail", "iap_purchase_start", "iap_purchase_cancel", "iap_purchase_fail", "extra_moves_grant"]:
 		if not seen_names.has(required_event):
 			errors.append("runtime analytics should emit %s during scene smoke." % required_event)
+	for placement in IMPLEMENTED_LIVE_EVENT_PLACEMENTS:
+		if not live_event_placements_seen.has(placement):
+			errors.append("runtime analytics should emit live_event_impression for %s placement." % placement)
+	for config_key in LiveEventService.REMOTE_CONFIG_EXPOSURE_KEYS:
+		if not remote_config_keys_seen.has(config_key):
+			errors.append("runtime analytics should emit remote_config_exposure for %s." % config_key)
 	var active_current_live_events := false
 	for placement in ["home", "collection", "stage_select"]:
 		if not LiveEventService.active_events_for(GameSession.get_highest_unlocked_stage_id(), placement).is_empty():
@@ -283,6 +293,10 @@ func _live_events_by_id() -> Dictionary:
 		if not event_id.is_empty():
 			by_id[event_id] = event_dict
 	return by_id
+
+
+func _live_event_by_id(event_id: String) -> Dictionary:
+	return Dictionary(_live_events_by_id().get(event_id, {}))
 
 
 func _validate_live_event_impression_payload(params: Dictionary, live_events_by_id: Dictionary, errors: PackedStringArray) -> void:
@@ -459,6 +473,8 @@ func _validate_main_event_detail_overlay(node: Node, errors: PackedStringArray) 
 			errors.append("%s home live event chip should expose offline status text." % MAIN_SCENE_PATH)
 		if offline_chip != null:
 			offline_chip.queue_free()
+	if node.has_method("_track_live_event_impression"):
+		node.call("_track_live_event_impression", _live_event_by_id("daily_reward_v1"), "home")
 
 
 func _validate_gameplay_scene(node: Node, errors: PackedStringArray) -> void:
@@ -1583,6 +1599,7 @@ func _validate_collection_scene(node: Node, errors: PackedStringArray) -> void:
 	for animal_id in collection_ids:
 		if node.find_child("AnimalCard_%s" % animal_id, true, false) == null:
 			errors.append("%s missing AnimalCard_%s." % [COLLECTION_SCENE_PATH, animal_id])
+	_validate_collection_card_label_state(node, errors)
 	if node.has_method("_collection_live_event_line_for_event"):
 		var ended_line := String(node.call("_collection_live_event_line_for_event", {
 			"id": "__validation_collection_event",
@@ -1595,6 +1612,66 @@ func _validate_collection_scene(node: Node, errors: PackedStringArray) -> void:
 		}))
 		if not ended_line.contains("종료됨"):
 			errors.append("%s collection live event line should expose ended status text." % COLLECTION_SCENE_PATH)
+	if node.has_method("_track_collection_event_impressions"):
+		var selected_stage_before := GameSession.get_selected_stage_id()
+		GameSession.record_stage_result(9, 0, 1)
+		node.call("_track_collection_event_impressions")
+		GameSession.set_selected_stage_id(selected_stage_before)
+
+
+func _validate_collection_card_label_state(node: Node, errors: PackedStringArray) -> void:
+	if not node.has_method("_refresh_cards"):
+		errors.append("%s should expose _refresh_cards for Rescue Book card state smoke." % COLLECTION_SCENE_PATH)
+		return
+	var grid := node.find_child("CollectionGrid", true, false)
+	if grid == null:
+		errors.append("%s is missing CollectionGrid for Rescue Book card state smoke." % COLLECTION_SCENE_PATH)
+		return
+	var previous_card_count := grid.get_child_count()
+
+	GameSession.add_rescue_book_tokens("rabbit", 40)
+	GameSession.mark_rescue_book_seen("bear")
+	node.call("_refresh_cards")
+
+	var refreshed_card_texts := _collection_card_label_texts_after(grid, previous_card_count)
+	var rabbit_text := _first_text_containing(refreshed_card_texts, "토끼")
+	if not rabbit_text.contains("Lv.3") or not rabbit_text.contains("토큰 40") or not rabbit_text.contains("NEW"):
+		errors.append("%s AnimalCard_rabbit should show Lv.3, token count, and NEW state after token fixture, got: %s." % [COLLECTION_SCENE_PATH, rabbit_text])
+
+	var bear_text := _first_text_containing(refreshed_card_texts, "곰")
+	if bear_text.contains("NEW"):
+		errors.append("%s AnimalCard_bear should hide NEW after mark_rescue_book_seen, got: %s." % [COLLECTION_SCENE_PATH, bear_text])
+
+	var frog_text := _first_text_containing(refreshed_card_texts, "개구리")
+	if not frog_text.contains("Stage 4 해금"):
+		errors.append("%s AnimalCard_frog should show locked unlock-stage copy before Stage 4, got: %s." % [COLLECTION_SCENE_PATH, frog_text])
+
+
+func _collection_card_label_texts_after(grid: Node, start_index: int) -> Array[String]:
+	var texts: Array[String] = []
+	for index in range(start_index, grid.get_child_count()):
+		texts.append(_label_text_blob(grid.get_child(index)))
+	return texts
+
+
+func _first_text_containing(texts: Array[String], needle: String) -> String:
+	for text in texts:
+		if text.contains(needle):
+			return text
+	return ""
+
+
+func _label_text_blob(node: Node) -> String:
+	if node == null:
+		return ""
+	var texts: Array[String] = []
+	if node is Label:
+		texts.append(String((node as Label).text))
+	for label_node in node.find_children("*", "Label", true, false):
+		var label := label_node as Label
+		if label != null and not label.text.is_empty():
+			texts.append(label.text)
+	return " ".join(texts)
 
 
 func _validate_stage_select_scene(node: Node, errors: PackedStringArray) -> void:
@@ -1646,6 +1723,8 @@ func _validate_stage_select_scene(node: Node, errors: PackedStringArray) -> void
 			errors.append("%s stage select live event chip should expose upcoming status text." % STAGE_SELECT_SCENE_PATH)
 		if upcoming_chip != null:
 			upcoming_chip.queue_free()
+	if node.has_method("_track_stage_select_live_event_impression"):
+		node.call("_track_stage_select_live_event_impression", _live_event_by_id("starter_missions_v1"))
 
 	var world_play_button := node.find_child("WorldPlayButton", true, false) as Button
 	if world_play_button == null:
