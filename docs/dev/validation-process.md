@@ -26,6 +26,7 @@
 - 게임플레이 보드 64칸 생성과 스테이지 선택 카드 100장 생성 확인
 - Mobile viewport matrix smoke: `1080x1920`, `720x1280`, `390x844`, `1920x1080`, `1280x720`, `844x390` 요청 window에서 실제 logical viewport 기준 레이아웃을 확인
 - Critical UI text stress: Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay에 장문 pseudo-localization title/body/CTA를 주입해 viewport/panel bounds와 CTA overlap을 확인
+- Render snapshot smoke: `390x844`, `844x390`에서 Home, Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay, Rescue Book을 실제 PNG로 저장하고 non-blank/varied pixel 및 핵심 UI region 렌더를 확인
 - Godot 헤드리스 로드
 - 파일 직접 읽기 안티패턴 스캔
 - Alpha QA packet dry-run 및 템플릿 계약 검증. 대표 코스, Device Evidence Pack, Stage Data Smoke Coverage, Focused Device Gate Matrix, Stage 31 Special Combo Evidence, Rescue Buddy Stage Matrix, Failure Continue Gateway, Analytics Gateway Local Buffer가 빠지면 실패한다.
@@ -35,20 +36,23 @@
 
 ## No-device Alpha Gate CI
 
-`.github/workflows/no-device-alpha-gate.yml`은 `main` push, pull request, 수동 실행에서 Godot 4.6.1 headless를 설치하고 아래 no-device 검증을 실행한다.
+`.github/workflows/no-device-alpha-gate.yml`은 `main` push, pull request, 수동 실행에서 Godot 4.6.1과 Xvfb 렌더 preflight 의존성을 설치하고 아래 no-device 검증을 실행한다.
 
 ```sh
 zsh scripts/validate_stage_data.sh
 zsh scripts/validate_stage_balance.sh
 zsh scripts/validate_analytics_contract.sh
 zsh scripts/validate_provider_readiness.sh
+zsh scripts/validate_render_snapshots.sh
 zsh scripts/validate_android_export_config.sh
 zsh scripts/validate_gameplay.sh
 ```
 
-이 CI는 Android 실기기 설치, release keystore 서명 증거, 실제 광고/IAP/analytics SDK provider 연동을 증명하지 않는다. 해당 항목은 아래 Android evidence script와 최종 Alpha QA report validator로 별도 승인해야 한다. workflow는 성공/실패와 관계없이 `/tmp/puzzle-*` 검증 로그와 caveat 문서를 `no-device-alpha-gate-logs` artifact로 업로드한다.
+이 CI는 Android 실기기 설치, release keystore 서명 증거, 실제 광고/IAP/analytics SDK provider 연동을 증명하지 않는다. 해당 항목은 아래 Android evidence script와 최종 Alpha QA report validator로 별도 승인해야 한다. workflow는 성공/실패와 관계없이 `/tmp/puzzle-*` 검증 로그, caveat 문서, `/tmp/puzzle-render-snapshots/*.png` 렌더 스냅샷을 `no-device-alpha-gate-logs` artifact로 업로드한다.
 
 `zsh scripts/validate_provider_readiness.sh`는 `data/provider_readiness.json`이 analytics `local_buffer`와 monetization `local_simulator`의 provider-neutral 계약을 실제 코드 상수와 맞게 고정하는지 검사한다. 이 gate는 `OPEN-007` 실제 SDK 공급자 선택을 완료했다는 뜻이 아니라, Firebase/GameAnalytics/광고/IAP provider를 붙이기 전 adapter hook, source/result canonicalization, queue/rejected_contract, request log, provider_result 보존 규칙을 CI가 지키게 하는 준비도 검사다.
+
+`zsh scripts/validate_render_snapshots.sh`는 표시 렌더러가 있는 로컬 환경에서는 일반 Godot 실행, CI에서는 `xvfb-run`으로 Home, Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay, Collection 스냅샷을 `390x844`와 `844x390` PNG로 저장한다. 이 gate는 blank/transparent/offscreen/missing texture 회귀를 잡기 위한 no-device preflight이며, 실기기 screenshot/video/logcat evidence를 대체하지 않는다.
 
 `zsh scripts/validate_android_export_config.sh`는 Android export preset이 `Zoo-Zoo Pop`, `com.shinehandmac.zoozoopop`, `build/android/zoo-zoo-pop-debug.apk`, SemVer `version/name`, 양수 `version/code`, signed package, vibrate permission, arm64 ABI를 유지하는지 검사한다. 이 preflight는 release keystore나 실제 APK 생성을 요구하지 않지만 starter placeholder가 export 설정으로 되돌아가는 것은 차단한다. alpha evidence path의 APK 이름은 `create_alpha_qa_packet.sh`와 `validate_alpha_qa_report.sh` 계약으로 별도 고정한다.
 

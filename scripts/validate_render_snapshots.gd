@@ -1,0 +1,314 @@
+extends SceneTree
+
+const GameSession = preload("res://scripts/game_session.gd")
+
+const MAIN_SCENE_PATH := "res://scenes/main.tscn"
+const STAGE_SELECT_SCENE_PATH := "res://scenes/stage_select.tscn"
+const GAMEPLAY_SCENE_PATH := "res://scenes/gameplay.tscn"
+const COLLECTION_SCENE_PATH := "res://scenes/collection_screen.tscn"
+const VALIDATION_SAVE_PATH := "user://render_snapshot_save_game.json"
+const SNAPSHOT_VIEWPORTS := [
+	Vector2i(390, 844),
+	Vector2i(844, 390),
+]
+const SCENARIOS := [
+	{"id": "home", "scene": MAIN_SCENE_PATH, "setup": "home"},
+	{"id": "stage_popup", "scene": STAGE_SELECT_SCENE_PATH, "setup": "stage_popup"},
+	{"id": "gameplay_stage4", "scene": GAMEPLAY_SCENE_PATH, "setup": "gameplay_stage4"},
+	{"id": "gameplay_stage25_failure", "scene": GAMEPLAY_SCENE_PATH, "setup": "gameplay_stage25_failure"},
+	{"id": "collection", "scene": COLLECTION_SCENE_PATH, "setup": "collection"},
+]
+
+var output_dir := ""
+
+
+func _init() -> void:
+	call_deferred("_run")
+
+
+func _run() -> void:
+	var errors := PackedStringArray()
+	output_dir = _snapshot_output_dir()
+	_prepare_output_dir(output_dir, errors)
+	GameSession.use_save_path_for_testing(VALIDATION_SAVE_PATH)
+
+	for viewport_size: Vector2i in SNAPSHOT_VIEWPORTS:
+		for scenario in SCENARIOS:
+			await _capture_scenario(Dictionary(scenario), viewport_size, errors)
+
+	if not errors.is_empty():
+		for error_text in errors:
+			push_error("Render snapshot validation error: %s" % error_text)
+		quit(1)
+		return
+
+	print("Render snapshot validation passed: %d PNGs in %s." % [SNAPSHOT_VIEWPORTS.size() * SCENARIOS.size(), output_dir])
+	quit()
+
+
+func _snapshot_output_dir() -> String:
+	var configured_dir := OS.get_environment("PAM_RENDER_SNAPSHOT_DIR").strip_edges()
+	if not configured_dir.is_empty():
+		return configured_dir
+	var tmp_dir := OS.get_environment("TMPDIR").strip_edges()
+	if tmp_dir.is_empty():
+		tmp_dir = "/tmp"
+	return tmp_dir.path_join("puzzle-render-snapshots")
+
+
+func _prepare_output_dir(target_dir: String, errors: PackedStringArray) -> void:
+	var make_error := DirAccess.make_dir_recursive_absolute(target_dir)
+	if make_error != OK:
+		errors.append("could not create render snapshot directory %s: %s" % [target_dir, error_string(make_error)])
+		return
+	var dir := DirAccess.open(target_dir)
+	if dir == null:
+		errors.append("could not open render snapshot directory %s" % target_dir)
+		return
+	for file_name in dir.get_files():
+		if file_name.ends_with(".png") or file_name.ends_with(".txt"):
+			dir.remove(file_name)
+
+
+func _capture_scenario(scenario: Dictionary, viewport_size: Vector2i, errors: PackedStringArray) -> void:
+	_reset_validation_state()
+	var setup_id := str(scenario.get("setup", ""))
+	if setup_id == "collection":
+		_prepare_collection_state()
+
+	root.size = viewport_size
+	var scene_path := str(scenario.get("scene", ""))
+	var scene_resource := load(scene_path)
+	if not (scene_resource is PackedScene):
+		errors.append("%s did not load as a PackedScene." % scene_path)
+		return
+
+	var node := (scene_resource as PackedScene).instantiate()
+	if node == null:
+		errors.append("%s could not be instantiated." % scene_path)
+		return
+
+	root.add_child(node)
+	await _settle_scene(node)
+	await _apply_scenario_setup(node, setup_id, errors)
+	await _settle_scene(node)
+
+	var snapshot_id := "%s_%dx%d" % [str(scenario.get("id", "snapshot")), viewport_size.x, viewport_size.y]
+	await _save_and_validate_snapshot(snapshot_id, node, setup_id, viewport_size, errors)
+
+	if is_instance_valid(node):
+		node.queue_free()
+	await process_frame
+	await process_frame
+
+
+func _reset_validation_state() -> void:
+	GameSession.reset_progress_for_testing_preserving_analytics()
+	GameSession.clear_analytics_events()
+
+
+func _prepare_collection_state() -> void:
+	for stage_id in range(1, 6):
+		GameSession.record_stage_result(stage_id, 12000, 3)
+	GameSession.add_rescue_book_tokens("frog", 3)
+	GameSession.add_rescue_book_tokens("koala", 2)
+	GameSession.add_rescue_book_tokens("hamster", 2)
+
+
+func _settle_scene(node: Node, frame_count: int = 5) -> void:
+	for _index in range(frame_count):
+		if node != null and node.has_method("_apply_responsive_layout"):
+			node.call("_apply_responsive_layout")
+		await process_frame
+
+
+func _apply_scenario_setup(node: Node, setup_id: String, errors: PackedStringArray) -> void:
+	match setup_id:
+		"stage_popup":
+			if not node.has_method("_show_stage_popup"):
+				errors.append("%s should expose _show_stage_popup for render snapshot smoke." % STAGE_SELECT_SCENE_PATH)
+				return
+			node.call("_show_stage_popup", 4)
+			await create_timer(0.28).timeout
+		"gameplay_stage4":
+			await _start_gameplay_stage(node, 3, errors)
+		"gameplay_stage25_failure":
+			await _prepare_stage_25_failure(node, errors)
+		_:
+			await process_frame
+
+
+func _start_gameplay_stage(node: Node, stage_index: int, errors: PackedStringArray) -> void:
+	if not node.has_method("_start_stage"):
+		errors.append("%s should expose _start_stage for render snapshot smoke." % GAMEPLAY_SCENE_PATH)
+		return
+	node.call("_start_stage", stage_index)
+	await create_timer(0.18).timeout
+
+
+func _prepare_stage_25_failure(node: Node, errors: PackedStringArray) -> void:
+	for method_name in ["_start_stage", "_stage_collect_targets", "_target_blockers", "_target_score", "_check_stage_state"]:
+		if not node.has_method(method_name):
+			errors.append("%s should expose %s for Stage 25 failure render snapshot." % [GAMEPLAY_SCENE_PATH, method_name])
+			return
+	node.call("_start_stage", 24)
+	GameSession.set_stage_fail_count_for_testing(25, 0)
+	var target_collect := Dictionary(node.call("_stage_collect_targets"))
+	var near_miss_counts := {}
+	for animal_id in target_collect.keys():
+		near_miss_counts[str(animal_id)] = int(target_collect[animal_id])
+	node.set("collected_counts", near_miss_counts)
+	node.set("cleared_blockers", maxi(0, int(node.call("_target_blockers")) - 1))
+	node.set("score", int(node.call("_target_score")))
+	node.set("remaining_moves", 0)
+	await node.call("_check_stage_state")
+	await create_timer(0.24).timeout
+
+
+func _save_and_validate_snapshot(snapshot_id: String, node: Node, setup_id: String, viewport_size: Vector2i, errors: PackedStringArray) -> void:
+	var texture := root.get_texture()
+	if texture == null:
+		errors.append("%s did not expose a viewport texture." % snapshot_id)
+		return
+	var image := texture.get_image()
+	if image == null or image.get_width() <= 0 or image.get_height() <= 0:
+		errors.append("%s produced an empty viewport image." % snapshot_id)
+		return
+	if image.get_width() != viewport_size.x or image.get_height() != viewport_size.y:
+		errors.append("%s image size should be %s, got %dx%d." % [snapshot_id, viewport_size, image.get_width(), image.get_height()])
+
+	var output_path := output_dir.path_join("%s.png" % snapshot_id)
+	var save_error := image.save_png(output_path)
+	if save_error != OK:
+		errors.append("%s could not save PNG %s: %s" % [snapshot_id, output_path, error_string(save_error)])
+		return
+	_validate_saved_png(output_path, snapshot_id, errors)
+	_validate_image_pixels(image, Rect2i(Vector2i.ZERO, Vector2i(image.get_width(), image.get_height())), "%s full frame" % snapshot_id, 0.08, 10, errors)
+	_validate_scenario_regions(image, node, setup_id, snapshot_id, errors)
+	print("Render snapshot saved: %s" % output_path)
+
+
+func _validate_saved_png(output_path: String, snapshot_id: String, errors: PackedStringArray) -> void:
+	if not FileAccess.file_exists(output_path):
+		errors.append("%s PNG was not created: %s" % [snapshot_id, output_path])
+		return
+	var file := FileAccess.open(output_path, FileAccess.READ)
+	if file == null:
+		errors.append("%s PNG could not be opened after save: %s" % [snapshot_id, output_path])
+		return
+	if file.get_length() <= 0:
+		errors.append("%s PNG should not be empty: %s" % [snapshot_id, output_path])
+
+
+func _validate_scenario_regions(image: Image, node: Node, setup_id: String, snapshot_id: String, errors: PackedStringArray) -> void:
+	match setup_id:
+		"home":
+			_validate_control_pixels(image, node.find_child("GameHomeLayer", true, false), snapshot_id, "GameHomeLayer", errors)
+			_validate_control_pixels(image, node.find_child("HomePlayButton", true, false), snapshot_id, "HomePlayButton", errors)
+			_validate_control_pixels(image, node.find_child("BottomNav", true, false), snapshot_id, "BottomNav", errors)
+		"stage_popup":
+			_validate_control_pixels(image, node.get("stage_popup_panel") as Control, snapshot_id, "StagePopupPanel", errors)
+			_validate_control_pixels(image, _find_button_with_text(node, "START"), snapshot_id, "StagePopupStartButton", errors)
+			_validate_control_pixels(image, node.get("stage_popup_buddy_label") as Control, snapshot_id, "StagePopupBuddyLabel", errors)
+		"gameplay_stage4":
+			_validate_control_pixels(image, node.get_node_or_null("SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame") as Control, snapshot_id, "BoardFrame", errors)
+			if image.get_height() >= image.get_width():
+				_validate_control_pixels(image, node.find_child("HudGoalDock", true, false) as Control, snapshot_id, "HudGoalDock", errors)
+				_validate_control_pixels(image, node.find_child("HudBoosterDock", true, false) as Control, snapshot_id, "HudBoosterDock", errors)
+				_validate_control_pixels(image, node.find_child("HudBuddyGauge", true, false) as Control, snapshot_id, "HudBuddyGauge", errors)
+			else:
+				_validate_control_pixels(image, node.find_child("StatsCard", true, false) as Control, snapshot_id, "StatsCard", errors)
+				_validate_control_pixels(image, node.find_child("GoalCard", true, false) as Control, snapshot_id, "GoalCard", errors)
+		"gameplay_stage25_failure":
+			_validate_control_pixels(image, node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel") as Control, snapshot_id, "OverlayPanel", errors)
+			_validate_control_pixels(image, node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlayPrimaryButton") as Control, snapshot_id, "OverlayPrimaryButton", errors)
+			_validate_control_pixels(image, node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlaySecondaryButton") as Control, snapshot_id, "OverlaySecondaryButton", errors)
+		"collection":
+			_validate_control_pixels(image, node.find_child("CollectionGrid", true, false) as Control, snapshot_id, "CollectionGrid", errors)
+			_validate_control_pixels(image, node.find_child("SummaryLabel", true, false) as Control, snapshot_id, "SummaryLabel", errors)
+
+
+func _validate_control_pixels(image: Image, control: Control, snapshot_id: String, label: String, errors: PackedStringArray) -> void:
+	if control == null:
+		errors.append("%s missing control region %s." % [snapshot_id, label])
+		return
+	if not control.is_visible_in_tree():
+		errors.append("%s control region %s should be visible." % [snapshot_id, label])
+		return
+	var rect := _control_rect_to_image_bounds(control.get_global_rect(), image.get_width(), image.get_height())
+	if rect.size.x <= 0 or rect.size.y <= 0:
+		errors.append("%s control region %s has no visible pixels in image bounds." % [snapshot_id, label])
+		return
+	_validate_image_pixels(image, rect, "%s %s" % [snapshot_id, label], 0.04, 3, errors)
+
+
+func _control_rect_to_image_bounds(rect: Rect2, image_width: int, image_height: int) -> Rect2i:
+	var viewport_size := root.get_visible_rect().size
+	var scale := Vector2(
+		float(image_width) / maxf(1.0, viewport_size.x),
+		float(image_height) / maxf(1.0, viewport_size.y)
+	)
+	var scaled_rect := Rect2(rect.position * scale, rect.size * scale)
+	var left := clampi(int(floor(scaled_rect.position.x)), 0, image_width)
+	var top := clampi(int(floor(scaled_rect.position.y)), 0, image_height)
+	var right := clampi(int(ceil(scaled_rect.position.x + scaled_rect.size.x)), 0, image_width)
+	var bottom := clampi(int(ceil(scaled_rect.position.y + scaled_rect.size.y)), 0, image_height)
+	return Rect2i(Vector2i(left, top), Vector2i(maxi(0, right - left), maxi(0, bottom - top)))
+
+
+func _validate_image_pixels(image: Image, rect: Rect2i, label: String, min_non_dark_ratio: float, min_unique_buckets: int, errors: PackedStringArray) -> void:
+	var stats := _image_region_stats(image, rect)
+	var samples := int(stats.get("samples", 0))
+	if samples <= 0:
+		errors.append("%s has no sampled pixels." % label)
+		return
+	var visible_ratio := float(stats.get("visible", 0)) / float(samples)
+	var non_dark_ratio := float(stats.get("non_dark", 0)) / float(samples)
+	var unique_buckets := int(stats.get("unique_buckets", 0))
+	if visible_ratio < 0.60:
+		errors.append("%s should be mostly visible pixels, got %.3f." % [label, visible_ratio])
+	if non_dark_ratio < min_non_dark_ratio:
+		errors.append("%s should not be blank/dark, non-dark ratio %.3f < %.3f." % [label, non_dark_ratio, min_non_dark_ratio])
+	if unique_buckets < min_unique_buckets:
+		errors.append("%s should contain varied rendered pixels, got %d color buckets." % [label, unique_buckets])
+
+
+func _image_region_stats(image: Image, rect: Rect2i) -> Dictionary:
+	var buckets := {}
+	var samples := 0
+	var visible := 0
+	var non_dark := 0
+	var step_x := maxi(1, int(ceil(float(rect.size.x) / 96.0)))
+	var step_y := maxi(1, int(ceil(float(rect.size.y) / 96.0)))
+	for y in range(rect.position.y, rect.position.y + rect.size.y, step_y):
+		for x in range(rect.position.x, rect.position.x + rect.size.x, step_x):
+			var color := image.get_pixel(x, y)
+			samples += 1
+			if color.a > 0.03:
+				visible += 1
+			var luminance := color.r * 0.2126 + color.g * 0.7152 + color.b * 0.0722
+			if color.a > 0.03 and luminance > 0.05:
+				non_dark += 1
+			var bucket := "%02d-%02d-%02d-%02d" % [
+				int(clampf(color.r, 0.0, 1.0) * 15.0),
+				int(clampf(color.g, 0.0, 1.0) * 15.0),
+				int(clampf(color.b, 0.0, 1.0) * 15.0),
+				int(clampf(color.a, 0.0, 1.0) * 15.0),
+			]
+			buckets[bucket] = true
+	return {
+		"samples": samples,
+		"visible": visible,
+		"non_dark": non_dark,
+		"unique_buckets": buckets.size(),
+	}
+
+
+func _find_button_with_text(parent: Node, text: String) -> Button:
+	if parent == null:
+		return null
+	for candidate in parent.find_children("*", "Button", true, false):
+		var button := candidate as Button
+		if button != null and button.text == text:
+			return button
+	return null

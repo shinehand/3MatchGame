@@ -497,9 +497,24 @@
   - 실제 SDK credentials, Android device, release keystore 없이 no-device CI에서 provider-neutral 준비 계약을 검증한다.
   - 실제 Firebase/GameAnalytics/광고/IAP SDK 선택과 production credential QA는 `OPEN-007` 및 alpha device evidence gate로 남는다.
 
+### PAM-QA-104: No-device Render Snapshot Smoke
+
+- 상태: 완료됨. `scripts/validate_render_snapshots.gd`/`.sh`가 Home, Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay, Collection을 `390x844`와 `844x390` PNG로 저장하고 파일 크기, viewport 크기, non-blank/varied pixel, 핵심 UI region 렌더 픽셀을 검증한다. 로컬에서는 표시 렌더러로 Godot를 실행하고, no-device CI는 `xvfb-run`으로 snapshot을 생성해 artifact에 남긴다.
+- 소유: QA Agent + Development Agent
+- 대상 파일:
+  - `scripts/validate_render_snapshots.gd`
+  - `scripts/validate_render_snapshots.sh`
+  - `scripts/validate_gameplay.sh`
+  - `.github/workflows/no-device-alpha-gate.yml`
+  - `docs/dev/validation-process.md`
+  - `docs/qa/project-animal-match-development-gates.md`
+- 완료 기준:
+  - no-device gate가 blank/transparent/offscreen/missing texture 회귀를 PNG snapshot과 pixel smoke로 잡는다.
+  - snapshot artifact는 실기기 screenshot/video/logcat evidence를 대체하지 않는다는 caveat를 유지한다.
+
 ## 추천 구현 순서
 
-완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`)는 회귀 검증 대상으로 유지한다.
+완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`)는 회귀 검증 대상으로 유지한다.
 
 다음 고가치 순서:
 

@@ -20,6 +20,12 @@
 - 같은 contract smoke는 `Pending`/`Blocked` 잔존, evidence 누락/빈 파일, 현재 HEAD와 다른 build commit, Android device evidence `BLOCKED`, release install `NOT_REQUESTED` fixture가 반드시 실패하는지도 검증한다.
 - 이 gate는 최종 실기기 evidence를 대체하지 않고, 최종 alpha report validator가 느슨해지는 회귀만 차단한다.
 
+## Gate 0B. No-device Render Snapshot Smoke
+
+- `zsh scripts/validate_render_snapshots.sh`는 Home, Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay, Collection을 `390x844`와 `844x390` PNG로 저장한다.
+- 각 snapshot은 파일 생성, 요청 viewport 크기, non-blank/varied pixel, 핵심 UI region의 실제 렌더 픽셀을 검증한다.
+- 이 gate는 blank/transparent/offscreen/missing texture 회귀를 차단하지만, 최종 Android 실기기 screenshot/video/logcat evidence를 대체하지 않는다.
+
 ## Gate 1. 문서 일치
 
 - `docs/project-animal-match-agent-start-here.md`의 현재 결정 사항과 충돌하지 않는다.

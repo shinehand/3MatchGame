@@ -29,7 +29,7 @@ jobs:
       - name: Install shell dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ca-certificates curl ripgrep unzip zsh
+          sudo apt-get install -y --no-install-recommends ca-certificates curl libgl1 libxcursor1 libxi6 libxinerama1 libxrandr2 libxrender1 mesa-vulkan-drivers ripgrep unzip xvfb zsh
 
       - name: Install Godot
         run: |
@@ -53,6 +53,9 @@ jobs:
 
       - name: Provider readiness validation
         run: zsh scripts/validate_provider_readiness.sh
+
+      - name: Render snapshot smoke
+        run: zsh scripts/validate_render_snapshots.sh
 
       - name: Android export config validation
         run: zsh scripts/validate_android_export_config.sh
@@ -90,3 +93,4 @@ jobs:
             /tmp/puzzle-*.stdout
             /tmp/puzzle-*.txt
             /tmp/puzzle-*.md
+            /tmp/puzzle-render-snapshots/*.png
