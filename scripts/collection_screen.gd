@@ -484,14 +484,14 @@ func _refresh_cosmetic_actions(animal: Dictionary, entry: Dictionary, unlocked: 
 			continue
 		var reward_type := String(reward_dict.get("reward_type", "cosmetic"))
 		var earned := earned_rewards.has(reward_id)
-		var equipped := equipped_cosmetic == reward_id
+		var is_equipped := equipped_cosmetic == reward_id
 		var button := Button.new()
 		button.name = "CosmeticButton_%s" % _safe_node_suffix(reward_id)
-		button.custom_minimum_size = Vector2(132, 40)
+		button.custom_minimum_size = Vector2(132, 44)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		button.tooltip_text = reward_id
-		if equipped:
+		if is_equipped:
 			button.text = "장착중 %s" % _reward_type_label(reward_type)
 			button.disabled = true
 		elif earned:
@@ -500,7 +500,7 @@ func _refresh_cosmetic_actions(animal: Dictionary, entry: Dictionary, unlocked: 
 		else:
 			button.text = "Lv.%d 대기" % int(reward_dict.get("level", 0))
 			button.disabled = true
-		_style_cosmetic_button(button, earned, equipped)
+		_style_cosmetic_button(button, earned, is_equipped)
 		cosmetic_grid.add_child(button)
 
 

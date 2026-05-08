@@ -41,6 +41,11 @@ const SPECIAL_COMBO_MANUAL_ROWS := ["row+column", "row+row", "column+column", "r
 const CRITICAL_TEXT_STRESS_TITLE := "[長文QA] Rescue Ready SuperLongLocalizationToken"
 const CRITICAL_TEXT_STRESS_BODY := "[長文QA] 구조 목표가 길어져도 버튼과 본문이 겹치지 않아야 합니다 SuperLongUnbrokenLocalizationToken"
 const CRITICAL_TEXT_STRESS_CTA := "PLAY 구조 시작"
+const COMMERCIAL_UI_PRIMARY_TOUCH := Vector2(144, 48)
+const COMMERCIAL_UI_SECONDARY_TOUCH := Vector2(88, 44)
+const COMMERCIAL_UI_ICON_TOUCH := Vector2(44, 44)
+const COMMERCIAL_UI_BUTTON_CONTRAST := 3.0
+const COMMERCIAL_UI_DISABLED_CONTRAST := 2.0
 const MOBILE_VIEWPORT_MATRIX := [
 	Vector2i(1080, 1920),
 	Vector2i(720, 1280),
@@ -220,6 +225,7 @@ func _validate_viewport_layout_for_scene(scene_path: String, node: Node, viewpor
 		COLLECTION_SCENE_PATH:
 			_validate_collection_viewport_layout(node, viewport_size, errors)
 			await _validate_collection_viewport_text_stress(node, viewport_size, errors)
+	_validate_commercial_ui_readability_gate(scene_path, node, viewport_size, errors)
 
 
 func _validate_critical_runtime_viewport_state(scene_path: String, node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
@@ -403,6 +409,10 @@ func _validate_stage_popup_mobile_viewport_matrix(node: Node, viewport_size: Vec
 		_validate_control_in_viewport(booster_button, viewport_size, STAGE_SELECT_SCENE_PATH, "Stage 4 mobile matrix booster %s" % booster_id, errors)
 		if panel != null and booster_button != null:
 			_validate_control_inside_container(booster_button, panel, STAGE_SELECT_SCENE_PATH, "Stage 4 mobile matrix booster %s" % booster_id, errors)
+	_validate_commercial_touch_target(start_button, COMMERCIAL_UI_PRIMARY_TOUCH, STAGE_SELECT_SCENE_PATH, "StagePopupStartButton commercial CTA", viewport_size, errors)
+	_validate_commercial_touch_target(close_button, COMMERCIAL_UI_ICON_TOUCH, STAGE_SELECT_SCENE_PATH, "StagePopupCloseButton commercial CTA", viewport_size, errors)
+	for booster_id in ["rainbow_paw", "striped", "bomb"]:
+		_validate_commercial_touch_target(booster_buttons.get(booster_id) as Control, COMMERCIAL_UI_SECONDARY_TOUCH, STAGE_SELECT_SCENE_PATH, "StagePopupBoosterButton %s commercial CTA" % booster_id, viewport_size, errors)
 
 
 func _validate_gameplay_viewport_layout(node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
@@ -476,6 +486,8 @@ func _validate_failure_overlay_viewport_clearance(node: Node, viewport_size: Vec
 			_validate_control_inside_container(control, panel, GAMEPLAY_SCENE_PATH, "%s %s" % [context, label], errors)
 	_validate_no_vertical_overlap(body, primary, GAMEPLAY_SCENE_PATH, "%s OverlayBody to primary CTA" % context, errors)
 	_validate_no_vertical_overlap(body, secondary, GAMEPLAY_SCENE_PATH, "%s OverlayBody to secondary CTA" % context, errors)
+	_validate_commercial_touch_target(primary, COMMERCIAL_UI_PRIMARY_TOUCH, GAMEPLAY_SCENE_PATH, "%s OverlayPrimaryButton commercial CTA" % context, viewport_size, errors)
+	_validate_commercial_touch_target(secondary, COMMERCIAL_UI_SECONDARY_TOUCH, GAMEPLAY_SCENE_PATH, "%s OverlaySecondaryButton commercial CTA" % context, viewport_size, errors)
 
 
 func _validate_collection_viewport_layout(node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
@@ -573,6 +585,147 @@ func _first_collection_card(node: Node) -> PanelContainer:
 		if card != null and String(card.name).begins_with("AnimalCard_"):
 			return card
 	return null
+
+
+func _validate_commercial_ui_readability_gate(scene_path: String, node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
+	match scene_path:
+		MAIN_SCENE_PATH:
+			_validate_commercial_touch_target(node.find_child("HomePlayButton", true, false), COMMERCIAL_UI_PRIMARY_TOUCH, scene_path, "HomePlayButton commercial CTA", viewport_size, errors)
+			_validate_commercial_touch_target(node.find_child("HomeMapButton", true, false), COMMERCIAL_UI_SECONDARY_TOUCH, scene_path, "HomeMapButton commercial CTA", viewport_size, errors)
+			_validate_commercial_touch_target(node.find_child("HomeCollectionButton", true, false), COMMERCIAL_UI_SECONDARY_TOUCH, scene_path, "HomeCollectionButton commercial CTA", viewport_size, errors)
+			_validate_commercial_touch_target(node.find_child("HomeSettingsButton", true, false), COMMERCIAL_UI_SECONDARY_TOUCH, scene_path, "HomeSettingsButton commercial CTA", viewport_size, errors)
+			_validate_commercial_button_spacing([
+				node.find_child("HomeMapButton", true, false),
+				node.find_child("HomeCollectionButton", true, false),
+				node.find_child("HomeSettingsButton", true, false),
+			], 6.0, scene_path, "Home bottom nav commercial spacing", errors)
+		STAGE_SELECT_SCENE_PATH:
+			_validate_commercial_touch_target(node.find_child("WorldPlayButton", true, false), COMMERCIAL_UI_PRIMARY_TOUCH, scene_path, "WorldPlayButton commercial CTA", viewport_size, errors)
+			var world_path_root := node.get_node_or_null("StageWorldLayer/WorldMapPathRoot")
+			if world_path_root != null:
+				for world_node in world_path_root.find_children("WorldStageNode*", "Button", true, false):
+					if world_node is Control and (world_node as Control).is_visible_in_tree():
+						_validate_commercial_touch_target(world_node, COMMERCIAL_UI_ICON_TOUCH, scene_path, "%s commercial stage node" % String(world_node.name), viewport_size, errors)
+		GAMEPLAY_SCENE_PATH:
+			var topbar_pause := node.get_node_or_null("SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/TopBar/PauseButton") as Control
+			if topbar_pause != null and topbar_pause.is_visible_in_tree():
+				_validate_commercial_touch_target(topbar_pause, COMMERCIAL_UI_ICON_TOUCH, scene_path, "TopBarPauseButton commercial CTA", viewport_size, errors)
+			for button_info in [
+				[node.get("hud_home_button") as Control, "HudHomeButton"],
+				[node.get("hud_retry_button") as Control, "HudRetryButton"],
+				[node.get("hud_pause_button") as Control, "HudPauseButton"],
+			]:
+				var button_control := button_info[0] as Control
+				if button_control != null and button_control.is_visible_in_tree():
+					_validate_commercial_touch_target(button_control, COMMERCIAL_UI_ICON_TOUCH, scene_path, "%s commercial CTA" % String(button_info[1]), viewport_size, errors)
+			for booster_button in Array(node.get("hud_booster_buttons")):
+				if booster_button is Control and (booster_button as Control).is_visible_in_tree():
+					_validate_commercial_touch_target(booster_button, COMMERCIAL_UI_SECONDARY_TOUCH, scene_path, "%s commercial booster CTA" % String((booster_button as Control).name), viewport_size, errors)
+		COLLECTION_SCENE_PATH:
+			_validate_commercial_touch_target(node.find_child("BackButton", true, false), COMMERCIAL_UI_SECONDARY_TOUCH, scene_path, "BackButton commercial CTA", viewport_size, errors)
+			var first_card := _first_collection_card(node)
+			if first_card != null:
+				_validate_commercial_touch_target(first_card, Vector2(88, 88), scene_path, "AnimalCard commercial tap target", viewport_size, errors)
+
+
+func _validate_commercial_touch_target(candidate: Node, minimum_size: Vector2, scene_path: String, label: String, viewport_size: Vector2i, errors: PackedStringArray) -> void:
+	_validate_control_in_viewport(candidate, viewport_size, scene_path, label, errors)
+	if not (candidate is Control):
+		return
+	var control := candidate as Control
+	if not control.is_visible_in_tree():
+		return
+	var rect := control.get_global_rect()
+	if rect.size.x + 0.5 < minimum_size.x or rect.size.y + 0.5 < minimum_size.y:
+		errors.append("%s %s should meet commercial touch target >= %s at %s, got %s." % [scene_path, label, minimum_size, viewport_size, rect.size])
+	if candidate is Button:
+		var button := candidate as Button
+		_validate_commercial_button_copy(button, scene_path, label, errors)
+		_validate_commercial_button_contrast(button, scene_path, label, errors)
+
+
+func _validate_commercial_button_copy(button: Button, scene_path: String, label: String, errors: PackedStringArray) -> void:
+	if button == null:
+		return
+	if button.text.strip_edges().is_empty() and button.tooltip_text.strip_edges().is_empty() and button.icon == null and _first_descendant_label_text(button).is_empty():
+		errors.append("%s %s should expose non-empty visible CTA text for commercial readability." % [scene_path, label])
+	var rect := button.get_global_rect()
+	var text_minimum := button.get_combined_minimum_size()
+	if button.text_overrun_behavior == TextServer.OVERRUN_NO_TRIMMING and text_minimum.x > rect.size.x * 1.35 and button.text.strip_edges().length() > 1:
+		errors.append("%s %s text may overflow: combined min %.1f wider than rect %.1f without trim/ellipsis." % [scene_path, label, text_minimum.x, rect.size.x])
+
+
+func _first_descendant_label_text(parent: Node) -> String:
+	if parent == null:
+		return ""
+	for candidate in parent.find_children("*", "Label", true, false):
+		var label := candidate as Label
+		if label != null and not label.text.strip_edges().is_empty():
+			return label.text.strip_edges()
+	return ""
+
+
+func _validate_commercial_button_contrast(button: Button, scene_path: String, label: String, errors: PackedStringArray) -> void:
+	if button == null:
+		return
+	var style_name := "disabled" if button.disabled else "normal"
+	var stylebox := button.get_theme_stylebox(style_name)
+	if not (stylebox is StyleBoxFlat):
+		return
+	var bg_color := (stylebox as StyleBoxFlat).bg_color
+	if bg_color.a <= 0.01:
+		return
+	var color_name := "font_disabled_color" if button.disabled else "font_color"
+	var font_color := button.get_theme_color(color_name)
+	if font_color.a <= 0.01:
+		return
+	var contrast := _contrast_ratio(_flatten_on_white(font_color), _flatten_on_white(bg_color))
+	var threshold := COMMERCIAL_UI_DISABLED_CONTRAST if button.disabled else COMMERCIAL_UI_BUTTON_CONTRAST
+	if contrast + 0.01 < threshold:
+		errors.append("%s %s contrast %.2f should be >= %.1f for commercial readability." % [scene_path, label, contrast, threshold])
+
+
+func _validate_commercial_button_spacing(candidates: Array, minimum_gap: float, scene_path: String, label: String, errors: PackedStringArray) -> void:
+	var controls: Array[Control] = []
+	for candidate in candidates:
+		if candidate is Control and (candidate as Control).is_visible_in_tree():
+			controls.append(candidate as Control)
+	for index in range(controls.size()):
+		for other_index in range(index + 1, controls.size()):
+			var first := controls[index].get_global_rect()
+			var second := controls[other_index].get_global_rect()
+			if first.intersects(second):
+				errors.append("%s %s buttons should not overlap: %s and %s." % [scene_path, label, first, second])
+				continue
+			var horizontal_gap := maxf(second.position.x - first.end.x, first.position.x - second.end.x)
+			var vertical_gap := maxf(second.position.y - first.end.y, first.position.y - second.end.y)
+			if horizontal_gap < minimum_gap and vertical_gap < minimum_gap:
+				errors.append("%s %s buttons should keep at least %.1fpx spacing, got rects %s and %s." % [scene_path, label, minimum_gap, first, second])
+
+
+func _flatten_on_white(color: Color) -> Color:
+	if color.a >= 0.999:
+		return Color(color.r, color.g, color.b, 1.0)
+	var inverse_alpha := 1.0 - color.a
+	return Color(color.r * color.a + inverse_alpha, color.g * color.a + inverse_alpha, color.b * color.a + inverse_alpha, 1.0)
+
+
+func _contrast_ratio(first: Color, second: Color) -> float:
+	var first_luminance := _relative_luminance(first)
+	var second_luminance := _relative_luminance(second)
+	var lighter := maxf(first_luminance, second_luminance)
+	var darker := minf(first_luminance, second_luminance)
+	return (lighter + 0.05) / (darker + 0.05)
+
+
+func _relative_luminance(color: Color) -> float:
+	return 0.2126 * _srgb_to_linear(color.r) + 0.7152 * _srgb_to_linear(color.g) + 0.0722 * _srgb_to_linear(color.b)
+
+
+func _srgb_to_linear(value: float) -> float:
+	if value <= 0.03928:
+		return value / 12.92
+	return pow((value + 0.055) / 1.055, 2.4)
 
 
 func _validate_control_in_viewport(candidate: Node, viewport_size: Vector2i, scene_path: String, label: String, errors: PackedStringArray) -> void:
@@ -3798,6 +3951,13 @@ func _validate_collection_card_input_runtime(node: Node, grid: Node, errors: Pac
 	var equip_button := node.find_child("CosmeticButton_rabbit_sprout_frame", true, false) as Button
 	if equip_button == null or not equip_button.disabled or not equip_button.text.contains("장착중"):
 		errors.append("%s equipped cosmetic button should show disabled 장착중 state." % COLLECTION_SCENE_PATH)
+	var viewport_size := Vector2i(root.get_visible_rect().size)
+	for button_info in [
+		[node.find_child("CosmeticButton_rabbit_smile_plus", true, false), "CosmeticButton_rabbit_smile_plus"],
+		[equip_button, "CosmeticButton_rabbit_sprout_frame"],
+		[node.find_child("CosmeticButton_rabbit_rescuer_badge", true, false), "CosmeticButton_rabbit_rescuer_badge"],
+	]:
+		_validate_commercial_touch_target(button_info[0] as Control, COMMERCIAL_UI_SECONDARY_TOUCH, COLLECTION_SCENE_PATH, "%s commercial CTA" % String(button_info[1]), viewport_size, errors)
 	var rabbit_card_after_equip := grid.find_child("AnimalCard_rabbit", true, false) as PanelContainer
 	var equipped_badge: PanelContainer = null
 	var equipped_badge_label: Label = null
