@@ -1135,10 +1135,10 @@ func _button_text(button: Button) -> String:
 
 func _validate_result_overlay_commercial_sizes(image: Image, panel: Control, mascot: Control, chip_grid: Control, primary: Control, snapshot_id: String, errors: PackedStringArray) -> void:
 	var portrait := image.get_height() >= image.get_width()
-	_validate_control_image_minimum_size(image, panel, snapshot_id, "OverlayPanel", Vector2(float(image.get_width()) * (0.70 if portrait else 0.23), float(image.get_height()) * (0.26 if portrait else 0.30)), errors)
-	_validate_control_image_minimum_size(image, mascot, snapshot_id, "OverlayMascot", Vector2(float(image.get_width()) * (0.09 if portrait else 0.035), float(image.get_width()) * (0.09 if portrait else 0.035)), errors)
-	_validate_control_image_minimum_size(image, chip_grid, snapshot_id, "OverlayChipGrid", Vector2(float(image.get_width()) * (0.62 if portrait else 0.18), float(image.get_height()) * (0.065 if portrait else 0.045)), errors)
-	_validate_control_image_minimum_size(image, primary, snapshot_id, "OverlayPrimaryButton", Vector2(float(image.get_width()) * (0.24 if portrait else 0.065), float(image.get_height()) * (0.035 if portrait else 0.035)), errors)
+	_validate_control_image_minimum_size(image, panel, snapshot_id, "OverlayPanel", Vector2(float(image.get_width()) * (0.70 if portrait else 0.38), float(image.get_height()) * (0.26 if portrait else 0.54)), errors)
+	_validate_control_image_minimum_size(image, mascot, snapshot_id, "OverlayMascot", Vector2(float(image.get_width()) * (0.09 if portrait else 0.055), float(image.get_width()) * (0.09 if portrait else 0.055)), errors)
+	_validate_control_image_minimum_size(image, chip_grid, snapshot_id, "OverlayChipGrid", Vector2(float(image.get_width()) * (0.62 if portrait else 0.32), float(image.get_height()) * (0.065 if portrait else 0.060)), errors)
+	_validate_control_image_minimum_size(image, primary, snapshot_id, "OverlayPrimaryButton", Vector2(float(image.get_width()) * (0.24 if portrait else 0.145), float(image.get_height()) * (0.035 if portrait else 0.055)), errors)
 
 
 func _validate_special_combo_snapshot_regions(image: Image, node: Node, scenario: Dictionary, snapshot_id: String, errors: PackedStringArray) -> void:

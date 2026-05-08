@@ -599,6 +599,13 @@ func _validate_failure_overlay_viewport_clearance(node: Node, viewport_size: Vec
 	_validate_no_vertical_overlap(chip_grid, secondary, GAMEPLAY_SCENE_PATH, "%s OverlayChipGrid to secondary CTA" % context, errors)
 	_validate_commercial_touch_target(primary, COMMERCIAL_UI_PRIMARY_TOUCH, GAMEPLAY_SCENE_PATH, "%s OverlayPrimaryButton commercial CTA" % context, viewport_size, errors)
 	_validate_commercial_touch_target(secondary, COMMERCIAL_UI_SECONDARY_TOUCH, GAMEPLAY_SCENE_PATH, "%s OverlaySecondaryButton commercial CTA" % context, viewport_size, errors)
+	var portrait := viewport_size.y >= viewport_size.x
+	if panel != null:
+		var panel_rect := panel.get_global_rect()
+		var minimum_panel_width := float(viewport_size.x) * (0.70 if portrait else 0.38)
+		var minimum_panel_height := float(viewport_size.y) * (0.26 if portrait else 0.54)
+		if panel_rect.size.x < minimum_panel_width or panel_rect.size.y < minimum_panel_height:
+			errors.append("%s %s OverlayPanel should read as a commercial result card at %s, got %s below %.1fx%.1f." % [GAMEPLAY_SCENE_PATH, context, viewport_size, panel_rect.size, minimum_panel_width, minimum_panel_height])
 
 
 func _validate_collection_viewport_layout(node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:

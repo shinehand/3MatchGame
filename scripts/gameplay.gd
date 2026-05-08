@@ -464,27 +464,7 @@ func _apply_responsive_layout() -> void:
 	quit_button.add_theme_font_size_override("font_size", 30 if portrait else 26)
 	retry_button.add_theme_font_size_override("font_size", 30 if portrait else 26)
 	next_stage_button.add_theme_font_size_override("font_size", 30 if portrait else 26)
-	overlay_panel.custom_minimum_size = Vector2(840, 0) if portrait else Vector2(1040, 0)
-	overlay_mascot.custom_minimum_size = Vector2(204, 204) if portrait else Vector2(192, 192)
-	overlay_ribbon.custom_minimum_size = Vector2(168, 58) if portrait else Vector2(190, 62)
-	overlay_title.add_theme_font_size_override("font_size", 38 if portrait else 46)
-	overlay_body.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	overlay_body.max_lines_visible = 3 if portrait else 4
-	overlay_body.add_theme_font_size_override("font_size", 19 if portrait else 28)
-	overlay_body.add_theme_constant_override("line_spacing", 4 if portrait else 10)
-	if overlay_chip_grid != null:
-		overlay_chip_grid.columns = 1 if portrait else 3
-		overlay_chip_grid.add_theme_constant_override("h_separation", 8 if portrait else 12)
-		overlay_chip_grid.add_theme_constant_override("v_separation", 6 if portrait else 10)
-		for child in overlay_chip_grid.get_children():
-			var chip_button := child as Button
-			if chip_button != null:
-				chip_button.custom_minimum_size = _overlay_chip_minimum_size(viewport_size)
-				chip_button.add_theme_font_size_override("font_size", _overlay_chip_font_size(viewport_size))
-	overlay_secondary_button.custom_minimum_size = Vector2(220, 82) if portrait else Vector2(250, 88)
-	overlay_primary_button.custom_minimum_size = Vector2(270, 84) if portrait else Vector2(290, 88)
-	overlay_secondary_button.add_theme_font_size_override("font_size", 26 if portrait else 28)
-	overlay_primary_button.add_theme_font_size_override("font_size", 26 if portrait else 28)
+	_layout_result_overlay_card(viewport_size, portrait)
 	_layout_stage_intro_card(viewport_size)
 	stats_card.visible = not portrait
 	status_card.visible = false
@@ -521,6 +501,68 @@ func _apply_responsive_layout() -> void:
 	_update_tips()
 
 	_update_board_surface_size()
+
+
+func _layout_result_overlay_card(viewport_size: Vector2, portrait: bool) -> void:
+	if overlay_panel == null:
+		return
+	if portrait:
+		overlay_panel.custom_minimum_size = Vector2(clampf(viewport_size.x * 0.78, 840.0, 980.0), 0)
+	else:
+		overlay_panel.custom_minimum_size = Vector2(
+			clampf(viewport_size.x * 0.44, 1540.0, 1880.0),
+			clampf(viewport_size.y * 0.64, 1100.0, 1260.0)
+		)
+
+	var overlay_margin := overlay_panel.find_child("OverlayMargin", true, false) as MarginContainer
+	if overlay_margin != null:
+		var horizontal_margin := 30 if portrait else 56
+		var vertical_margin := 26 if portrait else 44
+		overlay_margin.add_theme_constant_override("margin_left", horizontal_margin)
+		overlay_margin.add_theme_constant_override("margin_top", vertical_margin)
+		overlay_margin.add_theme_constant_override("margin_right", horizontal_margin)
+		overlay_margin.add_theme_constant_override("margin_bottom", vertical_margin)
+
+	var overlay_column := overlay_panel.find_child("OverlayColumn", true, false) as VBoxContainer
+	if overlay_column != null:
+		overlay_column.add_theme_constant_override("separation", 16 if portrait else 22)
+
+	if overlay_mascot != null:
+		overlay_mascot.custom_minimum_size = Vector2(204, 204) if portrait else Vector2(260, 260)
+	if overlay_ribbon != null:
+		overlay_ribbon.custom_minimum_size = Vector2(168, 58) if portrait else Vector2(260, 86)
+	if overlay_title != null:
+		overlay_title.custom_minimum_size = Vector2(0, 48) if portrait else Vector2(0, 86)
+		overlay_title.add_theme_font_size_override("font_size", 38 if portrait else 64)
+	if overlay_body != null:
+		overlay_body.custom_minimum_size = Vector2(0, 72) if portrait else Vector2(0, 158)
+		overlay_body.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		overlay_body.max_lines_visible = 3 if portrait else 4
+		overlay_body.add_theme_font_size_override("font_size", 19 if portrait else 38)
+		overlay_body.add_theme_constant_override("line_spacing", 4 if portrait else 12)
+
+	if overlay_chip_grid != null:
+		overlay_chip_grid.columns = 1 if portrait else 3
+		overlay_chip_grid.custom_minimum_size = Vector2(0, 170) if portrait else Vector2(0, 138)
+		overlay_chip_grid.add_theme_constant_override("h_separation", 8 if portrait else 18)
+		overlay_chip_grid.add_theme_constant_override("v_separation", 6 if portrait else 12)
+		for child in overlay_chip_grid.get_children():
+			var chip_button := child as Button
+			if chip_button != null:
+				chip_button.custom_minimum_size = _overlay_chip_minimum_size(viewport_size)
+				chip_button.add_theme_font_size_override("font_size", _overlay_chip_font_size(viewport_size))
+
+	var overlay_buttons: HBoxContainer = null
+	if overlay_primary_button != null:
+		overlay_buttons = overlay_primary_button.get_parent() as HBoxContainer
+	if overlay_buttons != null:
+		overlay_buttons.add_theme_constant_override("separation", 14 if portrait else 26)
+	if overlay_secondary_button != null:
+		overlay_secondary_button.custom_minimum_size = Vector2(220, 82) if portrait else Vector2(520, 128)
+		overlay_secondary_button.add_theme_font_size_override("font_size", 26 if portrait else 42)
+	if overlay_primary_button != null:
+		overlay_primary_button.custom_minimum_size = Vector2(270, 84) if portrait else Vector2(600, 128)
+		overlay_primary_button.add_theme_font_size_override("font_size", 26 if portrait else 42)
 
 
 func _layout_gameplay_hud(portrait: bool) -> void:
@@ -3708,6 +3750,7 @@ func _show_overlay(title: String, body: String, action: String, primary_text: St
 	_play_overlay_mascot_expression(_overlay_expression_for_action(title, action))
 	_update_overlay_ribbon(action)
 	_track_result_overlay_live_event_impression(action)
+	_layout_result_overlay_card(get_viewport_rect().size, MobileLayout.is_portrait(self))
 	var tween := create_tween()
 	tween.tween_property(overlay, "modulate", Color(1, 1, 1, 1), 0.14)
 
@@ -3778,11 +3821,11 @@ func _overlay_chip_short_text(line: String) -> String:
 func _overlay_chip_minimum_size(viewport_size: Vector2) -> Vector2:
 	if viewport_size.y >= viewport_size.x:
 		return Vector2(0, 54)
-	return Vector2(0, 82)
+	return Vector2(0, 118)
 
 
 func _overlay_chip_font_size(viewport_size: Vector2) -> int:
-	return 20 if viewport_size.y >= viewport_size.x else 26
+	return 20 if viewport_size.y >= viewport_size.x else 34
 
 
 func _overlay_chip_style(index: int, action: String) -> StyleBoxFlat:
