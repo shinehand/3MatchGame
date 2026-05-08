@@ -31,6 +31,13 @@
 - GitHub-hosted runner에서는 Xvfb renderer 실패가 전체 no-device gate를 막지 않도록 non-blocking artifact attempt로만 실행하며, 로컬 또는 지원되는 Xvfb 환경에서는 blocking으로 실행한다.
 - 이 gate는 blank/transparent/offscreen/missing texture 회귀를 차단하지만, 최종 Android 실기기 screenshot/video/logcat evidence를 대체하지 않는다.
 
+## Gate 0C. Commercial UI Readability & Touch Target
+
+- 자동 scene smoke는 홈, 월드맵, Stage Popup, gameplay HUD/실패 overlay, Rescue Book 핵심 CTA가 mobile viewport matrix에서 논리 viewport 안에 남는지 검증한다.
+- 핵심 상용 CTA는 primary `144x48`, secondary `88x44`, icon/stage node `44x44` 이상 터치 타깃을 가져야 한다.
+- 버튼은 visible text, child label, icon, tooltip 중 하나로 식별 가능해야 하며, enabled 버튼 대비는 `3.0:1`, disabled 버튼 대비는 `2.0:1` 이상이어야 한다.
+- 이 gate는 논리 px 기반 no-device 회귀 방지용이며, 실제 Android 물리 터치감과 색감은 최종 device evidence에서 별도 승인한다.
+
 ## Gate 1. 문서 일치
 
 - `docs/project-animal-match-agent-start-here.md`의 현재 결정 사항과 충돌하지 않는다.
@@ -115,6 +122,7 @@
 - 한국어/영어/일본어 pseudo-localization에서 목표 칩과 버튼 텍스트가 겹치지 않는다.
 - 자동 scene smoke는 Stage Popup, Gameplay HUD, 실패 overlay에 장문 pseudo-localization title/body/CTA를 주입해 viewport, panel bounds, CTA vertical overlap을 검증한다.
 - 자동 scene smoke는 6개 요청 window size의 mobile viewport matrix에서 홈, 월드맵, 컬렉션, Stage 4 Gameplay HUD, Stage Popup, Stage 25 실패 overlay의 실제 logical viewport bounds를 검증한다.
+- 자동 scene smoke는 핵심 CTA 최소 터치 타깃과 버튼 대비를 검증해 상용 UI readability 회귀를 차단한다.
 
 ## Gate 7A. Stage Popup / 시작 부스터
 

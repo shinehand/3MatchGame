@@ -580,9 +580,23 @@
   - no-device gate가 blank/transparent/offscreen/missing texture 회귀를 PNG snapshot과 pixel smoke로 잡는다.
   - snapshot artifact는 실기기 screenshot/video/logcat evidence를 대체하지 않는다는 caveat를 유지한다.
 
+### PAM-QA-111: Commercial UI Readability & Touch Target Gate
+
+- 상태: 완료됨. `scripts/validate_scene_loads.gd`의 mobile viewport matrix가 홈, 월드맵, Stage Popup, gameplay HUD/실패 overlay, Rescue Book의 핵심 상용 CTA에 대해 최소 터치 타깃, viewport bounds, CTA 텍스트/아이콘 식별, 버튼 대비를 검증한다. 기준은 primary CTA `144x48`, secondary CTA `88x44`, icon/stage node `44x44`, enabled 버튼 contrast `3.0:1`, disabled 버튼 contrast `2.0:1`이며, 전역 버튼 스캔 대신 실제 플레이 흐름의 핵심 CTA만 명시적으로 검사한다. Rescue Book cosmetic equip 버튼은 `44px` 높이로 상향했다.
+- 소유: QA Agent + Art Agent + Development Agent
+- 대상 파일:
+  - `scripts/validate_scene_loads.gd`
+  - `scripts/collection_screen.gd`
+  - `docs/dev/validation-process.md`
+  - `docs/qa/project-animal-match-development-gates.md`
+- 완료 기준:
+  - 핵심 CTA가 390x844/844x390을 포함한 viewport matrix에서 상용 터치 면적과 기본 대비를 만족한다.
+  - Stage node, icon-only booster처럼 텍스트 대신 자식 라벨/아이콘/tooltip을 쓰는 버튼은 오탐 없이 식별성을 검증한다.
+  - no-device scene smoke와 `validate_gameplay.sh`가 CTA 크기·대비 회귀를 실패시킨다.
+
 ## 추천 구현 순서
 
-완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
+완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
 
 다음 고가치 순서:
 
