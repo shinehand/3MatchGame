@@ -213,7 +213,7 @@
 
 ### PAM-DEV-051: SpecialEffectQueue와 조합 테스트
 
-- 상태: 부분 완료. 인접한 non-rainbow 특수 블록끼리 교환하면 일반 매치가 없어도 유효 이동으로 처리되어 공통 특수 효과 큐를 먼저 해결한다. scene load smoke가 row+column 15칸 제거, row 경로 위 bomb 연쇄 21칸 제거, clear 경로 인접 장애물 피해, rainbow+special 우선순위 라우팅, row+row/column+column 8칸 중복 제거, row+bomb/column+bomb 14칸 합집합, bomb+bomb 12칸 합집합, 4매치 row/column 특수 생성, 5매치 rainbow 생성, T/L 교차 bomb 생성까지 headless fixture로 검증한다. runtime scene smoke는 Stage 31에서 row+column, row+row, column+column, row+bomb, column+bomb, bomb+bomb 6종 실제 `_resolve_swap` 경로의 이동 수 1회 소모, 점수 증가, 경로 장애물 제거, `is_busy` 복귀, playing 상태 유지, `special_combo_trigger` analytics의 조합 타입/제거 수/장애물 수를 검증한다. `FxLayer.play_special_combo` 전용 flash/ring/조합별 label VFX와 smoke 검증을 추가해 특수+특수 발동 시작점이 일반 매치 burst와 구분된다. 6종 조합별 beam/ring 형태를 분리했고, FX smoke가 각 라벨과 explosive 조합 echo ring, child count, cleanup을 검증한다. Stage 31은 `combo_focus` + `recommended_smoke`로 31-40 특수 조합 밴드의 수동 smoke 진입점이 되며, balance validator가 이를 강제한다. 남은 작업은 실제 기기에서 6종 조합의 전용 flash/ring/label이 보드 판독을 해치지 않는지, 강한 사운드/햅틱/보드 shake가 과하지 않은지, 제거 후 낙하·리필이 자연스럽게 이어지는지 수동 QA로 판정하는 것이다.
+- 상태: 부분 완료. 인접한 non-rainbow 특수 블록끼리 교환하면 일반 매치가 없어도 유효 이동으로 처리되어 공통 특수 효과 큐를 먼저 해결한다. scene load smoke가 row+column 15칸 제거, row 경로 위 bomb 연쇄 21칸 제거, clear 경로 인접 장애물 피해, rainbow+special 우선순위 라우팅, row+row/column+column 8칸 중복 제거, row+bomb/column+bomb 14칸 합집합, bomb+bomb 12칸 합집합, 4매치 row/column 특수 생성, 5매치 rainbow 생성, T/L 교차 bomb 생성까지 headless fixture로 검증한다. runtime scene smoke는 Stage 31에서 row+column, row+row, column+column, row+bomb, column+bomb, bomb+bomb 6종 실제 `_resolve_swap` 경로의 이동 수 1회 소모, 점수 증가, 경로 장애물 제거, `is_busy` 복귀, playing 상태 유지, `special_combo_trigger` analytics의 조합 타입/제거 수/장애물 수를 검증한다. `FxLayer.play_special_combo` 전용 flash/ring/조합별 label VFX와 smoke 검증을 추가해 특수+특수 발동 시작점이 일반 매치 burst와 구분된다. 6종 조합별 beam/ring 형태를 분리했고, FX smoke가 각 라벨과 explosive 조합 echo ring, child count, cleanup을 검증한다. render snapshot smoke는 Stage 31 실제 `_resolve_swap` 발동 직후 6종을 portrait/landscape PNG로 저장하고 조합별 label/flash/ring 픽셀, filename combo type, `special_combo_trigger` payload, transient cleanup을 확인한다. Stage 31은 `combo_focus` + `recommended_smoke`로 31-40 특수 조합 밴드의 수동 smoke 진입점이 되며, balance validator가 이를 강제한다. 남은 작업은 실제 기기에서 6종 조합의 전용 flash/ring/label이 보드 판독을 해치지 않는지, 강한 사운드/햅틱/보드 shake가 과하지 않은지, 제거 후 낙하·리필이 자연스럽게 이어지는지 수동 QA로 판정하는 것이다.
 - 소유: Development Agent
 - 대상 파일:
   - `scripts/gameplay.gd`
@@ -539,7 +539,7 @@
 
 ### PAM-QA-104: No-device Render Snapshot Smoke
 
-- 상태: 완료됨. `scripts/validate_render_snapshots.gd`/`.sh`가 Home, Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay, Collection을 `390x844`와 `844x390` PNG로 저장하고 파일 크기, viewport 크기, non-blank/varied pixel, 핵심 UI region 렌더 픽셀을 검증한다. 로컬 또는 지원되는 Xvfb 환경에서는 blocking으로 실행하고, GitHub-hosted no-device CI는 Xvfb renderer 실패가 전체 gate를 막지 않도록 non-blocking artifact attempt로 실행한다.
+- 상태: 완료됨. `scripts/validate_render_snapshots.gd`/`.sh`가 Home, Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay, Stage 31 특수 조합 6종, Collection을 `390x844`와 `844x390` PNG 22장으로 저장하고 파일 크기, viewport 크기, non-blank/varied pixel, 핵심 UI region 렌더 픽셀을 검증한다. Stage 31 조합 스냅샷은 실제 `_resolve_swap`을 시작한 직후 조합별 label/flash/ring 픽셀, echo ring 필요 여부, filename combo type, `special_combo_trigger` analytics payload, transient VFX cleanup을 함께 확인한다. 로컬 또는 지원되는 Xvfb 환경에서는 blocking으로 실행하고, GitHub-hosted no-device CI는 Xvfb renderer 실패가 전체 gate를 막지 않도록 non-blocking artifact attempt로 실행한다.
 - 소유: QA Agent + Development Agent
 - 대상 파일:
   - `scripts/validate_render_snapshots.gd`
@@ -554,7 +554,7 @@
 
 ## 추천 구현 순서
 
-완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`)는 회귀 검증 대상으로 유지한다.
+완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
 
 다음 고가치 순서:
 

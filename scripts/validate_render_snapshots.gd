@@ -16,7 +16,98 @@ const SCENARIOS := [
 	{"id": "stage_popup", "scene": STAGE_SELECT_SCENE_PATH, "setup": "stage_popup"},
 	{"id": "gameplay_stage4", "scene": GAMEPLAY_SCENE_PATH, "setup": "gameplay_stage4"},
 	{"id": "gameplay_stage25_failure", "scene": GAMEPLAY_SCENE_PATH, "setup": "gameplay_stage25_failure"},
+	{
+		"id": "gameplay_stage31_special_combo_row_col",
+		"scene": GAMEPLAY_SCENE_PATH,
+		"setup": "gameplay_stage31_special_combo",
+		"combo_type": "row_col",
+		"label_text": "크로스!",
+		"from_special": "row",
+		"to_special": "col",
+		"from_cell": Vector2i(3, 1),
+		"to_cell": Vector2i(3, 2),
+		"obstacle_cell": Vector2i(2, 2),
+		"cleared_count": 15,
+		"requires_echo": false,
+	},
+	{
+		"id": "gameplay_stage31_special_combo_row_row",
+		"scene": GAMEPLAY_SCENE_PATH,
+		"setup": "gameplay_stage31_special_combo",
+		"combo_type": "row_row",
+		"label_text": "가로 러시!",
+		"from_special": "row",
+		"to_special": "row",
+		"from_cell": Vector2i(3, 1),
+		"to_cell": Vector2i(3, 2),
+		"obstacle_cell": Vector2i(3, 0),
+		"cleared_count": 8,
+		"requires_echo": false,
+	},
+	{
+		"id": "gameplay_stage31_special_combo_col_col",
+		"scene": GAMEPLAY_SCENE_PATH,
+		"setup": "gameplay_stage31_special_combo",
+		"combo_type": "col_col",
+		"label_text": "세로 러시!",
+		"from_special": "col",
+		"to_special": "col",
+		"from_cell": Vector2i(3, 1),
+		"to_cell": Vector2i(4, 1),
+		"obstacle_cell": Vector2i(0, 1),
+		"cleared_count": 8,
+		"requires_echo": false,
+	},
+	{
+		"id": "gameplay_stage31_special_combo_row_bomb",
+		"scene": GAMEPLAY_SCENE_PATH,
+		"setup": "gameplay_stage31_special_combo",
+		"combo_type": "row_bomb",
+		"label_text": "가로 폭탄!",
+		"from_special": "row",
+		"to_special": "bomb",
+		"from_cell": Vector2i(3, 1),
+		"to_cell": Vector2i(3, 2),
+		"obstacle_cell": Vector2i(2, 2),
+		"cleared_count": 14,
+		"requires_echo": true,
+	},
+	{
+		"id": "gameplay_stage31_special_combo_col_bomb",
+		"scene": GAMEPLAY_SCENE_PATH,
+		"setup": "gameplay_stage31_special_combo",
+		"combo_type": "col_bomb",
+		"label_text": "세로 폭탄!",
+		"from_special": "col",
+		"to_special": "bomb",
+		"from_cell": Vector2i(3, 1),
+		"to_cell": Vector2i(4, 1),
+		"obstacle_cell": Vector2i(4, 2),
+		"cleared_count": 14,
+		"requires_echo": true,
+	},
+	{
+		"id": "gameplay_stage31_special_combo_bomb_bomb",
+		"scene": GAMEPLAY_SCENE_PATH,
+		"setup": "gameplay_stage31_special_combo",
+		"combo_type": "bomb_bomb",
+		"label_text": "더블 폭탄!",
+		"from_special": "bomb",
+		"to_special": "bomb",
+		"from_cell": Vector2i(3, 1),
+		"to_cell": Vector2i(3, 2),
+		"obstacle_cell": Vector2i(2, 1),
+		"cleared_count": 12,
+		"requires_echo": true,
+	},
 	{"id": "collection", "scene": COLLECTION_SCENE_PATH, "setup": "collection"},
+]
+const SPECIAL_COMBO_TRANSIENT_NODE_NAMES := [
+	"SpecialComboFlash",
+	"SpecialComboBeam",
+	"SpecialComboRing",
+	"SpecialComboEchoRing",
+	"SpecialComboLabel",
 ]
 
 var output_dir := ""
@@ -98,11 +189,12 @@ func _capture_scenario(scenario: Dictionary, viewport_size: Vector2i, errors: Pa
 
 	root.add_child(node)
 	await _settle_scene(node)
-	await _apply_scenario_setup(node, setup_id, errors)
+	await _apply_scenario_setup(node, scenario, errors)
 	await _settle_scene(node)
 
 	var snapshot_id := "%s_%dx%d" % [str(scenario.get("id", "snapshot")), viewport_size.x, viewport_size.y]
-	await _save_and_validate_snapshot(snapshot_id, node, setup_id, viewport_size, errors)
+	await _save_and_validate_snapshot(snapshot_id, node, scenario, setup_id, viewport_size, errors)
+	await _validate_post_snapshot_cleanup(snapshot_id, node, scenario, errors)
 
 	if is_instance_valid(node):
 		node.queue_free()
@@ -130,7 +222,8 @@ func _settle_scene(node: Node, frame_count: int = 5) -> void:
 		await process_frame
 
 
-func _apply_scenario_setup(node: Node, setup_id: String, errors: PackedStringArray) -> void:
+func _apply_scenario_setup(node: Node, scenario: Dictionary, errors: PackedStringArray) -> void:
+	var setup_id := str(scenario.get("setup", ""))
 	match setup_id:
 		"stage_popup":
 			if not node.has_method("_show_stage_popup"):
@@ -142,6 +235,8 @@ func _apply_scenario_setup(node: Node, setup_id: String, errors: PackedStringArr
 			await _start_gameplay_stage(node, 3, errors)
 		"gameplay_stage25_failure":
 			await _prepare_stage_25_failure(node, errors)
+		"gameplay_stage31_special_combo":
+			await _prepare_stage_31_special_combo(node, scenario, errors)
 		_:
 			await process_frame
 
@@ -173,7 +268,69 @@ func _prepare_stage_25_failure(node: Node, errors: PackedStringArray) -> void:
 	await create_timer(0.24).timeout
 
 
-func _save_and_validate_snapshot(snapshot_id: String, node: Node, setup_id: String, viewport_size: Vector2i, errors: PackedStringArray) -> void:
+func _prepare_stage_31_special_combo(node: Node, scenario: Dictionary, errors: PackedStringArray) -> void:
+	for method_name in ["_start_stage", "_make_piece", "_refresh_all_tiles", "_resolve_swap"]:
+		if not node.has_method(method_name):
+			errors.append("%s should expose %s for Stage 31 special combo render snapshot." % [GAMEPLAY_SCENE_PATH, method_name])
+			return
+
+	await _start_gameplay_stage(node, 30, errors)
+	var board_data := _seed_special_combo_render_board(node, errors)
+	if board_data.is_empty():
+		return
+
+	var from_cell: Vector2i = scenario.get("from_cell", Vector2i(3, 1))
+	var to_cell: Vector2i = scenario.get("to_cell", Vector2i(3, 2))
+	var obstacle_cell: Vector2i = scenario.get("obstacle_cell", Vector2i(2, 2))
+	var from_special := String(scenario.get("from_special", "row"))
+	var to_special := String(scenario.get("to_special", "col"))
+
+	board_data[from_cell.x][from_cell.y] = node.call("_make_piece", "rabbit", from_special)
+	board_data[to_cell.x][to_cell.y] = node.call("_make_piece", "bear", to_special)
+	node.set("board_data", board_data)
+
+	var obstacle_data: Array = node.get("obstacle_data")
+	obstacle_data[obstacle_cell.x][obstacle_cell.y] = 1
+	node.set("obstacle_data", obstacle_data)
+	node.call("_refresh_all_tiles")
+	await _settle_scene(node, 2)
+
+	node.call("_resolve_swap", from_cell, to_cell)
+	await create_timer(0.12).timeout
+
+
+func _seed_special_combo_render_board(node: Node, errors: PackedStringArray) -> Array:
+	var board_data_value = node.get("board_data")
+	var obstacle_data_value = node.get("obstacle_data")
+	var active_mask_value = node.get("active_mask")
+	if not (board_data_value is Array) or not (obstacle_data_value is Array) or not (active_mask_value is Array):
+		errors.append("%s special combo render snapshot could not inspect board arrays." % GAMEPLAY_SCENE_PATH)
+		return []
+
+	var animals := ["rabbit", "bear", "cat", "chick", "frog"]
+	var board_data: Array = board_data_value
+	var obstacle_data: Array = obstacle_data_value
+	var active_mask: Array = active_mask_value
+	if board_data.size() < 8 or obstacle_data.size() < 8 or active_mask.size() < 8:
+		errors.append("%s special combo render snapshot expected 8x8 board arrays." % GAMEPLAY_SCENE_PATH)
+		return []
+
+	for row in range(8):
+		if not (board_data[row] is Array) or not (obstacle_data[row] is Array) or not (active_mask[row] is Array):
+			errors.append("%s special combo render snapshot expected row %d arrays." % [GAMEPLAY_SCENE_PATH, row])
+			return []
+		for col in range(8):
+			active_mask[row][col] = true
+			obstacle_data[row][col] = 0
+			board_data[row][col] = node.call("_make_piece", String(animals[(row * 2 + col) % animals.size()]))
+
+	node.set("active_mask", active_mask)
+	node.set("obstacle_data", obstacle_data)
+	node.set("board_data", board_data)
+	return board_data
+
+
+func _save_and_validate_snapshot(snapshot_id: String, node: Node, scenario: Dictionary, setup_id: String, viewport_size: Vector2i, errors: PackedStringArray) -> void:
 	var texture := root.get_texture()
 	if texture == null:
 		errors.append("%s did not expose a viewport texture." % snapshot_id)
@@ -193,8 +350,21 @@ func _save_and_validate_snapshot(snapshot_id: String, node: Node, setup_id: Stri
 	saved_snapshot_paths.append(output_path)
 	_validate_saved_png(output_path, snapshot_id, errors)
 	_validate_image_pixels(image, Rect2i(Vector2i.ZERO, Vector2i(image.get_width(), image.get_height())), "%s full frame" % snapshot_id, 0.08, 10, errors)
-	_validate_scenario_regions(image, node, setup_id, snapshot_id, errors)
+	_validate_scenario_regions(image, node, scenario, setup_id, snapshot_id, errors)
 	print("Render snapshot saved: %s" % output_path)
+
+
+func _validate_post_snapshot_cleanup(snapshot_id: String, node: Node, scenario: Dictionary, errors: PackedStringArray) -> void:
+	if str(scenario.get("setup", "")) != "gameplay_stage31_special_combo":
+		return
+
+	await create_timer(0.72).timeout
+	for _index in range(4):
+		await process_frame
+
+	for transient_name in SPECIAL_COMBO_TRANSIENT_NODE_NAMES:
+		if node.find_child(transient_name, true, false) != null:
+			errors.append("%s should clean up transient %s after the special combo render snapshot." % [snapshot_id, transient_name])
 
 
 func _write_snapshot_manifest(target_dir: String, snapshot_paths: PackedStringArray, errors: PackedStringArray) -> void:
@@ -221,7 +391,7 @@ func _validate_saved_png(output_path: String, snapshot_id: String, errors: Packe
 		errors.append("%s PNG should not be empty: %s" % [snapshot_id, output_path])
 
 
-func _validate_scenario_regions(image: Image, node: Node, setup_id: String, snapshot_id: String, errors: PackedStringArray) -> void:
+func _validate_scenario_regions(image: Image, node: Node, scenario: Dictionary, setup_id: String, snapshot_id: String, errors: PackedStringArray) -> void:
 	match setup_id:
 		"home":
 			_validate_control_pixels(image, node.find_child("GameHomeLayer", true, false), snapshot_id, "GameHomeLayer", errors)
@@ -244,9 +414,66 @@ func _validate_scenario_regions(image: Image, node: Node, setup_id: String, snap
 			_validate_control_pixels(image, node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel") as Control, snapshot_id, "OverlayPanel", errors)
 			_validate_control_pixels(image, node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlayPrimaryButton") as Control, snapshot_id, "OverlayPrimaryButton", errors)
 			_validate_control_pixels(image, node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlaySecondaryButton") as Control, snapshot_id, "OverlaySecondaryButton", errors)
+		"gameplay_stage31_special_combo":
+			_validate_control_pixels(image, node.get_node_or_null("SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame") as Control, snapshot_id, "BoardFrame", errors)
+			_validate_special_combo_snapshot_regions(image, node, scenario, snapshot_id, errors)
 		"collection":
 			_validate_control_pixels(image, node.find_child("CollectionGrid", true, false) as Control, snapshot_id, "CollectionGrid", errors)
 			_validate_control_pixels(image, node.find_child("SummaryLabel", true, false) as Control, snapshot_id, "SummaryLabel", errors)
+
+
+func _validate_special_combo_snapshot_regions(image: Image, node: Node, scenario: Dictionary, snapshot_id: String, errors: PackedStringArray) -> void:
+	var combo_type := String(scenario.get("combo_type", ""))
+	if combo_type.is_empty():
+		errors.append("%s special combo snapshot is missing combo_type metadata." % snapshot_id)
+	elif not snapshot_id.contains(combo_type):
+		errors.append("%s snapshot filename should include combo type %s." % [snapshot_id, combo_type])
+
+	var label := node.find_child("SpecialComboLabel", true, false) as Label
+	_validate_control_pixels(image, label, snapshot_id, "SpecialComboLabel", errors)
+	_validate_control_within_image_bounds(label, snapshot_id, "SpecialComboLabel", errors)
+	if label != null:
+		var expected_label := String(scenario.get("label_text", ""))
+		if label.text != expected_label:
+			errors.append("%s special combo label should be %s for %s, got %s." % [snapshot_id, expected_label, combo_type, label.text])
+		_validate_canvas_item_alpha(label, snapshot_id, "SpecialComboLabel", 0.20, errors)
+
+	var flash := node.find_child("SpecialComboFlash", true, false) as Control
+	var ring := node.find_child("SpecialComboRing", true, false) as Control
+	_validate_control_pixels(image, flash, snapshot_id, "SpecialComboFlash", errors)
+	_validate_control_pixels(image, ring, snapshot_id, "SpecialComboRing", errors)
+	_validate_canvas_item_alpha(flash, snapshot_id, "SpecialComboFlash", 0.08, errors)
+	_validate_canvas_item_alpha(ring, snapshot_id, "SpecialComboRing", 0.08, errors)
+
+	if flash is ColorRect and (flash as ColorRect).color.a < 0.08:
+		errors.append("%s SpecialComboFlash color alpha should remain visible during snapshot, got %.3f." % [snapshot_id, (flash as ColorRect).color.a])
+	if bool(scenario.get("requires_echo", false)):
+		var echo_ring := node.find_child("SpecialComboEchoRing", true, false) as Control
+		_validate_control_pixels(image, echo_ring, snapshot_id, "SpecialComboEchoRing", errors)
+		_validate_canvas_item_alpha(echo_ring, snapshot_id, "SpecialComboEchoRing", 0.06, errors)
+
+	var board_root := node.get_node_or_null("FxLayer/BoardFxRoot")
+	if board_root == null:
+		errors.append("%s is missing FxLayer/BoardFxRoot for special combo render snapshot." % snapshot_id)
+	else:
+		var board_fx_children := board_root.get_child_count()
+		if board_fx_children < 3:
+			errors.append("%s should have transient special combo VFX children, got %d." % [snapshot_id, board_fx_children])
+		if board_fx_children > 40:
+			errors.append("%s should keep no-device special combo VFX children <= 40, got %d." % [snapshot_id, board_fx_children])
+
+	var params := _analytics_event_params_by_name_and_key("special_combo_trigger", "combo_type", combo_type)
+	if params.is_empty():
+		errors.append("%s should emit special_combo_trigger analytics for combo_type %s." % [snapshot_id, combo_type])
+		return
+	if int(params.get("stage_id", 0)) != 31:
+		errors.append("%s special_combo_trigger should identify Stage 31, got %d." % [snapshot_id, int(params.get("stage_id", 0))])
+	if String(params.get("from_special", "")) != String(scenario.get("from_special", "")) or String(params.get("to_special", "")) != String(scenario.get("to_special", "")):
+		errors.append("%s special_combo_trigger should preserve from/to specials for %s." % [snapshot_id, combo_type])
+	if int(params.get("cleared_count", 0)) != int(scenario.get("cleared_count", 0)):
+		errors.append("%s special_combo_trigger should record %d cleared cells for %s, got %d." % [snapshot_id, int(scenario.get("cleared_count", 0)), combo_type, int(params.get("cleared_count", 0))])
+	if int(params.get("obstacles_cleared", 0)) != 1:
+		errors.append("%s special_combo_trigger should record one obstacle cleared for %s, got %d." % [snapshot_id, combo_type, int(params.get("obstacles_cleared", 0))])
 
 
 func _validate_control_pixels(image: Image, control: Control, snapshot_id: String, label: String, errors: PackedStringArray) -> void:
@@ -261,6 +488,22 @@ func _validate_control_pixels(image: Image, control: Control, snapshot_id: Strin
 		errors.append("%s control region %s has no visible pixels in image bounds." % [snapshot_id, label])
 		return
 	_validate_image_pixels(image, rect, "%s %s" % [snapshot_id, label], 0.04, 3, errors)
+
+
+func _validate_control_within_image_bounds(control: Control, snapshot_id: String, label: String, errors: PackedStringArray) -> void:
+	if control == null:
+		return
+	var rect := control.get_global_rect()
+	var viewport_size := root.get_visible_rect().size
+	if rect.position.x < -1.0 or rect.position.y < -1.0 or rect.position.x + rect.size.x > viewport_size.x + 1.0 or rect.position.y + rect.size.y > viewport_size.y + 1.0:
+		errors.append("%s control region %s should fit inside viewport bounds, got %s in %s." % [snapshot_id, label, rect, viewport_size])
+
+
+func _validate_canvas_item_alpha(node: CanvasItem, snapshot_id: String, label: String, min_alpha: float, errors: PackedStringArray) -> void:
+	if node == null:
+		return
+	if node.modulate.a < min_alpha:
+		errors.append("%s %s alpha %.3f should be >= %.3f during render snapshot." % [snapshot_id, label, node.modulate.a, min_alpha])
 
 
 func _control_rect_to_image_bounds(rect: Rect2, image_width: int, image_height: int) -> Rect2i:
@@ -333,3 +576,18 @@ func _find_button_with_text(parent: Node, text: String) -> Button:
 		if button != null and button.text == text:
 			return button
 	return null
+
+
+func _analytics_event_params_by_name_and_key(event_name: String, key: String, value: String) -> Dictionary:
+	var events := GameSession.get_analytics_events()
+	for index in range(events.size() - 1, -1, -1):
+		var event = events[index]
+		if not (event is Dictionary):
+			continue
+		var event_dict: Dictionary = event
+		if String(event_dict.get("name", "")) != event_name:
+			continue
+		var params: Dictionary = Dictionary(event_dict.get("params", {}))
+		if String(params.get(key, "")) == value:
+			return params
+	return {}

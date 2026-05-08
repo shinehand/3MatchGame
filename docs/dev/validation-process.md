@@ -26,7 +26,7 @@
 - 게임플레이 보드 64칸 생성과 스테이지 선택 카드 100장 생성 확인
 - Mobile viewport matrix smoke: `1080x1920`, `720x1280`, `390x844`, `1920x1080`, `1280x720`, `844x390` 요청 window에서 실제 logical viewport 기준 레이아웃을 확인
 - Critical UI text stress: Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay에 장문 pseudo-localization title/body/CTA를 주입해 viewport/panel bounds와 CTA overlap을 확인
-- Render snapshot smoke: `390x844`, `844x390`에서 Home, Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay, Rescue Book을 실제 PNG로 저장하고 non-blank/varied pixel 및 핵심 UI region 렌더를 확인
+- Render snapshot smoke: `390x844`, `844x390`에서 Home, Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay, Stage 31 특수 조합 6종, Collection을 실제 PNG 22장으로 저장하고 non-blank/varied pixel, 핵심 UI region, 특수 조합 label/flash/ring 렌더를 확인
 - LiveOps config validation. `remote_config.json`과 `live_events.json`의 unlock key, placement, offline fallback, disabled season pass, remote config exposure 계약을 독립 검증한다.
 - Godot 헤드리스 로드
 - 파일 직접 읽기 안티패턴 스캔
@@ -57,7 +57,7 @@ zsh scripts/validate_gameplay.sh
 
 `zsh scripts/validate_liveops_config.sh`는 `data/events/remote_config.json`과 `data/events/live_events.json`을 `LiveEventService` 계약에 맞춰 독립 검증한다. 이 gate는 필수 remote config key와 exposure key, event type별 unlock key, positive/ranged tuning 값, `home`/`stage_select`/`result_overlay`/`collection` placement coverage, enabled 이벤트의 unlock 전/후 query 결과, offline fallback status, disabled `season_pass` 비노출, `remote_config_exposure` 중복 방지와 필수 payload를 검사한다. `season_pass` 해금은 `season_pass_unlock_level` 원격 설정으로 제어하지만, 실제 store product/SDK evidence 전까지 현재 alpha fixture는 disabled 상태여야 한다.
 
-`zsh scripts/validate_render_snapshots.sh`는 표시 렌더러가 있는 로컬 환경에서는 일반 Godot 실행, CI에서는 `xvfb-run`으로 Home, Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay, Collection 스냅샷을 `390x844`와 `844x390` PNG로 저장한다. 이 gate는 blank/transparent/offscreen/missing texture 회귀를 잡기 위한 no-device preflight이며, 실기기 screenshot/video/logcat evidence를 대체하지 않는다. GitHub-hosted runner의 Xvfb renderer가 실패할 수 있어 workflow에서는 non-blocking artifact attempt로 실행하고, `validate_gameplay.sh`는 GitHub Actions 안에서 이 단계만 skip caveat를 출력한다. 로컬 또는 지원되는 Xvfb 환경에서는 `zsh scripts/validate_render_snapshots.sh`를 blocking으로 실행해야 한다.
+`zsh scripts/validate_render_snapshots.sh`는 표시 렌더러가 있는 로컬 환경에서는 일반 Godot 실행, CI에서는 `xvfb-run`으로 Home, Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay, Stage 31 특수 조합 6종, Collection 스냅샷을 `390x844`와 `844x390` PNG 22장으로 저장한다. Stage 31 조합 스냅샷은 실제 `_resolve_swap` 발동 직후 조합별 label/flash/ring 렌더, explosive echo ring 필요 여부, filename combo type, `special_combo_trigger` payload, transient VFX cleanup을 확인한다. 이 gate는 blank/transparent/offscreen/missing texture 회귀와 수동 QA 전 VFX 판독성 회귀를 잡기 위한 no-device preflight이며, 실기기 screenshot/video/logcat evidence를 대체하지 않는다. GitHub-hosted runner의 Xvfb renderer가 실패할 수 있어 workflow에서는 non-blocking artifact attempt로 실행하고, `validate_gameplay.sh`는 GitHub Actions 안에서 이 단계만 skip caveat를 출력한다. 로컬 또는 지원되는 Xvfb 환경에서는 `zsh scripts/validate_render_snapshots.sh`를 blocking으로 실행해야 한다.
 
 `zsh scripts/validate_android_export_config.sh`는 Android export preset이 `Zoo-Zoo Pop`, `com.shinehandmac.zoozoopop`, `build/android/zoo-zoo-pop-debug.apk`, SemVer `version/name`, 양수 `version/code`, signed package, vibrate permission, arm64 ABI를 유지하는지 검사한다. 이 preflight는 release keystore나 실제 APK 생성을 요구하지 않지만 starter placeholder가 export 설정으로 되돌아가는 것은 차단한다. alpha evidence path의 APK 이름은 `create_alpha_qa_packet.sh`와 `validate_alpha_qa_report.sh` 계약으로 별도 고정한다.
 
@@ -202,6 +202,7 @@ zsh scripts/validate_gameplay.sh
 - 자동 headless fixture가 row+column, row+row, column+column, row+bomb, column+bomb, bomb+bomb 6종 특수 조합을 중복 제거 없이 검증하고, Stage 31 실제 swap smoke가 6종 모두의 이동 수/점수/장애물/`is_busy` 복귀를 검증한다. `FxLayer` smoke는 특수 조합 전용 flash/ring/label, explosive echo ring, child count, cleanup도 확인한다.
 - Stage 31 실제 swap smoke는 6종 특수 조합의 `special_combo_trigger` analytics가 조합 타입, from/to 특수, 제거 수, 장애물 제거 수를 남기는지도 확인한다.
 - Stage 31 실제 swap smoke는 6종 특수 조합이 일반 매치 사운드가 아니라 `special_combo` 전용 피드백과 강한 햅틱 요청을 남기는지도 확인한다.
+- Render snapshot smoke는 Stage 31 실제 `_resolve_swap` 발동 직후 6종 특수 조합 label/flash/ring이 portrait/landscape PNG에 보이고, 조합별 filename과 analytics payload가 일치하며, transient VFX가 cleanup되는지 확인한다.
 - `FxLayer` smoke는 매치 burst, 특수 생성, 특수 조합, 콤보 배너, 목표 완료, 덤불 제거, 이동 경고, 보너스 점수, 무지개 VFX를 동시에 호출한 뒤 child count 상한과 transient node cleanup을 확인한다.
 - Stage 31 실제 플레이에서 6종 특수 조합의 VFX 겹침, 낙하/리필 연결, 터치감을 수동 확인한다.
 - Stage 4/5/8/16/18/20/24/25/31/41/51/81 첫 등장 Rescue Buddy가 보드/게이지/장애물/점수/추천/구조 이동에 과한 지연 없이 반응한다.

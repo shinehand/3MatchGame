@@ -22,8 +22,9 @@
 
 ## Gate 0B. No-device Render Snapshot Smoke
 
-- `zsh scripts/validate_render_snapshots.sh`는 Home, Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay, Collection을 `390x844`와 `844x390` PNG로 저장한다.
+- `zsh scripts/validate_render_snapshots.sh`는 Home, Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay, Stage 31 특수 조합 6종, Collection을 `390x844`와 `844x390` PNG 22장으로 저장한다.
 - 각 snapshot은 파일 생성, 요청 viewport 크기, non-blank/varied pixel, 핵심 UI region의 실제 렌더 픽셀을 검증한다.
+- Stage 31 특수 조합 snapshot은 실제 `_resolve_swap` 발동 직후 조합별 label/flash/ring, explosive echo ring 필요 여부, filename combo type, `special_combo_trigger` analytics payload, transient VFX cleanup을 검증한다.
 - GitHub-hosted runner에서는 Xvfb renderer 실패가 전체 no-device gate를 막지 않도록 non-blocking artifact attempt로만 실행하며, 로컬 또는 지원되는 Xvfb 환경에서는 blocking으로 실행한다.
 - 이 gate는 blank/transparent/offscreen/missing texture 회귀를 차단하지만, 최종 Android 실기기 screenshot/video/logcat evidence를 대체하지 않는다.
 
@@ -78,6 +79,7 @@
 - 특수+특수 발동 시작점은 `FxLayer.play_special_combo` 전용 shaped flash/beam, ring, 조합별 label VFX로 일반 매치 burst와 구분된다.
 - 특수+특수 발동은 `Feedback.play_special_combo` 전용 SFX/haptic 경로를 사용해 일반 매치 피드백과 구분된다.
 - 특수+특수 발동은 조합 타입별 VFX 라벨과 `special_combo_trigger` analytics로 6종 타입/제거 수/장애물 수를 기록한다.
+- no-device render snapshot은 Stage 31 실제 `_resolve_swap` 발동 직후 6종 조합의 label/flash/ring이 portrait/landscape PNG에서 보이고 화면 안에 들어오는지 확인한다.
 - 덤불/장애물 제거는 전용 VFX와 SFX/haptic 경로를 가져 일반 매치 피드백과 구분된다.
 - rainbow+special은 특수+특수 큐보다 rainbow resolution 경로를 우선한다.
 - 실제 기기 최종 QA는 Stage 31에서 특수+특수 조합 6종 모두를 portrait/landscape 증거 영상 또는 연속 캡처로 남기고, 보드 판독성 반려 여부를 기록한다.
