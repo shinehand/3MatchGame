@@ -571,10 +571,17 @@ func _validate_scenario_regions(image: Image, node: Node, scenario: Dictionary, 
 	match setup_id:
 		"home":
 			var home_play_button := node.find_child("HomePlayButton", true, false) as Control
+			var home_path_root := node.find_child("LevelPathPreview", true, false) as Control
+			var current_path_node := node.find_child("PathNode1", true, false) as Control
+			var path_connector := node.find_child("HomePathConnector", true, false) as Control
 			_validate_control_pixels(image, node.find_child("GameHomeLayer", true, false), snapshot_id, "GameHomeLayer", errors)
 			_validate_control_pixels(image, node.find_child("HomeActionPanel", true, false), snapshot_id, "HomeActionPanel", errors)
 			_validate_control_pixels(image, home_play_button, snapshot_id, "HomePlayButton", errors)
 			_validate_control_image_minimum_size(image, home_play_button, snapshot_id, "HomePlayButton", Vector2(210, 48) if image.get_height() >= image.get_width() else Vector2(220, 48), errors)
+			_validate_control_pixels(image, home_path_root, snapshot_id, "LevelPathPreview", errors)
+			_validate_control_pixels(image, current_path_node, snapshot_id, "PathNode1", errors)
+			_validate_control_pixels(image, path_connector, snapshot_id, "HomePathConnector", errors)
+			_validate_control_image_minimum_size(image, current_path_node, snapshot_id, "PathNode1", Vector2(24, 24) if image.get_height() >= image.get_width() else Vector2(36, 36), errors)
 			_validate_control_pixels(image, node.find_child("BottomNav", true, false), snapshot_id, "BottomNav", errors)
 		"home_settings_overlay":
 			_validate_home_settings_overlay_snapshot_regions(image, node, snapshot_id, errors, true)

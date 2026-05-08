@@ -246,6 +246,24 @@ func _validate_main_viewport_layout(node: Node, viewport_size: Vector2i, errors:
 	_validate_control_in_viewport(node.find_child("HomeMapButton", true, false), viewport_size, MAIN_SCENE_PATH, "HomeMapButton", errors)
 	_validate_control_in_viewport(node.find_child("HomeCollectionButton", true, false), viewport_size, MAIN_SCENE_PATH, "HomeCollectionButton", errors)
 	_validate_control_in_viewport(node.find_child("HomeSettingsButton", true, false), viewport_size, MAIN_SCENE_PATH, "HomeSettingsButton", errors)
+	var path_root := node.find_child("LevelPathPreview", true, false) as Control
+	if path_root == null:
+		errors.append("%s missing LevelPathPreview at %s." % [MAIN_SCENE_PATH, viewport_size])
+	else:
+		var path_nodes := path_root.find_children("PathNode*", "PanelContainer", false, false)
+		if path_nodes.size() != 6:
+			errors.append("%s expected 6 home path preview nodes at %s, got %d." % [MAIN_SCENE_PATH, viewport_size, path_nodes.size()])
+		for path_node in path_nodes:
+			var control := path_node as Control
+			if control == null:
+				continue
+			_validate_control_in_viewport(control, viewport_size, MAIN_SCENE_PATH, String(control.name), errors)
+			var min_path_node_side := 72.0 if viewport_size.y >= viewport_size.x else 148.0
+			if control.get_global_rect().size.x < min_path_node_side or control.get_global_rect().size.y < min_path_node_side:
+				errors.append("%s %s should remain a commercial-size home path candy at %s, got %s." % [MAIN_SCENE_PATH, String(control.name), viewport_size, control.get_global_rect().size])
+			var path_label := control.find_child("PathNodeLabel", true, false) as Label
+			if path_label != null and path_label.autowrap_mode != TextServer.AUTOWRAP_OFF:
+				errors.append("%s %s label should not wrap GO/number text." % [MAIN_SCENE_PATH, String(control.name)])
 
 
 func _validate_main_viewport_text_stress(node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:

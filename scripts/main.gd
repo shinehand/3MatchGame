@@ -640,10 +640,14 @@ func _make_path_node(index: int) -> PanelContainer:
 	panel.add_theme_stylebox_override("panel", _home_style(bg_color, border_color, 36, 4))
 
 	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(center)
 	var label_text := "GO" if current else str(index + 1)
 	var label := _make_home_label(label_text, 24, Color(0.10, 0.23, 0.34, 1), HORIZONTAL_ALIGNMENT_CENTER)
 	label.name = "PathNodeLabel"
+	label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	center.add_child(label)
 	return panel
@@ -1536,14 +1540,93 @@ func _layout_path_nodes(positions: Array[Vector2]) -> void:
 		return
 	var viewport_size := get_viewport_rect().size
 	var portrait := viewport_size.y >= viewport_size.x
-	var node_side := 72.0 if portrait else clampf(viewport_size.y * 0.075, 112.0, 148.0)
+	var node_side := 76.0 if portrait else clampf(viewport_size.y * 0.094, 148.0, 188.0)
 	var node_font := 24 if portrait else int(clampf(viewport_size.y * 0.030, 44.0, 60.0))
-	for index in range(mini(home_path_root.get_child_count(), positions.size())):
-		var node := home_path_root.get_child(index) as Control
+	_clear_home_path_connectors()
+	for index in range(positions.size() - 1):
+		_add_home_path_connector(positions[index], positions[index + 1], portrait)
+	var path_nodes := home_path_root.find_children("PathNode*", "PanelContainer", false, false)
+	for index in range(mini(path_nodes.size(), positions.size())):
+		var node := path_nodes[index] as PanelContainer
 		var target_position: Vector2 = positions[index]
 		node.size = Vector2(node_side, node_side)
 		node.custom_minimum_size = node.size
 		node.position = target_position - node.size * 0.5
+		node.z_index = 3
+		_style_home_path_node(node, index, node_side)
 		var label := node.find_child("PathNodeLabel", true, false) as Label
 		if label != null:
+			label.custom_minimum_size = Vector2(node_side * 0.72, node_side * 0.42)
+			label.text = "GO" if index == 0 else str(index + 1)
 			label.add_theme_font_size_override("font_size", node_font)
+
+
+func _clear_home_path_connectors() -> void:
+	for child in home_path_root.get_children():
+		var child_name := String(child.name)
+		if child_name.begins_with("HomePathConnector") or child_name.begins_with("HomePathShadow") or child_name.begins_with("HomePathCandyDot"):
+			home_path_root.remove_child(child)
+			child.queue_free()
+
+
+func _add_home_path_connector(from_position: Vector2, to_position: Vector2, portrait: bool) -> void:
+	var delta := to_position - from_position
+	var length := delta.length()
+	if length <= 0.0:
+		return
+	var path_height := 10.0 if portrait else 18.0
+	var shadow_height := 18.0 if portrait else 28.0
+	var dot_size := 14.0 if portrait else 24.0
+	var shadow := PanelContainer.new()
+	shadow.name = "HomePathShadow"
+	shadow.size = Vector2(length, shadow_height)
+	shadow.pivot_offset = Vector2(0, shadow_height * 0.5)
+	shadow.position = from_position + (Vector2(2, 5) if portrait else Vector2(4, 8))
+	shadow.rotation = delta.angle()
+	shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shadow.z_index = 0
+	var shadow_style := _home_style(Color(0.08, 0.16, 0.28, 0.09), Color(0, 0, 0, 0), int(shadow_height * 0.5), 0)
+	shadow_style.shadow_size = 0
+	shadow.add_theme_stylebox_override("panel", shadow_style)
+	home_path_root.add_child(shadow)
+
+	var path := PanelContainer.new()
+	path.name = "HomePathConnector"
+	path.size = Vector2(length, path_height)
+	path.pivot_offset = Vector2(0, path_height * 0.5)
+	path.position = from_position
+	path.rotation = delta.angle()
+	path.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	path.z_index = 1
+	var path_style := _home_style(Color("ffd949"), Color("ff9c24"), int(path_height * 0.6), 3 if portrait else 4)
+	path_style.shadow_color = Color(0.08, 0.16, 0.24, 0.10)
+	path_style.shadow_size = 4
+	path.add_theme_stylebox_override("panel", path_style)
+	home_path_root.add_child(path)
+
+	var dot_count := clampi(int(length / (46.0 if portrait else 72.0)), 1, 4)
+	for dot_index in range(dot_count):
+		var t := float(dot_index + 1) / float(dot_count + 1)
+		var dot := PanelContainer.new()
+		dot.name = "HomePathCandyDot%d" % dot_index
+		dot.size = Vector2(dot_size, dot_size)
+		dot.position = from_position.lerp(to_position, t) - dot.size * 0.5
+		dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		dot.z_index = 2
+		var dot_color: Color = [Color("ff6fae"), Color("57d4ff"), Color("7cf47b"), Color("ffd84f")][dot_index % 4]
+		var dot_style := _home_style(dot_color, Color(1, 1, 1, 0.82), int(dot_size * 0.55), 2)
+		dot_style.shadow_color = Color(0.08, 0.16, 0.24, 0.10)
+		dot_style.shadow_size = 4
+		dot.add_theme_stylebox_override("panel", dot_style)
+		home_path_root.add_child(dot)
+
+
+func _style_home_path_node(node: PanelContainer, index: int, node_side: float) -> void:
+	var current := index == 0
+	var cleared := index < 3
+	var bg_color := Color(1.0, 0.86, 0.24, 0.96) if current else Color(1, 1, 1, 0.84)
+	var border_color := Color(1.0, 0.45, 0.10, 1.0) if current else Color(0.42, 0.78, 1.0, 0.96)
+	if cleared and not current:
+		bg_color = Color(0.42, 0.94, 0.62, 0.90)
+		border_color = Color(0.21, 0.72, 0.42, 0.96)
+	node.add_theme_stylebox_override("panel", _home_style(bg_color, border_color, int(node_side * 0.50), 5 if current else 4))

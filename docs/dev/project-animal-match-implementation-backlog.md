@@ -954,9 +954,25 @@
   - `WorldStageNode*`, current ring, PLAY/finale/lock/star decorations가 실제 PNG에서 판독 가능한 크기를 유지한다.
   - `validate_gameplay.sh`와 render snapshot smoke 40개가 통과한다.
 
+### PAM-UX-134: Home Level Path Candy Connector Polish
+
+- 상태: 완료됨. Home landscape의 레벨 경로 preview가 작은 고립 노드 묶음처럼 보이고 current `GO` 라벨이 좁게 눌려 보이던 문제를 줄였다. `LevelPathPreview`에 캔디풍 연결선과 candy dot을 추가하고, `PathNode*`를 portrait/landscape별 상용 크기로 재배치했으며, label wrapping을 꺼 `GO`/숫자 라벨이 세로로 깨지지 않게 했다. Render snapshot은 Home에서 `LevelPathPreview`, `PathNode1`, `HomePathConnector` 픽셀과 current node PNG 최소 크기를 검증하고, scene smoke는 6개 home path candy가 viewport 안에서 상용 크기와 nowrap label을 유지하는지 확인한다.
+- 소유: Art Agent + Development Agent + QA Agent
+- 대상 파일:
+  - `scripts/main.gd`
+  - `scripts/validate_scene_loads.gd`
+  - `scripts/validate_render_snapshots.gd`
+  - `docs/dev/validation-process.md`
+  - `docs/qa/project-animal-match-development-gates.md`
+  - `docs/dev/project-animal-match-implementation-backlog.md`
+- 완료 기준:
+  - `390x844`, `844x390` Home snapshot에서 `PathNode*`가 연결선과 candy dot으로 이어진 레벨 진행 경로처럼 보인다.
+  - `PathNode1` current `GO` 라벨이 한 줄로 판독되고, node가 작은 debug marker처럼 보이지 않는다.
+  - `validate_gameplay.sh`와 render snapshot smoke 40개가 통과한다.
+
 ## 추천 구현 순서
 
-완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-058`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`, `PAM-UX-114`, `PAM-UX-115`, `PAM-UX-116`, `PAM-LIVEOPS-118`, `PAM-UX-119`, `PAM-UX-120`, `PAM-UX-121`, `PAM-UX-122`, `PAM-UX-123`, `PAM-UX-124`, `PAM-UX-125`, `PAM-UX-126`, `PAM-UX-127`, `PAM-UX-128`, `PAM-UX-129`, `PAM-UX-130`, `PAM-UX-131`, `PAM-UX-132`, `PAM-UX-133`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
+완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-058`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`, `PAM-UX-114`, `PAM-UX-115`, `PAM-UX-116`, `PAM-LIVEOPS-118`, `PAM-UX-119`, `PAM-UX-120`, `PAM-UX-121`, `PAM-UX-122`, `PAM-UX-123`, `PAM-UX-124`, `PAM-UX-125`, `PAM-UX-126`, `PAM-UX-127`, `PAM-UX-128`, `PAM-UX-129`, `PAM-UX-130`, `PAM-UX-131`, `PAM-UX-132`, `PAM-UX-133`, `PAM-UX-134`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
 
 다음 고가치 순서:
 
