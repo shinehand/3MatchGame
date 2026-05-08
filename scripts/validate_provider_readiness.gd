@@ -3,6 +3,17 @@ extends SceneTree
 const MANIFEST_PATH := "res://data/provider_readiness.json"
 const AnalyticsGateway = preload("res://scripts/analytics_gateway.gd")
 const MonetizationGateway = preload("res://scripts/monetization_gateway.gd")
+const PRODUCTION_PROVIDER_TOKENS := [
+	"firebase",
+	"gameanalytics",
+	"admob",
+	"googlemobileads",
+	"googleplaybilling",
+	"unityads",
+	"applovin",
+	"ironsource",
+	"revenuecat",
+]
 
 
 func _init() -> void:
@@ -49,6 +60,7 @@ func _validate_provider_readiness() -> PackedStringArray:
 		errors
 	)
 	_validate_no_production_provider_names(manifest, errors)
+	_validate_production_provider_name_guard_self_test(errors)
 	_validate_analytics_manifest(Dictionary(manifest.get("analytics", {})), errors)
 	_validate_monetization_manifest(Dictionary(manifest.get("monetization", {})), errors)
 	return errors
@@ -242,7 +254,6 @@ func _require_existing_command_script(command: String, label: String, errors: Pa
 
 
 func _validate_no_production_provider_names(value, errors: PackedStringArray, path: String = "manifest") -> void:
-	var blocked_terms := ["firebase", "gameanalytics", "admob", "unity ads", "unityads", "applovin", "ironsource", "revenuecat"]
 	if value is Dictionary:
 		for key in Dictionary(value).keys():
 			_validate_no_production_provider_names(key, errors, "%s.%s" % [path, str(key)])
@@ -253,7 +264,51 @@ func _validate_no_production_provider_names(value, errors: PackedStringArray, pa
 			_validate_no_production_provider_names(item, errors, "%s[%d]" % [path, index])
 			index += 1
 	else:
-		var text := str(value).strip_edges().to_lower()
-		for blocked_term in blocked_terms:
-			if text == blocked_term or text.contains("%s_" % blocked_term) or text.contains("%s:" % blocked_term):
-				errors.append("%s must not select production provider '%s' before OPEN-007 is resolved" % [path, blocked_term])
+		var blocked_token := _production_provider_token_for_text(str(value))
+		if not blocked_token.is_empty():
+			errors.append("%s must not select production provider '%s' before OPEN-007 is resolved" % [path, blocked_token])
+
+
+func _validate_production_provider_name_guard_self_test(errors: PackedStringArray) -> void:
+	var negative_cases := {
+		"Firebase Analytics": "firebase",
+		"firebase_analytics": "firebase",
+		"Game Analytics provider": "gameanalytics",
+		"GameAnalytics": "gameanalytics",
+		"AdMob": "admob",
+		"Ad Mob provider": "admob",
+		"google_mobile_ads": "googlemobileads",
+		"Google Play Billing": "googleplaybilling",
+		"Unity Ads": "unityads",
+		"unity-ads-provider": "unityads",
+		"AppLovin MAX": "applovin",
+		"ironSource": "ironsource",
+		"Revenue Cat": "revenuecat",
+	}
+	for provider_name in negative_cases.keys():
+		var expected_token := String(negative_cases[provider_name])
+		var actual_token := _production_provider_token_for_text(String(provider_name))
+		if actual_token != expected_token:
+			errors.append("provider guard self-test should reject %s as %s, got %s" % [String(provider_name), expected_token, actual_token])
+
+	for provider_name in ["local_buffer", "local_simulator", "Local Buffer", "Local Simulator", "custom adapter", "provider_neutral", "provider_neutral_adapter", "no_sdk_selected", "none"]:
+		var actual_token := _production_provider_token_for_text(provider_name)
+		if not actual_token.is_empty():
+			errors.append("provider guard self-test should allow %s, got %s" % [provider_name, actual_token])
+
+
+func _production_provider_token_for_text(value: String) -> String:
+	var normalized := _normalize_provider_guard_text(value)
+	if normalized.is_empty():
+		return ""
+	for blocked_token in PRODUCTION_PROVIDER_TOKENS:
+		if normalized == blocked_token or normalized.contains(blocked_token):
+			return blocked_token
+	return ""
+
+
+func _normalize_provider_guard_text(value: String) -> String:
+	var normalized := value.strip_edges().to_lower()
+	for separator in [" ", "_", "-", ":", ".", "/", "\\", "\t", "\n", "\r", "(", ")", "[", "]"]:
+		normalized = normalized.replace(separator, "")
+	return normalized
