@@ -13,6 +13,7 @@ const SNAPSHOT_VIEWPORTS := [
 ]
 const SCENARIOS := [
 	{"id": "home", "scene": MAIN_SCENE_PATH, "setup": "home"},
+	{"id": "home_live_event_ended_detail", "scene": MAIN_SCENE_PATH, "setup": "home_event_detail_ended"},
 	{"id": "stage_select_world_map", "scene": STAGE_SELECT_SCENE_PATH, "setup": "stage_select_world_map"},
 	{"id": "stage_popup", "scene": STAGE_SELECT_SCENE_PATH, "setup": "stage_popup"},
 	{"id": "gameplay_stage4_buddy_initial", "scene": GAMEPLAY_SCENE_PATH, "setup": "gameplay_stage4", "buddy_state": "initial", "buddy_charges": 0},
@@ -232,6 +233,8 @@ func _settle_scene(node: Node, frame_count: int = 5) -> void:
 func _apply_scenario_setup(node: Node, scenario: Dictionary, errors: PackedStringArray) -> void:
 	var setup_id := str(scenario.get("setup", ""))
 	match setup_id:
+		"home_event_detail_ended":
+			await _prepare_home_ended_event_detail(node, errors)
 		"stage_popup":
 			if not node.has_method("_show_stage_popup"):
 				errors.append("%s should expose _show_stage_popup for render snapshot smoke." % STAGE_SELECT_SCENE_PATH)
@@ -248,6 +251,65 @@ func _apply_scenario_setup(node: Node, scenario: Dictionary, errors: PackedStrin
 			await _prepare_stage_31_special_combo(node, scenario, errors)
 		_:
 			await process_frame
+
+
+func _prepare_home_ended_event_detail(node: Node, errors: PackedStringArray) -> void:
+	if not node.has_method("_show_event_detail"):
+		errors.append("%s should expose _show_event_detail for home live event detail render snapshot." % MAIN_SCENE_PATH)
+		return
+	await _validate_home_event_detail_state_contracts(node, errors)
+	node.call("_show_event_detail", _home_event_detail_snapshot_fixture("ended"))
+	await process_frame
+
+
+func _home_event_detail_snapshot_fixture(status: String) -> Dictionary:
+	var title_by_status := {
+		"active": "진행 중 보급 이벤트",
+		"offline": "오프라인 보급 이벤트",
+		"upcoming": "예정된 보급 이벤트",
+		"ended": "종료된 보급 이벤트",
+	}
+	var event := {
+		"id": "__snapshot_%s_home_event" % status,
+		"type": "daily_reward",
+		"title": String(title_by_status.get(status, "보급 이벤트")),
+		"enabled": true,
+		"status": status,
+		"unlock_stage": 1,
+		"placements": ["home"],
+		"start_at": "2026-05-01",
+		"end_at": "2026-05-31" if status != "ended" else "2026-05-07",
+		"reward": {"gold": 120, "booster": "rainbow_paw", "booster_count": 1},
+	}
+	return event
+
+
+func _validate_home_event_detail_state_contracts(node: Node, errors: PackedStringArray) -> void:
+	var state_cases := [
+		{"status": "active", "status_label": "진행 중", "button_text": "보상 받기", "button_disabled": false},
+		{"status": "offline", "status_label": "오프라인", "button_text": "보상 받기", "button_disabled": false},
+		{"status": "upcoming", "status_label": "시작 전", "button_text": "시작 전", "button_disabled": true},
+		{"status": "ended", "status_label": "종료됨", "button_text": "종료됨", "button_disabled": true},
+	]
+	for state_case in state_cases:
+		var status := String(state_case.get("status", ""))
+		node.call("_show_event_detail", _home_event_detail_snapshot_fixture(status))
+		await process_frame
+		var overlay := node.find_child("EventDetailOverlay", true, false) as Control
+		var status_label: Label = null
+		var claim_button: Button = null
+		if overlay != null:
+			status_label = overlay.find_child("EventDetailStatusLabel", true, false) as Label
+			claim_button = overlay.find_child("EventClaimButton", true, false) as Button
+		if status_label == null or status_label.text != String(state_case.get("status_label", "")):
+			errors.append("Home event detail %s badge expected %s, got %s." % [status, String(state_case.get("status_label", "")), "" if status_label == null else status_label.text])
+		if claim_button == null:
+			errors.append("Home event detail %s should expose EventClaimButton." % status)
+			continue
+		if claim_button.text != String(state_case.get("button_text", "")):
+			errors.append("Home event detail %s button expected %s, got %s." % [status, String(state_case.get("button_text", "")), claim_button.text])
+		if claim_button.disabled != bool(state_case.get("button_disabled", true)):
+			errors.append("Home event detail %s button disabled expected %s, got %s." % [status, bool(state_case.get("button_disabled", true)), claim_button.disabled])
 
 
 func _start_gameplay_stage(node: Node, stage_index: int, errors: PackedStringArray) -> void:
@@ -488,6 +550,8 @@ func _validate_scenario_regions(image: Image, node: Node, scenario: Dictionary, 
 			_validate_control_pixels(image, home_play_button, snapshot_id, "HomePlayButton", errors)
 			_validate_control_image_minimum_size(image, home_play_button, snapshot_id, "HomePlayButton", Vector2(210, 48) if image.get_height() >= image.get_width() else Vector2(220, 48), errors)
 			_validate_control_pixels(image, node.find_child("BottomNav", true, false), snapshot_id, "BottomNav", errors)
+		"home_event_detail_ended":
+			_validate_home_event_detail_snapshot_regions(image, node, snapshot_id, errors)
 		"stage_select_world_map":
 			_validate_stage_select_world_map_snapshot_regions(image, node, snapshot_id, errors)
 		"stage_popup":
@@ -511,6 +575,65 @@ func _validate_scenario_regions(image: Image, node: Node, scenario: Dictionary, 
 			_validate_control_pixels(image, node.find_child("CollectionGrid", true, false) as Control, snapshot_id, "CollectionGrid", errors)
 			_validate_control_pixels(image, node.find_child("SummaryLabel", true, false) as Control, snapshot_id, "SummaryLabel", errors)
 			_validate_collection_snapshot_regions(image, node, snapshot_id, errors)
+
+
+func _validate_home_event_detail_snapshot_regions(image: Image, node: Node, snapshot_id: String, errors: PackedStringArray) -> void:
+	var overlay := node.find_child("EventDetailOverlay", true, false) as Control
+	var panel: Control = null
+	var status_badge: Control = null
+	var status_label: Label = null
+	var meta_label: Label = null
+	var progress_card: Control = null
+	var progress_label: Label = null
+	var reward_row: Control = null
+	var body_label: Label = null
+	var claim_button: Button = null
+	if overlay != null:
+		panel = overlay.find_child("OverlayPanel", true, false) as Control
+		status_badge = overlay.find_child("EventDetailStatusBadge", true, false) as Control
+		status_label = overlay.find_child("EventDetailStatusLabel", true, false) as Label
+		meta_label = overlay.find_child("EventDetailMetaLabel", true, false) as Label
+		progress_card = overlay.find_child("EventDetailProgressCard", true, false) as Control
+		progress_label = overlay.find_child("EventDetailProgressLabel", true, false) as Label
+		reward_row = overlay.find_child("EventRewardChipRow", true, false) as Control
+		body_label = overlay.find_child("EventDetailBodyLabel", true, false) as Label
+		claim_button = overlay.find_child("EventClaimButton", true, false) as Button
+	for control_info in [[overlay, "EventDetailOverlay"], [panel, "EventDetailPanel"], [status_badge, "EventDetailStatusBadge"], [status_label, "EventDetailStatusLabel"], [meta_label, "EventDetailMetaLabel"], [progress_card, "EventDetailProgressCard"], [progress_label, "EventDetailProgressLabel"], [reward_row, "EventRewardChipRow"], [body_label, "EventDetailBodyLabel"], [claim_button, "EventClaimButton"]]:
+		var control := control_info[0] as Control
+		var label := String(control_info[1])
+		_validate_control_pixels(image, control, snapshot_id, label, errors)
+		_validate_control_within_image_bounds(control, snapshot_id, label, errors)
+	if overlay == null or not overlay.visible:
+		errors.append("%s should render EventDetailOverlay visible." % snapshot_id)
+	if status_label == null or status_label.text != "종료됨":
+		errors.append("%s ended event detail status badge should read 종료됨, got %s." % [snapshot_id, "" if status_label == null else status_label.text])
+	if meta_label == null or not meta_label.text.contains("오늘 보급") or not meta_label.text.contains("2026-05-01") or not meta_label.text.contains("2026-05-07"):
+		errors.append("%s ended event detail meta should include event type and window, got %s." % [snapshot_id, "" if meta_label == null else meta_label.text])
+	if progress_label == null or not progress_label.text.contains("이벤트 종료"):
+		errors.append("%s ended event detail progress should show 이벤트 종료, got %s." % [snapshot_id, "" if progress_label == null else progress_label.text])
+	var reward_texts := _label_texts_under(reward_row)
+	for expected_reward in ["골드 120", "rainbow_paw x1"]:
+		if not reward_texts.has(expected_reward):
+			errors.append("%s ended event detail reward chips should include %s, got %s." % [snapshot_id, expected_reward, ", ".join(reward_texts)])
+	if body_label == null or not body_label.text.contains("종료됨"):
+		errors.append("%s ended event detail body should include 종료됨, got %s." % [snapshot_id, "" if body_label == null else body_label.text])
+	if claim_button == null:
+		return
+	if not claim_button.disabled:
+		errors.append("%s ended event detail claim button should be disabled." % snapshot_id)
+	if claim_button.text != "종료됨":
+		errors.append("%s ended event detail claim button should read 종료됨, got %s." % [snapshot_id, claim_button.text])
+
+
+func _label_texts_under(root: Node) -> Array[String]:
+	var texts: Array[String] = []
+	if root == null:
+		return texts
+	for candidate in root.find_children("*", "Label", true, false):
+		var label := candidate as Label
+		if label != null:
+			texts.append(label.text)
+	return texts
 
 
 func _validate_stage_select_world_map_snapshot_regions(image: Image, node: Node, snapshot_id: String, errors: PackedStringArray) -> void:

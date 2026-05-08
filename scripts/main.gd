@@ -85,6 +85,11 @@ var home_path_root: Control
 var event_detail_overlay: ColorRect
 var event_detail_panel: PanelContainer
 var event_detail_title_label: Label
+var event_detail_status_badge: PanelContainer
+var event_detail_status_label: Label
+var event_detail_meta_label: Label
+var event_detail_progress_label: Label
+var event_detail_reward_row: HBoxContainer
 var event_detail_body_label: Label
 var event_claim_button: Button
 var _home_event_impressions_sent := {}
@@ -472,18 +477,59 @@ func _build_event_detail_overlay() -> void:
 	event_detail_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_row.add_child(event_detail_title_label)
 
+	event_detail_status_badge = PanelContainer.new()
+	event_detail_status_badge.name = "EventDetailStatusBadge"
+	event_detail_status_badge.custom_minimum_size = Vector2(132, 56)
+	top_row.add_child(event_detail_status_badge)
+
+	event_detail_status_label = _make_home_label("진행 중", 19, Color(0.12, 0.23, 0.34, 1), HORIZONTAL_ALIGNMENT_CENTER)
+	event_detail_status_label.name = "EventDetailStatusLabel"
+	event_detail_status_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	event_detail_status_badge.add_child(event_detail_status_label)
+
 	var close_button := _make_home_icon_button("닫기")
 	close_button.name = "EventDetailCloseButton"
 	close_button.custom_minimum_size = Vector2(122, 64)
 	close_button.pressed.connect(_on_event_detail_close_button_pressed)
 	top_row.add_child(close_button)
 
-	event_detail_body_label = _make_home_label("", 24, Color(0.22, 0.26, 0.30, 1), HORIZONTAL_ALIGNMENT_LEFT)
+	event_detail_meta_label = _make_home_label("", 22, Color(0.20, 0.31, 0.42, 1), HORIZONTAL_ALIGNMENT_CENTER)
+	event_detail_meta_label.name = "EventDetailMetaLabel"
+	event_detail_meta_label.custom_minimum_size = Vector2(0, 44)
+	event_detail_meta_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	column.add_child(event_detail_meta_label)
+
+	var progress_card := PanelContainer.new()
+	progress_card.name = "EventDetailProgressCard"
+	progress_card.custom_minimum_size = Vector2(0, 104)
+	progress_card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	progress_card.add_theme_stylebox_override("panel", _home_style(Color(1.0, 1.0, 1.0, 0.84), Color(0.45, 0.78, 1.0, 0.92), 24, 3))
+	column.add_child(progress_card)
+
+	var progress_margin := MarginContainer.new()
+	progress_margin.add_theme_constant_override("margin_left", 18)
+	progress_margin.add_theme_constant_override("margin_top", 12)
+	progress_margin.add_theme_constant_override("margin_right", 18)
+	progress_margin.add_theme_constant_override("margin_bottom", 12)
+	progress_card.add_child(progress_margin)
+
+	event_detail_progress_label = _make_home_label("", 22, Color(0.18, 0.32, 0.43, 1), HORIZONTAL_ALIGNMENT_CENTER)
+	event_detail_progress_label.name = "EventDetailProgressLabel"
+	event_detail_progress_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	progress_margin.add_child(event_detail_progress_label)
+
+	event_detail_reward_row = HBoxContainer.new()
+	event_detail_reward_row.name = "EventRewardChipRow"
+	event_detail_reward_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	event_detail_reward_row.add_theme_constant_override("separation", 10)
+	event_detail_reward_row.custom_minimum_size = Vector2(0, 66)
+	column.add_child(event_detail_reward_row)
+
+	event_detail_body_label = _make_home_label("", 22, Color(0.22, 0.26, 0.30, 1), HORIZONTAL_ALIGNMENT_CENTER)
 	event_detail_body_label.name = "EventDetailBodyLabel"
-	event_detail_body_label.custom_minimum_size = Vector2(0, 340)
+	event_detail_body_label.custom_minimum_size = Vector2(0, 150)
 	event_detail_body_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	event_detail_body_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	event_detail_body_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	event_detail_body_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	column.add_child(event_detail_body_label)
 
 	event_claim_button = Button.new()
@@ -618,6 +664,7 @@ func _show_event_detail(event: Dictionary) -> void:
 	stage_overlay.visible = false
 	settings_overlay.visible = false
 	event_detail_title_label.text = String(_selected_event.get("title", "라이브 이벤트"))
+	_refresh_event_detail_summary_widgets(_selected_event)
 	event_detail_body_label.text = _build_event_detail_body(_selected_event)
 	_refresh_event_claim_button()
 	event_detail_overlay.visible = true
@@ -675,15 +722,47 @@ func _refresh_event_claim_button() -> void:
 	event_claim_button.disabled = claimed
 
 
+func _refresh_event_detail_summary_widgets(event: Dictionary) -> void:
+	var status := _event_status(event)
+	if event_detail_status_label != null:
+		event_detail_status_label.text = _event_status_label(status)
+	if event_detail_status_badge != null:
+		event_detail_status_badge.add_theme_stylebox_override("panel", _home_style(_event_status_badge_color(status), _event_status_border_color(status), 22, 3))
+	if event_detail_meta_label != null:
+		event_detail_meta_label.text = "%s · %s" % [_event_type_label(String(event.get("type", ""))), _event_window_text(event)]
+	if event_detail_progress_label != null:
+		event_detail_progress_label.text = "진행\n%s" % _event_progress_text(event)
+		event_detail_progress_label.add_theme_constant_override("line_spacing", 3)
+	_refresh_event_reward_chips(event)
+
+
+func _refresh_event_reward_chips(event: Dictionary) -> void:
+	if event_detail_reward_row == null:
+		return
+	for child in event_detail_reward_row.get_children():
+		event_detail_reward_row.remove_child(child)
+		child.queue_free()
+	for chip_text in _event_reward_chip_texts(event):
+		event_detail_reward_row.add_child(_make_event_reward_chip(chip_text))
+
+
+func _make_event_reward_chip(text: String) -> PanelContainer:
+	var chip := PanelContainer.new()
+	chip.name = "EventRewardChip"
+	chip.custom_minimum_size = Vector2(150, 52)
+	chip.add_theme_stylebox_override("panel", _home_style(Color(1.0, 0.95, 0.64, 0.94), Color(1.0, 0.58, 0.18, 0.94), 20, 3))
+	var label := _make_home_label(text, 18, Color(0.26, 0.19, 0.08, 1), HORIZONTAL_ALIGNMENT_CENTER)
+	label.name = "EventRewardChipLabel"
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	chip.add_child(label)
+	return chip
+
+
 func _build_event_detail_body(event: Dictionary) -> String:
 	var lines: Array[String] = []
-	lines.append("종류  %s" % _event_type_label(String(event.get("type", ""))))
-	lines.append("상태  %s" % _event_status_label(_event_status(event)))
-	lines.append("기간  %s" % _event_window_text(event))
-	lines.append("진행  %s" % _event_progress_text(event))
-	lines.append("보상  %s" % _event_reward_summary(event))
-	lines.append("")
-	lines.append(_event_status_body_line(_event_status(event)))
+	var status := _event_status(event)
+	lines.append("상태  %s" % _event_status_label(status))
+	lines.append(_event_status_body_line(status))
 	return "\n".join(lines)
 
 
@@ -746,11 +825,64 @@ func _event_reward_summary(event: Dictionary) -> String:
 	return "이벤트 보상 준비 중"
 
 
+func _event_reward_chip_texts(event: Dictionary) -> Array[String]:
+	if event.has("reward"):
+		return _reward_dictionary_chip_texts(Dictionary(event.get("reward", {})))
+	if event.has("missions"):
+		var chips: Array[String] = []
+		for mission_value in Array(event.get("missions", [])):
+			if not (mission_value is Dictionary):
+				continue
+			var mission := Dictionary(mission_value)
+			if mission.has("reward_gold"):
+				chips.append("골드 %d" % int(mission.get("reward_gold", 0)))
+			if mission.has("reward_booster"):
+				chips.append("%s x%d" % [String(mission.get("reward_booster", "부스터")), int(mission.get("reward_booster_count", 1))])
+		if not chips.is_empty():
+			return chips.slice(0, mini(chips.size(), 3))
+	if event.has("free_track_rewards"):
+		return [
+			"무료 %d개" % Array(event.get("free_track_rewards", [])).size(),
+			"프리미엄 %d개" % Array(event.get("premium_track_rewards", [])).size(),
+		]
+	return ["보상 준비"]
+
+
 func _event_status(event: Dictionary) -> String:
 	var status := String(event.get("status", "")).strip_edges()
 	if status.is_empty():
 		status = LiveEventService.event_status(event)
 	return status
+
+
+func _event_status_badge_color(status: String) -> Color:
+	match status:
+		"active":
+			return Color(0.78, 1.0, 0.70, 0.94)
+		"offline":
+			return Color(0.80, 0.92, 1.0, 0.94)
+		"upcoming":
+			return Color(1.0, 0.92, 0.66, 0.94)
+		"ended":
+			return Color(0.90, 0.92, 0.94, 0.94)
+		"disabled":
+			return Color(0.86, 0.86, 0.88, 0.94)
+	return Color(1.0, 1.0, 1.0, 0.94)
+
+
+func _event_status_border_color(status: String) -> Color:
+	match status:
+		"active":
+			return Color(0.28, 0.78, 0.36, 0.96)
+		"offline":
+			return Color(0.32, 0.66, 1.0, 0.96)
+		"upcoming":
+			return Color(0.98, 0.62, 0.16, 0.96)
+		"ended":
+			return Color(0.60, 0.66, 0.72, 0.96)
+		"disabled":
+			return Color(0.52, 0.56, 0.60, 0.96)
+	return Color(0.70, 0.76, 0.80, 0.96)
 
 
 func _event_status_label(status: String) -> String:
@@ -827,6 +959,23 @@ func _reward_dictionary_summary(reward: Dictionary) -> String:
 	if parts.is_empty():
 		return "이벤트 보상"
 	return " · ".join(parts)
+
+
+func _reward_dictionary_chip_texts(reward: Dictionary) -> Array[String]:
+	var chips: Array[String] = []
+	if reward.has("gold"):
+		chips.append("골드 %d" % int(reward.get("gold", 0)))
+	if reward.has("tokens"):
+		chips.append("토큰 %d" % int(reward.get("tokens", 0)))
+	if reward.has("booster"):
+		chips.append("%s x%d" % [String(reward.get("booster", "부스터")), int(reward.get("booster_count", 1))])
+	if reward.has("boosters"):
+		var boosters: Dictionary = Dictionary(reward.get("boosters", {}))
+		for booster_id in boosters.keys():
+			chips.append("%s x%d" % [String(booster_id), int(boosters[booster_id])])
+	if chips.is_empty():
+		chips.append("이벤트 보상")
+	return chips.slice(0, mini(chips.size(), 3))
 
 
 func _game_session_has_method(method_name: String) -> bool:
@@ -1145,7 +1294,7 @@ func _apply_responsive_layout() -> void:
 	if event_detail_panel:
 		event_detail_panel.custom_minimum_size = Vector2(700, 760) if portrait else Vector2(820, 620)
 	if event_detail_body_label:
-		event_detail_body_label.custom_minimum_size = Vector2(0, 400) if portrait else Vector2(0, 320)
+		event_detail_body_label.custom_minimum_size = Vector2(0, 150) if portrait else Vector2(0, 118)
 
 
 func _layout_game_home(portrait: bool) -> void:
