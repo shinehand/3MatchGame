@@ -214,6 +214,8 @@ func _reset_validation_state() -> void:
 func _prepare_collection_state() -> void:
 	for stage_id in range(1, 6):
 		GameSession.record_stage_result(stage_id, 12000, 3)
+	GameSession.add_rescue_book_tokens("rabbit", 40, "render_snapshot", 4)
+	GameSession.equip_rescue_book_cosmetic("rabbit", "rabbit_sprout_frame", "render_snapshot")
 	GameSession.add_rescue_book_tokens("frog", 3)
 	GameSession.add_rescue_book_tokens("koala", 2)
 	GameSession.add_rescue_book_tokens("hamster", 2)
@@ -459,6 +461,7 @@ func _write_snapshot_manifest(target_dir: String, snapshot_paths: PackedStringAr
 		return
 	file.store_line("Render snapshot output dir: %s" % target_dir)
 	file.store_line("Render snapshot count: %d" % snapshot_paths.size())
+	file.store_line("Collection cosmetic fixture: animal_id=rabbit tokens=40 equipped_cosmetic=rabbit_sprout_frame")
 	for snapshot_path in snapshot_paths:
 		file.store_line(snapshot_path)
 
@@ -499,6 +502,38 @@ func _validate_scenario_regions(image: Image, node: Node, scenario: Dictionary, 
 		"collection":
 			_validate_control_pixels(image, node.find_child("CollectionGrid", true, false) as Control, snapshot_id, "CollectionGrid", errors)
 			_validate_control_pixels(image, node.find_child("SummaryLabel", true, false) as Control, snapshot_id, "SummaryLabel", errors)
+			_validate_collection_snapshot_regions(image, node, snapshot_id, errors)
+
+
+func _validate_collection_snapshot_regions(image: Image, node: Node, snapshot_id: String, errors: PackedStringArray) -> void:
+	var detail_label := node.find_child("DetailLabel", true, false) as Label
+	var cosmetic_grid := node.find_child("CosmeticEquipGrid", true, false) as Control
+	var earned_button := node.find_child("CosmeticButton_rabbit_smile_plus", true, false) as Button
+	var equipped_button := node.find_child("CosmeticButton_rabbit_sprout_frame", true, false) as Button
+	var unearned_button := node.find_child("CosmeticButton_rabbit_rescuer_badge", true, false) as Button
+	_validate_control_pixels(image, detail_label, snapshot_id, "CollectionDetailLabel", errors)
+	_validate_control_pixels(image, cosmetic_grid, snapshot_id, "CosmeticEquipGrid", errors)
+	_validate_control_pixels(image, earned_button, snapshot_id, "CosmeticButtonRabbitSmilePlus", errors)
+	_validate_control_pixels(image, equipped_button, snapshot_id, "CosmeticButtonRabbitSproutFrame", errors)
+	_validate_control_pixels(image, unearned_button, snapshot_id, "CosmeticButtonRabbitRescuerBadge", errors)
+	_validate_control_within_image_bounds(cosmetic_grid, snapshot_id, "CosmeticEquipGrid", errors)
+	_validate_control_within_image_bounds(earned_button, snapshot_id, "CosmeticButtonRabbitSmilePlus", errors)
+	_validate_control_within_image_bounds(equipped_button, snapshot_id, "CosmeticButtonRabbitSproutFrame", errors)
+	_validate_control_within_image_bounds(unearned_button, snapshot_id, "CosmeticButtonRabbitRescuerBadge", errors)
+	if detail_label == null or not detail_label.text.contains("토끼") or not detail_label.text.contains("Lv.3") or not detail_label.text.contains("토큰 40") or not detail_label.text.contains("우정 보상"):
+		errors.append("%s collection snapshot detail should show selected rabbit Lv.3 token reward track." % snapshot_id)
+	if earned_button == null or earned_button.disabled or not earned_button.text.contains("장착"):
+		errors.append("%s collection snapshot should show an enabled 장착 button for earned unequipped rabbit cosmetic." % snapshot_id)
+	if equipped_button == null or not equipped_button.disabled or not equipped_button.text.contains("장착중"):
+		errors.append("%s collection snapshot should show disabled 장착중 state for rabbit_sprout_frame." % snapshot_id)
+	elif equipped_button.tooltip_text != "rabbit_sprout_frame":
+		errors.append("%s collection snapshot equipped button should preserve rabbit_sprout_frame tooltip metadata." % snapshot_id)
+	if unearned_button == null or not unearned_button.disabled or not unearned_button.text.contains("대기"):
+		errors.append("%s collection snapshot should show a disabled 대기 button for unearned rabbit cosmetic." % snapshot_id)
+	var state_animals := Dictionary(GameSession.get_rescue_book_state().get("animals", {}))
+	var rabbit_entry := Dictionary(state_animals.get("rabbit", {}))
+	if int(rabbit_entry.get("tokens", 0)) != 40 or String(rabbit_entry.get("equipped_cosmetic", "")) != "rabbit_sprout_frame":
+		errors.append("%s collection snapshot fixture should preserve rabbit tokens=40 and equipped rabbit_sprout_frame." % snapshot_id)
 
 
 func _validate_stage_4_buddy_snapshot_regions(image: Image, node: Node, scenario: Dictionary, snapshot_id: String, errors: PackedStringArray) -> void:
