@@ -29,7 +29,7 @@ jobs:
       - name: Install shell dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ca-certificates curl libgl1 libgl1-mesa-dri libglx-mesa0 libglu1-mesa libxcursor1 libxi6 libxinerama1 libxrandr2 libxrender1 mesa-vulkan-drivers ripgrep unzip xvfb zsh
+          sudo apt-get install -y --no-install-recommends ca-certificates curl libgl1 libgl1-mesa-dri libglx-mesa0 libglu1-mesa libxcursor1 libxi6 libxinerama1 libxrandr2 libxrender1 mesa-vulkan-drivers ripgrep unzip xauth xvfb zsh
 
       - name: Install Godot
         run: |
