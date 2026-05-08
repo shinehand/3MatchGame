@@ -19,6 +19,10 @@ fi
 if ! "${godot_command[@]}" >"$validation_stdout" 2>&1; then
   echo "Render snapshot validation failed."
   cat "$validation_stdout"
+  if [ -n "${GITHUB_ACTIONS:-}" ]; then
+    diagnostic_summary="$(tail -80 "$validation_stdout" "$validation_log" 2>/dev/null | tr '\n' ' ' | cut -c1-3500)"
+    echo "::error title=Render snapshot validation failed::$diagnostic_summary"
+  fi
   exit 1
 fi
 touch "$validation_log" "$validation_stdout"
