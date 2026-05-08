@@ -3961,16 +3961,56 @@ func _build_failure_overlay_body(fail_offer: Dictionary = {}) -> String:
 	if fail_offer.is_empty():
 		fail_offer = _build_failure_offer()
 	var lines: Array[String] = [
-		"실패 유형  %s" % String(fail_offer.get("type", "general_shortfall")),
+		"%s" % _format_failure_type_for_overlay(fail_offer),
 		"남은 목표  %s" % _build_goal_remaining_summary(),
 		"놓친 핵심  %s" % _build_failure_focus_summary(),
 		"다음 한 수  %s" % _build_failure_retry_hint(fail_offer),
-		"추천  %s" % FailOfferPolicy.format_offer_line(fail_offer),
+		"추천  %s" % _format_failure_offer_for_overlay(fail_offer),
 	]
 	var live_event_line := _result_overlay_live_event_line()
 	if not live_event_line.is_empty() and lines.size() < 6:
 		lines.append(live_event_line)
 	return "\n".join(lines)
+
+
+func _format_failure_type_for_overlay(fail_offer: Dictionary) -> String:
+	match String(fail_offer.get("type", FailOfferPolicy.TYPE_GENERAL)):
+		FailOfferPolicy.TYPE_NEAR_MISS:
+			return "거의 다 왔어요"
+		FailOfferPolicy.TYPE_STRATEGIC:
+			return "목표부터 다시 공략"
+		FailOfferPolicy.TYPE_FIRST_FAIL:
+			return "무료 재도전 가능"
+		FailOfferPolicy.TYPE_REPEAT_FAIL:
+			return "다른 순서로 재도전"
+		FailOfferPolicy.TYPE_HARD_FAIL:
+			return "어려운 판이에요"
+	return "다시 도전해요"
+
+
+func _format_failure_offer_for_overlay(fail_offer: Dictionary) -> String:
+	var parts: Array[String] = []
+	if bool(fail_offer.get("show_rewarded_ad", false)):
+		parts.append("+3 이동 계속")
+	elif String(fail_offer.get("primary_cta", "재도전")).contains("무료"):
+		parts.append("무료 재도전")
+	var booster_label := _booster_name_for_overlay(String(fail_offer.get("booster_suggestion", "")))
+	if not booster_label.is_empty():
+		parts.append("%s 추천" % booster_label)
+	if parts.is_empty():
+		parts.append(String(fail_offer.get("primary_cta", "재도전")))
+	return " · ".join(parts)
+
+
+func _booster_name_for_overlay(booster_id: String) -> String:
+	match booster_id:
+		"rainbow_paw":
+			return "무지개 발바닥"
+		"striped":
+			return "줄무늬"
+		"bomb":
+			return "폭탄"
+	return booster_id
 
 
 func _build_failure_focus_summary() -> String:
@@ -3999,7 +4039,7 @@ func _build_failure_focus_summary() -> String:
 func _build_failure_retry_hint(fail_offer: Dictionary) -> String:
 	var blocker_remaining := maxi(0, _target_blockers() - cleared_blockers)
 	if blocker_remaining > 0:
-		return "덤불 옆에서 폭탄이나 줄무늬 특수 블록."
+		return "덤불 옆 특수 블록."
 
 	var collect_targets: Dictionary = _stage_collect_targets()
 	for animal_id in collect_targets.keys():

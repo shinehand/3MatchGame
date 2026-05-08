@@ -3033,9 +3033,14 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s near-miss failure primary CTA should offer +3 move continue." % GAMEPLAY_SCENE_PATH)
 	if overlay_secondary == null or not overlay_secondary.visible or overlay_secondary.text != "재도전":
 		errors.append("%s near-miss failure secondary CTA should offer retry." % GAMEPLAY_SCENE_PATH)
-	if overlay_body == null or not overlay_body.text.contains("near_miss") or not overlay_body.text.contains("보상형 +3 이동") or not overlay_body.text.contains("추천 부스터 rainbow_paw"):
-		errors.append("%s near-miss failure body should show fail type, rewarded move offer, and booster recommendation." % GAMEPLAY_SCENE_PATH)
-	if overlay_body == null or not overlay_body.text.contains("놓친 핵심  덤불 1개 정리") or not overlay_body.text.contains("다음 한 수  덤불 옆에서 폭탄이나 줄무늬 특수 블록"):
+	var near_miss_offer := Dictionary(node.get("active_fail_offer"))
+	if String(near_miss_offer.get("type", "")) != "near_miss" or not bool(near_miss_offer.get("show_rewarded_ad", false)) or String(near_miss_offer.get("booster_suggestion", "")) != "rainbow_paw":
+		errors.append("%s near-miss failure offer contract should keep fail type, rewarded move offer, and booster recommendation metadata." % GAMEPLAY_SCENE_PATH)
+	if overlay_body == null or not overlay_body.text.contains("거의 다 왔어요") or not overlay_body.text.contains("+3 이동 계속") or not overlay_body.text.contains("무지개 발바닥"):
+		errors.append("%s near-miss failure body should show commercial retry copy and localized booster recommendation." % GAMEPLAY_SCENE_PATH)
+	if overlay_body != null and (overlay_body.text.contains("near_miss") or overlay_body.text.contains("rewarded_continue") or overlay_body.text.contains("rainbow_paw") or overlay_body.text.contains("보상형 +3 이동")):
+		errors.append("%s near-miss failure body should not expose raw offer ids or provider-style rewarded copy." % GAMEPLAY_SCENE_PATH)
+	if overlay_body == null or not overlay_body.text.contains("놓친 핵심  덤불 1개 정리") or not overlay_body.text.contains("다음 한 수  덤불 옆 특수 블록"):
 		errors.append("%s near-miss failure body should isolate missed goal and one actionable retry hint." % GAMEPLAY_SCENE_PATH)
 	if overlay_body != null and _visible_label_line_count(overlay_body) > 6:
 		errors.append("%s near-miss failure body should stay commercially scannable with 6 or fewer visible lines." % GAMEPLAY_SCENE_PATH)
@@ -3680,8 +3685,13 @@ func _validate_failure_overlay_focus_hint_variants(node: Node, errors: PackedStr
 		errors.append("%s collection failure hint smoke should expose 재도전 primary CTA." % GAMEPLAY_SCENE_PATH)
 	if overlay_secondary == null or not overlay_secondary.visible or overlay_secondary.text != "홈으로":
 		errors.append("%s collection failure hint smoke should expose 홈으로 secondary CTA." % GAMEPLAY_SCENE_PATH)
-	if overlay_body == null or not overlay_body.text.contains("실패 유형  strategic_miss") or not overlay_body.text.contains("남은 목표  곰 3개") or not overlay_body.text.contains("놓친 핵심  곰 3개 더 구조") or not overlay_body.text.contains("다음 한 수  곰 주변 매치부터 만들고 무지개 발바닥은 마지막 목표에 쓰세요."):
+	var collection_fail_offer := Dictionary(node.get("active_fail_offer"))
+	if String(collection_fail_offer.get("type", "")) != "strategic_miss":
+		errors.append("%s collection failure offer metadata should keep strategic_miss classification." % GAMEPLAY_SCENE_PATH)
+	if overlay_body == null or not overlay_body.text.contains("목표부터 다시 공략") or not overlay_body.text.contains("남은 목표  곰 3개") or not overlay_body.text.contains("놓친 핵심  곰 3개 더 구조") or not overlay_body.text.contains("다음 한 수  곰 주변 매치부터 만들고 무지개 발바닥은 마지막 목표에 쓰세요."):
 		errors.append("%s collection failure overlay should show the missed collection focus and retry hint." % GAMEPLAY_SCENE_PATH)
+	if overlay_body != null and overlay_body.text.contains("strategic_miss"):
+		errors.append("%s collection failure overlay should not expose raw fail type ids." % GAMEPLAY_SCENE_PATH)
 
 	node.call("_start_stage", 11)
 	GameSession.set_stage_fail_count_for_testing(12, 0)
@@ -3703,8 +3713,13 @@ func _validate_failure_overlay_focus_hint_variants(node: Node, errors: PackedStr
 		errors.append("%s score failure hint smoke should expose 재도전 primary CTA." % GAMEPLAY_SCENE_PATH)
 	if overlay_secondary == null or not overlay_secondary.visible or overlay_secondary.text != "홈으로":
 		errors.append("%s score failure hint smoke should expose 홈으로 secondary CTA." % GAMEPLAY_SCENE_PATH)
-	if overlay_body == null or not overlay_body.text.contains("실패 유형  strategic_miss") or not overlay_body.text.contains("남은 목표  점수 300점") or not overlay_body.text.contains("놓친 핵심  점수 300점 더 획득") or not overlay_body.text.contains("다음 한 수  4매치 이상과 연쇄를 노려 점수 배수를 먼저 키우세요."):
+	var score_fail_offer := Dictionary(node.get("active_fail_offer"))
+	if String(score_fail_offer.get("type", "")) != "strategic_miss":
+		errors.append("%s score failure offer metadata should keep strategic_miss classification." % GAMEPLAY_SCENE_PATH)
+	if overlay_body == null or not overlay_body.text.contains("목표부터 다시 공략") or not overlay_body.text.contains("남은 목표  점수 300점") or not overlay_body.text.contains("놓친 핵심  점수 300점 더 획득") or not overlay_body.text.contains("다음 한 수  4매치 이상과 연쇄를 노려 점수 배수를 먼저 키우세요."):
 		errors.append("%s score failure overlay should show the missed score focus and retry hint." % GAMEPLAY_SCENE_PATH)
+	if overlay_body != null and overlay_body.text.contains("strategic_miss"):
+		errors.append("%s score failure overlay should not expose raw fail type ids." % GAMEPLAY_SCENE_PATH)
 
 
 func _validate_loyal_fetch_failure_gate_runtime(node: Node, errors: PackedStringArray) -> void:
