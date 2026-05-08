@@ -388,6 +388,11 @@ func _validate_stage_popup_mobile_viewport_matrix(node: Node, viewport_size: Vec
 	var start_button := _find_button_with_text(panel, "PLAY")
 	var close_button := _find_button_with_text(node, "×")
 	_validate_control_in_viewport(panel, viewport_size, STAGE_SELECT_SCENE_PATH, "Stage 4 mobile matrix StagePopupPanel", errors)
+	if panel != null and viewport_size.y >= viewport_size.x:
+		var panel_rect := panel.get_global_rect()
+		var minimum_commercial_width := float(viewport_size.x) * 0.62
+		if panel_rect.size.x < minimum_commercial_width:
+			errors.append("%s Stage 4 mobile matrix StagePopupPanel should read as a commercial start card at %s, got width %.1f below %.1f." % [STAGE_SELECT_SCENE_PATH, viewport_size, panel_rect.size.x, minimum_commercial_width])
 	for control_info in [
 		[title_label, "StagePopupTitle"],
 		[goal_label, "StagePopupGoal"],
@@ -425,11 +430,16 @@ func _validate_gameplay_viewport_layout(node: Node, viewport_size: Vector2i, err
 		if board_rect.size.x < min_expected_board_side or board_rect.size.y < min_expected_board_side:
 			errors.append("%s BoardFrame is too small at %s: %s, expected each side >= %.1f." % [GAMEPLAY_SCENE_PATH, viewport_size, board_rect.size, min_expected_board_side])
 	if portrait:
+		_validate_control_in_viewport(node.find_child("HudTopDock", true, false), viewport_size, GAMEPLAY_SCENE_PATH, "HudTopDock", errors)
 		_validate_control_in_viewport(node.find_child("HudGoalDock", true, false), viewport_size, GAMEPLAY_SCENE_PATH, "HudGoalDock", errors)
 		_validate_control_in_viewport(node.find_child("HudBoosterDock", true, false), viewport_size, GAMEPLAY_SCENE_PATH, "HudBoosterDock", errors)
 	else:
 		_validate_control_in_viewport(node.find_child("StatsCard", true, false), viewport_size, GAMEPLAY_SCENE_PATH, "StatsCard landscape", errors)
 		_validate_control_in_viewport(node.find_child("GoalCard", true, false), viewport_size, GAMEPLAY_SCENE_PATH, "GoalCard landscape", errors)
+		if board_frame != null:
+			var max_landscape_board_height: float = float(viewport_size.y) * 0.92
+			if board_frame.get_global_rect().size.y > max_landscape_board_height:
+				errors.append("%s BoardFrame should not stretch into an empty tray at landscape %s, got height %.1f above %.1f." % [GAMEPLAY_SCENE_PATH, viewport_size, board_frame.get_global_rect().size.y, max_landscape_board_height])
 	if node.find_child("HudBuddyGauge", true, false) == null:
 		errors.append("%s missing responsive layout target HudBuddyGauge at %s." % [GAMEPLAY_SCENE_PATH, viewport_size])
 
@@ -618,9 +628,11 @@ func _validate_commercial_ui_readability_gate(scene_path: String, node: Node, vi
 				var button_control := button_info[0] as Control
 				if button_control != null and button_control.is_visible_in_tree():
 					_validate_commercial_touch_target(button_control, COMMERCIAL_UI_ICON_TOUCH, scene_path, "%s commercial CTA" % String(button_info[1]), viewport_size, errors)
-			for booster_button in Array(node.get("hud_booster_buttons")):
-				if booster_button is Control and (booster_button as Control).is_visible_in_tree():
-					_validate_commercial_touch_target(booster_button, COMMERCIAL_UI_SECONDARY_TOUCH, scene_path, "%s commercial booster CTA" % String((booster_button as Control).name), viewport_size, errors)
+			var hud_boosters = node.get("hud_booster_buttons")
+			if hud_boosters is Array:
+				for booster_button in hud_boosters:
+					if booster_button is Control and (booster_button as Control).is_visible_in_tree():
+						_validate_commercial_touch_target(booster_button, COMMERCIAL_UI_SECONDARY_TOUCH, scene_path, "%s commercial booster CTA" % String((booster_button as Control).name), viewport_size, errors)
 		COLLECTION_SCENE_PATH:
 			_validate_commercial_touch_target(node.find_child("BackButton", true, false), COMMERCIAL_UI_SECONDARY_TOUCH, scene_path, "BackButton commercial CTA", viewport_size, errors)
 			var first_card := _first_collection_card(node)

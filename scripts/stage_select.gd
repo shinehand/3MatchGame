@@ -1583,32 +1583,32 @@ func _layout_stage_popup(portrait: bool, viewport_size: Vector2) -> void:
 		return
 
 	if portrait:
-		stage_popup_panel.custom_minimum_size = Vector2(minf(viewport_size.x - 28.0, 362.0), minf(viewport_size.y - 34.0, 762.0))
+		stage_popup_panel.custom_minimum_size = Vector2(minf(viewport_size.x - 56.0, 760.0), minf(viewport_size.y - 42.0, 860.0))
 		if stage_popup_margin:
-			stage_popup_margin.add_theme_constant_override("margin_left", 20)
-			stage_popup_margin.add_theme_constant_override("margin_top", 20)
-			stage_popup_margin.add_theme_constant_override("margin_right", 20)
-			stage_popup_margin.add_theme_constant_override("margin_bottom", 20)
+			stage_popup_margin.add_theme_constant_override("margin_left", 28)
+			stage_popup_margin.add_theme_constant_override("margin_top", 26)
+			stage_popup_margin.add_theme_constant_override("margin_right", 28)
+			stage_popup_margin.add_theme_constant_override("margin_bottom", 26)
 		if stage_popup_column:
-			stage_popup_column.add_theme_constant_override("separation", 10)
-		stage_popup_title_label.add_theme_font_size_override("font_size", 30)
-		stage_popup_goal_label.custom_minimum_size = Vector2(0, 72)
-		stage_popup_goal_label.add_theme_font_size_override("font_size", 22)
-		stage_popup_meta_label.add_theme_font_size_override("font_size", 18)
-		stage_popup_reward_label.custom_minimum_size = Vector2(0, 48)
-		stage_popup_reward_label.add_theme_font_size_override("font_size", 18)
-		stage_popup_buddy_label.custom_minimum_size = Vector2(0, 64)
-		stage_popup_buddy_label.add_theme_font_size_override("font_size", 17)
+			stage_popup_column.add_theme_constant_override("separation", 12)
+		stage_popup_title_label.add_theme_font_size_override("font_size", 36)
+		stage_popup_goal_label.custom_minimum_size = Vector2(0, 94)
+		stage_popup_goal_label.add_theme_font_size_override("font_size", 26)
+		stage_popup_meta_label.add_theme_font_size_override("font_size", 22)
+		stage_popup_reward_label.custom_minimum_size = Vector2(0, 58)
+		stage_popup_reward_label.add_theme_font_size_override("font_size", 22)
+		stage_popup_buddy_label.custom_minimum_size = Vector2(0, 78)
+		stage_popup_buddy_label.add_theme_font_size_override("font_size", 21)
 		if stage_popup_booster_row:
-			stage_popup_booster_row.add_theme_constant_override("separation", 8)
+			stage_popup_booster_row.add_theme_constant_override("separation", 10)
 		for booster_button_value in stage_popup_booster_buttons.values():
 			var booster_button := booster_button_value as Button
 			if booster_button:
-				booster_button.custom_minimum_size = Vector2(92, 84)
-				booster_button.add_theme_font_size_override("font_size", 14)
+				booster_button.custom_minimum_size = Vector2(156, 108)
+				booster_button.add_theme_font_size_override("font_size", 18)
 		if stage_popup_start_button:
-			stage_popup_start_button.custom_minimum_size = Vector2(0, 72)
-			stage_popup_start_button.add_theme_font_size_override("font_size", 30)
+			stage_popup_start_button.custom_minimum_size = Vector2(0, 88)
+			stage_popup_start_button.add_theme_font_size_override("font_size", 36)
 	else:
 		stage_popup_panel.custom_minimum_size = Vector2(minf(viewport_size.x - 48.0, 720.0), minf(viewport_size.y - 34.0, 800.0))
 		if stage_popup_margin:

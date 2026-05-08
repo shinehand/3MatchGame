@@ -155,6 +155,7 @@ var hud_combo_label: Label
 var hud_combo_gauge: ProgressBar
 var hud_buddy_label: Label
 var hud_buddy_gauge: ProgressBar
+var hud_goal_chip_row: HBoxContainer
 var hud_home_button: Button
 var hud_retry_button: Button
 var hud_pause_button: Button
@@ -255,8 +256,8 @@ func _update_board_surface_size() -> void:
 	var board_height: float = float(BOARD_ROWS) * tile_size.y + float(max(BOARD_ROWS - 1, 0) * v_separation)
 	var portrait: bool = MobileLayout.is_portrait(self)
 	var viewport_size: Vector2 = get_viewport_rect().size
-	var max_visible_width: float = max(320.0, viewport_size.x - 88.0) if portrait else min(1240.0, max(720.0, viewport_size.x - 480.0))
-	var max_visible_height: float = max(520.0, viewport_size.y * 0.76) if portrait else min(980.0, max(520.0, viewport_size.y - 200.0))
+	var max_visible_width: float = max(320.0, viewport_size.x - 88.0) if portrait else min(1560.0, max(980.0, viewport_size.x - 1320.0))
+	var max_visible_height: float = max(520.0, viewport_size.y * 0.76) if portrait else min(1500.0, max(760.0, viewport_size.y - 220.0))
 
 	board_grid.custom_minimum_size = Vector2(board_width, board_height)
 	board_scroll.custom_minimum_size = Vector2(min(board_width, max_visible_width), min(board_height, max_visible_height))
@@ -266,7 +267,7 @@ func _update_board_surface_size() -> void:
 func _current_tile_extent() -> float:
 	var portrait: bool = MobileLayout.is_portrait(self)
 	if not portrait:
-		return 116.0
+		return 150.0
 
 	var viewport_width: float = get_viewport_rect().size.x
 	var h_separation: int = board_grid.get_theme_constant("h_separation")
@@ -377,16 +378,16 @@ func _apply_responsive_layout() -> void:
 	board_panel.custom_minimum_size = Vector2(0, 0) if portrait else Vector2(1000, 0)
 	board_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	board_panel.size_flags_vertical = 0 if portrait else Control.SIZE_EXPAND_FILL
-	board_frame.size_flags_vertical = 0 if portrait else Control.SIZE_EXPAND_FILL
+	board_frame.size_flags_vertical = 0
 	board_margin.add_theme_constant_override("margin_left", 14 if portrait else 24)
 	board_margin.add_theme_constant_override("margin_top", 14 if portrait else 24)
 	board_margin.add_theme_constant_override("margin_right", 14 if portrait else 24)
 	board_margin.add_theme_constant_override("margin_bottom", 14 if portrait else 24)
 	board_column.add_theme_constant_override("separation", 8 if portrait else 18)
-	board_surface_margin.add_theme_constant_override("margin_left", 10 if portrait else 18)
-	board_surface_margin.add_theme_constant_override("margin_top", 12 if portrait else 20)
-	board_surface_margin.add_theme_constant_override("margin_right", 10 if portrait else 18)
-	board_surface_margin.add_theme_constant_override("margin_bottom", 12 if portrait else 18)
+	board_surface_margin.add_theme_constant_override("margin_left", 8 if portrait else 14)
+	board_surface_margin.add_theme_constant_override("margin_top", 10 if portrait else 14)
+	board_surface_margin.add_theme_constant_override("margin_right", 8 if portrait else 14)
+	board_surface_margin.add_theme_constant_override("margin_bottom", 10 if portrait else 14)
 	board_shine.visible = not portrait
 	board_grid.add_theme_constant_override("h_separation", 5 if portrait else 7)
 	board_grid.add_theme_constant_override("v_separation", 5 if portrait else 7)
@@ -394,12 +395,12 @@ func _apply_responsive_layout() -> void:
 	board_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 
 	var portrait_hud_height := clampf(viewport_size.y * 0.22, 250.0, 330.0)
-	sidebar_scroll.custom_minimum_size = Vector2(0, portrait_hud_height) if portrait else Vector2(352, 0)
-	sidebar_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sidebar_scroll.custom_minimum_size = Vector2(0, portrait_hud_height) if portrait else Vector2(980, 0)
+	sidebar_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL if portrait else Control.SIZE_FILL
 	sidebar_scroll.size_flags_vertical = Control.SIZE_FILL if portrait else Control.SIZE_EXPAND_FILL
 	sidebar_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	sidebar_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED if portrait else ScrollContainer.SCROLL_MODE_AUTO
-	sidebar.custom_minimum_size = Vector2(0, 0) if portrait else Vector2(352, 0)
+	sidebar.custom_minimum_size = Vector2(0, 0) if portrait else Vector2(980, 0)
 	sidebar.add_theme_constant_override("separation", 12 if portrait else 16)
 	sidebar_scroll.scroll_horizontal = 0
 	sidebar_scroll.scroll_vertical = 0
@@ -423,7 +424,7 @@ func _apply_responsive_layout() -> void:
 
 	if gameplay_hud_layer:
 		gameplay_hud_layer.visible = portrait
-	board_margin.add_theme_constant_override("margin_top", 260 if portrait else 24)
+	board_margin.add_theme_constant_override("margin_top", 310 if portrait else 24)
 	tutorial_banner.custom_minimum_size = Vector2(0, 72) if portrait else Vector2.ZERO
 	tutorial_label.add_theme_font_size_override("font_size", 19 if portrait else 24)
 	tutorial_label.add_theme_constant_override("line_spacing", 4 if portrait else 0)
@@ -444,7 +445,7 @@ func _apply_responsive_layout() -> void:
 	overlay_body.add_theme_font_size_override("font_size", 20 if portrait else 24)
 	overlay_body.add_theme_constant_override("line_spacing", 8 if portrait else 10)
 	stats_card.visible = not portrait
-	status_card.visible = not portrait
+	status_card.visible = false
 	tips_card.visible = false
 	combo_value.visible = not portrait
 	combo_gauge.visible = true
@@ -482,20 +483,24 @@ func _layout_gameplay_hud(portrait: bool) -> void:
 	var goal_dock := gameplay_hud_layer.get_node_or_null("HudGoalDock") as Control
 	if top_dock:
 		top_dock.offset_left = 18.0 if portrait else 26.0
-		top_dock.offset_top = 18.0 if portrait else 22.0
+		top_dock.offset_top = 16.0 if portrait else 22.0
 		top_dock.offset_right = -18.0 if portrait else -26.0
-		top_dock.offset_bottom = 112.0 if portrait else 106.0
+		top_dock.offset_bottom = 126.0 if portrait else 106.0
 	if goal_dock:
 		goal_dock.offset_left = 28.0 if portrait else 36.0
-		goal_dock.offset_top = 118.0 if portrait else 112.0
+		goal_dock.offset_top = 116.0 if portrait else 112.0
 		goal_dock.offset_right = -28.0 if portrait else -36.0
-		goal_dock.offset_bottom = 232.0 if portrait else 174.0
+		goal_dock.offset_bottom = 238.0 if portrait else 174.0
 	if hud_goal_label:
-		hud_goal_label.add_theme_font_size_override("font_size", 19 if portrait else 18)
+		hud_goal_label.add_theme_font_size_override("font_size", 18 if portrait else 18)
+		hud_goal_label.custom_minimum_size = Vector2(0, 26) if portrait else Vector2.ZERO
+	if hud_goal_chip_row:
+		hud_goal_chip_row.visible = portrait
+		hud_goal_chip_row.add_theme_constant_override("separation", 8 if portrait else 6)
 	if hud_combo_label:
-		hud_combo_label.add_theme_font_size_override("font_size", 15 if portrait else 15)
+		hud_combo_label.add_theme_font_size_override("font_size", 14 if portrait else 15)
 	if hud_combo_gauge:
-		hud_combo_gauge.custom_minimum_size = Vector2(180, 16) if portrait else Vector2(150, 14)
+		hud_combo_gauge.custom_minimum_size = Vector2(176, 14) if portrait else Vector2(150, 14)
 	if hud_booster_dock:
 		hud_booster_dock.visible = portrait
 		hud_booster_dock.offset_left = 24.0 if portrait else 120.0
@@ -543,6 +548,20 @@ func _configure_action_buttons(portrait: bool) -> void:
 		quit_button.text = "홈으로"
 		retry_button.text = "재시작"
 		next_stage_button.text = "다음 스테이지"
+
+	for stat_label in [hud_level_label, hud_moves_label, hud_score_label]:
+		if stat_label == null:
+			continue
+		var stat_panel := stat_label.get_parent() as Control
+		if stat_panel:
+			stat_panel.custom_minimum_size = Vector2(122, 66) if portrait else Vector2(132, 62)
+		stat_label.add_theme_font_size_override("font_size", 20 if portrait else 18)
+		stat_label.add_theme_constant_override("line_spacing", 1 if portrait else 1)
+	for icon_button in [hud_home_button, hud_retry_button, hud_pause_button]:
+		if icon_button == null:
+			continue
+		icon_button.custom_minimum_size = Vector2(74, 66) if portrait else Vector2(68, 62)
+		icon_button.add_theme_font_size_override("font_size", 31 if portrait else 30)
 
 
 func _pick_kind_without_match(row: int, col: int) -> String:
@@ -796,6 +815,12 @@ func _build_gameplay_hud_layer() -> void:
 	hud_goal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	goal_column.add_child(hud_goal_label)
 
+	hud_goal_chip_row = HBoxContainer.new()
+	hud_goal_chip_row.name = "HudGoalChipRow"
+	hud_goal_chip_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	hud_goal_chip_row.add_theme_constant_override("separation", 8)
+	goal_column.add_child(hud_goal_chip_row)
+
 	var combo_row := HBoxContainer.new()
 	combo_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	combo_row.add_theme_constant_override("separation", 10)
@@ -913,14 +938,100 @@ func _resize_hud_booster_buttons(portrait: bool) -> void:
 		if button == null:
 			continue
 		var label_text := String(button.get_meta("hud_label", button.tooltip_text))
-		if portrait:
-			button.text = ""
-			button.custom_minimum_size = Vector2(92, 74)
-			button.add_theme_font_size_override("font_size", 14)
-		else:
-			button.text = label_text
-			button.custom_minimum_size = Vector2(150, 86)
-			button.add_theme_font_size_override("font_size", 18)
+		button.text = "" if portrait else label_text
+		button.custom_minimum_size = Vector2(92, 74) if portrait else Vector2(150, 86)
+		button.add_theme_font_size_override("font_size", 14 if portrait else 18)
+
+
+func _refresh_hud_goal_chips() -> void:
+	if hud_goal_chip_row == null:
+		return
+	for child in hud_goal_chip_row.get_children():
+		hud_goal_chip_row.remove_child(child)
+		child.queue_free()
+
+	var chip_data := _hud_goal_chip_data()
+	for index in range(mini(chip_data.size(), 4)):
+		var data := chip_data[index] as Dictionary
+		hud_goal_chip_row.add_child(_make_hud_goal_chip(data))
+
+
+func _hud_goal_chip_data() -> Array:
+	var chips: Array = []
+	var targets: Dictionary = _stage_collect_targets()
+	for animal_id in targets.keys():
+		var target_count := int(targets[animal_id])
+		var remaining_count: int = maxi(target_count - int(collected_counts.get(animal_id, 0)), 0)
+		chips.append({
+			"texture": animal_textures.get(String(animal_id)),
+			"text": str(remaining_count),
+			"complete": remaining_count <= 0,
+			"tooltip": "%s 남은 구조 %d" % [ANIMAL_NAMES[String(animal_id)], remaining_count],
+		})
+
+	var score_remaining: int = maxi(_target_score() - score, 0)
+	if score_remaining > 0:
+		chips.append({
+			"texture": null,
+			"text": "★%s" % _compact_hud_count(score_remaining),
+			"complete": false,
+			"tooltip": "남은 점수 %d" % score_remaining,
+		})
+
+	var blocker_remaining: int = maxi(_target_blockers() - cleared_blockers, 0)
+	if blocker_remaining > 0:
+		chips.append({
+			"texture": ui_textures.get("bush"),
+			"text": str(blocker_remaining),
+			"complete": false,
+			"tooltip": "남은 덤불 %d" % blocker_remaining,
+		})
+	return chips
+
+
+func _make_hud_goal_chip(data: Dictionary) -> PanelContainer:
+	var chip := PanelContainer.new()
+	chip.custom_minimum_size = Vector2(118, 44)
+	chip.tooltip_text = String(data.get("tooltip", "목표"))
+	var complete := bool(data.get("complete", false))
+	var bg_color := Color(0.83, 1.0, 0.74, 0.94) if complete else Color(1.0, 1.0, 1.0, 0.92)
+	var border_color := Color("54d66f") if complete else Color("8ed8ff")
+	chip.add_theme_stylebox_override("panel", _hud_style(bg_color, border_color, 18, 3))
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_top", 4)
+	margin.add_theme_constant_override("margin_right", 10)
+	margin.add_theme_constant_override("margin_bottom", 4)
+	chip.add_child(margin)
+
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 6)
+	margin.add_child(row)
+
+	var texture := data.get("texture") as Texture2D
+	if texture != null:
+		var icon := TextureRect.new()
+		icon.custom_minimum_size = Vector2(34, 34)
+		icon.texture = texture
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		row.add_child(icon)
+
+	var label := _make_hud_label(String(data.get("text", "0")), 20, Color("213a55"), HORIZONTAL_ALIGNMENT_CENTER)
+	label.custom_minimum_size = Vector2(34, 34)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(label)
+	return chip
+
+
+func _compact_hud_count(value: int) -> String:
+	if value >= 10000:
+		return "%d만" % int(round(float(value) / 10000.0))
+	if value >= 1000:
+		return "%dk" % int(ceil(float(value) / 1000.0))
+	return str(value)
 
 
 func _make_hud_label(text: String, font_size: int, color: Color, alignment: HorizontalAlignment) -> Label:
@@ -3039,16 +3150,17 @@ func _update_gameplay_hud() -> void:
 		hud_moves_label.add_theme_color_override("font_color", _moves_warning_color())
 	if hud_score_label:
 		hud_score_label.text = "점수\n%d" % score
-	if hud_goal_label:
-		var remaining_text := _build_goal_remaining_summary()
-		if remaining_text.is_empty():
-			remaining_text = "구조 완료"
-		if MobileLayout.is_portrait(self):
-			hud_goal_label.text = "목표: %s\n남은 구조: %s" % [_build_goal_result_summary(), remaining_text]
-			hud_goal_label.add_theme_constant_override("line_spacing", 5)
-		else:
-			hud_goal_label.text = "목표  %s   ·   남은 구조  %s" % [_build_goal_result_summary(), remaining_text]
-			hud_goal_label.add_theme_constant_override("line_spacing", 0)
+		if hud_goal_label:
+			var remaining_text := _build_goal_remaining_summary()
+			if remaining_text.is_empty():
+				remaining_text = "구조 완료"
+			if MobileLayout.is_portrait(self):
+				hud_goal_label.text = "구조 목표"
+				hud_goal_label.add_theme_constant_override("line_spacing", 2)
+			else:
+				hud_goal_label.text = "목표  %s   ·   남은 구조  %s" % [_build_goal_result_summary(), remaining_text]
+				hud_goal_label.add_theme_constant_override("line_spacing", 0)
+	_refresh_hud_goal_chips()
 	if hud_combo_label:
 		hud_combo_label.text = "콤보 %d/%d%s%s" % [combo_gauge_points, COMBO_GAUGE_MAX, _fever_hud_suffix(), _buddy_hud_suffix()]
 	if hud_combo_gauge:
