@@ -15,6 +15,7 @@ const SCENARIOS := [
 	{"id": "home", "scene": MAIN_SCENE_PATH, "setup": "home"},
 	{"id": "stage_popup", "scene": STAGE_SELECT_SCENE_PATH, "setup": "stage_popup"},
 	{"id": "gameplay_stage4", "scene": GAMEPLAY_SCENE_PATH, "setup": "gameplay_stage4"},
+	{"id": "gameplay_stage1_success", "scene": GAMEPLAY_SCENE_PATH, "setup": "gameplay_stage1_success"},
 	{"id": "gameplay_stage25_failure", "scene": GAMEPLAY_SCENE_PATH, "setup": "gameplay_stage25_failure"},
 	{
 		"id": "gameplay_stage31_special_combo_row_col",
@@ -233,6 +234,8 @@ func _apply_scenario_setup(node: Node, scenario: Dictionary, errors: PackedStrin
 			await create_timer(0.28).timeout
 		"gameplay_stage4":
 			await _start_gameplay_stage(node, 3, errors)
+		"gameplay_stage1_success":
+			await _prepare_stage_1_success(node, errors)
 		"gameplay_stage25_failure":
 			await _prepare_stage_25_failure(node, errors)
 		"gameplay_stage31_special_combo":
@@ -266,6 +269,31 @@ func _prepare_stage_25_failure(node: Node, errors: PackedStringArray) -> void:
 	node.set("remaining_moves", 0)
 	await node.call("_check_stage_state")
 	await create_timer(0.24).timeout
+
+
+func _prepare_stage_1_success(node: Node, errors: PackedStringArray) -> void:
+	for method_name in ["_start_stage", "_stage_collect_targets", "_target_blockers", "_target_score", "_check_stage_state"]:
+		if not node.has_method(method_name):
+			errors.append("%s should expose %s for Stage 1 success render snapshot." % [GAMEPLAY_SCENE_PATH, method_name])
+			return
+	node.call("_start_stage", 0)
+	_complete_gameplay_stage_goals(node)
+	node.set("remaining_moves", 2)
+	var complete_events_before := _analytics_event_count("stage_complete")
+	await node.call("_check_stage_state")
+	if _analytics_event_count("stage_complete") <= complete_events_before:
+		errors.append("%s Stage 1 success render snapshot should emit stage_complete analytics." % GAMEPLAY_SCENE_PATH)
+	await create_timer(0.24).timeout
+
+
+func _complete_gameplay_stage_goals(node: Node) -> void:
+	var collected := {}
+	var target_collect := Dictionary(node.call("_stage_collect_targets"))
+	for animal_id in target_collect.keys():
+		collected[String(animal_id)] = int(target_collect[animal_id])
+	node.set("collected_counts", collected)
+	node.set("cleared_blockers", int(node.call("_target_blockers")))
+	node.set("score", int(node.call("_target_score")))
 
 
 func _prepare_stage_31_special_combo(node: Node, scenario: Dictionary, errors: PackedStringArray) -> void:
@@ -410,6 +438,8 @@ func _validate_scenario_regions(image: Image, node: Node, scenario: Dictionary, 
 			else:
 				_validate_control_pixels(image, node.find_child("StatsCard", true, false) as Control, snapshot_id, "StatsCard", errors)
 				_validate_control_pixels(image, node.find_child("GoalCard", true, false) as Control, snapshot_id, "GoalCard", errors)
+		"gameplay_stage1_success":
+			_validate_result_overlay_snapshot_regions(image, node, snapshot_id, errors)
 		"gameplay_stage25_failure":
 			_validate_control_pixels(image, node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel") as Control, snapshot_id, "OverlayPanel", errors)
 			_validate_control_pixels(image, node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlayPrimaryButton") as Control, snapshot_id, "OverlayPrimaryButton", errors)
@@ -420,6 +450,54 @@ func _validate_scenario_regions(image: Image, node: Node, scenario: Dictionary, 
 		"collection":
 			_validate_control_pixels(image, node.find_child("CollectionGrid", true, false) as Control, snapshot_id, "CollectionGrid", errors)
 			_validate_control_pixels(image, node.find_child("SummaryLabel", true, false) as Control, snapshot_id, "SummaryLabel", errors)
+
+
+func _validate_result_overlay_snapshot_regions(image: Image, node: Node, snapshot_id: String, errors: PackedStringArray) -> void:
+	var overlay := node.get_node_or_null("Overlay") as CanvasItem
+	if overlay == null or not overlay.visible:
+		errors.append("%s should show the success result overlay." % snapshot_id)
+	if String(node.get("stage_state")) != "cleared":
+		errors.append("%s should leave Stage 1 cleared, got %s." % [snapshot_id, String(node.get("stage_state"))])
+	if String(node.get("overlay_action")) != "clear_stage":
+		errors.append("%s should use clear_stage overlay action, got %s." % [snapshot_id, String(node.get("overlay_action"))])
+	if GameSession.get_highest_unlocked_stage_id() < 2:
+		errors.append("%s should unlock Stage 2 after Stage 1 success." % snapshot_id)
+
+	var panel := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel") as Control
+	var title := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayTitle") as Label
+	var body := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayBody") as Label
+	var mascot := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayMascot") as TextureRect
+	var primary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlayPrimaryButton") as Button
+	var secondary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlaySecondaryButton") as Button
+
+	for control_info in [[panel, "OverlayPanel"], [title, "OverlayTitle"], [body, "OverlayBody"], [mascot, "OverlayMascot"], [primary, "OverlayPrimaryButton"], [secondary, "OverlaySecondaryButton"]]:
+		var control := control_info[0] as Control
+		var label := String(control_info[1])
+		_validate_control_pixels(image, control, snapshot_id, label, errors)
+		_validate_control_within_image_bounds(control, snapshot_id, label, errors)
+
+	if title == null or not title.text.contains("구조 완료"):
+		errors.append("%s success overlay title should contain 구조 완료." % snapshot_id)
+	if body == null or not body.text.contains("보상") or not body.text.contains("별") or not body.text.contains("다음"):
+		errors.append("%s success overlay body should show reward, stars, and next action text." % snapshot_id)
+	elif not body.text.contains("Zoo-Zoo Time"):
+		errors.append("%s success overlay body should include Zoo-Zoo Time bonus text." % snapshot_id)
+	if mascot == null or mascot.texture == null:
+		errors.append("%s success overlay should show a non-null mascot texture." % snapshot_id)
+	if primary == null or primary.text != "다음 스테이지":
+		errors.append("%s success overlay primary CTA should be 다음 스테이지." % snapshot_id)
+	if secondary == null or not secondary.visible or secondary.text != "홈으로":
+		errors.append("%s success overlay secondary CTA should be visible 홈으로." % snapshot_id)
+	var stage_complete_params := _last_analytics_event_params("stage_complete")
+	if stage_complete_params.is_empty():
+		errors.append("%s should preserve stage_complete analytics payload." % snapshot_id)
+	else:
+		if int(stage_complete_params.get("stage_id", 0)) != 1:
+			errors.append("%s stage_complete analytics should identify Stage 1, got %d." % [snapshot_id, int(stage_complete_params.get("stage_id", 0))])
+		if int(stage_complete_params.get("moves_left", 0)) != 2:
+			errors.append("%s stage_complete analytics should preserve 2 Zoo-Zoo Time moves, got %d." % [snapshot_id, int(stage_complete_params.get("moves_left", 0))])
+		if int(stage_complete_params.get("zoo_zoo_time_bonus", 0)) <= 0:
+			errors.append("%s stage_complete analytics should include a positive Zoo-Zoo Time bonus." % snapshot_id)
 
 
 func _validate_special_combo_snapshot_regions(image: Image, node: Node, scenario: Dictionary, snapshot_id: String, errors: PackedStringArray) -> void:
@@ -590,4 +668,21 @@ func _analytics_event_params_by_name_and_key(event_name: String, key: String, va
 		var params: Dictionary = Dictionary(event_dict.get("params", {}))
 		if String(params.get(key, "")) == value:
 			return params
+	return {}
+
+
+func _analytics_event_count(event_name: String) -> int:
+	var count := 0
+	for event in GameSession.get_analytics_events():
+		if event is Dictionary and String(Dictionary(event).get("name", "")) == event_name:
+			count += 1
+	return count
+
+
+func _last_analytics_event_params(event_name: String) -> Dictionary:
+	var events := GameSession.get_analytics_events()
+	for index in range(events.size() - 1, -1, -1):
+		var event = events[index]
+		if event is Dictionary and String(Dictionary(event).get("name", "")) == event_name:
+			return Dictionary(Dictionary(event).get("params", {}))
 	return {}
