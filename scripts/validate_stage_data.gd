@@ -31,6 +31,9 @@ func _init() -> void:
 	if not _validate_board_mask_topology_policy(stages):
 		quit(1)
 		return
+	if not _validate_collection_board_gate_policy(stages):
+		quit(1)
+		return
 
 	print("Stage validation passed: loaded %d stages." % stages.size())
 	quit()
@@ -52,6 +55,24 @@ func _validate_board_mask_topology_policy(stages: Array) -> bool:
 	if not _expect_validator_rejects("Disconnected board_mask", _stage_variant(stages, 1, {"board_mask": _disconnected_board_mask()}), "board_mask active cells must be 4-way connected"):
 		return false
 	if not _expect_validator_rejects("Tiny board_mask island", _stage_variant(stages, 1, {"board_mask": _tiny_island_board_mask()}), "board_mask component size 1 is too small"):
+		return false
+	return true
+
+
+func _validate_collection_board_gate_policy(stages: Array) -> bool:
+	var koala_pool_stage := _stage_variant(stages, 20, {
+		"animal_pool": ["rabbit", "bear", "cat", "chick", "koala"],
+		"spawn_weights": {"rabbit": 3, "bear": 3, "cat": 2, "chick": 2, "koala": 1},
+	})
+	if not _expect_validator_rejects("Board-disabled collection animal in pool", koala_pool_stage, "board_enabled=false collection animal koala"):
+		return false
+
+	var hamster_target_stage := _stage_variant(stages, 20, {
+		"animal_pool": ["rabbit", "bear", "cat", "chick", "hamster"],
+		"spawn_weights": {"rabbit": 3, "bear": 3, "cat": 2, "chick": 2, "hamster": 1},
+		"target_collect": {"hamster": 6},
+	})
+	if not _expect_validator_rejects("Board-disabled collection animal in target", hamster_target_stage, "board_enabled=false collection animal hamster"):
 		return false
 	return true
 

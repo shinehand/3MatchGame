@@ -9,6 +9,14 @@ const BOARD_NEIGHBOR_OFFSETS := [
 	Vector2i(0, -1),
 ]
 const VALID_ANIMALS := ["rabbit", "bear", "cat", "chick", "frog", "dog", "panda", "pig", "penguin", "fox", "lion", "elephant"]
+const COLLECTION_BOARD_EXPANSION_ORDER := {
+	"koala": {"order": 1, "min_stage": 101, "stage_band": "101-110"},
+	"hamster": {"order": 2, "min_stage": 111, "stage_band": "111-120"},
+	"deer": {"order": 3, "min_stage": 121, "stage_band": "121-130"},
+	"seal": {"order": 4, "min_stage": 131, "stage_band": "131-140"},
+	"sheep": {"order": 5, "min_stage": 141, "stage_band": "141-150"},
+	"turtle": {"order": 6, "min_stage": 151, "stage_band": "151-160"},
+}
 const VALID_ROSTER_GROUPS := [
 	"forest_early",
 	"trap_trail",
@@ -203,10 +211,13 @@ static func validate_stages(stages: Array) -> PackedStringArray:
 
 		var collect_targets: Dictionary = stage.get("target_collect", {})
 		for animal_id in collect_targets.keys():
-			if not VALID_ANIMALS.has(String(animal_id)):
-				errors.append("stage %d has unknown collect target %s" % [stage_id, String(animal_id)])
+			var target_animal_id := String(animal_id)
+			if COLLECTION_BOARD_EXPANSION_ORDER.has(target_animal_id):
+				errors.append(_collection_board_disabled_error(stage_id, target_animal_id, "target_collect"))
+			elif not VALID_ANIMALS.has(target_animal_id):
+				errors.append("stage %d has unknown collect target %s" % [stage_id, target_animal_id])
 			if int(collect_targets[animal_id]) < 0:
-				errors.append("stage %d has negative collect target for %s" % [stage_id, String(animal_id)])
+				errors.append("stage %d has negative collect target for %s" % [stage_id, target_animal_id])
 
 		var target_score := int(stage.get("target_score", 0))
 		if target_score < 0:
@@ -229,8 +240,11 @@ static func validate_stages(stages: Array) -> PackedStringArray:
 		if animal_pool.size() < min_pool_size or animal_pool.size() > max_pool_size:
 			errors.append("stage %d animal_pool size %d must be %d-%d (source spawn_profile.pool)" % [stage_id, animal_pool.size(), min_pool_size, max_pool_size])
 		for animal_id in animal_pool:
-			if not VALID_ANIMALS.has(String(animal_id)):
-				errors.append("stage %d has unknown animal_pool entry %s (source spawn_profile.pool)" % [stage_id, String(animal_id)])
+			var pool_animal_id := String(animal_id)
+			if COLLECTION_BOARD_EXPANSION_ORDER.has(pool_animal_id):
+				errors.append(_collection_board_disabled_error(stage_id, pool_animal_id, "animal_pool (source spawn_profile.pool)"))
+			elif not VALID_ANIMALS.has(pool_animal_id):
+				errors.append("stage %d has unknown animal_pool entry %s (source spawn_profile.pool)" % [stage_id, pool_animal_id])
 
 		var spawn_weights: Dictionary = stage.get("spawn_weights", {})
 		for animal_id in animal_pool:
@@ -242,8 +256,11 @@ static func validate_stages(stages: Array) -> PackedStringArray:
 			if stage_id < unlock_stage:
 				errors.append("stage %d uses %s before unlock stage %d" % [stage_id, animal_key, unlock_stage])
 		for weighted_animal_id in spawn_weights.keys():
-			if not animal_pool.has(String(weighted_animal_id)):
-				errors.append("stage %d spawn weight %s is outside animal_pool (source spawn_profile.weights)" % [stage_id, String(weighted_animal_id)])
+			var weighted_animal_key := String(weighted_animal_id)
+			if COLLECTION_BOARD_EXPANSION_ORDER.has(weighted_animal_key):
+				errors.append(_collection_board_disabled_error(stage_id, weighted_animal_key, "spawn_weights (source spawn_profile.weights)"))
+			if not animal_pool.has(weighted_animal_key):
+				errors.append("stage %d spawn weight %s is outside animal_pool (source spawn_profile.weights)" % [stage_id, weighted_animal_key])
 		for animal_id in collect_targets.keys():
 			if not animal_pool.has(String(animal_id)):
 				errors.append("stage %d collect target %s must be included in animal_pool (source spawn_profile.pool)" % [stage_id, String(animal_id)])
@@ -330,7 +347,9 @@ static func _validate_buddy_config(stage: Dictionary, stage_id: int, errors: Pac
 
 	if buddy_animal.is_empty() and buddy_skill_id.is_empty() and buddy_charge_rule.is_empty() and charges_required == 0 and max_uses == 0:
 		return
-	if not VALID_ANIMALS.has(buddy_animal):
+	if COLLECTION_BOARD_EXPANSION_ORDER.has(buddy_animal):
+		errors.append(_collection_board_disabled_error(stage_id, buddy_animal, "buddy_animal"))
+	elif not VALID_ANIMALS.has(buddy_animal):
 		errors.append("stage %d has invalid buddy_animal %s" % [stage_id, buddy_animal])
 	if not VALID_BUDDY_SKILLS.has(buddy_skill_id):
 		errors.append("stage %d has invalid buddy_skill_id %s" % [stage_id, buddy_skill_id])
@@ -358,6 +377,18 @@ static func _validate_buddy_config(stage: Dictionary, stage_id: int, errors: Pac
 			errors.append("stage %d buddy skill %s must allow %s max uses for this difficulty, got %d" % [stage_id, buddy_skill_id, allowed_text, max_uses])
 		if stage_id < int(tuning.get("min_stage", 1)):
 			errors.append("stage %d uses buddy skill %s before minimum stage %d" % [stage_id, buddy_skill_id, int(tuning.get("min_stage", 1))])
+
+
+static func _collection_board_disabled_error(stage_id: int, animal_id: String, field_name: String) -> String:
+	var expansion: Dictionary = Dictionary(COLLECTION_BOARD_EXPANSION_ORDER.get(animal_id, {}))
+	return "stage %d uses board_enabled=false collection animal %s in %s; enable it only after expansion order %d (%s, min stage %d)" % [
+		stage_id,
+		animal_id,
+		field_name,
+		int(expansion.get("order", 0)),
+		String(expansion.get("stage_band", "")),
+		int(expansion.get("min_stage", 0)),
+	]
 
 
 static func _buddy_allowed_max_uses(stage: Dictionary, tuning: Dictionary) -> int:

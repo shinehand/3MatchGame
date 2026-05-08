@@ -27,13 +27,13 @@
 | DEC-018 | SDK 공급자 선택 전 provider readiness는 `data/provider_readiness.json` manifest와 validator로 고정 | Accepted | Analytics `local_buffer`, Monetization `local_simulator`, adapter hook, source/result canonicalization, provider_result 보존, queue/request log 상한을 `validate_provider_readiness.sh`가 코드와 대조 | Tech/QA |
 | DEC-019 | 시즌 패스 해금 레벨은 `season_pass_unlock_level` 원격 설정으로 제어 | Accepted | baseline은 Stage 21이며, 실제 store product/SDK evidence 전까지 alpha `season_pass` fixture는 disabled로 유지하고 `validate_liveops_config.sh`가 검증 | BM/Tech/QA |
 | DEC-020 | `lion`, `elephant` MVP 기본 블록은 전용 256px PNG 에셋으로 고정 | Locked | `assets/generated/candy/lion_candy_block.png`와 `elephant_candy_block.png`가 추가되었고, scene smoke가 MVP 보드 12종 직접 Texture2D/256x256 로드를 검증한다. 표정 atlas/고급 애니메이션 에셋은 후속 아트 QA로 분리 | Art/Tech/QA |
+| DEC-021 | 13-18번 컬렉션 동물의 시즌 1 보드 투입 순서는 `koala -> hamster -> deer -> seal -> sheep -> turtle` | Locked | `data/animals.json`의 `board_expansion_order`, `board_candidate_min_stage`, `board_candidate_stage_band`로 고정한다. 현재 alpha에서는 6종 모두 `board_enabled=false`를 유지하고, stage JSON의 pool/target/weights/buddy에 들어가면 validator가 실패해야 한다 | Planning/Balance/QA |
 
 ## 2. 아직 열려 있는 결정
 
 | ID | 질문 | 후보 | 결정 필요 시점 | 소유 |
 | --- | --- | --- | --- | --- |
 | OPEN-007 | 분석 SDK 실제 공급자 | Firebase, GameAnalytics, custom adapter | SDK adapter 연결 전. 선택된 provider는 `data/provider_readiness.json`의 adapter 계약을 지켜야 함 | Tech/PM |
-| OPEN-009 | 13-18번 컬렉션 동물의 보드 투입 순서 | koala, hamster, deer, seal, sheep, turtle 중 이벤트 성과 기준 | 시즌 1 보드 확장 전 | Planning/Balance |
 
 ## 3. 변경 금지선
 
@@ -52,4 +52,3 @@
 ## 5. 다음 회의 안건
 
 1. `OPEN-007`: 분석 SDK 실제 공급자와 adapter 연결 범위.
-2. `OPEN-009`: 컬렉션 전용 동물의 보드 투입 우선순위.

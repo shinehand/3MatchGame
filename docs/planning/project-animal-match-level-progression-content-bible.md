@@ -69,7 +69,7 @@
 | penguin/fox | Stage 31-35 | Stage 28-30 | 같은 색/실루엣 풀 중복 주의 |
 | lion | Stage 51 이후 | Stage 45-50 | Stage 51 이전 pool/target 금지 |
 | elephant | Stage 81 이후 | Stage 75-80 | Stage 81 이전 pool/target 금지 |
-| 13-18번 컬렉션 동물 | 보드 미투입 | Rescue Book/Event | `board_enabled` 전 stage JSON 금지 |
+| 13-18번 컬렉션 동물 | 현재 alpha 보드 미투입. 시즌 1 확장 후보는 koala(101-110) -> hamster(111-120) -> deer(121-130) -> seal(131-140) -> sheep(141-150) -> turtle(151-160) | Rescue Book/Event | `board_enabled` 전 stage JSON 금지 |
 
 ## 목표 설계 가이드
 
@@ -116,6 +116,7 @@
 8. Level 1-10에 광고/IAP/하트 소모 조건이 들어가지 않았는가?
 9. 보드 마스크가 리필 불가능한 고립 셀을 만들지 않는가?
 10. QA smoke 대상 스테이지는 수동 체크리스트에 포함되어 있는가?
+11. 13-18번 컬렉션 동물은 `board_expansion_order`와 `board_candidate_min_stage`가 있더라도 `board_enabled=false`인 동안 pool/target/weights/buddy에 들어가지 않는가?
 
 ## 데이터 필드 확장 후보
 

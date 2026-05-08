@@ -161,7 +161,8 @@ animal_{id}_worried_02.png
 
 - `scripts/gameplay.gd`의 `ANIMAL_IDS`는 MVP 보드 로스터 12종과 일치해야 한다.
 - `scripts/stage_data_validator.gd`의 유효 동물 목록은 `board_enabled == true` 동물만 허용한다.
-- 컬렉션 전용 동물은 보드 validator에 들어가기 전까지 stage JSON의 `animal_pool`에 쓰지 않는다.
+- 컬렉션 전용 동물은 보드 validator에 들어가기 전까지 stage JSON의 `animal_pool`, 목표, spawn weight, Buddy 설정에 쓰지 않는다.
+- 시즌 1 보드 확장 후보 순서는 `koala -> hamster -> deer -> seal -> sheep -> turtle`이며, 현재 alpha에서는 모두 `board_enabled=false`다.
 - `scripts/block_tile.gd`의 `set_expression()`은 알 수 없는 expression을 받으면 `idle`로 안전하게 fallback한다.
 - expression scheduler는 `is_busy == false`와 `stage_state == "playing"` 조건을 유지한다.
 

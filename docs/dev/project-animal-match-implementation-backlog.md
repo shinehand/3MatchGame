@@ -506,6 +506,25 @@
   - 레벨 데이터 수정 에이전트가 밴드별 기획 의도를 보면서 stage JSON을 조정할 수 있다.
   - 밸런스 검증이 해금 순서와 hard/recovery 파형 위반을 잡을 수 있다.
 
+### PAM-PLAN-117: Collection Animal Board Expansion Order Contract
+
+- 상태: 완료됨. `OPEN-009`를 `DEC-021`로 승격하고 13-18번 컬렉션 동물의 시즌 1 보드 투입 후보 순서를 `koala -> hamster -> deer -> seal -> sheep -> turtle`로 고정했다. `data/animals.json`은 각 후보에 `board_expansion_order`, `board_candidate_min_stage`, `board_candidate_stage_band`를 보유하지만, 현재 alpha에서는 모두 `board_enabled=false`를 유지한다. `StageDataValidator`는 이 6종이 stage JSON의 `spawn_profile.pool`, `spawn_profile.weights`, 목표, Buddy 설정에 들어가면 명시적으로 실패한다.
+- 소유: Planning Agent + Development Agent + QA Agent
+- 대상 파일:
+  - `data/animals.json`
+  - `scripts/stage_data_validator.gd`
+  - `scripts/validate_stage_data.gd`
+  - `scripts/validate_scene_loads.gd`
+  - `docs/planning/project-animal-match-decision-register.md`
+  - `docs/planning/project-animal-match-level-progression-content-bible.md`
+  - `docs/planning/project-animal-match-animal-roster-animation-matrix.md`
+  - `docs/dev/project-animal-match-technical-architecture.md`
+  - `docs/qa/project-animal-match-development-gates.md`
+- 완료 기준:
+  - `OPEN-009`가 더 이상 미결정 항목으로 남지 않는다.
+  - `validate_stage_data.sh`가 board-disabled collection animal pool/target negative fixture를 실패시킨다.
+  - scene smoke가 6개 launch collection 후보의 순서와 candidate band metadata를 검증한다.
+
 ## P7. 릴리즈 준비도
 
 ### PAM-REL-101: Android Export Identity / Release Preflight Validator

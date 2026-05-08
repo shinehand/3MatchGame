@@ -213,7 +213,7 @@
 ## Gate 11. 동물 로스터/애니메이션 에셋
 
 - MVP 보드 12종은 64px 미리보기에서 이름 없이 구분된다.
-- 13-18번 컬렉션 전용 동물은 `board_enabled` 전까지 stage JSON의 `spawn_profile.pool`에 들어가지 않는다.
+- 13-18번 컬렉션 전용 동물은 시즌 1 후보 순서 `koala -> hamster -> deer -> seal -> sheep -> turtle`와 후보 band metadata를 가지되, `board_enabled=false`인 동안 stage JSON의 `spawn_profile.pool`, `spawn_profile.weights`, 목표, Buddy 설정에 들어가면 안 된다.
 - 모든 MVP 보드 동물은 `idle`, `blink`, `smile`, `match`, `fever`, `worried` 상태를 표시하거나 fallback으로 대체된다.
 - `match` 표현은 제거 직전 우선순위가 가장 높고, `blink`나 `worried`가 이를 덮지 않는다.
 - `fever` 표현 중에도 목표 UI, 특수 배지, 이동 수 HUD가 읽힌다.

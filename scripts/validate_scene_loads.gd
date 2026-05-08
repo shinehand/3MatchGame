@@ -22,6 +22,7 @@ const SESSION_VALIDATION_SAVE_PATH := "user://scene_validation_save_game.json"
 const SESSION_VALIDATION_SAVE_FILE_NAME := "scene_validation_save_game.json"
 const SESSION_VALIDATION_ANALYTICS_QUEUE_PATH := "user://scene_validation_analytics_gateway_queue.json"
 const ANIMAL_IDS := ["rabbit", "bear", "cat", "chick", "frog", "dog", "panda", "pig", "penguin", "fox", "lion", "elephant"]
+const COLLECTION_BOARD_EXPANSION_ORDER := ["koala", "hamster", "deer", "seal", "sheep", "turtle"]
 const FIRST_SESSION_COLLECTION_UNLOCK_IDS := ["frog", "koala", "hamster"]
 const FIRST_SESSION_COLLECTION_UNLOCK_STAGES := {"frog": 4, "koala": 5, "hamster": 6}
 const ANIMAL_TEXTURE_FALLBACKS := {
@@ -4889,6 +4890,7 @@ func _validate_rescue_book_model(errors: PackedStringArray) -> void:
 		errors.append("Rescue Book expected 18 launch animal definitions, got %d." % animals.size())
 	var seen_ids := {}
 	var board_ids: Array[String] = []
+	var launch_board_candidates := {}
 	for animal in animals:
 		if not (animal is Dictionary):
 			errors.append("Rescue Book animal definition must be a dictionary.")
@@ -4902,6 +4904,8 @@ func _validate_rescue_book_model(errors: PackedStringArray) -> void:
 			errors.append("Rescue Book animal %s has invalid unlock_stage." % animal_id)
 		if bool(animal_dict.get("board_enabled", false)):
 			board_ids.append(animal_id)
+		elif String(animal_dict.get("roster_tier", "")) == "launch_collection":
+			launch_board_candidates[animal_id] = animal_dict
 		if not bool(animal_dict.get("collection_enabled", false)):
 			errors.append("Rescue Book animal %s must be collection_enabled." % animal_id)
 		if String(animal_dict.get("animation_profile", "")).is_empty():
@@ -4925,6 +4929,7 @@ func _validate_rescue_book_model(errors: PackedStringArray) -> void:
 	for animal_id in ANIMAL_IDS:
 		if not board_ids.has(animal_id):
 			errors.append("Board roster missing board_enabled animal %s." % animal_id)
+	_validate_collection_board_expansion_contract(launch_board_candidates, errors)
 
 	_validate_animation_profiles(animals, errors)
 
@@ -4946,6 +4951,27 @@ func _validate_rescue_book_model(errors: PackedStringArray) -> void:
 			errors.append("Rescue Book friendship reward %s should be earned by Lv.3." % reward_id)
 	if CollectionState.reward_entries_earned_between("rabbit", 1, 3).size() != 2:
 		errors.append("Rescue Book reward diff should return the Lv.2 and Lv.3 rabbit rewards.")
+
+
+func _validate_collection_board_expansion_contract(launch_board_candidates: Dictionary, errors: PackedStringArray) -> void:
+	if launch_board_candidates.size() != COLLECTION_BOARD_EXPANSION_ORDER.size():
+		errors.append("Collection board expansion expected %d launch_collection candidates, got %d." % [COLLECTION_BOARD_EXPANSION_ORDER.size(), launch_board_candidates.size()])
+	var previous_min_stage := 100
+	for index in range(COLLECTION_BOARD_EXPANSION_ORDER.size()):
+		var animal_id := String(COLLECTION_BOARD_EXPANSION_ORDER[index])
+		if not launch_board_candidates.has(animal_id):
+			errors.append("Collection board expansion missing ordered candidate %s." % animal_id)
+			continue
+		var animal_dict: Dictionary = Dictionary(launch_board_candidates[animal_id])
+		var expected_order := index + 1
+		if int(animal_dict.get("board_expansion_order", 0)) != expected_order:
+			errors.append("Collection board expansion %s expected order %d, got %d." % [animal_id, expected_order, int(animal_dict.get("board_expansion_order", 0))])
+		var candidate_min_stage := int(animal_dict.get("board_candidate_min_stage", 0))
+		if candidate_min_stage <= previous_min_stage:
+			errors.append("Collection board expansion %s min stage %d should be greater than %d." % [animal_id, candidate_min_stage, previous_min_stage])
+		if String(animal_dict.get("board_candidate_stage_band", "")).strip_edges().is_empty():
+			errors.append("Collection board expansion %s missing board_candidate_stage_band." % animal_id)
+		previous_min_stage = candidate_min_stage
 
 
 func _validate_animation_profiles(animals: Array, errors: PackedStringArray) -> void:

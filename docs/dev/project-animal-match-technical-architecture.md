@@ -33,7 +33,7 @@ Godot 4.x에서 모바일 매치3 퍼즐을 안정적으로 운영하기 위한 
 
 원본 JSON의 canonical 필드는 `spawn_profile.pool`과 `spawn_profile.weights`다. `StageCatalog._normalize_stage()`는 런타임에서 쓰기 쉽도록 이를 각각 `animal_pool`, `spawn_weights`로 정규화한다. 문서나 validator에서 `animal_pool`을 말할 때는 “정규화된 런타임 필드(원본: `spawn_profile.pool`)”를 뜻한다.
 
-`spawn_profile.pool`은 전체 동물 로스터가 아니라 해당 스테이지에 실제로 출현하는 활성 풀이다. MVP 보드 로스터는 12종, 글로벌 런칭 컬렉션 목표는 18종, 시즌 운영 확장 목표는 24종으로 두되, 매치 확률과 가독성을 위해 한 스테이지의 활성 풀은 기본 5-6종, 튜토리얼 구간은 4-5종까지 허용한다. 컬렉션 전용 동물은 `board_enabled == true`가 되기 전까지 stage JSON의 `spawn_profile.pool`에 넣지 않는다.
+`spawn_profile.pool`은 전체 동물 로스터가 아니라 해당 스테이지에 실제로 출현하는 활성 풀이다. MVP 보드 로스터는 12종, 글로벌 런칭 컬렉션 목표는 18종, 시즌 운영 확장 목표는 24종으로 두되, 매치 확률과 가독성을 위해 한 스테이지의 활성 풀은 기본 5-6종, 튜토리얼 구간은 4-5종까지 허용한다. 컬렉션 전용 동물은 `board_enabled == true`가 되기 전까지 stage JSON의 `spawn_profile.pool`, `spawn_profile.weights`, 목표, Buddy 설정에 넣지 않는다. 시즌 1 보드 확장 후보 순서는 `koala -> hamster -> deer -> seal -> sheep -> turtle`이며, 각 후보의 최소 band는 `data/animals.json`의 `board_candidate_min_stage`/`board_candidate_stage_band`가 기준이다.
 
 `roster_group`은 같은 밴드 안에서 사용하는 동물 출현/해금 묶음을 추적하기 위한 메타데이터다. 런타임은 `StageCatalog._normalize_stage()`에서 값을 읽고, 누락 시 밴드 기준 기본값으로 보정한다.
 
