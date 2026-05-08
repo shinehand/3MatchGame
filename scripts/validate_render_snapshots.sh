@@ -13,7 +13,7 @@ mkdir -p "$PAM_RENDER_SNAPSHOT_DIR"
 rm -f "$validation_log" "$validation_stdout"
 godot_command=(godot --quiet --audio-driver Dummy --rendering-driver opengl3 --path . --log-file "$validation_log" --script res://scripts/validate_render_snapshots.gd)
 if command -v xvfb-run >/dev/null 2>&1; then
-  godot_command=(xvfb-run -a -s "-screen 0 1280x1024x24 +extension GLX +render -noreset" godot --quiet --audio-driver Dummy --display-driver x11 --rendering-driver opengl3 --path . --log-file "$validation_log" --script res://scripts/validate_render_snapshots.gd)
+  godot_command=(xvfb-run -a -s "-screen 0 1280x1024x24 +extension GLX +render -noreset" godot --quiet --audio-driver Dummy --display-driver x11 --rendering-driver vulkan --path . --log-file "$validation_log" --script res://scripts/validate_render_snapshots.gd)
 fi
 
 if ! "${godot_command[@]}" >"$validation_stdout" 2>&1; then
