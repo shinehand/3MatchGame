@@ -165,7 +165,9 @@ var hud_pause_button: Button
 var hud_booster_dock: Control
 var hud_booster_buttons: Array[Button] = []
 var gameplay_juice_layer: Control
+var stage_intro_card: PanelContainer
 var stage_intro_label: Label
+var stage_intro_status_chip: Button
 var _prev_complete_set: Dictionary = {}
 var _last_moves_warning := -1
 var _last_worried_moves := -1
@@ -483,6 +485,7 @@ func _apply_responsive_layout() -> void:
 	overlay_primary_button.custom_minimum_size = Vector2(270, 84) if portrait else Vector2(290, 88)
 	overlay_secondary_button.add_theme_font_size_override("font_size", 26 if portrait else 28)
 	overlay_primary_button.add_theme_font_size_override("font_size", 26 if portrait else 28)
+	_layout_stage_intro_card(viewport_size)
 	stats_card.visible = not portrait
 	status_card.visible = false
 	_configure_landscape_support_card(portrait)
@@ -1169,49 +1172,124 @@ func _build_gameplay_juice_layer() -> void:
 	add_child(gameplay_juice_layer)
 	move_child(gameplay_juice_layer, overlay.get_index())
 
+	var intro_center := Control.new()
+	intro_center.name = "StageIntroCenter"
+	intro_center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	intro_center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	gameplay_juice_layer.add_child(intro_center)
+
+	stage_intro_card = PanelContainer.new()
+	stage_intro_card.name = "StageIntroCard"
+	stage_intro_card.visible = false
+	stage_intro_card.custom_minimum_size = Vector2(620, 260)
+	stage_intro_card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stage_intro_card.add_theme_stylebox_override("panel", _stage_intro_card_style())
+	intro_center.add_child(stage_intro_card)
+
+	var intro_margin := MarginContainer.new()
+	intro_margin.name = "StageIntroMargin"
+	intro_margin.add_theme_constant_override("margin_left", 44)
+	intro_margin.add_theme_constant_override("margin_top", 28)
+	intro_margin.add_theme_constant_override("margin_right", 44)
+	intro_margin.add_theme_constant_override("margin_bottom", 30)
+	stage_intro_card.add_child(intro_margin)
+
+	var intro_column := VBoxContainer.new()
+	intro_column.name = "StageIntroColumn"
+	intro_column.alignment = BoxContainer.ALIGNMENT_CENTER
+	intro_column.add_theme_constant_override("separation", 12)
+	intro_margin.add_child(intro_column)
+
 	stage_intro_label = Label.new()
 	stage_intro_label.name = "StageIntroLabel"
-	stage_intro_label.visible = false
-	stage_intro_label.set_anchors_preset(Control.PRESET_FULL_RECT)
 	stage_intro_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	stage_intro_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	stage_intro_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	stage_intro_label.add_theme_font_size_override("font_size", 58)
-	stage_intro_label.add_theme_color_override("font_color", Color(1.0, 0.92, 0.18, 1.0))
-	stage_intro_label.add_theme_color_override("font_shadow_color", Color(0.06, 0.16, 0.34, 0.78))
-	stage_intro_label.add_theme_constant_override("shadow_offset_y", 7)
+	stage_intro_label.add_theme_font_size_override("font_size", 46)
+	stage_intro_label.add_theme_color_override("font_color", Color("213a55"))
+	stage_intro_label.add_theme_color_override("font_shadow_color", Color(1.0, 0.92, 0.32, 0.72))
+	stage_intro_label.add_theme_constant_override("shadow_offset_y", 4)
 	stage_intro_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	gameplay_juice_layer.add_child(stage_intro_label)
+	intro_column.add_child(stage_intro_label)
+
+	stage_intro_status_chip = Button.new()
+	stage_intro_status_chip.name = "StageIntroStatusChip"
+	stage_intro_status_chip.disabled = true
+	stage_intro_status_chip.focus_mode = Control.FOCUS_NONE
+	stage_intro_status_chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stage_intro_status_chip.custom_minimum_size = Vector2(420, 94)
+	stage_intro_status_chip.add_theme_font_size_override("font_size", 48)
+	stage_intro_status_chip.add_theme_color_override("font_disabled_color", Color("653b08"))
+	stage_intro_status_chip.add_theme_stylebox_override("disabled", _stage_intro_status_style())
+	intro_column.add_child(stage_intro_status_chip)
+
+
+func _stage_intro_card_style() -> StyleBoxFlat:
+	var style := _hud_style(Color(1.0, 0.98, 0.88, 0.94), Color("ffbf32"), 36, 6)
+	style.shadow_color = Color(0.08, 0.14, 0.25, 0.22)
+	style.shadow_size = 18
+	style.shadow_offset = Vector2(0, 8)
+	return style
+
+
+func _stage_intro_status_style() -> StyleBoxFlat:
+	var style := _hud_style(Color("ffd858"), Color("ff7fb1"), 28, 5)
+	style.shadow_color = Color(0.10, 0.14, 0.22, 0.12)
+	style.shadow_size = 6
+	style.shadow_offset = Vector2(0, 3)
+	return style
 
 
 func _play_stage_intro() -> void:
-	if stage_intro_label == null or not is_inside_tree():
+	if stage_intro_card == null or stage_intro_label == null or stage_intro_status_chip == null or not is_inside_tree():
 		return
 
 	_animate_board_enter()
-	stage_intro_label.visible = true
-	stage_intro_label.text = "LEVEL %d\nREADY" % _current_stage_id()
-	stage_intro_label.modulate = Color(1, 1, 1, 0)
-	stage_intro_label.scale = Vector2(0.72, 0.72)
-	stage_intro_label.pivot_offset = get_viewport_rect().size * 0.5
+	var viewport_size := get_viewport_rect().size
+	_layout_stage_intro_card(viewport_size)
+	stage_intro_card.visible = true
+	stage_intro_label.text = "Level %d" % _current_stage_id()
+	stage_intro_status_chip.text = "READY"
+	stage_intro_card.modulate = Color(1, 1, 1, 0)
+	stage_intro_card.scale = Vector2(0.72, 0.72)
+	stage_intro_card.pivot_offset = stage_intro_card.size * 0.5
 
 	var tween := create_tween()
 	tween.set_trans(Tween.TRANS_BACK)
 	tween.set_ease(Tween.EASE_OUT)
-	tween.tween_property(stage_intro_label, "scale", Vector2.ONE, 0.22)
-	tween.parallel().tween_property(stage_intro_label, "modulate", Color(1, 1, 1, 1), 0.16)
+	tween.tween_property(stage_intro_card, "scale", Vector2.ONE, 0.22)
+	tween.parallel().tween_property(stage_intro_card, "modulate", Color(1, 1, 1, 1), 0.16)
 	tween.tween_interval(0.32)
 	tween.tween_callback(func() -> void:
-		stage_intro_label.text = "GO!"
-		stage_intro_label.add_theme_font_size_override("font_size", 76)
+		stage_intro_status_chip.text = "GO!"
 	)
-	tween.tween_property(stage_intro_label, "scale", Vector2(1.12, 1.12), 0.18)
-	tween.parallel().tween_property(stage_intro_label, "modulate", Color(1, 1, 1, 0), 0.18)
+	tween.tween_property(stage_intro_card, "scale", Vector2(1.08, 1.08), 0.18)
+	tween.parallel().tween_property(stage_intro_card, "modulate", Color(1, 1, 1, 0), 0.18)
 	tween.tween_callback(func() -> void:
-		stage_intro_label.visible = false
-		stage_intro_label.add_theme_font_size_override("font_size", 58)
-		stage_intro_label.scale = Vector2.ONE
+		stage_intro_card.visible = false
+		stage_intro_card.scale = Vector2.ONE
 	)
+
+
+func _layout_stage_intro_card(viewport_size: Vector2) -> void:
+	if stage_intro_card == null:
+		return
+	var portrait := viewport_size.y >= viewport_size.x
+	var card_size := Vector2(
+		clampf(viewport_size.x * (0.52 if portrait else 0.28), 620.0 if portrait else 700.0, 760.0 if portrait else 840.0),
+		clampf(viewport_size.y * (0.12 if portrait else 0.17), 250.0 if portrait else 220.0, 320.0 if portrait else 280.0)
+	)
+	stage_intro_card.custom_minimum_size = card_size
+	stage_intro_card.size = card_size
+	var target_center := viewport_size * 0.5
+	if board_frame != null and board_frame.is_inside_tree():
+		var board_rect := board_frame.get_global_rect()
+		target_center = board_rect.position + board_rect.size * 0.5
+	stage_intro_card.position = target_center - card_size * 0.5
+	if stage_intro_label:
+		stage_intro_label.add_theme_font_size_override("font_size", int(clampf(viewport_size.y * (0.018 if portrait else 0.034), 42.0 if portrait else 46.0, 54.0 if portrait else 60.0)))
+	if stage_intro_status_chip:
+		stage_intro_status_chip.custom_minimum_size = Vector2(0, clampf(viewport_size.y * (0.046 if portrait else 0.080), 92.0 if portrait else 94.0, 118.0 if portrait else 126.0))
+		stage_intro_status_chip.add_theme_font_size_override("font_size", int(clampf(viewport_size.y * (0.022 if portrait else 0.044), 48.0 if portrait else 52.0, 62.0 if portrait else 70.0)))
 
 
 func _animate_board_enter() -> void:

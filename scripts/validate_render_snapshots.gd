@@ -878,8 +878,22 @@ func _validate_collection_snapshot_regions(image: Image, node: Node, snapshot_id
 
 func _validate_stage_4_buddy_snapshot_regions(image: Image, node: Node, scenario: Dictionary, snapshot_id: String, errors: PackedStringArray) -> void:
 	var board_frame := node.get_node_or_null("SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame") as Control
+	var intro_card := node.find_child("StageIntroCard", true, false) as Control
+	var intro_label := node.find_child("StageIntroLabel", true, false) as Label
+	var intro_status := node.find_child("StageIntroStatusChip", true, false) as Button
 	_validate_control_pixels(image, board_frame, snapshot_id, "BoardFrame", errors)
 	_validate_control_within_image_bounds(board_frame, snapshot_id, "BoardFrame", errors)
+	_validate_control_pixels(image, intro_card, snapshot_id, "StageIntroCard", errors)
+	_validate_control_pixels(image, intro_label, snapshot_id, "StageIntroLabel", errors)
+	_validate_control_pixels(image, intro_status, snapshot_id, "StageIntroStatusChip", errors)
+	_validate_control_within_image_bounds(intro_card, snapshot_id, "StageIntroCard", errors)
+	_validate_control_within_image_bounds(intro_status, snapshot_id, "StageIntroStatusChip", errors)
+	_validate_control_image_minimum_size(image, intro_card, snapshot_id, "StageIntroCard", Vector2(float(image.get_width()) * (0.34 if image.get_height() >= image.get_width() else 0.15), float(image.get_height()) * (0.070 if image.get_height() >= image.get_width() else 0.070)), errors)
+	_validate_control_image_maximum_height(image, intro_card, snapshot_id, "StageIntroCard", float(image.get_height()) * 0.18, errors)
+	if intro_label == null or not intro_label.text.contains("Level"):
+		errors.append("%s StageIntroLabel should show a Level title instead of raw all-caps overlay copy." % snapshot_id)
+	if intro_status == null or not ["READY", "GO!"].has(intro_status.text):
+		errors.append("%s StageIntroStatusChip should show READY or GO!, got %s." % [snapshot_id, "" if intro_status == null else intro_status.text])
 
 	if image.get_height() >= image.get_width():
 		var goal_dock := node.find_child("HudGoalDock", true, false) as Control

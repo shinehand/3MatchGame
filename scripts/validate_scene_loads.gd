@@ -453,6 +453,21 @@ func _validate_gameplay_viewport_layout(node: Node, viewport_size: Vector2i, err
 	var portrait := viewport_size.y >= viewport_size.x
 	var board_frame := node.get_node_or_null("SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame") as Control
 	_validate_control_in_viewport(board_frame, viewport_size, GAMEPLAY_SCENE_PATH, "BoardFrame", errors)
+	var intro_card := node.find_child("StageIntroCard", true, false) as Control
+	var intro_label := node.find_child("StageIntroLabel", true, false) as Label
+	var intro_status := node.find_child("StageIntroStatusChip", true, false) as Button
+	for intro_info in [[intro_card, "StageIntroCard"], [intro_label, "StageIntroLabel"], [intro_status, "StageIntroStatusChip"]]:
+		var intro_control := intro_info[0] as Control
+		var intro_name := String(intro_info[1])
+		if intro_control != null and intro_control.is_visible_in_tree():
+			_validate_control_in_viewport(intro_control, viewport_size, GAMEPLAY_SCENE_PATH, intro_name, errors)
+	if intro_card != null and intro_card.is_visible_in_tree():
+		var intro_rect := intro_card.get_global_rect()
+		var max_intro_height := float(viewport_size.y) * 0.19
+		if intro_rect.size.y > max_intro_height:
+			errors.append("%s StageIntroCard should be a compact commercial start badge at %s, got height %.1f above %.1f." % [GAMEPLAY_SCENE_PATH, viewport_size, intro_rect.size.y, max_intro_height])
+	if intro_label != null and intro_label.text.contains("\n"):
+		errors.append("%s StageIntroLabel should not use raw multi-line LEVEL/READY copy at %s." % [GAMEPLAY_SCENE_PATH, viewport_size])
 	if board_frame != null:
 		var board_rect := board_frame.get_global_rect()
 		var min_expected_board_side: float = min(float(viewport_size.x), float(viewport_size.y)) * 0.46
@@ -1892,9 +1907,11 @@ func _validate_gameplay_scene(node: Node, errors: PackedStringArray) -> void:
 	var juice_layer := node.get_node_or_null("GameplayJuiceLayer") as CanvasItem
 	if juice_layer == null:
 		errors.append("%s is missing the top-level gameplay juice layer." % GAMEPLAY_SCENE_PATH)
-	var intro_label := node.get_node_or_null("GameplayJuiceLayer/StageIntroLabel") as Label
-	if intro_label == null:
-		errors.append("%s is missing the READY/GO stage intro label." % GAMEPLAY_SCENE_PATH)
+	var intro_card := node.find_child("StageIntroCard", true, false) as PanelContainer
+	var intro_label := node.find_child("StageIntroLabel", true, false) as Label
+	var intro_status := node.find_child("StageIntroStatusChip", true, false) as Button
+	if intro_card == null or intro_label == null or intro_status == null:
+		errors.append("%s is missing the commercial READY/GO stage intro card." % GAMEPLAY_SCENE_PATH)
 
 	var gameplay_hud_layer := node.get_node_or_null("GameplayHudLayer") as CanvasItem
 	if gameplay_hud_layer == null:

@@ -29,7 +29,7 @@
 - Stage Select World Map/Progress snapshot은 Stage 1-3 클리어, Stage 4 current, Stage 5 locked fixture에서 current ring/PLAY ribbon, cleared star tray, locked badge, finale ribbon, 하단 선택 패널 비겹침, `WorldSelectedChipRow`의 목표/이동/보상 chip 텍스트와 PNG 최소 크기를 검증한다.
 - Stage 1 성공 결과 snapshot은 보상/별/Zoo-Zoo Time/`OverlayChipGrid` 보상 칩/`다음 스테이지`/`홈으로` CTA, panel/mascot/chip/CTA PNG 최소 크기, `stage_complete` analytics, Stage 2 해금을 검증한다.
 - Stage 25 실패 snapshot은 near-miss 본문, 목표/핵심/다음 action chip, `+3 이동 받고 계속`/`재도전` CTA, panel/mascot/chip/CTA PNG 최소 크기를 검증한다.
-- Stage 4 Buddy HUD snapshot은 0/3, 2/3, 출동, 완료 상태에서 portrait 라벨/게이지와 landscape `LandscapeHudShell`/combo text가 읽히고, shell이 실제 PNG 너비의 20% 이상을 확보하며, `BoardFrame`과 `LandscapeHudShell` 사이 gap이 실제 PNG 너비의 14% 이하로 유지되고, `LandscapeSupportCard`와 landscape action CTA가 실제 PNG에 렌더되며, `buddy_skill_charge`/`buddy_skill_ready`/`buddy_skill_trigger` analytics payload가 중복 없이 기록되는지 검증한다.
+- Stage 4 Buddy HUD snapshot은 0/3, 2/3, 출동, 완료 상태에서 portrait 라벨/게이지, `StageIntroCard`/READY chip, landscape `LandscapeHudShell`/combo text가 읽히고, shell이 실제 PNG 너비의 20% 이상을 확보하며, `BoardFrame`과 `LandscapeHudShell` 사이 gap이 실제 PNG 너비의 14% 이하로 유지되고, `LandscapeSupportCard`와 landscape action CTA가 실제 PNG에 렌더되며, `buddy_skill_charge`/`buddy_skill_ready`/`buddy_skill_trigger` analytics payload가 중복 없이 기록되는지 검증한다.
 - Stage 31 특수 조합 snapshot은 실제 `_resolve_swap` 발동 직후 조합별 label/flash/ring, explosive echo ring 필요 여부, filename combo type, `special_combo_trigger` analytics payload, transient VFX cleanup을 검증한다.
 - Collection snapshot은 `rabbit` 40토큰과 `rabbit_sprout_frame` 장착 fixture에서 compact `CollectionHeaderPanel`/`CosmeticEquipGrid`, 상세 reward track, `장착중` 버튼 region, `rabbit` 카드와 `AnimalPreview`, locked dog 카드/preview/status의 PNG 최소 크기와 `Stage 7 해금` 문구를 검증한다.
 - GitHub-hosted runner에서는 Xvfb renderer 실패가 전체 no-device gate를 막지 않도록 non-blocking artifact attempt로만 실행하며, 로컬 또는 지원되는 Xvfb 환경에서는 blocking으로 실행한다.
@@ -46,6 +46,7 @@
 - Stage Select World Map의 `WorldSelectedPanel`은 빈 흰 tray처럼 보이면 안 되며, 선택 스테이지 제목, 목표/이동/보상 chip, `PLAY` CTA가 panel 안에서 겹치지 않고 함께 렌더되어야 한다.
 - Collection portrait는 2열 앨범 카드로 읽혀야 하며, header/cosmetic reward action은 표처럼 길어지지 않는 compact ribbon이어야 한다. Landscape는 얇은 표처럼 눌리지 않고 6열 앨범 카드 그리드로 유지되어야 한다. Scene smoke가 portrait/landscape column 수, 첫 카드 높이, 동물 preview 크기, cosmetic ribbon 높이를 검증한다.
 - Gameplay portrait는 `HudTopDock`, `HudGoalDock`, `HudBoosterDock`이 BoardFrame과 겹치지 않아야 하고, landscape `LandscapeHudShell`은 BoardFrame과 겹치지 않는 하나의 compact HUD 패널이어야 하며, 실제 render snapshot에서도 얇은 debug rail, 비어 있는 하단 패널, 또는 BoardFrame과 멀리 떨어진 별도 섬처럼 보이면 안 된다. Landscape action CTA는 shell 안에서 commercial touch target을 유지해야 한다. Landscape BoardFrame은 빈 tray처럼 과신장되면 안 된다.
+- Gameplay 시작 연출은 `StageIntroCard`와 READY/GO chip이 있는 compact start badge여야 하며, raw multi-line `LEVEL/READY` text overlay나 landscape HUD 침범으로 돌아가면 실패한다.
 - 결과/실패 overlay는 보상/다음 행동 또는 실패 원인/다음 한 수 중심으로 6개 이하의 visible line을 유지하고, 보상/목표/핵심/다음 행동은 `OverlayChipGrid` 칩으로 분리되어 debug log처럼 과밀해지지 않아야 한다.
 - 이 gate는 논리 px 기반 no-device 회귀 방지용이며, 실제 Android 물리 터치감과 색감은 최종 device evidence에서 별도 승인한다.
 

@@ -649,6 +649,7 @@
 - 소유: Art Agent + Development Agent + QA Agent
 - 대상 파일:
   - `scripts/gameplay.gd`
+  - `scripts/validate_gameplay.sh`
   - `scripts/validate_scene_loads.gd`
   - `docs/dev/validation-process.md`
   - `docs/qa/project-animal-match-development-gates.md`
@@ -889,9 +890,25 @@
   - 하단 선택 패널의 info column과 `WorldPlayButton`이 겹치지 않고, `PLAY` CTA가 primary 위계를 유지한다.
   - `validate_gameplay.sh`와 render snapshot smoke 40개가 통과한다.
 
+### PAM-UX-130: Gameplay Stage Intro Start Card Polish
+
+- 상태: 완료됨. Gameplay 시작 연출이 보드 위에 `LEVEL/READY` 대문자 텍스트만 떠서 개발용 라벨처럼 보이던 문제를 줄였다. `GameplayJuiceLayer`에 `StageIntroCard`를 만들고 `Level N` 제목과 `StageIntroStatusChip` READY/GO chip을 카드 안에 배치했으며, landscape에서는 화면 중앙이 아니라 `BoardFrame` 중심에 맞춰 우측 HUD를 침범하지 않게 했다. Render snapshot은 Stage 4 Buddy 4상태 portrait/landscape에서 intro card/label/chip 픽셀, 크기, 텍스트를 검증하고, scene smoke는 viewport matrix에서 multi-line raw intro copy와 과대 카드 높이를 차단한다.
+- 소유: Art Agent + Development Agent + QA Agent
+- 대상 파일:
+  - `scripts/gameplay.gd`
+  - `scripts/validate_scene_loads.gd`
+  - `scripts/validate_render_snapshots.gd`
+  - `docs/dev/validation-process.md`
+  - `docs/qa/project-animal-match-development-gates.md`
+  - `docs/dev/project-animal-match-implementation-backlog.md`
+- 완료 기준:
+  - Stage 4 Buddy snapshot에서 `StageIntroCard`, `StageIntroLabel`, `StageIntroStatusChip`이 실제 PNG에 렌더된다.
+  - Landscape gameplay intro card가 `BoardFrame` 중심에 있고 `LandscapeHudShell`을 침범하지 않는다.
+  - `validate_gameplay.sh`와 render snapshot smoke 40개가 통과한다.
+
 ## 추천 구현 순서
 
-완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-058`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`, `PAM-UX-114`, `PAM-UX-115`, `PAM-UX-116`, `PAM-LIVEOPS-118`, `PAM-UX-119`, `PAM-UX-120`, `PAM-UX-121`, `PAM-UX-122`, `PAM-UX-123`, `PAM-UX-124`, `PAM-UX-125`, `PAM-UX-126`, `PAM-UX-127`, `PAM-UX-128`, `PAM-UX-129`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
+완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-058`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`, `PAM-UX-114`, `PAM-UX-115`, `PAM-UX-116`, `PAM-LIVEOPS-118`, `PAM-UX-119`, `PAM-UX-120`, `PAM-UX-121`, `PAM-UX-122`, `PAM-UX-123`, `PAM-UX-124`, `PAM-UX-125`, `PAM-UX-126`, `PAM-UX-127`, `PAM-UX-128`, `PAM-UX-129`, `PAM-UX-130`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
 
 다음 고가치 순서:
 
