@@ -539,7 +539,7 @@
 
 ### PAM-QA-104: No-device Render Snapshot Smoke
 
-- 상태: 완료됨. `scripts/validate_render_snapshots.gd`/`.sh`가 Home, Stage Popup, Stage 4 Gameplay HUD, Stage 1 성공 결과 overlay, Stage 25 실패 overlay, Stage 31 특수 조합 6종, Collection을 `390x844`와 `844x390` PNG 24장으로 저장하고 파일 크기, viewport 크기, non-blank/varied pixel, 핵심 UI region 렌더 픽셀을 검증한다. Stage 1 성공 스냅샷은 실제 클리어 후 보상/별/Zoo-Zoo Time/다음 CTA/홈 CTA와 `stage_complete`/Stage 2 해금을 확인한다. Stage 31 조합 스냅샷은 실제 `_resolve_swap`을 시작한 직후 조합별 label/flash/ring 픽셀, echo ring 필요 여부, filename combo type, `special_combo_trigger` analytics payload, transient VFX cleanup을 함께 확인한다. 로컬 또는 지원되는 Xvfb 환경에서는 blocking으로 실행하고, GitHub-hosted no-device CI는 Xvfb renderer 실패가 전체 gate를 막지 않도록 non-blocking artifact attempt로 실행한다.
+- 상태: 완료됨. `scripts/validate_render_snapshots.gd`/`.sh`가 Home, Stage Popup, Stage 4 Gameplay Buddy HUD 4상태, Stage 1 성공 결과 overlay, Stage 25 실패 overlay, Stage 31 특수 조합 6종, Collection을 `390x844`와 `844x390` PNG 30장으로 저장하고 파일 크기, viewport 크기, non-blank/varied pixel, 핵심 UI region 렌더 픽셀을 검증한다. Stage 4 Buddy 스냅샷은 0/3, 2/3, 출동, 완료 상태의 라벨/게이지/landscape combo text와 `buddy_skill_charge`/`buddy_skill_ready`/`buddy_skill_trigger` payload를 확인한다. Stage 1 성공 스냅샷은 실제 클리어 후 보상/별/Zoo-Zoo Time/다음 CTA/홈 CTA와 `stage_complete`/Stage 2 해금을 확인한다. Stage 31 조합 스냅샷은 실제 `_resolve_swap`을 시작한 직후 조합별 label/flash/ring 픽셀, echo ring 필요 여부, filename combo type, `special_combo_trigger` analytics payload, transient VFX cleanup을 함께 확인한다. 로컬 또는 지원되는 Xvfb 환경에서는 blocking으로 실행하고, GitHub-hosted no-device CI는 Xvfb renderer 실패가 전체 gate를 막지 않도록 non-blocking artifact attempt로 실행한다.
 - 소유: QA Agent + Development Agent
 - 대상 파일:
   - `scripts/validate_render_snapshots.gd`

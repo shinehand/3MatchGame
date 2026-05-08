@@ -14,7 +14,10 @@ const SNAPSHOT_VIEWPORTS := [
 const SCENARIOS := [
 	{"id": "home", "scene": MAIN_SCENE_PATH, "setup": "home"},
 	{"id": "stage_popup", "scene": STAGE_SELECT_SCENE_PATH, "setup": "stage_popup"},
-	{"id": "gameplay_stage4", "scene": GAMEPLAY_SCENE_PATH, "setup": "gameplay_stage4"},
+	{"id": "gameplay_stage4_buddy_initial", "scene": GAMEPLAY_SCENE_PATH, "setup": "gameplay_stage4", "buddy_state": "initial", "buddy_charges": 0},
+	{"id": "gameplay_stage4_buddy_charged", "scene": GAMEPLAY_SCENE_PATH, "setup": "gameplay_stage4", "buddy_state": "charged", "buddy_charges": 2},
+	{"id": "gameplay_stage4_buddy_ready", "scene": GAMEPLAY_SCENE_PATH, "setup": "gameplay_stage4", "buddy_state": "ready", "buddy_charges": 3},
+	{"id": "gameplay_stage4_buddy_complete", "scene": GAMEPLAY_SCENE_PATH, "setup": "gameplay_stage4", "buddy_state": "complete", "buddy_charges": 3, "trigger_buddy": true},
 	{"id": "gameplay_stage1_success", "scene": GAMEPLAY_SCENE_PATH, "setup": "gameplay_stage1_success"},
 	{"id": "gameplay_stage25_failure", "scene": GAMEPLAY_SCENE_PATH, "setup": "gameplay_stage25_failure"},
 	{
@@ -233,7 +236,7 @@ func _apply_scenario_setup(node: Node, scenario: Dictionary, errors: PackedStrin
 			node.call("_show_stage_popup", 4)
 			await create_timer(0.28).timeout
 		"gameplay_stage4":
-			await _start_gameplay_stage(node, 3, errors)
+			await _prepare_stage_4_buddy_state(node, scenario, errors)
 		"gameplay_stage1_success":
 			await _prepare_stage_1_success(node, errors)
 		"gameplay_stage25_failure":
@@ -250,6 +253,59 @@ func _start_gameplay_stage(node: Node, stage_index: int, errors: PackedStringArr
 		return
 	node.call("_start_stage", stage_index)
 	await create_timer(0.18).timeout
+
+
+func _prepare_stage_4_buddy_state(node: Node, scenario: Dictionary, errors: PackedStringArray) -> void:
+	for method_name in ["_start_stage", "_charge_buddy_skill_for_match", "_trigger_buddy_skill", "_update_hud"]:
+		if not node.has_method(method_name):
+			errors.append("%s should expose %s for Stage 4 Buddy HUD render snapshot." % [GAMEPLAY_SCENE_PATH, method_name])
+			return
+	await _start_gameplay_stage(node, 3, errors)
+
+	var charge_count := int(scenario.get("buddy_charges", 0))
+	for _index in range(charge_count):
+		node.call("_charge_buddy_skill_for_match", "rabbit")
+
+	if bool(scenario.get("trigger_buddy", false)):
+		_ensure_stage_4_quick_refill_candidate(node, errors)
+		node.call("_trigger_buddy_skill")
+
+	node.call("_update_hud")
+	await _settle_scene(node, 3)
+
+
+func _ensure_stage_4_quick_refill_candidate(node: Node, errors: PackedStringArray) -> void:
+	if not node.has_method("_make_piece") or not node.has_method("_refresh_tile"):
+		errors.append("%s should expose board helpers for Stage 4 Buddy complete render snapshot." % GAMEPLAY_SCENE_PATH)
+		return
+	var board_data_value = node.get("board_data")
+	var active_mask_value = node.get("active_mask")
+	if not (board_data_value is Array) or not (active_mask_value is Array):
+		errors.append("%s Stage 4 Buddy render snapshot could not inspect board arrays." % GAMEPLAY_SCENE_PATH)
+		return
+
+	var board_data: Array = board_data_value
+	var active_mask: Array = active_mask_value
+	var replacement_cell := Vector2i(-1, -1)
+	for row in range(board_data.size()):
+		if not (board_data[row] is Array) or not (active_mask[row] is Array):
+			continue
+		for col in range((board_data[row] as Array).size()):
+			if col >= (active_mask[row] as Array).size() or not bool(active_mask[row][col]):
+				continue
+			var piece := String(board_data[row][col])
+			if piece.is_empty() or piece.contains("|"):
+				continue
+			if piece != "rabbit":
+				return
+			if replacement_cell.x < 0:
+				replacement_cell = Vector2i(row, col)
+	if replacement_cell.x < 0:
+		errors.append("%s Stage 4 Buddy render snapshot could not find an active cell for quick_refill." % GAMEPLAY_SCENE_PATH)
+		return
+	board_data[replacement_cell.x][replacement_cell.y] = node.call("_make_piece", "bear")
+	node.set("board_data", board_data)
+	node.call("_refresh_tile", replacement_cell.x, replacement_cell.y)
 
 
 func _prepare_stage_25_failure(node: Node, errors: PackedStringArray) -> void:
@@ -430,14 +486,7 @@ func _validate_scenario_regions(image: Image, node: Node, scenario: Dictionary, 
 			_validate_control_pixels(image, _find_button_with_text(node, "START"), snapshot_id, "StagePopupStartButton", errors)
 			_validate_control_pixels(image, node.get("stage_popup_buddy_label") as Control, snapshot_id, "StagePopupBuddyLabel", errors)
 		"gameplay_stage4":
-			_validate_control_pixels(image, node.get_node_or_null("SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame") as Control, snapshot_id, "BoardFrame", errors)
-			if image.get_height() >= image.get_width():
-				_validate_control_pixels(image, node.find_child("HudGoalDock", true, false) as Control, snapshot_id, "HudGoalDock", errors)
-				_validate_control_pixels(image, node.find_child("HudBoosterDock", true, false) as Control, snapshot_id, "HudBoosterDock", errors)
-				_validate_control_pixels(image, node.find_child("HudBuddyGauge", true, false) as Control, snapshot_id, "HudBuddyGauge", errors)
-			else:
-				_validate_control_pixels(image, node.find_child("StatsCard", true, false) as Control, snapshot_id, "StatsCard", errors)
-				_validate_control_pixels(image, node.find_child("GoalCard", true, false) as Control, snapshot_id, "GoalCard", errors)
+			_validate_stage_4_buddy_snapshot_regions(image, node, scenario, snapshot_id, errors)
 		"gameplay_stage1_success":
 			_validate_result_overlay_snapshot_regions(image, node, snapshot_id, errors)
 		"gameplay_stage25_failure":
@@ -450,6 +499,140 @@ func _validate_scenario_regions(image: Image, node: Node, scenario: Dictionary, 
 		"collection":
 			_validate_control_pixels(image, node.find_child("CollectionGrid", true, false) as Control, snapshot_id, "CollectionGrid", errors)
 			_validate_control_pixels(image, node.find_child("SummaryLabel", true, false) as Control, snapshot_id, "SummaryLabel", errors)
+
+
+func _validate_stage_4_buddy_snapshot_regions(image: Image, node: Node, scenario: Dictionary, snapshot_id: String, errors: PackedStringArray) -> void:
+	var board_frame := node.get_node_or_null("SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame") as Control
+	_validate_control_pixels(image, board_frame, snapshot_id, "BoardFrame", errors)
+	_validate_control_within_image_bounds(board_frame, snapshot_id, "BoardFrame", errors)
+
+	if image.get_height() >= image.get_width():
+		var goal_dock := node.find_child("HudGoalDock", true, false) as Control
+		var booster_dock := node.find_child("HudBoosterDock", true, false) as Control
+		var buddy_row := node.find_child("HudBuddyRow", true, false) as Control
+		var buddy_label := node.get("hud_buddy_label") as Label
+		var buddy_gauge := node.get("hud_buddy_gauge") as ProgressBar
+		for control_info in [[goal_dock, "HudGoalDock"], [booster_dock, "HudBoosterDock"], [buddy_row, "HudBuddyRow"], [buddy_label, "HudBuddyLabel"], [buddy_gauge, "HudBuddyGauge"]]:
+			var control := control_info[0] as Control
+			var label := String(control_info[1])
+			_validate_control_pixels(image, control, snapshot_id, label, errors)
+			_validate_control_within_image_bounds(control, snapshot_id, label, errors)
+		_validate_controls_do_not_overlap(goal_dock, board_frame, snapshot_id, "HudGoalDock", "BoardFrame", errors)
+		_validate_controls_do_not_overlap(booster_dock, board_frame, snapshot_id, "HudBoosterDock", "BoardFrame", errors)
+	else:
+		var stats_card := node.find_child("StatsCard", true, false) as Control
+		var goal_card := node.find_child("GoalCard", true, false) as Control
+		var combo_value := node.get("combo_value") as Label
+		var combo_gauge := node.get("combo_gauge") as ProgressBar
+		for control_info in [[stats_card, "StatsCard"], [goal_card, "GoalCard"], [combo_value, "ComboValue"], [combo_gauge, "ComboGauge"]]:
+			var control := control_info[0] as Control
+			var label := String(control_info[1])
+			_validate_control_pixels(image, control, snapshot_id, label, errors)
+			_validate_control_within_image_bounds(control, snapshot_id, label, errors)
+		_validate_controls_do_not_overlap(stats_card, board_frame, snapshot_id, "StatsCard", "BoardFrame", errors)
+		_validate_controls_do_not_overlap(goal_card, board_frame, snapshot_id, "GoalCard", "BoardFrame", errors)
+
+	_validate_stage_4_buddy_state(node, scenario, snapshot_id, errors)
+	_validate_stage_4_buddy_analytics(scenario, snapshot_id, errors)
+
+
+func _validate_stage_4_buddy_state(node: Node, scenario: Dictionary, snapshot_id: String, errors: PackedStringArray) -> void:
+	var buddy_state := String(scenario.get("buddy_state", "initial"))
+	var buddy_label := node.get("hud_buddy_label") as Label
+	var buddy_gauge := node.get("hud_buddy_gauge") as ProgressBar
+	var combo_value := node.get("combo_value") as Label
+	if buddy_label == null or buddy_gauge == null:
+		errors.append("%s should expose Stage 4 Buddy HUD label and gauge." % snapshot_id)
+		return
+	if String(node.get("stage_state")) != "playing":
+		errors.append("%s Stage 4 Buddy HUD snapshot should stay in playing state, got %s." % [snapshot_id, String(node.get("stage_state"))])
+	if not buddy_label.visible or not buddy_gauge.visible:
+		errors.append("%s Stage 4 Buddy HUD label and gauge should be visible." % snapshot_id)
+	if not buddy_label.text.contains("토끼"):
+		errors.append("%s Stage 4 Buddy HUD should identify rabbit as 토끼, got %s." % [snapshot_id, buddy_label.text])
+
+	var expected_label_text := ""
+	var expected_combo_text := ""
+	var expected_gauge_value := 0
+	var expected_charge_count := 0
+	var expected_pending := false
+	var expected_uses := 0
+	match buddy_state:
+		"charged":
+			expected_label_text = "2/3"
+			expected_combo_text = "Buddy 2/3"
+			expected_gauge_value = 2
+			expected_charge_count = 2
+		"ready":
+			expected_label_text = "출동"
+			expected_combo_text = "Buddy 3/3"
+			expected_gauge_value = 3
+			expected_charge_count = 3
+			expected_pending = true
+		"complete":
+			expected_label_text = "완료"
+			expected_combo_text = "Buddy 완료"
+			expected_gauge_value = 3
+			expected_uses = 1
+		_:
+			expected_label_text = "0/3"
+			expected_combo_text = "Buddy 0/3"
+
+	if not buddy_label.text.contains(expected_label_text):
+		errors.append("%s Stage 4 Buddy HUD state %s should show %s, got %s." % [snapshot_id, buddy_state, expected_label_text, buddy_label.text])
+	if int(buddy_gauge.max_value) != 3 or int(buddy_gauge.value) != expected_gauge_value:
+		errors.append("%s Stage 4 Buddy gauge state %s should be %d/3, got %d/%d." % [snapshot_id, buddy_state, expected_gauge_value, int(buddy_gauge.value), int(buddy_gauge.max_value)])
+	if combo_value == null or not combo_value.text.contains(expected_combo_text):
+		errors.append("%s Stage 4 landscape combo text should preserve %s, got %s." % [snapshot_id, expected_combo_text, "" if combo_value == null else combo_value.text])
+	if int(node.get("buddy_charge_count")) != expected_charge_count:
+		errors.append("%s Stage 4 Buddy internal charge for %s should be %d, got %d." % [snapshot_id, buddy_state, expected_charge_count, int(node.get("buddy_charge_count"))])
+	if bool(node.get("buddy_trigger_pending")) != expected_pending:
+		errors.append("%s Stage 4 Buddy pending flag for %s should be %s." % [snapshot_id, buddy_state, str(expected_pending)])
+	if int(node.get("buddy_uses")) != expected_uses:
+		errors.append("%s Stage 4 Buddy uses for %s should be %d, got %d." % [snapshot_id, buddy_state, expected_uses, int(node.get("buddy_uses"))])
+
+
+func _validate_stage_4_buddy_analytics(scenario: Dictionary, snapshot_id: String, errors: PackedStringArray) -> void:
+	var buddy_state := String(scenario.get("buddy_state", "initial"))
+	var expected_charge_events := 0
+	var expected_ready_events := 0
+	var expected_trigger_events := 0
+	var expected_last_charge := 0
+	match buddy_state:
+		"charged":
+			expected_charge_events = 2
+			expected_last_charge = 2
+		"ready":
+			expected_charge_events = 3
+			expected_ready_events = 1
+			expected_last_charge = 3
+		"complete":
+			expected_charge_events = 3
+			expected_ready_events = 1
+			expected_trigger_events = 1
+			expected_last_charge = 3
+
+	if _analytics_event_count("buddy_skill_charge") != expected_charge_events:
+		errors.append("%s Stage 4 Buddy state %s should emit %d charge events, got %d." % [snapshot_id, buddy_state, expected_charge_events, _analytics_event_count("buddy_skill_charge")])
+	if _analytics_event_count("buddy_skill_ready") != expected_ready_events:
+		errors.append("%s Stage 4 Buddy state %s should emit %d ready events, got %d." % [snapshot_id, buddy_state, expected_ready_events, _analytics_event_count("buddy_skill_ready")])
+	if _analytics_event_count("buddy_skill_trigger") != expected_trigger_events:
+		errors.append("%s Stage 4 Buddy state %s should emit %d trigger events, got %d." % [snapshot_id, buddy_state, expected_trigger_events, _analytics_event_count("buddy_skill_trigger")])
+
+	if expected_last_charge > 0:
+		var charge_params := _last_analytics_event_params("buddy_skill_charge")
+		if int(charge_params.get("stage_id", 0)) != 4 or String(charge_params.get("animal_id", "")) != "rabbit" or String(charge_params.get("skill_id", "")) != "quick_refill":
+			errors.append("%s Stage 4 Buddy charge analytics should identify rabbit quick_refill." % snapshot_id)
+		if int(charge_params.get("charge_count", 0)) != expected_last_charge:
+			errors.append("%s Stage 4 Buddy charge analytics should end at %d, got %d." % [snapshot_id, expected_last_charge, int(charge_params.get("charge_count", 0))])
+	if expected_ready_events > 0:
+		var ready_params := _last_analytics_event_params("buddy_skill_ready")
+		if int(ready_params.get("stage_id", 0)) != 4 or String(ready_params.get("animal_id", "")) != "rabbit" or String(ready_params.get("skill_id", "")) != "quick_refill":
+			errors.append("%s Stage 4 Buddy ready analytics should identify rabbit quick_refill." % snapshot_id)
+	if expected_trigger_events > 0:
+		var trigger_params := _last_analytics_event_params("buddy_skill_trigger")
+		if int(trigger_params.get("stage_id", 0)) != 4 or String(trigger_params.get("animal_id", "")) != "rabbit" or String(trigger_params.get("effect_type", "")) != "quick_refill":
+			errors.append("%s Stage 4 Buddy trigger analytics should identify rabbit quick_refill." % snapshot_id)
 
 
 func _validate_result_overlay_snapshot_regions(image: Image, node: Node, snapshot_id: String, errors: PackedStringArray) -> void:
@@ -575,6 +758,19 @@ func _validate_control_within_image_bounds(control: Control, snapshot_id: String
 	var viewport_size := root.get_visible_rect().size
 	if rect.position.x < -1.0 or rect.position.y < -1.0 or rect.position.x + rect.size.x > viewport_size.x + 1.0 or rect.position.y + rect.size.y > viewport_size.y + 1.0:
 		errors.append("%s control region %s should fit inside viewport bounds, got %s in %s." % [snapshot_id, label, rect, viewport_size])
+
+
+func _validate_controls_do_not_overlap(a: Control, b: Control, snapshot_id: String, a_label: String, b_label: String, errors: PackedStringArray) -> void:
+	if a == null or b == null:
+		return
+	if not a.is_visible_in_tree() or not b.is_visible_in_tree():
+		return
+	var a_rect := a.get_global_rect()
+	var b_rect := b.get_global_rect()
+	var overlap_width := minf(a_rect.position.x + a_rect.size.x, b_rect.position.x + b_rect.size.x) - maxf(a_rect.position.x, b_rect.position.x)
+	var overlap_height := minf(a_rect.position.y + a_rect.size.y, b_rect.position.y + b_rect.size.y) - maxf(a_rect.position.y, b_rect.position.y)
+	if overlap_width > 1.0 and overlap_height > 1.0:
+		errors.append("%s control regions %s and %s should not overlap, overlap %.1fx%.1f." % [snapshot_id, a_label, b_label, overlap_width, overlap_height])
 
 
 func _validate_canvas_item_alpha(node: CanvasItem, snapshot_id: String, label: String, min_alpha: float, errors: PackedStringArray) -> void:

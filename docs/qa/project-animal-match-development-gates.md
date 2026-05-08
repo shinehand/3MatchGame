@@ -22,9 +22,10 @@
 
 ## Gate 0B. No-device Render Snapshot Smoke
 
-- `zsh scripts/validate_render_snapshots.sh`는 Home, Stage Popup, Stage 4 Gameplay HUD, Stage 1 성공 결과 overlay, Stage 25 실패 overlay, Stage 31 특수 조합 6종, Collection을 `390x844`와 `844x390` PNG 24장으로 저장한다.
+- `zsh scripts/validate_render_snapshots.sh`는 Home, Stage Popup, Stage 4 Gameplay Buddy HUD 4상태, Stage 1 성공 결과 overlay, Stage 25 실패 overlay, Stage 31 특수 조합 6종, Collection을 `390x844`와 `844x390` PNG 30장으로 저장한다.
 - 각 snapshot은 파일 생성, 요청 viewport 크기, non-blank/varied pixel, 핵심 UI region의 실제 렌더 픽셀을 검증한다.
 - Stage 1 성공 결과 snapshot은 보상/별/Zoo-Zoo Time/`다음 스테이지`/`홈으로` CTA, `stage_complete` analytics, Stage 2 해금을 검증한다.
+- Stage 4 Buddy HUD snapshot은 0/3, 2/3, 출동, 완료 상태에서 portrait 라벨/게이지와 landscape combo text가 읽히고, `buddy_skill_charge`/`buddy_skill_ready`/`buddy_skill_trigger` analytics payload가 중복 없이 기록되는지 검증한다.
 - Stage 31 특수 조합 snapshot은 실제 `_resolve_swap` 발동 직후 조합별 label/flash/ring, explosive echo ring 필요 여부, filename combo type, `special_combo_trigger` analytics payload, transient VFX cleanup을 검증한다.
 - GitHub-hosted runner에서는 Xvfb renderer 실패가 전체 no-device gate를 막지 않도록 non-blocking artifact attempt로만 실행하며, 로컬 또는 지원되는 Xvfb 환경에서는 blocking으로 실행한다.
 - 이 gate는 blank/transparent/offscreen/missing texture 회귀를 차단하지만, 최종 Android 실기기 screenshot/video/logcat evidence를 대체하지 않는다.
