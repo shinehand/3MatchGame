@@ -17,7 +17,7 @@
 ## Gate 0A. Alpha QA Report Validator Contract
 
 - `zsh scripts/validate_alpha_qa_report_contract.sh`는 임시 PASS report/evidence fixture가 `validate_alpha_qa_report.sh`를 통과하는지 검증한다.
-- 같은 contract smoke는 `Pending`/`Blocked` 잔존, evidence 누락/빈 파일, 현재 HEAD와 다른 build commit, Android device evidence `BLOCKED`, release install `NOT_REQUESTED` fixture가 반드시 실패하는지도 검증한다.
+- 같은 contract smoke는 `Pending`/`Blocked` 잔존, evidence 누락/빈 파일, Rescue Book cosmetic equip 필수 행 삭제, 현재 HEAD와 다른 build commit, Android device evidence `BLOCKED`, release install `NOT_REQUESTED` fixture가 반드시 실패하는지도 검증한다.
 - 이 gate는 최종 실기기 evidence를 대체하지 않고, 최종 alpha report validator가 느슨해지는 회귀만 차단한다.
 
 ## Gate 0B. No-device Render Snapshot Smoke

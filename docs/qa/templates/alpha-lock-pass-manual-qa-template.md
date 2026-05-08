@@ -86,6 +86,7 @@
 | PAM_QA_041_STAGE_POPUP | PAM-QA-041 popup/pre-booster | Stage Popup open/close, START, pre-booster board placement, touch feel | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/pam-qa-041-popup.*` |  |
 | STAGE_POPUP_BUDDY | PAM-QA-041 Buddy preview | Stage Popup Buddy target == HUD Buddy target on Buddy stages | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/stage-popup-buddy.*` |  |
 | RESCUE_BOOK_UNLOCK | Rescue Book unlock | Stage 1-5 clear keeps frog/koala/hamster unlock, NEW, token state | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/rescue-book-unlock.*` |  |
+| RESCUE_BOOK_COSMETIC_EQUIP | PAM-DEV-063 cosmetic equip | Rabbit 40 tokens, rabbit_sprout_frame equipped, 장착중/장착/대기 buttons, save/reopen persistence, animal_cosmetic_equip payload, duplicate/unearned equip blocked | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/rescue-book-cosmetic-equip.*` |  |
 | SPECIAL_COMBO_6 | PAM-DEV-051 Stage 31 special combos | Six special+special combo VFX/SFX/haptics/readability evidence | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/stage-031-special-combos.*` |  |
 | RESCUE_BUDDY_SMOKE | Rescue Buddy readability | Stage 4, Stage 8, Stage 18 or 81 Buddy HUD/ready/blocked/complete readability | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/buddy-readability.*` |  |
 | NEAR_MISS_CONTINUE | Near Miss continue | Stage 25 near miss fail overlay, retry, +3 moves continue state | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/near-miss-continue.*` |  |

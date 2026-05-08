@@ -502,7 +502,7 @@
 
 ### PAM-QA-102: Alpha QA Report Validator Contract Smoke
 
-- 상태: 완료됨. `scripts/validate_alpha_qa_report_contract.sh`가 임시 alpha report/evidence fixture를 생성해 `validate_alpha_qa_report.sh`의 PASS 계약과 negative fixture 실패 계약을 자동 검증한다. PASS fixture는 현재 HEAD, `Overall result: Pass`, `QA result: Approve`, 필수 evidence content를 채우고, negative fixture는 `Pending` 잔존, evidence 누락, wrong commit, `Capture result: BLOCKED`, release `Install result: NOT_REQUESTED`가 반드시 실패하는지 확인한다. `validate_gameplay.sh`와 no-device CI는 이 contract smoke를 포함한다.
+- 상태: 완료됨. `scripts/validate_alpha_qa_report_contract.sh`가 임시 alpha report/evidence fixture를 생성해 `validate_alpha_qa_report.sh`의 PASS 계약과 negative fixture 실패 계약을 자동 검증한다. PASS fixture는 현재 HEAD, `Overall result: Pass`, `QA result: Approve`, 필수 evidence content를 채우고, negative fixture는 `Pending` 잔존, evidence 누락, Rescue Book cosmetic equip 필수 행 삭제, wrong commit, `Capture result: BLOCKED`, release `Install result: NOT_REQUESTED`가 반드시 실패하는지 확인한다. `validate_gameplay.sh`와 no-device CI는 이 contract smoke를 포함한다.
 - 소유: QA Agent + Development Agent
 - 대상 파일:
   - `scripts/validate_alpha_qa_report_contract.sh`

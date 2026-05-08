@@ -123,6 +123,7 @@ validate_template_contract() {
 		"PAM_QA_041_STAGE_POPUP" \
 		"STAGE_POPUP_BUDDY" \
 		"RESCUE_BOOK_UNLOCK" \
+		"RESCUE_BOOK_COSMETIC_EQUIP" \
 		"SPECIAL_COMBO_6" \
 		"RESCUE_BUDDY_SMOKE" \
 		"NEAR_MISS_CONTINUE" \
@@ -135,6 +136,7 @@ validate_template_contract() {
 		"PAM-QA-040" \
 		"PAM-QA-041" \
 		"PAM-DEV-051" \
+		"PAM-DEV-063" \
 		"PAM-DEV-054" \
 		"PAM-ANA-090"; do
 		require_template_text "gate id" "$gate_id"
@@ -183,6 +185,10 @@ validate_template_contract() {
 	done
 
 	for required_text in \
+		"rescue-book-cosmetic-equip" \
+		"rabbit_sprout_frame" \
+		"animal_cosmetic_equip" \
+		"save/reopen" \
 		"rewarded_ad pending keeps overlay" \
 		"pending duplicate tap does not create second request" \
 		"invalid source rejected_invalid_source" \

@@ -217,6 +217,10 @@ missing_report="$(make_pass_fixture missing-evidence)"
 rm -f "$FIXTURE_ROOT/missing-evidence/captures/install-log.txt"
 expect_failure "missing-evidence" "$missing_report"
 
+missing_cosmetic_report="$(make_pass_fixture missing-cosmetic-row)"
+perl -0pi -e 's/^\| RESCUE_BOOK_COSMETIC_EQUIP \|.*\n//m' "$missing_cosmetic_report"
+expect_failure "missing-cosmetic-row" "$missing_cosmetic_report"
+
 wrong_commit_report="$(make_pass_fixture wrong-commit)"
 perl -0pi -e 's/^- Build source commit:.*$/- Build source commit: deadbeef/m' "$wrong_commit_report"
 expect_failure "wrong-commit" "$wrong_commit_report"

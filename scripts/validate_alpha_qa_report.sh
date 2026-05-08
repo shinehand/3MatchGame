@@ -435,6 +435,7 @@ validate_report_contract() {
 		"PAM_QA_041_STAGE_POPUP" \
 		"STAGE_POPUP_BUDDY" \
 		"RESCUE_BOOK_UNLOCK" \
+		"RESCUE_BOOK_COSMETIC_EQUIP" \
 		"SPECIAL_COMBO_6" \
 		"RESCUE_BUDDY_SMOKE" \
 		"NEAR_MISS_CONTINUE" \
@@ -449,6 +450,10 @@ validate_report_contract() {
 		"pam-qa-041-popup" \
 		"stage-popup-buddy" \
 		"rescue-book-unlock" \
+		"rescue-book-cosmetic-equip" \
+		"rabbit_sprout_frame" \
+		"animal_cosmetic_equip" \
+		"save/reopen" \
 		"stage-031-special-combos" \
 		"buddy-readability" \
 		"near-miss-continue" \
