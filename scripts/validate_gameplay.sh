@@ -122,35 +122,15 @@ if ! zsh scripts/validate_alpha_qa_report_contract.sh >"$alpha_report_contract_s
 fi
 cat "$alpha_report_contract_stdout"
 
-echo "[12/13] Android QA script dry-run contracts"
-android_debug_stdout="/tmp/puzzle-android-debug-dry-run.stdout"
-android_device_stdout="/tmp/puzzle-android-device-dry-run.stdout"
-manual_device_stdout="/tmp/puzzle-manual-device-dry-run.stdout"
-android_release_stdout="/tmp/puzzle-android-release-dry-run.stdout"
-release_keystore="$(mktemp -t puzzle-release-keystore.XXXXXX)"
-trap 'rm -f "$release_keystore"' EXIT
-rm -f "$android_debug_stdout" "$android_device_stdout" "$manual_device_stdout" "$android_release_stdout"
-if ! zsh scripts/export_android_debug.sh --dry-run >"$android_debug_stdout" 2>&1; then
-  echo "Android debug export dry-run failed."
-  cat "$android_debug_stdout"
+echo "[12/13] Android QA helper contract smoke"
+android_qa_helpers_stdout="/tmp/puzzle-android-qa-helpers-contract.stdout"
+rm -f "$android_qa_helpers_stdout"
+if ! zsh scripts/validate_android_qa_helpers_contract.sh >"$android_qa_helpers_stdout" 2>&1; then
+  echo "Android QA helper contract smoke failed."
+  cat "$android_qa_helpers_stdout"
   exit 1
 fi
-if ! zsh scripts/capture_android_device_evidence.sh --dry-run >"$android_device_stdout" 2>&1; then
-  echo "Android device evidence dry-run failed."
-  cat "$android_device_stdout"
-  exit 1
-fi
-if ! zsh scripts/record_manual_device_checks.sh --tester=Validation --device=NoDevice --os=0 --sound=PASS --haptics=PASS --touch=PASS --sound-note="dry run" --haptics-note="dry run" --touch-note="dry run" --dry-run >"$manual_device_stdout" 2>&1; then
-  echo "Manual device checks dry-run failed."
-  cat "$manual_device_stdout"
-  exit 1
-fi
-if ! GODOT_ANDROID_KEYSTORE_RELEASE_PATH="$release_keystore" GODOT_ANDROID_KEYSTORE_RELEASE_USER=validation GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=validation zsh scripts/export_android_release.sh --dry-run >"$android_release_stdout" 2>&1; then
-  echo "Android release export dry-run failed."
-  cat "$android_release_stdout"
-  exit 1
-fi
-echo "Android QA script dry-run contracts passed."
+cat "$android_qa_helpers_stdout"
 
 echo "[13/13] Manual smoke checklist"
 cat <<'EOF'

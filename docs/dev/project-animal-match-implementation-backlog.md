@@ -479,6 +479,25 @@
   - 최종 alpha report validator가 허술해져 unresolved 결과나 빈 evidence를 통과시키는 회귀가 no-device에서 잡힌다.
   - 실제 기기/keystore/SDK evidence는 여전히 최종 report와 device evidence gate에서 별도 승인한다.
 
+### PAM-QA-105: Android QA Helper Contract Smoke
+
+- 상태: 완료됨. `scripts/validate_android_qa_helpers_contract.sh`가 debug export, release export, device capture, manual device checks helper의 dry-run PASS 계약과 negative 계약을 검증한다. 검사 범위는 debug/device/manual/release dry-run path 해석, legacy release env alias, release password non-leak, unknown option 실패, 빈 output/package/preset 경로 실패, `--video-seconds` 범위 실패, manual tester/result 누락 실패, release signing env 누락 실패, dry-run artifact 미생성을 포함한다. `validate_gameplay.sh`와 no-device CI가 이 smoke를 실행한다.
+- 소유: Development Agent + QA Agent + PM Lead
+- 대상 파일:
+  - `scripts/validate_android_qa_helpers_contract.sh`
+  - `scripts/validate_gameplay.sh`
+  - `.github/workflows/no-device-alpha-gate.yml`
+  - `scripts/export_android_debug.sh`
+  - `scripts/export_android_release.sh`
+  - `scripts/capture_android_device_evidence.sh`
+  - `scripts/record_manual_device_checks.sh`
+  - `docs/dev/validation-process.md`
+  - `docs/qa/project-animal-match-development-gates.md`
+- 완료 기준:
+  - Android QA helper CLI가 실제 기기/서명 도구 없이도 dry-run 계약을 안정적으로 보고한다.
+  - 잘못된 입력, release env 누락, release password 출력 회귀가 no-device에서 실패한다.
+  - dry-run helper contract는 실제 release keystore, APK export, Android install/launch, screenshot/video/logcat, human device PASS evidence를 대체하지 않는다는 caveat를 유지한다.
+
 ### PAM-REL-103: Provider Readiness Manifest / Validator
 
 - 상태: 완료됨. `data/provider_readiness.json`이 analytics `local_buffer`와 monetization `local_simulator`의 provider-neutral 상태를 machine-readable manifest로 고정하고, `scripts/validate_provider_readiness.gd`/`.sh`가 코드 상수와 manifest를 대조한다. 검증은 `OPEN-007` 실제 SDK 선택을 완료하지 않고, SDK 연결 전 adapter hook, source/result canonicalization, `provider_result` 보존, rejected_contract/rejected_invalid_source, queue/request log 상한이 흔들리지 않게 막는다. `validate_gameplay.sh`와 no-device alpha CI가 이 gate를 실행한다.
@@ -514,7 +533,7 @@
 
 ## 추천 구현 순서
 
-완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`)는 회귀 검증 대상으로 유지한다.
+완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`)는 회귀 검증 대상으로 유지한다.
 
 다음 고가치 순서:
 

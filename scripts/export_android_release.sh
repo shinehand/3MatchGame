@@ -37,6 +37,16 @@ for arg in "$@"; do
 	esac
 done
 
+if [ -z "$OUTPUT_APK" ]; then
+	echo "Output APK path is empty."
+	exit 2
+fi
+
+if [ -z "$EXPORT_PRESET_NAME" ]; then
+	echo "Export preset name is empty."
+	exit 2
+fi
+
 TODAY="$(date +%Y-%m-%d)"
 CAPTURE_DIR="output/alpha-lock-pass/$TODAY/captures"
 EVIDENCE_PATH="$CAPTURE_DIR/android-release-export.txt"

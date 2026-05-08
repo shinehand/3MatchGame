@@ -30,7 +30,7 @@
 - Godot 헤드리스 로드
 - 파일 직접 읽기 안티패턴 스캔
 - Alpha QA packet dry-run 및 템플릿 계약 검증. 대표 코스, Device Evidence Pack, Stage Data Smoke Coverage, Focused Device Gate Matrix, Stage 31 Special Combo Evidence, Rescue Buddy Stage Matrix, Failure Continue Gateway, Analytics Gateway Local Buffer가 빠지면 실패한다.
-- Android QA helper script dry-run 계약 검증. Debug export, device evidence capture, manual device checks, release export CLI가 실기기/서명 도구 실행 없이 인자와 evidence path를 해석하는지 확인한다.
+- Android QA helper contract smoke. Debug export, device evidence capture, manual device checks, release export CLI가 실기기/서명 도구 실행 없이 인자와 evidence path를 해석하고, 잘못된 인자/누락 release env/비밀번호 출력 회귀를 거절하는지 확인한다.
 - Scene smoke는 `StageCatalog`의 `recommended_smoke`/Buddy 스테이지를 Alpha QA 템플릿의 `STAGE_SMOKE_###`/`BUDDY_STAGE_###` 행과 대조해 stage data와 수동 QA packet이 어긋나면 실패한다.
 - 수동 스모크 체크리스트 출력
 
@@ -45,6 +45,7 @@ zsh scripts/validate_analytics_contract.sh
 zsh scripts/validate_provider_readiness.sh
 zsh scripts/validate_render_snapshots.sh  # GitHub-hosted runner에서는 non-blocking artifact attempt
 zsh scripts/validate_android_export_config.sh
+zsh scripts/validate_android_qa_helpers_contract.sh
 zsh scripts/validate_gameplay.sh
 ```
 
@@ -55,6 +56,8 @@ zsh scripts/validate_gameplay.sh
 `zsh scripts/validate_render_snapshots.sh`는 표시 렌더러가 있는 로컬 환경에서는 일반 Godot 실행, CI에서는 `xvfb-run`으로 Home, Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay, Collection 스냅샷을 `390x844`와 `844x390` PNG로 저장한다. 이 gate는 blank/transparent/offscreen/missing texture 회귀를 잡기 위한 no-device preflight이며, 실기기 screenshot/video/logcat evidence를 대체하지 않는다. GitHub-hosted runner의 Xvfb renderer가 실패할 수 있어 workflow에서는 non-blocking artifact attempt로 실행하고, `validate_gameplay.sh`는 GitHub Actions 안에서 이 단계만 skip caveat를 출력한다. 로컬 또는 지원되는 Xvfb 환경에서는 `zsh scripts/validate_render_snapshots.sh`를 blocking으로 실행해야 한다.
 
 `zsh scripts/validate_android_export_config.sh`는 Android export preset이 `Zoo-Zoo Pop`, `com.shinehandmac.zoozoopop`, `build/android/zoo-zoo-pop-debug.apk`, SemVer `version/name`, 양수 `version/code`, signed package, vibrate permission, arm64 ABI를 유지하는지 검사한다. 이 preflight는 release keystore나 실제 APK 생성을 요구하지 않지만 starter placeholder가 export 설정으로 되돌아가는 것은 차단한다. alpha evidence path의 APK 이름은 `create_alpha_qa_packet.sh`와 `validate_alpha_qa_report.sh` 계약으로 별도 고정한다.
+
+`zsh scripts/validate_android_qa_helpers_contract.sh`는 Android debug export, release export, device evidence capture, manual device checks helper의 dry-run/negative 계약을 검증한다. PASS 경로는 output/evidence path 해석과 legacy release env alias를 확인하고, negative 경로는 unknown option, 빈 output/package/preset 경로, `--video-seconds` 범위 위반, manual tester/result 누락, release signing env 누락을 반드시 실패시킨다. release password는 sentinel 값을 넣어도 stdout/stderr에 실제 값이 나오면 실패하며, dry-run은 APK, evidence, device capture 파일을 만들지 않아야 한다. 이 smoke는 helper CLI가 안전한지 보는 no-device 검증이며 release keystore, APK export, install, launch, screenshot/video/logcat, human device PASS evidence를 대체하지 않는다.
 
 `zsh scripts/export_android_debug.sh`는 Android debug export를 수행하고 `build/android/zoo-zoo-pop-debug.apk`를 `apksigner`로 검증한 뒤 `output/alpha-lock-pass/YYYY-MM-DD/captures/android-debug-export.txt`에 commit, APK 경로, export 결과, signature verify 결과, ADB device 상태를 남긴다. `--dry-run`은 CLI 계약과 evidence path만 확인하며 APK export, signature verify, install, device evidence를 증명하지 않는다. 기기가 연결된 설치 검증은 `zsh scripts/export_android_debug.sh --install`로 실행하며, 연결 기기가 정확히 1대가 아니면 install evidence는 Blocked로 기록한다.
 

@@ -203,6 +203,13 @@
 - `zsh scripts/validate_android_export_config.sh`와 `zsh scripts/validate_gameplay.sh`가 starter placeholder 회귀를 차단한다.
 - 이 gate는 release keystore, APK export, 설치, 실행을 증명하지 않으며 해당 항목은 Android evidence script와 alpha QA report validator로 승인한다.
 
+## Gate 13. Android QA Helper Contract
+
+- `zsh scripts/validate_android_qa_helpers_contract.sh`는 debug export, release export, device capture, manual device checks helper의 dry-run PASS 계약을 검증한다.
+- unknown option, 빈 output/package/preset 경로, `--video-seconds` 범위 위반, manual tester/result 누락, release signing env 누락은 실패해야 한다.
+- release password sentinel 값은 stdout/stderr에 노출되면 안 되며, dry-run은 APK/evidence/capture 파일을 만들면 안 된다.
+- 이 gate는 helper CLI 안전성만 보는 no-device smoke이며 release keystore, APK export, install/launch, screenshot/video/logcat, human PASS note를 대체하지 않는다.
+
 ## 승인 보고 형식
 
 ```text

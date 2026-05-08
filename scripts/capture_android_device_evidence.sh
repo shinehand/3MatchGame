@@ -67,6 +67,11 @@ for arg in "$@"; do
 	esac
 done
 
+if [ -z "$CAPTURE_DIR" ]; then
+	echo "Capture output dir is empty."
+	exit 2
+fi
+
 if [ -z "$PACKAGE_ID" ]; then
 	echo "Android package id is empty. Set --package or export_presets.cfg package/unique_name."
 	exit 1

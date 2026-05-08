@@ -61,6 +61,9 @@ jobs:
       - name: Android export config validation
         run: zsh scripts/validate_android_export_config.sh
 
+      - name: Android QA helper contract smoke
+        run: zsh scripts/validate_android_qa_helpers_contract.sh
+
       - name: Full no-device gameplay gate
         run: zsh scripts/validate_gameplay.sh
 
@@ -76,6 +79,9 @@ jobs:
           and snapshot PNGs may be absent if Xvfb rendering is unavailable. Run
           `zsh scripts/validate_render_snapshots.sh` as a blocking check on a local display
           or supported Xvfb renderer.
+
+          Android QA helper contract smoke validates CLI dry-run safety only; it does not
+          create APKs, sign builds, install to a device, or prove real-device evidence.
 
           It does not replace:
 
