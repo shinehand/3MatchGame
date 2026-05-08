@@ -27,7 +27,27 @@ if ! "${godot_command[@]}" >"$validation_stdout" 2>&1; then
 fi
 touch "$validation_log" "$validation_stdout"
 
-validation_fail_on_matches "Render snapshot validation" "SCRIPT ERROR:|Parse Error:|Invalid access to property|Cannot call method|Attempt to call function|Render snapshot validation error" "$validation_log" "$validation_stdout"
+blocking_log_patterns="SCRIPT ERROR:|Parse Error:|Invalid access to property|Cannot call method|Attempt to call function|Render snapshot validation error"
+if scan_output="$(validation_search "$blocking_log_patterns" "$validation_log" "$validation_stdout" 2>&1)"; then
+  print -r -- "$scan_output"
+  echo "Render snapshot validation reported blocking errors."
+  if [ -n "${GITHUB_ACTIONS:-}" ]; then
+    diagnostic_summary="$(print -r -- "$scan_output" | tail -80 | tr '\n' ' ' | cut -c1-3500)"
+    echo "::error title=Render snapshot validation log scan failed::$diagnostic_summary"
+  fi
+  exit 1
+else
+  scan_status=$?
+  if [ "$scan_status" -gt 1 ]; then
+    print -r -- "$scan_output"
+    echo "Render snapshot validation scan failed."
+    if [ -n "${GITHUB_ACTIONS:-}" ]; then
+      diagnostic_summary="$(print -r -- "$scan_output" | tail -80 | tr '\n' ' ' | cut -c1-3500)"
+      echo "::error title=Render snapshot validation scan failed::$diagnostic_summary"
+    fi
+    exit "$scan_status"
+  fi
+fi
 
 snapshot_count="$(find "$PAM_RENDER_SNAPSHOT_DIR" -type f -name '*.png' | wc -l | tr -d ' ')"
 if [ "$snapshot_count" -lt 10 ]; then
