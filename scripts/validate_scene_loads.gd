@@ -502,6 +502,13 @@ func _validate_gameplay_hud_clearance(node: Node, viewport_size: Vector2i, conte
 		errors.append("%s %s should keep HudGoalDock clear of BoardFrame at %s." % [GAMEPLAY_SCENE_PATH, context, viewport_size])
 	if booster_dock.is_visible_in_tree() and board_frame.is_visible_in_tree() and booster_dock.get_global_rect().intersects(board_frame.get_global_rect()):
 		errors.append("%s %s should keep HudBoosterDock clear of BoardFrame at %s." % [GAMEPLAY_SCENE_PATH, context, viewport_size])
+	if viewport_size.y >= viewport_size.x and booster_dock.is_visible_in_tree() and board_frame.is_visible_in_tree():
+		var board_rect := board_frame.get_global_rect()
+		var booster_rect := booster_dock.get_global_rect()
+		var board_to_booster_gap := booster_rect.position.y - (board_rect.position.y + board_rect.size.y)
+		var max_commercial_gap := float(viewport_size.y) * 0.20
+		if board_to_booster_gap > max_commercial_gap:
+			errors.append("%s %s should keep portrait boosters close to the board at %s, got gap %.1f above %.1f." % [GAMEPLAY_SCENE_PATH, context, viewport_size, board_to_booster_gap, max_commercial_gap])
 
 
 func _validate_failure_overlay_viewport_clearance(node: Node, viewport_size: Vector2i, context: String, errors: PackedStringArray) -> void:

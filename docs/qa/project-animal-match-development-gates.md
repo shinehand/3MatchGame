@@ -132,6 +132,7 @@
 - 한국어/영어/일본어 pseudo-localization에서 목표 칩과 버튼 텍스트가 겹치지 않는다.
 - 자동 scene smoke는 Stage Popup, Gameplay HUD, 실패 overlay에 장문 pseudo-localization title/body/CTA를 주입해 viewport, panel bounds, CTA vertical overlap을 검증한다.
 - 자동 scene smoke는 6개 요청 window size의 mobile viewport matrix에서 홈, 월드맵, 컬렉션, Stage 4 Gameplay HUD, Stage Popup, Stage 25 실패 overlay의 실제 logical viewport bounds를 검증한다.
+- Stage 4 Gameplay portrait는 보드와 하단 booster dock 사이가 과하게 비어 보이지 않아야 하며, scene smoke가 보드-부스터 간격 상한을 검증한다.
 - 자동 scene smoke는 핵심 CTA 최소 터치 타깃과 버튼 대비를 검증해 상용 UI readability 회귀를 차단한다.
 
 ## Gate 7A. Stage Popup / 시작 부스터

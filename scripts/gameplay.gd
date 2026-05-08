@@ -446,7 +446,7 @@ func _apply_responsive_layout() -> void:
 
 	if gameplay_hud_layer:
 		gameplay_hud_layer.visible = portrait
-	board_margin.add_theme_constant_override("margin_top", 310 if portrait else 24)
+		board_margin.add_theme_constant_override("margin_top", 430 if portrait else 24)
 	tutorial_banner.custom_minimum_size = Vector2(0, 72) if portrait else Vector2.ZERO
 	tutorial_label.add_theme_font_size_override("font_size", 19 if portrait else 24)
 	tutorial_label.add_theme_constant_override("line_spacing", 4 if portrait else 0)
@@ -530,9 +530,9 @@ func _layout_gameplay_hud(portrait: bool) -> void:
 	if hud_booster_dock:
 		hud_booster_dock.visible = portrait
 		hud_booster_dock.offset_left = 24.0 if portrait else 120.0
-		hud_booster_dock.offset_top = -126.0 if portrait else -132.0
+		hud_booster_dock.offset_top = -500.0 if portrait else -132.0
 		hud_booster_dock.offset_right = -24.0 if portrait else -120.0
-		hud_booster_dock.offset_bottom = -22.0 if portrait else -24.0
+		hud_booster_dock.offset_bottom = -358.0 if portrait else -24.0
 	_resize_hud_booster_buttons(portrait)
 	_update_gameplay_hud()
 
@@ -996,8 +996,8 @@ func _resize_hud_booster_buttons(portrait: bool) -> void:
 			continue
 		var label_text := String(button.get_meta("hud_label", button.tooltip_text))
 		button.text = "" if portrait else label_text
-		button.custom_minimum_size = Vector2(92, 74) if portrait else Vector2(150, 86)
-		button.add_theme_font_size_override("font_size", 14 if portrait else 18)
+		button.custom_minimum_size = Vector2(116, 94) if portrait else Vector2(150, 86)
+		button.add_theme_font_size_override("font_size", 16 if portrait else 18)
 
 
 func _refresh_hud_goal_chips() -> void:
