@@ -38,6 +38,7 @@
 - 버튼은 visible text, child label, icon, tooltip 중 하나로 식별 가능해야 하며, enabled 버튼 대비는 `3.0:1`, disabled 버튼 대비는 `2.0:1` 이상이어야 한다.
 - Stage Popup portrait는 좁은 debug card가 아니라 viewport 폭의 상용 start card로 읽혀야 하며, scene smoke가 최소 폭을 검증한다.
 - Gameplay portrait는 `HudTopDock`, `HudGoalDock`, `HudBoosterDock`이 BoardFrame과 겹치지 않아야 하고, landscape BoardFrame은 빈 tray처럼 과신장되면 안 된다.
+- 결과/실패 overlay는 보상/다음 행동 또는 실패 원인/다음 한 수 중심으로 6개 이하의 visible line을 유지해 debug log처럼 과밀해지지 않아야 한다.
 - 이 gate는 논리 px 기반 no-device 회귀 방지용이며, 실제 Android 물리 터치감과 색감은 최종 device evidence에서 별도 승인한다.
 
 ## Gate 1. 문서 일치

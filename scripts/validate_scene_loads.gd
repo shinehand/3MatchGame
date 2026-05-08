@@ -677,6 +677,16 @@ func _first_descendant_label_text(parent: Node) -> String:
 	return ""
 
 
+func _visible_label_line_count(label: Label) -> int:
+	if label == null:
+		return 0
+	var count := 0
+	for line in label.text.split("\n"):
+		if String(line).strip_edges() != "":
+			count += 1
+	return count
+
+
 func _validate_commercial_button_contrast(button: Button, scene_path: String, label: String, errors: PackedStringArray) -> void:
 	if button == null:
 		return
@@ -2935,6 +2945,8 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s clear overlay body should show reward, stars, and next action text." % GAMEPLAY_SCENE_PATH)
 	if overlay_body == null or not overlay_body.text.contains("도감") or not overlay_body.text.contains("토큰 +3"):
 		errors.append("%s clear overlay body should show the Rescue Book token reward." % GAMEPLAY_SCENE_PATH)
+	if overlay_body != null and _visible_label_line_count(overlay_body) > 6:
+		errors.append("%s clear overlay body should stay commercially scannable with 6 or fewer visible lines." % GAMEPLAY_SCENE_PATH)
 	if overlay_mascot == null or overlay_mascot.texture == null:
 		errors.append("%s clear overlay should show a non-null success mascot texture." % GAMEPLAY_SCENE_PATH)
 	if overlay_primary == null or overlay_primary.text != "다음 스테이지":
@@ -3025,6 +3037,8 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s near-miss failure body should show fail type, rewarded move offer, and booster recommendation." % GAMEPLAY_SCENE_PATH)
 	if overlay_body == null or not overlay_body.text.contains("놓친 핵심  덤불 1개 정리") or not overlay_body.text.contains("다음 한 수  덤불 옆에서 폭탄이나 줄무늬 특수 블록"):
 		errors.append("%s near-miss failure body should isolate missed goal and one actionable retry hint." % GAMEPLAY_SCENE_PATH)
+	if overlay_body != null and _visible_label_line_count(overlay_body) > 6:
+		errors.append("%s near-miss failure body should stay commercially scannable with 6 or fewer visible lines." % GAMEPLAY_SCENE_PATH)
 	await _validate_failure_overlay_text_stress(node, errors)
 	if _analytics_event_count("stage_fail") <= fail_events_before:
 		errors.append("%s near-miss failure runtime smoke should emit stage_fail analytics." % GAMEPLAY_SCENE_PATH)

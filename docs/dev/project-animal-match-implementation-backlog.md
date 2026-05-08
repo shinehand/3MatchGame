@@ -610,9 +610,23 @@
   - `844x390` render snapshot에서 BoardFrame이 빈 tray로 늘어나지 않고 사이드바가 화면 절반을 점유하지 않는다.
   - scene smoke가 Stage Popup portrait 최소 폭, `HudTopDock`/`HudGoalDock`/`HudBoosterDock` bounds, landscape BoardFrame 과신장 방지를 검증한다.
 
+### PAM-UX-113: Commercial Result Overlay Density Polish
+
+- 상태: 완료됨. 결과/실패 overlay를 상용 캐주얼 퍼즐의 보상 카드처럼 읽히도록 넓히고, mascot/ribbon 비중을 줄여 본문과 CTA에 공간을 돌렸다. 성공 본문은 별점, 보상, 도감 토큰, Zoo-Zoo 보너스, 다음 행동 중심으로 압축했고, 실패 본문은 실패 유형, 남은 목표, 놓친 핵심, 다음 한 수, 추천 offer만 남겨 디버그 로그처럼 보이던 줄 수를 줄였다.
+- 소유: Art Agent + Development Agent + QA Agent
+- 대상 파일:
+  - `scripts/gameplay.gd`
+  - `scripts/validate_scene_loads.gd`
+  - `docs/dev/validation-process.md`
+  - `docs/qa/project-animal-match-development-gates.md`
+- 완료 기준:
+  - Stage 1 성공 overlay와 Stage 25 실패 overlay가 `390x844`에서 핵심 정보와 CTA 중심으로 읽힌다.
+  - scene smoke가 성공/near-miss 실패 overlay 본문을 6개 이하의 visible line으로 제한해 문구 과밀 회귀를 차단한다.
+  - 기존 보상/별/다음 CTA, 도감 토큰, Zoo-Zoo Time, 실패 유형, 남은 목표, retry hint, rewarded offer 문구 계약은 유지한다.
+
 ## 추천 구현 순서
 
-완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
+완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
 
 다음 고가치 순서:
 

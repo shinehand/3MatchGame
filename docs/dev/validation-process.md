@@ -26,6 +26,7 @@
 - 게임플레이 보드 64칸 생성과 스테이지 선택 카드 100장 생성 확인
 - Mobile viewport matrix smoke: `1080x1920`, `720x1280`, `390x844`, `1920x1080`, `1280x720`, `844x390` 요청 window에서 실제 logical viewport 기준 레이아웃을 확인
 - Commercial UI readability gate: 홈, 월드맵, Stage Popup, gameplay HUD/실패 overlay, Rescue Book 핵심 CTA가 primary `144x48`, secondary `88x44`, icon/stage node `44x44` 이상 터치 타깃, 버튼 대비 `3.0:1` 이상, disabled 대비 `2.0:1` 이상을 만족하는지 확인
+- Result overlay density gate: Stage 1 성공 overlay와 Stage 25 near-miss 실패 overlay의 본문 visible line을 6개 이하로 유지해 보상/다음 행동 또는 실패 원인/다음 한 수 중심의 상용 카드 판독성을 확인
 - Critical UI text stress: Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay에 장문 pseudo-localization title/body/CTA를 주입해 viewport/panel bounds와 CTA overlap을 확인
 - Render snapshot smoke: `390x844`, `844x390`에서 Home, Stage Popup, Stage 4 Gameplay Buddy HUD 4상태, Stage 1 성공 결과 overlay, Stage 25 실패 overlay, Stage 31 특수 조합 6종, Collection을 실제 PNG 30장으로 저장하고 non-blank/varied pixel, 핵심 UI region, Buddy 라벨/게이지/analytics, 성공 결과 보상/CTA, 특수 조합 label/flash/ring 렌더를 확인
 - LiveOps config validation. `remote_config.json`과 `live_events.json`의 unlock key, placement, offline fallback, disabled season pass, remote config exposure 계약을 독립 검증한다.
@@ -90,7 +91,7 @@ zsh scripts/validate_gameplay.sh
 - `match`: 제거 직전 우선순위가 가장 높고 `blink`, `smile`, `worried`가 덮지 못한다.
 - `worried`: 이동 수 3 이하 HUD 갱신 경로에서 목표 타일 일부에만 표시되고 동시에 4개 이하로 제한된다.
 - `fever`: 표정 자체는 Tween 기반이며 목표 UI, 특수 배지, 이동 수 HUD 판독성은 논리 앵커 smoke로 1차 확인한다.
-- Mobile viewport matrix는 Stage 4 세로 HUD의 `BoardFrame`, `HudTopDock`, `HudGoalDock`, `HudBoosterDock`, `HudBuddyGauge`, `PortraitGoalSummary` bounds와 HUD/보드 겹침을 검사한다. Stage Popup portrait 최소 폭과 landscape BoardFrame 과신장도 함께 막아 상용 start card와 보드 중심 레이아웃이 유지되는지 확인한다.
+- Mobile viewport matrix는 Stage 4 세로 HUD의 `BoardFrame`, `HudTopDock`, `HudGoalDock`, `HudBoosterDock`, `HudBuddyGauge`, `PortraitGoalSummary` bounds와 HUD/보드 겹침을 검사한다. Stage Popup portrait 최소 폭, 결과/실패 overlay 본문 visible line 제한, landscape BoardFrame 과신장도 함께 막아 상용 start card와 보드 중심 레이아웃이 유지되는지 확인한다.
 
 아래 항목은 no-device readiness로 승인하지 않는다. 실제 기기 또는 시뮬레이터에서 portrait/landscape 물리 viewport를 확인해야 한다.
 

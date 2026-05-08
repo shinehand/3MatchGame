@@ -438,12 +438,16 @@ func _apply_responsive_layout() -> void:
 	quit_button.add_theme_font_size_override("font_size", 30 if portrait else 26)
 	retry_button.add_theme_font_size_override("font_size", 30 if portrait else 26)
 	next_stage_button.add_theme_font_size_override("font_size", 30 if portrait else 26)
-	overlay_panel.custom_minimum_size = Vector2(560, 0) if portrait else Vector2(520, 0)
-	overlay_mascot.custom_minimum_size = Vector2(176, 176) if portrait else Vector2(156, 156)
-	overlay_ribbon.custom_minimum_size = Vector2(184, 66) if portrait else Vector2(176, 60)
-	overlay_title.add_theme_font_size_override("font_size", 34 if portrait else 40)
-	overlay_body.add_theme_font_size_override("font_size", 20 if portrait else 24)
-	overlay_body.add_theme_constant_override("line_spacing", 8 if portrait else 10)
+	overlay_panel.custom_minimum_size = Vector2(840, 0) if portrait else Vector2(700, 0)
+	overlay_mascot.custom_minimum_size = Vector2(150, 150) if portrait else Vector2(136, 136)
+	overlay_ribbon.custom_minimum_size = Vector2(168, 58) if portrait else Vector2(156, 54)
+	overlay_title.add_theme_font_size_override("font_size", 38 if portrait else 40)
+	overlay_body.add_theme_font_size_override("font_size", 22 if portrait else 24)
+	overlay_body.add_theme_constant_override("line_spacing", 7 if portrait else 10)
+	overlay_secondary_button.custom_minimum_size = Vector2(210, 76) if portrait else Vector2(180, 72)
+	overlay_primary_button.custom_minimum_size = Vector2(240, 76) if portrait else Vector2(180, 72)
+	overlay_secondary_button.add_theme_font_size_override("font_size", 26 if portrait else 24)
+	overlay_primary_button.add_theme_font_size_override("font_size", 26 if portrait else 24)
 	stats_card.visible = not portrait
 	status_card.visible = false
 	tips_card.visible = false
@@ -3941,20 +3945,14 @@ func _build_clear_overlay_body(star_count: int, unlock_text: String, campaign_co
 			int(last_rescue_book_token_reward.get("amount", 0)),
 		])
 	if last_zoo_zoo_moves_spent > 0:
-		lines.append("Zoo-Zoo Time  이동 %d회 폭발 · 보너스 +%d" % [last_zoo_zoo_moves_spent, last_zoo_zoo_bonus_score])
-	lines.append("목표  %s" % _build_goal_result_summary())
+		lines.append("Zoo-Zoo Time  보너스 +%d" % last_zoo_zoo_bonus_score)
 	if campaign_complete:
-		lines.append("진행  전체 구조 작전 완료")
 		lines.append("다음  홈으로 / 다시 플레이")
-		lines.append("")
-		lines.append("모든 구조 노드가 열렸습니다.")
 	else:
 		lines.append("해금  %s" % unlock_text)
 		lines.append("다음  다음 스테이지 / 홈으로")
-		lines.append("")
-		lines.append("바로 다음 구조 작전으로 이어갈 수 있습니다.")
 	var live_event_line := _result_overlay_live_event_line()
-	if not live_event_line.is_empty():
+	if not live_event_line.is_empty() and lines.size() < 6:
 		lines.append(live_event_line)
 	return "\n".join(lines)
 
@@ -3963,19 +3961,14 @@ func _build_failure_overlay_body(fail_offer: Dictionary = {}) -> String:
 	if fail_offer.is_empty():
 		fail_offer = _build_failure_offer()
 	var lines: Array[String] = [
-		"조금만 더!",
 		"실패 유형  %s" % String(fail_offer.get("type", "general_shortfall")),
 		"남은 목표  %s" % _build_goal_remaining_summary(),
 		"놓친 핵심  %s" % _build_failure_focus_summary(),
 		"다음 한 수  %s" % _build_failure_retry_hint(fail_offer),
-		"현재 진행  %s" % _build_goal_result_summary(),
-		"점수  %d" % score,
-		"다음  %s / %s" % [String(fail_offer.get("primary_cta", "재도전")), String(fail_offer.get("secondary_cta", "홈으로"))],
-		"",
 		"추천  %s" % FailOfferPolicy.format_offer_line(fail_offer),
 	]
 	var live_event_line := _result_overlay_live_event_line()
-	if not live_event_line.is_empty():
+	if not live_event_line.is_empty() and lines.size() < 6:
 		lines.append(live_event_line)
 	return "\n".join(lines)
 
@@ -4006,7 +3999,7 @@ func _build_failure_focus_summary() -> String:
 func _build_failure_retry_hint(fail_offer: Dictionary) -> String:
 	var blocker_remaining := maxi(0, _target_blockers() - cleared_blockers)
 	if blocker_remaining > 0:
-		return "덤불 옆에서 폭탄이나 줄무늬 특수 블록을 먼저 터뜨리세요."
+		return "덤불 옆에서 폭탄이나 줄무늬 특수 블록."
 
 	var collect_targets: Dictionary = _stage_collect_targets()
 	for animal_id in collect_targets.keys():
