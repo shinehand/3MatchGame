@@ -560,14 +560,17 @@ func _validate_collection_viewport_layout(node: Node, viewport_size: Vector2i, e
 		errors.append("%s should render at least one commercial animal card at %s." % [COLLECTION_SCENE_PATH, viewport_size])
 		return
 	var portrait := viewport_size.y >= viewport_size.x
+	var expected_columns := 2 if portrait else 6
+	if collection_grid.columns != expected_columns:
+		errors.append("%s CollectionGrid should use %d album columns at %s, got %d." % [COLLECTION_SCENE_PATH, expected_columns, viewport_size, collection_grid.columns])
 	var card_rect := first_card.get_global_rect()
-	var minimum_card_height := float(viewport_size.y) * (0.13 if portrait else 0.22)
+	var minimum_card_height := float(viewport_size.y) * (0.16 if portrait else 0.22)
 	if card_rect.size.y < minimum_card_height:
 		errors.append("%s AnimalCard should not collapse into a thin row at %s, got height %.1f below %.1f." % [COLLECTION_SCENE_PATH, viewport_size, card_rect.size.y, minimum_card_height])
 	var preview := first_card.find_child("AnimalPreview", true, false) as Control
 	if preview != null:
 		var preview_rect := preview.get_global_rect()
-		var minimum_preview_side := float(viewport_size.y) * (0.052 if portrait else 0.10)
+		var minimum_preview_side := float(viewport_size.y) * (0.074 if portrait else 0.10)
 		if minf(preview_rect.size.x, preview_rect.size.y) < minimum_preview_side:
 			errors.append("%s AnimalPreview should remain readable at %s, got %s below %.1f." % [COLLECTION_SCENE_PATH, viewport_size, preview_rect.size, minimum_preview_side])
 

@@ -782,6 +782,9 @@ func _validate_collection_snapshot_regions(image: Image, node: Node, snapshot_id
 	var equipped_button := node.find_child("CosmeticButton_rabbit_sprout_frame", true, false) as Button
 	var unearned_button := node.find_child("CosmeticButton_rabbit_rescuer_badge", true, false) as Button
 	var rabbit_card := node.find_child("AnimalCard_rabbit", true, false) as Control
+	var rabbit_preview: Control = null
+	if rabbit_card != null:
+		rabbit_preview = rabbit_card.find_child("AnimalPreview", true, false) as Control
 	var equipped_badge: Control = null
 	var equipped_badge_label: Label = null
 	if rabbit_card != null:
@@ -790,15 +793,21 @@ func _validate_collection_snapshot_regions(image: Image, node: Node, snapshot_id
 			equipped_badge_label = equipped_badge.find_child("EquippedCosmeticBadgeLabel", true, false) as Label
 	_validate_control_pixels(image, detail_label, snapshot_id, "CollectionDetailLabel", errors)
 	_validate_control_pixels(image, cosmetic_grid, snapshot_id, "CosmeticEquipGrid", errors)
+	_validate_control_pixels(image, rabbit_card, snapshot_id, "AnimalCardRabbit", errors)
+	_validate_control_pixels(image, rabbit_preview, snapshot_id, "AnimalPreviewRabbit", errors)
 	_validate_control_pixels(image, earned_button, snapshot_id, "CosmeticButtonRabbitSmilePlus", errors)
 	_validate_control_pixels(image, equipped_button, snapshot_id, "CosmeticButtonRabbitSproutFrame", errors)
 	_validate_control_pixels(image, unearned_button, snapshot_id, "CosmeticButtonRabbitRescuerBadge", errors)
 	_validate_control_pixels(image, equipped_badge, snapshot_id, "EquippedRabbitFrameBadge", errors)
 	_validate_control_within_image_bounds(cosmetic_grid, snapshot_id, "CosmeticEquipGrid", errors)
+	_validate_control_within_image_bounds(rabbit_card, snapshot_id, "AnimalCardRabbit", errors)
+	_validate_control_within_image_bounds(rabbit_preview, snapshot_id, "AnimalPreviewRabbit", errors)
 	_validate_control_within_image_bounds(earned_button, snapshot_id, "CosmeticButtonRabbitSmilePlus", errors)
 	_validate_control_within_image_bounds(equipped_button, snapshot_id, "CosmeticButtonRabbitSproutFrame", errors)
 	_validate_control_within_image_bounds(unearned_button, snapshot_id, "CosmeticButtonRabbitRescuerBadge", errors)
 	_validate_control_within_image_bounds(equipped_badge, snapshot_id, "EquippedRabbitFrameBadge", errors)
+	_validate_control_image_minimum_size(image, rabbit_card, snapshot_id, "AnimalCardRabbit", Vector2(float(image.get_width()) * (0.42 if image.get_height() >= image.get_width() else 0.13), float(image.get_height()) * (0.16 if image.get_height() >= image.get_width() else 0.20)), errors)
+	_validate_control_image_minimum_size(image, rabbit_preview, snapshot_id, "AnimalPreviewRabbit", Vector2(float(image.get_width()) * (0.18 if image.get_height() >= image.get_width() else 0.055), float(image.get_width()) * (0.18 if image.get_height() >= image.get_width() else 0.055)), errors)
 	if detail_label == null or not detail_label.text.contains("토끼") or not detail_label.text.contains("Lv.3") or not detail_label.text.contains("토큰 40") or not detail_label.text.contains("우정 보상"):
 		errors.append("%s collection snapshot detail should show selected rabbit Lv.3 token reward track." % snapshot_id)
 	if earned_button == null or earned_button.disabled or not earned_button.text.contains("장착"):
