@@ -78,7 +78,7 @@ func _build_layout() -> void:
 
 	var root := VBoxContainer.new()
 	root.name = "LayoutRoot"
-	root.add_theme_constant_override("separation", 12)
+	root.add_theme_constant_override("separation", 10)
 	safe_margin.add_child(root)
 
 	header_panel = PanelContainer.new()
@@ -96,7 +96,7 @@ func _build_layout() -> void:
 
 	var header_column := VBoxContainer.new()
 	header_column.name = "HeaderColumn"
-	header_column.add_theme_constant_override("separation", 8)
+	header_column.add_theme_constant_override("separation", 6)
 	header_margin.add_child(header_column)
 
 	var header := HBoxContainer.new()
@@ -147,6 +147,8 @@ func _build_layout() -> void:
 	detail_label.text = "구조한 친구들의 해금 상태와 토큰, 우정 레벨을 확인합니다."
 	detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	detail_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	detail_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	detail_label.max_lines_visible = 2
 	detail_label.add_theme_font_size_override("font_size", 18)
 	detail_label.add_theme_color_override("font_color", Color("416076"))
 	header_column.add_child(detail_label)
@@ -269,7 +271,7 @@ func _make_animal_card(animal: Dictionary, entry: Dictionary) -> PanelContainer:
 	preview.custom_minimum_size = _collection_preview_size(get_viewport_rect().size)
 	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	preview.modulate = Color(1, 1, 1, 1) if unlocked else Color(0.24, 0.28, 0.32, 0.44)
+	preview.modulate = Color(1, 1, 1, 1) if unlocked else Color(0.56, 0.62, 0.70, 0.48)
 	preview.set_meta("animal_id", animal_id)
 	preview.set_meta("expression_source", "collection")
 	preview.set_meta("expression_state", "idle")
@@ -530,10 +532,10 @@ func _refresh_cosmetic_actions(animal: Dictionary, entry: Dictionary, unlocked: 
 		button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		button.tooltip_text = reward_id
 		if is_equipped:
-			button.text = "장착중 %s" % _reward_type_label(reward_type)
+			button.text = "%s 장착중" % _reward_type_label(reward_type)
 			button.disabled = true
 		elif earned:
-			button.text = "장착 %s" % _reward_type_label(reward_type)
+			button.text = "%s 장착" % _reward_type_label(reward_type)
 			button.pressed.connect(_on_cosmetic_reward_pressed.bind(animal_id, reward_id))
 		else:
 			button.text = "Lv.%d 대기" % int(reward_dict.get("level", 0))
@@ -731,8 +733,8 @@ func _collection_style(bg_color: Color, border_color: Color, radius: int, border
 
 
 func _card_style(unlocked: bool, is_new: bool, is_selected: bool, equipped_reward_type: String = "") -> StyleBoxFlat:
-	var bg_color := Color("ffffff") if unlocked else Color("e3e8ef")
-	var border_color := Color("8ee5c5") if unlocked else Color("b7c1cf")
+	var bg_color := Color("ffffff") if unlocked else Color("f1f7fb")
+	var border_color := Color("8ee5c5") if unlocked else Color("c9ddeb")
 	var border_width := 2
 	var has_equipped_frame := unlocked and equipped_reward_type == "card_frame"
 	if is_new:
@@ -745,7 +747,7 @@ func _card_style(unlocked: bool, is_new: bool, is_selected: bool, equipped_rewar
 		border_color = Color("ff74a8")
 		border_width = maxi(border_width, 4)
 	if is_selected:
-		bg_color = Color("fff7fb") if unlocked else Color("edf1f6")
+		bg_color = Color("fff7fb") if unlocked else Color("f5f9fd")
 		border_color = Color("ff6fae")
 		border_width = 5 if has_equipped_frame else 4
 	var style := _collection_style(bg_color, border_color, 20, border_width)
@@ -755,7 +757,6 @@ func _card_style(unlocked: bool, is_new: bool, is_selected: bool, equipped_rewar
 
 
 func _style_cosmetic_button(button: Button, earned: bool, equipped: bool) -> void:
-	button.add_theme_font_size_override("font_size", 15)
 	button.add_theme_color_override("font_color", Color("213a55"))
 	button.add_theme_color_override("font_disabled_color", Color("6f7a88"))
 	if equipped:
@@ -774,30 +775,39 @@ func _apply_responsive_layout() -> void:
 	MobileLayout.apply_safe_area(safe_margin, self, 18)
 	var viewport_size := get_viewport_rect().size
 	var portrait := viewport_size.y >= viewport_size.x
+	var root_container := find_child("LayoutRoot", true, false) as VBoxContainer
+	if root_container != null:
+		root_container.add_theme_constant_override("separation", 9 if portrait else 14)
 	card_grid.columns = 2 if portrait else 6
 	card_grid.add_theme_constant_override("h_separation", 14 if portrait else 10)
 	card_grid.add_theme_constant_override("v_separation", 14 if portrait else 10)
 	if header_panel != null:
 		header_panel.custom_minimum_size = Vector2(0, 0)
 	if header_margin != null:
-		header_margin.add_theme_constant_override("margin_left", 14 if portrait else 30)
-		header_margin.add_theme_constant_override("margin_top", 12 if portrait else 20)
-		header_margin.add_theme_constant_override("margin_right", 14 if portrait else 30)
-		header_margin.add_theme_constant_override("margin_bottom", 12 if portrait else 20)
+		header_margin.add_theme_constant_override("margin_left", 12 if portrait else 30)
+		header_margin.add_theme_constant_override("margin_top", 8 if portrait else 20)
+		header_margin.add_theme_constant_override("margin_right", 12 if portrait else 30)
+		header_margin.add_theme_constant_override("margin_bottom", 8 if portrait else 20)
+	var header_column := find_child("HeaderColumn", true, false) as VBoxContainer
+	if header_column != null:
+		header_column.add_theme_constant_override("separation", 5 if portrait else 10)
 	if back_button != null:
-		back_button.custom_minimum_size = Vector2(96, 50) if portrait else Vector2(128, 78)
-		back_button.add_theme_font_size_override("font_size", 20 if portrait else 34)
+		back_button.custom_minimum_size = Vector2(88, 44) if portrait else Vector2(128, 78)
+		back_button.add_theme_font_size_override("font_size", 18 if portrait else 34)
 	var title_label := find_child("TitleLabel", true, false) as Label
 	if title_label != null:
-		title_label.add_theme_font_size_override("font_size", 32 if portrait else 46)
+		title_label.add_theme_font_size_override("font_size", 30 if portrait else 46)
 	if summary_label != null:
-		summary_label.add_theme_font_size_override("font_size", 17 if portrait else 24)
+		summary_label.add_theme_font_size_override("font_size", 15 if portrait else 24)
 	if detail_label != null:
-		detail_label.add_theme_font_size_override("font_size", 16 if portrait else 24)
+		detail_label.autowrap_mode = TextServer.AUTOWRAP_OFF if portrait else TextServer.AUTOWRAP_WORD_SMART
+		detail_label.max_lines_visible = 1 if portrait else 2
+		detail_label.custom_minimum_size = Vector2(0, 22 if portrait else 58)
+		detail_label.add_theme_font_size_override("font_size", 14 if portrait else 24)
 	if cosmetic_grid != null:
-		cosmetic_grid.columns = 2 if portrait else 3
-		cosmetic_grid.add_theme_constant_override("h_separation", 7 if portrait else 14)
-		cosmetic_grid.add_theme_constant_override("v_separation", 7 if portrait else 12)
+		cosmetic_grid.columns = 3
+		cosmetic_grid.add_theme_constant_override("h_separation", 6 if portrait else 14)
+		cosmetic_grid.add_theme_constant_override("v_separation", 5 if portrait else 12)
 		for child in cosmetic_grid.get_children():
 			var button := child as Button
 			if button != null:
@@ -900,11 +910,11 @@ func _equipped_badge_font_size(viewport_size: Vector2) -> int:
 
 
 func _cosmetic_action_button_minimum_size(viewport_size: Vector2) -> Vector2:
-	return Vector2(132, 44) if viewport_size.y >= viewport_size.x else Vector2(280, 88)
+	return Vector2(104, 44) if viewport_size.y >= viewport_size.x else Vector2(280, 88)
 
 
 func _cosmetic_action_button_font_size(viewport_size: Vector2) -> int:
-	return 16 if viewport_size.y >= viewport_size.x else 32
+	return 14 if viewport_size.y >= viewport_size.x else 32
 
 
 func _on_back_pressed() -> void:

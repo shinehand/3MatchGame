@@ -4055,6 +4055,21 @@ func _validate_collection_card_input_runtime(node: Node, grid: Node, errors: Pac
 	var cosmetic_grid := node.find_child("CosmeticEquipGrid", true, false) as GridContainer
 	if cosmetic_grid == null or not cosmetic_grid.visible:
 		errors.append("%s Rescue Book detail should show cosmetic equip actions for earned reward tracks." % COLLECTION_SCENE_PATH)
+	var viewport_size := Vector2i(root.get_visible_rect().size)
+	var portrait := viewport_size.y >= viewport_size.x
+	if cosmetic_grid != null and cosmetic_grid.visible:
+		if cosmetic_grid.columns != 3:
+			errors.append("%s CosmeticEquipGrid should use a compact 3-column reward ribbon at %s, got %d." % [COLLECTION_SCENE_PATH, viewport_size, cosmetic_grid.columns])
+		var cosmetic_grid_rect := cosmetic_grid.get_global_rect()
+		var maximum_cosmetic_grid_height := float(viewport_size.y) * (0.13 if portrait else 0.34)
+		if cosmetic_grid_rect.size.y > maximum_cosmetic_grid_height:
+			errors.append("%s CosmeticEquipGrid should not read as a tall table at %s, got height %.1f above %.1f." % [COLLECTION_SCENE_PATH, viewport_size, cosmetic_grid_rect.size.y, maximum_cosmetic_grid_height])
+	var header_panel := node.find_child("CollectionHeaderPanel", true, false) as Control
+	if header_panel != null and header_panel.is_visible_in_tree():
+		var header_rect := header_panel.get_global_rect()
+		var maximum_header_height := float(viewport_size.y) * (0.18 if portrait else 0.34)
+		if header_rect.size.y > maximum_header_height:
+			errors.append("%s CollectionHeaderPanel should stay compact above the album grid at %s, got height %.1f above %.1f." % [COLLECTION_SCENE_PATH, viewport_size, header_rect.size.y, maximum_header_height])
 	var equip_events_before := _analytics_event_count("animal_cosmetic_equip")
 	if node.has_method("_on_cosmetic_reward_pressed"):
 		node.call("_on_cosmetic_reward_pressed", "rabbit", "rabbit_sprout_frame")
@@ -4082,7 +4097,6 @@ func _validate_collection_card_input_runtime(node: Node, grid: Node, errors: Pac
 	var equip_button := node.find_child("CosmeticButton_rabbit_sprout_frame", true, false) as Button
 	if equip_button == null or not equip_button.disabled or not equip_button.text.contains("장착중"):
 		errors.append("%s equipped cosmetic button should show disabled 장착중 state." % COLLECTION_SCENE_PATH)
-	var viewport_size := Vector2i(root.get_visible_rect().size)
 	for button_info in [
 		[node.find_child("CosmeticButton_rabbit_smile_plus", true, false), "CosmeticButton_rabbit_smile_plus"],
 		[equip_button, "CosmeticButton_rabbit_sprout_frame"],

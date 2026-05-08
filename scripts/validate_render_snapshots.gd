@@ -776,38 +776,60 @@ func _first_label_text_under(root: Node, label_name: String) -> String:
 
 
 func _validate_collection_snapshot_regions(image: Image, node: Node, snapshot_id: String, errors: PackedStringArray) -> void:
+	var header_panel := node.find_child("CollectionHeaderPanel", true, false) as Control
 	var detail_label := node.find_child("DetailLabel", true, false) as Label
 	var cosmetic_grid := node.find_child("CosmeticEquipGrid", true, false) as Control
 	var earned_button := node.find_child("CosmeticButton_rabbit_smile_plus", true, false) as Button
 	var equipped_button := node.find_child("CosmeticButton_rabbit_sprout_frame", true, false) as Button
 	var unearned_button := node.find_child("CosmeticButton_rabbit_rescuer_badge", true, false) as Button
 	var rabbit_card := node.find_child("AnimalCard_rabbit", true, false) as Control
+	var locked_card := node.find_child("AnimalCard_dog", true, false) as Control
 	var rabbit_preview: Control = null
 	if rabbit_card != null:
 		rabbit_preview = rabbit_card.find_child("AnimalPreview", true, false) as Control
+	var locked_preview: Control = null
+	var locked_status_visual: Control = null
+	var locked_status_label: Label = null
+	if locked_card != null:
+		locked_preview = locked_card.find_child("AnimalPreview", true, false) as Control
+		locked_status_visual = locked_card.find_child("AnimalStatusVisual", true, false) as Control
+		locked_status_label = locked_card.find_child("AnimalStatusLabel", true, false) as Label
 	var equipped_badge: Control = null
 	var equipped_badge_label: Label = null
 	if rabbit_card != null:
 		equipped_badge = rabbit_card.find_child("EquippedCosmeticBadge_rabbit_sprout_frame", true, false) as Control
 		if equipped_badge != null:
 			equipped_badge_label = equipped_badge.find_child("EquippedCosmeticBadgeLabel", true, false) as Label
+	_validate_control_pixels(image, header_panel, snapshot_id, "CollectionHeaderPanel", errors)
 	_validate_control_pixels(image, detail_label, snapshot_id, "CollectionDetailLabel", errors)
 	_validate_control_pixels(image, cosmetic_grid, snapshot_id, "CosmeticEquipGrid", errors)
 	_validate_control_pixels(image, rabbit_card, snapshot_id, "AnimalCardRabbit", errors)
 	_validate_control_pixels(image, rabbit_preview, snapshot_id, "AnimalPreviewRabbit", errors)
+	_validate_control_pixels(image, locked_card, snapshot_id, "AnimalCardLockedDog", errors)
+	_validate_control_pixels(image, locked_preview, snapshot_id, "AnimalPreviewLockedDog", errors)
+	_validate_control_pixels(image, locked_status_visual, snapshot_id, "AnimalStatusLockedDog", errors)
 	_validate_control_pixels(image, earned_button, snapshot_id, "CosmeticButtonRabbitSmilePlus", errors)
 	_validate_control_pixels(image, equipped_button, snapshot_id, "CosmeticButtonRabbitSproutFrame", errors)
 	_validate_control_pixels(image, unearned_button, snapshot_id, "CosmeticButtonRabbitRescuerBadge", errors)
 	_validate_control_pixels(image, equipped_badge, snapshot_id, "EquippedRabbitFrameBadge", errors)
+	_validate_control_within_image_bounds(header_panel, snapshot_id, "CollectionHeaderPanel", errors)
 	_validate_control_within_image_bounds(cosmetic_grid, snapshot_id, "CosmeticEquipGrid", errors)
 	_validate_control_within_image_bounds(rabbit_card, snapshot_id, "AnimalCardRabbit", errors)
 	_validate_control_within_image_bounds(rabbit_preview, snapshot_id, "AnimalPreviewRabbit", errors)
+	_validate_control_within_image_bounds(locked_card, snapshot_id, "AnimalCardLockedDog", errors)
+	_validate_control_within_image_bounds(locked_preview, snapshot_id, "AnimalPreviewLockedDog", errors)
+	_validate_control_within_image_bounds(locked_status_visual, snapshot_id, "AnimalStatusLockedDog", errors)
 	_validate_control_within_image_bounds(earned_button, snapshot_id, "CosmeticButtonRabbitSmilePlus", errors)
 	_validate_control_within_image_bounds(equipped_button, snapshot_id, "CosmeticButtonRabbitSproutFrame", errors)
 	_validate_control_within_image_bounds(unearned_button, snapshot_id, "CosmeticButtonRabbitRescuerBadge", errors)
 	_validate_control_within_image_bounds(equipped_badge, snapshot_id, "EquippedRabbitFrameBadge", errors)
 	_validate_control_image_minimum_size(image, rabbit_card, snapshot_id, "AnimalCardRabbit", Vector2(float(image.get_width()) * (0.42 if image.get_height() >= image.get_width() else 0.13), float(image.get_height()) * (0.16 if image.get_height() >= image.get_width() else 0.20)), errors)
 	_validate_control_image_minimum_size(image, rabbit_preview, snapshot_id, "AnimalPreviewRabbit", Vector2(float(image.get_width()) * (0.18 if image.get_height() >= image.get_width() else 0.055), float(image.get_width()) * (0.18 if image.get_height() >= image.get_width() else 0.055)), errors)
+	_validate_control_image_minimum_size(image, locked_card, snapshot_id, "AnimalCardLockedDog", Vector2(float(image.get_width()) * (0.42 if image.get_height() >= image.get_width() else 0.13), float(image.get_height()) * (0.16 if image.get_height() >= image.get_width() else 0.20)), errors)
+	_validate_control_image_minimum_size(image, locked_preview, snapshot_id, "AnimalPreviewLockedDog", Vector2(float(image.get_width()) * (0.14 if image.get_height() >= image.get_width() else 0.045), float(image.get_width()) * (0.14 if image.get_height() >= image.get_width() else 0.045)), errors)
+	if image.get_height() >= image.get_width():
+		_validate_control_image_maximum_height(image, header_panel, snapshot_id, "CollectionHeaderPanel", float(image.get_height()) * 0.13, errors)
+		_validate_control_image_maximum_height(image, cosmetic_grid, snapshot_id, "CosmeticEquipGrid", float(image.get_height()) * 0.058, errors)
 	if detail_label == null or not detail_label.text.contains("토끼") or not detail_label.text.contains("Lv.3") or not detail_label.text.contains("토큰 40") or not detail_label.text.contains("우정 보상"):
 		errors.append("%s collection snapshot detail should show selected rabbit Lv.3 token reward track." % snapshot_id)
 	if earned_button == null or earned_button.disabled or not earned_button.text.contains("장착"):
@@ -818,6 +840,8 @@ func _validate_collection_snapshot_regions(image: Image, node: Node, snapshot_id
 		errors.append("%s collection snapshot equipped button should preserve rabbit_sprout_frame tooltip metadata." % snapshot_id)
 	if unearned_button == null or not unearned_button.disabled or not unearned_button.text.contains("대기"):
 		errors.append("%s collection snapshot should show a disabled 대기 button for unearned rabbit cosmetic." % snapshot_id)
+	if locked_status_label == null or not locked_status_label.text.contains("Stage 7 해금"):
+		errors.append("%s collection snapshot should keep locked dog card unlock-stage copy." % snapshot_id)
 	if equipped_badge_label == null or not equipped_badge_label.text.contains("장착 프레임"):
 		errors.append("%s collection snapshot should show an equipped rabbit frame badge on the animal card." % snapshot_id)
 	if rabbit_card == null or String(rabbit_card.get_meta("equipped_cosmetic", "")) != "rabbit_sprout_frame" or String(rabbit_card.get_meta("equipped_cosmetic_type", "")) != "card_frame":
@@ -1103,6 +1127,14 @@ func _validate_control_image_minimum_size(image: Image, control: Control, snapsh
 	var rect := _control_rect_to_image_bounds(control.get_global_rect(), image.get_width(), image.get_height())
 	if float(rect.size.x) < minimum_size.x or float(rect.size.y) < minimum_size.y:
 		errors.append("%s %s should remain commercially readable in the PNG at least %s, got %s." % [snapshot_id, label, minimum_size, rect.size])
+
+
+func _validate_control_image_maximum_height(image: Image, control: Control, snapshot_id: String, label: String, maximum_height: float, errors: PackedStringArray) -> void:
+	if control == null:
+		return
+	var rect := _control_rect_to_image_bounds(control.get_global_rect(), image.get_width(), image.get_height())
+	if float(rect.size.y) > maximum_height:
+		errors.append("%s %s should remain a compact commercial ribbon in the PNG, got height %.1f above %.1f." % [snapshot_id, label, float(rect.size.y), maximum_height])
 
 
 func _validate_control_image_horizontal_gap(image: Image, left_control: Control, right_control: Control, snapshot_id: String, left_label: String, right_label: String, max_gap: float, errors: PackedStringArray) -> void:
