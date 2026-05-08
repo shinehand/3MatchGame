@@ -856,9 +856,26 @@
   - 잠금 dog 카드의 preview/status가 실제 PNG에서 non-blank로 렌더되고 `Stage 7 해금` 상태를 유지한다.
   - `validate_gameplay.sh`와 render snapshot smoke 40개가 통과한다.
 
+### PAM-UX-128: Result Overlay Reward Chip Polish
+
+- 상태: 완료됨. Stage clear/failure overlay가 텍스트만 작은 보상 카드처럼 보이던 문제를 줄였다. 성공 overlay는 골드/별/점수, Rescue Book 토큰, Zoo-Zoo Time을 `OverlayChipGrid` 보상 칩으로 분리하고 mascot과 CTA를 키워 보상감이 먼저 읽히게 했다. Near-miss 실패 overlay는 남은 목표, 놓친 핵심, 다음 한 수를 action chip으로 분리해 실패 원인과 다음 행동을 즉시 읽게 했다. Render snapshot은 성공/실패 overlay panel, mascot, chip grid, primary CTA 최소 PNG 크기와 chip 텍스트를 검증하고, scene smoke는 reward chip 조건과 기존 실패 오퍼/monetization 계약을 함께 확인한다.
+- 소유: Art Agent + Development Agent + QA Agent
+- 대상 파일:
+  - `scenes/gameplay.tscn`
+  - `scripts/gameplay.gd`
+  - `scripts/validate_scene_loads.gd`
+  - `scripts/validate_render_snapshots.gd`
+  - `docs/dev/validation-process.md`
+  - `docs/qa/project-animal-match-development-gates.md`
+  - `docs/dev/project-animal-match-implementation-backlog.md`
+- 완료 기준:
+  - `390x844`와 `844x390` Stage 1 성공 overlay에서 보상 칩, mascot, `다음 스테이지` CTA가 실제 PNG에서 상용 판독 크기를 유지한다.
+  - Stage 25 near-miss 실패 overlay에서 목표/핵심/다음 action chip과 `+3 이동 받고 계속` CTA가 실제 PNG에 렌더된다.
+  - `validate_gameplay.sh`와 render snapshot smoke 40개가 통과한다.
+
 ## 추천 구현 순서
 
-완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-058`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`, `PAM-UX-114`, `PAM-UX-115`, `PAM-UX-116`, `PAM-LIVEOPS-118`, `PAM-UX-119`, `PAM-UX-120`, `PAM-UX-121`, `PAM-UX-122`, `PAM-UX-123`, `PAM-UX-124`, `PAM-UX-125`, `PAM-UX-126`, `PAM-UX-127`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
+완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-058`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`, `PAM-UX-114`, `PAM-UX-115`, `PAM-UX-116`, `PAM-LIVEOPS-118`, `PAM-UX-119`, `PAM-UX-120`, `PAM-UX-121`, `PAM-UX-122`, `PAM-UX-123`, `PAM-UX-124`, `PAM-UX-125`, `PAM-UX-126`, `PAM-UX-127`, `PAM-UX-128`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
 
 다음 고가치 순서:
 

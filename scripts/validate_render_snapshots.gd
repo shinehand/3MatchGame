@@ -598,9 +598,7 @@ func _validate_scenario_regions(image: Image, node: Node, scenario: Dictionary, 
 		"gameplay_stage1_success":
 			_validate_result_overlay_snapshot_regions(image, node, snapshot_id, errors)
 		"gameplay_stage25_failure":
-			_validate_control_pixels(image, node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel") as Control, snapshot_id, "OverlayPanel", errors)
-			_validate_control_pixels(image, node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlayPrimaryButton") as Control, snapshot_id, "OverlayPrimaryButton", errors)
-			_validate_control_pixels(image, node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlaySecondaryButton") as Control, snapshot_id, "OverlaySecondaryButton", errors)
+			_validate_failure_overlay_snapshot_regions(image, node, snapshot_id, errors)
 		"gameplay_stage31_special_combo":
 			_validate_control_pixels(image, node.get_node_or_null("SafeMargin/LayoutRoot/BoardPanel/BoardMargin/BoardColumn/BoardFrame") as Control, snapshot_id, "BoardFrame", errors)
 			_validate_special_combo_snapshot_regions(image, node, scenario, snapshot_id, errors)
@@ -1013,14 +1011,19 @@ func _validate_result_overlay_snapshot_regions(image: Image, node: Node, snapsho
 	var title := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayTitle") as Label
 	var body := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayBody") as Label
 	var mascot := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayMascot") as TextureRect
+	var chip_grid := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayChipGrid") as Control
+	var chip_primary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayChipGrid/OverlayResultChipPrimary") as Button
+	var chip_secondary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayChipGrid/OverlayResultChipSecondary") as Button
+	var chip_tertiary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayChipGrid/OverlayResultChipTertiary") as Button
 	var primary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlayPrimaryButton") as Button
 	var secondary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlaySecondaryButton") as Button
 
-	for control_info in [[panel, "OverlayPanel"], [title, "OverlayTitle"], [body, "OverlayBody"], [mascot, "OverlayMascot"], [primary, "OverlayPrimaryButton"], [secondary, "OverlaySecondaryButton"]]:
+	for control_info in [[panel, "OverlayPanel"], [title, "OverlayTitle"], [body, "OverlayBody"], [mascot, "OverlayMascot"], [chip_grid, "OverlayChipGrid"], [chip_primary, "OverlayResultChipPrimary"], [chip_secondary, "OverlayResultChipSecondary"], [chip_tertiary, "OverlayResultChipTertiary"], [primary, "OverlayPrimaryButton"], [secondary, "OverlaySecondaryButton"]]:
 		var control := control_info[0] as Control
 		var label := String(control_info[1])
 		_validate_control_pixels(image, control, snapshot_id, label, errors)
 		_validate_control_within_image_bounds(control, snapshot_id, label, errors)
+	_validate_result_overlay_commercial_sizes(image, panel, mascot, chip_grid, primary, snapshot_id, errors)
 
 	if title == null or not title.text.contains("구조 완료"):
 		errors.append("%s success overlay title should contain 구조 완료." % snapshot_id)
@@ -1028,6 +1031,9 @@ func _validate_result_overlay_snapshot_regions(image: Image, node: Node, snapsho
 		errors.append("%s success overlay body should show reward, stars, and next action text." % snapshot_id)
 	elif not body.text.contains("Zoo-Zoo Time"):
 		errors.append("%s success overlay body should include Zoo-Zoo Time bonus text." % snapshot_id)
+	var success_chip_text := _button_text(chip_primary) + " " + _button_text(chip_secondary) + " " + _button_text(chip_tertiary)
+	if chip_grid == null or not chip_grid.visible or not success_chip_text.contains("골드") or not success_chip_text.contains("도감") or not success_chip_text.contains("Zoo-Zoo Time"):
+		errors.append("%s success overlay should expose reward chips for gold, Rescue Book tokens, and Zoo-Zoo Time." % snapshot_id)
 	if mascot == null or mascot.texture == null:
 		errors.append("%s success overlay should show a non-null mascot texture." % snapshot_id)
 	if primary == null or primary.text != "다음 스테이지":
@@ -1044,6 +1050,48 @@ func _validate_result_overlay_snapshot_regions(image: Image, node: Node, snapsho
 			errors.append("%s stage_complete analytics should preserve 2 Zoo-Zoo Time moves, got %d." % [snapshot_id, int(stage_complete_params.get("moves_left", 0))])
 		if int(stage_complete_params.get("zoo_zoo_time_bonus", 0)) <= 0:
 			errors.append("%s stage_complete analytics should include a positive Zoo-Zoo Time bonus." % snapshot_id)
+
+
+func _validate_failure_overlay_snapshot_regions(image: Image, node: Node, snapshot_id: String, errors: PackedStringArray) -> void:
+	var panel := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel") as Control
+	var title := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayTitle") as Label
+	var body := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayBody") as Label
+	var mascot := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayMascot") as TextureRect
+	var chip_grid := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayChipGrid") as Control
+	var chip_primary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayChipGrid/OverlayResultChipPrimary") as Button
+	var chip_secondary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayChipGrid/OverlayResultChipSecondary") as Button
+	var chip_tertiary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayChipGrid/OverlayResultChipTertiary") as Button
+	var primary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlayPrimaryButton") as Button
+	var secondary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlaySecondaryButton") as Button
+	for control_info in [[panel, "OverlayPanel"], [title, "OverlayTitle"], [body, "OverlayBody"], [mascot, "OverlayMascot"], [chip_grid, "OverlayChipGrid"], [chip_primary, "OverlayResultChipPrimary"], [chip_secondary, "OverlayResultChipSecondary"], [chip_tertiary, "OverlayResultChipTertiary"], [primary, "OverlayPrimaryButton"], [secondary, "OverlaySecondaryButton"]]:
+		var control := control_info[0] as Control
+		var label := String(control_info[1])
+		_validate_control_pixels(image, control, snapshot_id, label, errors)
+		_validate_control_within_image_bounds(control, snapshot_id, label, errors)
+	_validate_result_overlay_commercial_sizes(image, panel, mascot, chip_grid, primary, snapshot_id, errors)
+	if title == null or not title.text.contains("재도전 필요"):
+		errors.append("%s failure overlay title should show retry-needed copy." % snapshot_id)
+	if body == null or not body.text.contains("거의 다 왔어요") or not body.text.contains("놓친 핵심") or not body.text.contains("다음 한 수"):
+		errors.append("%s failure overlay body should preserve near-miss reason and next-step copy." % snapshot_id)
+	var failure_chip_text := _button_text(chip_primary) + " " + _button_text(chip_secondary) + " " + _button_text(chip_tertiary)
+	if chip_grid == null or not chip_grid.visible or not failure_chip_text.contains("목표") or not failure_chip_text.contains("핵심") or not failure_chip_text.contains("다음"):
+		errors.append("%s failure overlay should expose action chips for goal, missed focus, and next move." % snapshot_id)
+	if primary == null or primary.text != "+3 이동 받고 계속":
+		errors.append("%s failure overlay primary CTA should remain +3 이동 받고 계속." % snapshot_id)
+	if secondary == null or not secondary.visible or secondary.text != "재도전":
+		errors.append("%s failure overlay secondary CTA should remain 재도전." % snapshot_id)
+
+
+func _button_text(button: Button) -> String:
+	return "" if button == null else button.text
+
+
+func _validate_result_overlay_commercial_sizes(image: Image, panel: Control, mascot: Control, chip_grid: Control, primary: Control, snapshot_id: String, errors: PackedStringArray) -> void:
+	var portrait := image.get_height() >= image.get_width()
+	_validate_control_image_minimum_size(image, panel, snapshot_id, "OverlayPanel", Vector2(float(image.get_width()) * (0.70 if portrait else 0.23), float(image.get_height()) * (0.26 if portrait else 0.30)), errors)
+	_validate_control_image_minimum_size(image, mascot, snapshot_id, "OverlayMascot", Vector2(float(image.get_width()) * (0.09 if portrait else 0.035), float(image.get_width()) * (0.09 if portrait else 0.035)), errors)
+	_validate_control_image_minimum_size(image, chip_grid, snapshot_id, "OverlayChipGrid", Vector2(float(image.get_width()) * (0.62 if portrait else 0.18), float(image.get_height()) * (0.065 if portrait else 0.045)), errors)
+	_validate_control_image_minimum_size(image, primary, snapshot_id, "OverlayPrimaryButton", Vector2(float(image.get_width()) * (0.24 if portrait else 0.065), float(image.get_height()) * (0.035 if portrait else 0.035)), errors)
 
 
 func _validate_special_combo_snapshot_regions(image: Image, node: Node, scenario: Dictionary, snapshot_id: String, errors: PackedStringArray) -> void:

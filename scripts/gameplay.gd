@@ -112,6 +112,7 @@ const RESULT_OVERLAY_ACTIONS := ["clear_stage", "all_clear", "restart_stage"]
 @onready var overlay_mascot: TextureRect = $Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayMascot
 @onready var overlay_title: Label = $Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayTitle
 @onready var overlay_body: Label = $Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayBody
+@onready var overlay_chip_grid: GridContainer = $Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayChipGrid
 @onready var overlay_primary_button: Button = $Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlayPrimaryButton
 @onready var overlay_secondary_button: Button = $Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlaySecondaryButton
 @onready var fx_layer: CanvasLayer = $FxLayer
@@ -461,16 +462,27 @@ func _apply_responsive_layout() -> void:
 	quit_button.add_theme_font_size_override("font_size", 30 if portrait else 26)
 	retry_button.add_theme_font_size_override("font_size", 30 if portrait else 26)
 	next_stage_button.add_theme_font_size_override("font_size", 30 if portrait else 26)
-	overlay_panel.custom_minimum_size = Vector2(840, 0) if portrait else Vector2(700, 0)
-	overlay_mascot.custom_minimum_size = Vector2(150, 150) if portrait else Vector2(136, 136)
-	overlay_ribbon.custom_minimum_size = Vector2(168, 58) if portrait else Vector2(156, 54)
-	overlay_title.add_theme_font_size_override("font_size", 38 if portrait else 40)
-	overlay_body.add_theme_font_size_override("font_size", 22 if portrait else 24)
-	overlay_body.add_theme_constant_override("line_spacing", 7 if portrait else 10)
-	overlay_secondary_button.custom_minimum_size = Vector2(210, 76) if portrait else Vector2(180, 72)
-	overlay_primary_button.custom_minimum_size = Vector2(240, 76) if portrait else Vector2(180, 72)
-	overlay_secondary_button.add_theme_font_size_override("font_size", 26 if portrait else 24)
-	overlay_primary_button.add_theme_font_size_override("font_size", 26 if portrait else 24)
+	overlay_panel.custom_minimum_size = Vector2(840, 0) if portrait else Vector2(1040, 0)
+	overlay_mascot.custom_minimum_size = Vector2(204, 204) if portrait else Vector2(192, 192)
+	overlay_ribbon.custom_minimum_size = Vector2(168, 58) if portrait else Vector2(190, 62)
+	overlay_title.add_theme_font_size_override("font_size", 38 if portrait else 46)
+	overlay_body.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	overlay_body.max_lines_visible = 3 if portrait else 4
+	overlay_body.add_theme_font_size_override("font_size", 19 if portrait else 28)
+	overlay_body.add_theme_constant_override("line_spacing", 4 if portrait else 10)
+	if overlay_chip_grid != null:
+		overlay_chip_grid.columns = 1 if portrait else 3
+		overlay_chip_grid.add_theme_constant_override("h_separation", 8 if portrait else 12)
+		overlay_chip_grid.add_theme_constant_override("v_separation", 6 if portrait else 10)
+		for child in overlay_chip_grid.get_children():
+			var chip_button := child as Button
+			if chip_button != null:
+				chip_button.custom_minimum_size = _overlay_chip_minimum_size(viewport_size)
+				chip_button.add_theme_font_size_override("font_size", _overlay_chip_font_size(viewport_size))
+	overlay_secondary_button.custom_minimum_size = Vector2(220, 82) if portrait else Vector2(250, 88)
+	overlay_primary_button.custom_minimum_size = Vector2(270, 84) if portrait else Vector2(290, 88)
+	overlay_secondary_button.add_theme_font_size_override("font_size", 26 if portrait else 28)
+	overlay_primary_button.add_theme_font_size_override("font_size", 26 if portrait else 28)
 	stats_card.visible = not portrait
 	status_card.visible = false
 	_configure_landscape_support_card(portrait)
@@ -3613,12 +3625,110 @@ func _show_overlay(title: String, body: String, action: String, primary_text: St
 	overlay_primary_button.text = primary_text
 	overlay_secondary_button.visible = show_secondary
 	overlay_secondary_button.text = secondary_text
+	_refresh_overlay_chips(action, body)
 	_update_overlay_mascot(title, action)
 	_play_overlay_mascot_expression(_overlay_expression_for_action(title, action))
 	_update_overlay_ribbon(action)
 	_track_result_overlay_live_event_impression(action)
 	var tween := create_tween()
 	tween.tween_property(overlay, "modulate", Color(1, 1, 1, 1), 0.14)
+
+
+func _refresh_overlay_chips(action: String, body: String) -> void:
+	if overlay_chip_grid == null:
+		return
+	for child in overlay_chip_grid.get_children():
+		overlay_chip_grid.remove_child(child)
+		child.queue_free()
+
+	var chip_texts := _overlay_chip_texts(action, body)
+	overlay_chip_grid.visible = not chip_texts.is_empty()
+	if chip_texts.is_empty():
+		return
+
+	var viewport_size := get_viewport_rect().size
+	overlay_chip_grid.columns = 1 if MobileLayout.is_portrait(self) else mini(3, chip_texts.size())
+	var chip_names := ["OverlayResultChipPrimary", "OverlayResultChipSecondary", "OverlayResultChipTertiary"]
+	for index in range(mini(chip_texts.size(), chip_names.size())):
+		var chip := Button.new()
+		chip.name = String(chip_names[index])
+		chip.text = String(chip_texts[index])
+		chip.disabled = true
+		chip.focus_mode = Control.FOCUS_NONE
+		chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		chip.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		chip.custom_minimum_size = _overlay_chip_minimum_size(viewport_size)
+		chip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		chip.add_theme_font_size_override("font_size", _overlay_chip_font_size(viewport_size))
+		chip.add_theme_color_override("font_disabled_color", Color("24445f"))
+		chip.add_theme_stylebox_override("disabled", _overlay_chip_style(index, action))
+		overlay_chip_grid.add_child(chip)
+
+
+func _overlay_chip_texts(action: String, body: String) -> PackedStringArray:
+	var lines := PackedStringArray()
+	for raw_line in body.split("\n"):
+		var line := String(raw_line).strip_edges()
+		if not line.is_empty():
+			lines.append(line)
+
+	var chips := PackedStringArray()
+	if ["clear_stage", "all_clear"].has(action):
+		for line in lines:
+			if line.contains("골드") or line.begins_with("도감") or line.begins_with("Zoo-Zoo Time"):
+				chips.append(_overlay_chip_short_text(line))
+			if chips.size() >= 3:
+				break
+		if chips.size() < 3:
+			for line in lines:
+				if line.begins_with("★★"):
+					chips.append(_overlay_chip_short_text(line))
+					break
+	elif ["continue_stage", "restart_stage"].has(action):
+		for line in lines:
+			if line.begins_with("남은 목표") or line.begins_with("놓친 핵심") or line.begins_with("다음 한 수"):
+				chips.append(_overlay_chip_short_text(line))
+			if chips.size() >= 3:
+				break
+	return chips
+
+
+func _overlay_chip_short_text(line: String) -> String:
+	return line.replace("보상  ", "").replace("남은 목표  ", "목표  ").replace("놓친 핵심  ", "핵심  ").replace("다음 한 수  ", "다음  ")
+
+
+func _overlay_chip_minimum_size(viewport_size: Vector2) -> Vector2:
+	if viewport_size.y >= viewport_size.x:
+		return Vector2(0, 54)
+	return Vector2(0, 82)
+
+
+func _overlay_chip_font_size(viewport_size: Vector2) -> int:
+	return 20 if viewport_size.y >= viewport_size.x else 26
+
+
+func _overlay_chip_style(index: int, action: String) -> StyleBoxFlat:
+	var colors := [
+		[Color("fff3a8"), Color("ffbf32")],
+		[Color("e2fbef"), Color("62d78f")],
+		[Color("e3f7ff"), Color("6ecbff")],
+	]
+	if ["continue_stage", "restart_stage"].has(action):
+		colors = [
+			[Color("fff0c7"), Color("ffb533")],
+			[Color("ffe1ec"), Color("ff72a6")],
+			[Color("e5f6ff"), Color("70cfff")],
+		]
+	var pair: Array = colors[index % colors.size()]
+	var style := StyleBoxFlat.new()
+	style.bg_color = pair[0]
+	style.border_color = pair[1]
+	style.set_border_width_all(3)
+	style.set_corner_radius_all(18)
+	style.shadow_color = Color(0.12, 0.18, 0.28, 0.12)
+	style.shadow_size = 4
+	style.shadow_offset = Vector2(0, 2)
+	return style
 
 
 func _hide_overlay() -> void:

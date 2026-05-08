@@ -535,16 +535,18 @@ func _validate_failure_overlay_viewport_clearance(node: Node, viewport_size: Vec
 	var panel := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel") as Control
 	var title := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayTitle") as Control
 	var body := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayBody") as Control
+	var chip_grid := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayChipGrid") as Control
 	var primary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlayPrimaryButton") as Control
 	var secondary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlaySecondaryButton") as Control
-	for control_info in [[panel, "OverlayPanel"], [title, "OverlayTitle"], [body, "OverlayBody"], [primary, "OverlayPrimaryButton"], [secondary, "OverlaySecondaryButton"]]:
+	for control_info in [[panel, "OverlayPanel"], [title, "OverlayTitle"], [body, "OverlayBody"], [chip_grid, "OverlayChipGrid"], [primary, "OverlayPrimaryButton"], [secondary, "OverlaySecondaryButton"]]:
 		var control := control_info[0] as Control
 		var label := String(control_info[1])
 		_validate_control_in_viewport(control, viewport_size, GAMEPLAY_SCENE_PATH, "%s %s" % [context, label], errors)
 		if panel != null and control != null and control != panel:
 			_validate_control_inside_container(control, panel, GAMEPLAY_SCENE_PATH, "%s %s" % [context, label], errors)
-	_validate_no_vertical_overlap(body, primary, GAMEPLAY_SCENE_PATH, "%s OverlayBody to primary CTA" % context, errors)
-	_validate_no_vertical_overlap(body, secondary, GAMEPLAY_SCENE_PATH, "%s OverlayBody to secondary CTA" % context, errors)
+	_validate_no_vertical_overlap(body, chip_grid, GAMEPLAY_SCENE_PATH, "%s OverlayBody to chip grid" % context, errors)
+	_validate_no_vertical_overlap(chip_grid, primary, GAMEPLAY_SCENE_PATH, "%s OverlayChipGrid to primary CTA" % context, errors)
+	_validate_no_vertical_overlap(chip_grid, secondary, GAMEPLAY_SCENE_PATH, "%s OverlayChipGrid to secondary CTA" % context, errors)
 	_validate_commercial_touch_target(primary, COMMERCIAL_UI_PRIMARY_TOUCH, GAMEPLAY_SCENE_PATH, "%s OverlayPrimaryButton commercial CTA" % context, viewport_size, errors)
 	_validate_commercial_touch_target(secondary, COMMERCIAL_UI_SECONDARY_TOUCH, GAMEPLAY_SCENE_PATH, "%s OverlaySecondaryButton commercial CTA" % context, viewport_size, errors)
 
@@ -762,6 +764,13 @@ func _visible_label_line_count(label: Label) -> int:
 		if String(line).strip_edges() != "":
 			count += 1
 	return count
+
+
+func _button_text_under(parent: Node, button_name: String) -> String:
+	if parent == null:
+		return ""
+	var button := parent.find_child(button_name, true, false) as Button
+	return "" if button == null else button.text
 
 
 func _validate_commercial_button_contrast(button: Button, scene_path: String, label: String, errors: PackedStringArray) -> void:
@@ -3021,6 +3030,7 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	var overlay_title := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayTitle") as Label
 	var overlay_body := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayBody") as Label
 	var overlay_mascot := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayMascot") as TextureRect
+	var overlay_chip_grid := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayChipGrid") as Control
 	var overlay_primary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlayPrimaryButton") as Button
 	var overlay_secondary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlaySecondaryButton") as Button
 	if overlay == null or not overlay.visible:
@@ -3037,6 +3047,11 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s clear overlay body should show the Rescue Book token reward." % GAMEPLAY_SCENE_PATH)
 	if overlay_body != null and _visible_label_line_count(overlay_body) > 6:
 		errors.append("%s clear overlay body should stay commercially scannable with 6 or fewer visible lines." % GAMEPLAY_SCENE_PATH)
+	var success_chip_text := _button_text_under(overlay_chip_grid, "OverlayResultChipPrimary") + " " + _button_text_under(overlay_chip_grid, "OverlayResultChipSecondary") + " " + _button_text_under(overlay_chip_grid, "OverlayResultChipTertiary")
+	if overlay_chip_grid == null or not overlay_chip_grid.visible or not success_chip_text.contains("골드") or not success_chip_text.contains("도감"):
+		errors.append("%s clear overlay should show reward chips for gold and Rescue Book tokens." % GAMEPLAY_SCENE_PATH)
+	if overlay_body != null and overlay_body.text.contains("Zoo-Zoo Time") and not success_chip_text.contains("Zoo-Zoo Time"):
+		errors.append("%s clear overlay should mirror Zoo-Zoo Time into reward chips when the bonus is present." % GAMEPLAY_SCENE_PATH)
 	if overlay_mascot == null or overlay_mascot.texture == null:
 		errors.append("%s clear overlay should show a non-null success mascot texture." % GAMEPLAY_SCENE_PATH)
 	if overlay_primary == null or overlay_primary.text != "다음 스테이지":
@@ -3134,6 +3149,9 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s near-miss failure body should isolate missed goal and one actionable retry hint." % GAMEPLAY_SCENE_PATH)
 	if overlay_body != null and _visible_label_line_count(overlay_body) > 6:
 		errors.append("%s near-miss failure body should stay commercially scannable with 6 or fewer visible lines." % GAMEPLAY_SCENE_PATH)
+	var failure_chip_text := _button_text_under(overlay_chip_grid, "OverlayResultChipPrimary") + " " + _button_text_under(overlay_chip_grid, "OverlayResultChipSecondary") + " " + _button_text_under(overlay_chip_grid, "OverlayResultChipTertiary")
+	if overlay_chip_grid == null or not overlay_chip_grid.visible or not failure_chip_text.contains("목표") or not failure_chip_text.contains("핵심") or not failure_chip_text.contains("다음"):
+		errors.append("%s near-miss failure overlay should show action chips for goal, missed focus, and next move." % GAMEPLAY_SCENE_PATH)
 	await _validate_failure_overlay_text_stress(node, errors)
 	if _analytics_event_count("stage_fail") <= fail_events_before:
 		errors.append("%s near-miss failure runtime smoke should emit stage_fail analytics." % GAMEPLAY_SCENE_PATH)
@@ -3704,6 +3722,7 @@ func _validate_failure_overlay_text_stress(node: Node, errors: PackedStringArray
 	var panel := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel") as Control
 	var title := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayTitle") as Label
 	var body := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayBody") as Label
+	var chip_grid := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayChipGrid") as Control
 	var primary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlayPrimaryButton") as Button
 	var secondary := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayButtons/OverlaySecondaryButton") as Button
 	var original_title := "" if title == null else title.text
@@ -3720,12 +3739,13 @@ func _validate_failure_overlay_text_stress(node: Node, errors: PackedStringArray
 		secondary.text = "재도전"
 	await process_frame
 	_validate_control_in_viewport(panel, viewport_size, GAMEPLAY_SCENE_PATH, "OverlayPanel text stress", errors)
-	for control_info in [[title, "OverlayTitle"], [body, "OverlayBody"], [primary, "OverlayPrimaryButton"], [secondary, "OverlaySecondaryButton"]]:
+	for control_info in [[title, "OverlayTitle"], [body, "OverlayBody"], [chip_grid, "OverlayChipGrid"], [primary, "OverlayPrimaryButton"], [secondary, "OverlaySecondaryButton"]]:
 		var control := control_info[0] as Control
 		var label := String(control_info[1])
 		if control != null and control.is_visible_in_tree():
 			_validate_control_inside_container(control, panel, GAMEPLAY_SCENE_PATH, "%s text stress" % label, errors)
-	_validate_no_vertical_overlap(body, primary, GAMEPLAY_SCENE_PATH, "OverlayBody to primary CTA", errors)
+	_validate_no_vertical_overlap(body, chip_grid, GAMEPLAY_SCENE_PATH, "OverlayBody to chip grid", errors)
+	_validate_no_vertical_overlap(chip_grid, primary, GAMEPLAY_SCENE_PATH, "OverlayChipGrid to primary CTA", errors)
 	if title != null:
 		title.text = original_title
 	if body != null:
