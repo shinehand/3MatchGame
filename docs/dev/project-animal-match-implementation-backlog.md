@@ -749,9 +749,21 @@
   - sound/haptics toggle과 close CTA가 표시, bounds, 텍스트, 최소 터치 타깃 검증을 통과한다.
   - render snapshot smoke가 정확히 40개 PNG를 요구하며 settings overlay 시나리오 누락을 실패시킨다.
 
+### PAM-UX-121: Stage Popup Commercial Start Card Polish
+
+- 상태: 완료됨. Stage Popup을 목표/스테이지 메타/보상/Rescue Buddy 정보가 한눈에 분리되는 캔디풍 start card로 보정했다. 목표 영역은 초록 goal chip, 스테이지 정보는 하늘색 status chip, 보상은 노랑 reward chip, buddy 안내는 하늘색 helper chip으로 읽히게 했고, `PLAY` CTA와 title typography를 세로/가로 viewport별로 키웠다. 기존 `stage_popup` render snapshot과 scene mobile matrix가 panel, buddy label, booster buttons, close, PLAY CTA bounds/touch target을 계속 검증한다.
+- 소유: Art Agent + Development Agent + QA Agent
+- 대상 파일:
+  - `scripts/stage_select.gd`
+  - `docs/dev/project-animal-match-implementation-backlog.md`
+- 완료 기준:
+  - Stage Popup이 개발용 텍스트 묶음이 아니라 상용 시작 전 카드처럼 읽힌다.
+  - Portrait와 landscape snapshot에서 목표, 메타, 보상, buddy, booster, PLAY CTA가 겹치지 않는다.
+  - 기존 render snapshot smoke 40개와 scene mobile matrix가 회귀 없이 통과한다.
+
 ## 추천 구현 순서
 
-완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-058`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`, `PAM-UX-114`, `PAM-UX-115`, `PAM-UX-116`, `PAM-LIVEOPS-118`, `PAM-UX-119`, `PAM-UX-120`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
+완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-058`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`, `PAM-UX-114`, `PAM-UX-115`, `PAM-UX-116`, `PAM-LIVEOPS-118`, `PAM-UX-119`, `PAM-UX-120`, `PAM-UX-121`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
 
 다음 고가치 순서:
 
