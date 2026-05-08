@@ -185,6 +185,7 @@ static func save_state() -> void:
 		push_error("GameSession: failed to open save file.")
 		return
 	file.store_string(JSON.stringify(_save_data, "\t"))
+	file.flush()
 
 
 static func get_session_id() -> String:

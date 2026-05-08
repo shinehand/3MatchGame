@@ -152,6 +152,7 @@ var stage_popup_margin: MarginContainer
 var stage_popup_column: VBoxContainer
 var stage_popup_booster_row: HBoxContainer
 var stage_popup_start_button: Button
+var stage_popup_close_button: Button
 var stage_popup_booster_buttons: Dictionary = {}
 var stage_select_event_impressions_sent := {}
 
@@ -522,16 +523,16 @@ func _build_stage_popup() -> void:
 	stage_popup_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(stage_popup_title_label)
 
-	var close_button := Button.new()
-	close_button.text = "×"
-	close_button.custom_minimum_size = Vector2(72, 72)
-	close_button.add_theme_font_size_override("font_size", 34)
-	close_button.add_theme_color_override("font_color", Color("213a55"))
-	close_button.add_theme_stylebox_override("normal", _rounded_style(Color(1, 1, 1, 0.66), Color("86c3e5"), 22, 3))
-	close_button.add_theme_stylebox_override("hover", _rounded_style(Color("e9fbff"), Color("6ec6ff"), 22, 3))
-	close_button.add_theme_stylebox_override("pressed", _rounded_style(Color("d8f6ff"), Color("6ec6ff"), 22, 3))
-	close_button.pressed.connect(_on_stage_popup_close_pressed)
-	header.add_child(close_button)
+	stage_popup_close_button = Button.new()
+	stage_popup_close_button.text = "×"
+	stage_popup_close_button.custom_minimum_size = Vector2(72, 72)
+	stage_popup_close_button.add_theme_font_size_override("font_size", 34)
+	stage_popup_close_button.add_theme_color_override("font_color", Color("213a55"))
+	stage_popup_close_button.add_theme_stylebox_override("normal", _rounded_style(Color(1, 1, 1, 0.66), Color("86c3e5"), 22, 3))
+	stage_popup_close_button.add_theme_stylebox_override("hover", _rounded_style(Color("e9fbff"), Color("6ec6ff"), 22, 3))
+	stage_popup_close_button.add_theme_stylebox_override("pressed", _rounded_style(Color("d8f6ff"), Color("6ec6ff"), 22, 3))
+	stage_popup_close_button.pressed.connect(_on_stage_popup_close_pressed)
+	header.add_child(stage_popup_close_button)
 
 	stage_popup_goal_label = _make_popup_label("목표", 26, Color("513d30"), HORIZONTAL_ALIGNMENT_CENTER)
 	stage_popup_goal_label.custom_minimum_size = Vector2(0, 104)
@@ -1599,6 +1600,9 @@ func _layout_stage_popup(portrait: bool, viewport_size: Vector2) -> void:
 		stage_popup_reward_label.add_theme_font_size_override("font_size", 22)
 		stage_popup_buddy_label.custom_minimum_size = Vector2(0, 78)
 		stage_popup_buddy_label.add_theme_font_size_override("font_size", 21)
+		if stage_popup_close_button:
+			stage_popup_close_button.custom_minimum_size = Vector2(72, 72)
+			stage_popup_close_button.add_theme_font_size_override("font_size", 34)
 		if stage_popup_booster_row:
 			stage_popup_booster_row.add_theme_constant_override("separation", 10)
 		for booster_button_value in stage_popup_booster_buttons.values():
@@ -1610,32 +1614,35 @@ func _layout_stage_popup(portrait: bool, viewport_size: Vector2) -> void:
 			stage_popup_start_button.custom_minimum_size = Vector2(0, 88)
 			stage_popup_start_button.add_theme_font_size_override("font_size", 36)
 	else:
-		stage_popup_panel.custom_minimum_size = Vector2(minf(viewport_size.x - 48.0, 720.0), minf(viewport_size.y - 34.0, 800.0))
+		stage_popup_panel.custom_minimum_size = Vector2(clampf(viewport_size.x * 0.52, 1680.0, 2280.0), minf(viewport_size.y - 120.0, 1500.0))
 		if stage_popup_margin:
-			stage_popup_margin.add_theme_constant_override("margin_left", 28)
-			stage_popup_margin.add_theme_constant_override("margin_top", 28)
-			stage_popup_margin.add_theme_constant_override("margin_right", 28)
-			stage_popup_margin.add_theme_constant_override("margin_bottom", 28)
+			stage_popup_margin.add_theme_constant_override("margin_left", 72)
+			stage_popup_margin.add_theme_constant_override("margin_top", 54)
+			stage_popup_margin.add_theme_constant_override("margin_right", 72)
+			stage_popup_margin.add_theme_constant_override("margin_bottom", 54)
 		if stage_popup_column:
-			stage_popup_column.add_theme_constant_override("separation", 18)
-		stage_popup_title_label.add_theme_font_size_override("font_size", 38)
-		stage_popup_goal_label.custom_minimum_size = Vector2(0, 104)
-		stage_popup_goal_label.add_theme_font_size_override("font_size", 26)
-		stage_popup_meta_label.add_theme_font_size_override("font_size", 24)
-		stage_popup_reward_label.custom_minimum_size = Vector2(0, 76)
-		stage_popup_reward_label.add_theme_font_size_override("font_size", 24)
-		stage_popup_buddy_label.custom_minimum_size = Vector2(0, 92)
-		stage_popup_buddy_label.add_theme_font_size_override("font_size", 23)
+			stage_popup_column.add_theme_constant_override("separation", 24)
+		stage_popup_title_label.add_theme_font_size_override("font_size", 72)
+		stage_popup_goal_label.custom_minimum_size = Vector2(0, 138)
+		stage_popup_goal_label.add_theme_font_size_override("font_size", 46)
+		stage_popup_meta_label.add_theme_font_size_override("font_size", 40)
+		stage_popup_reward_label.custom_minimum_size = Vector2(0, 96)
+		stage_popup_reward_label.add_theme_font_size_override("font_size", 40)
+		stage_popup_buddy_label.custom_minimum_size = Vector2(0, 132)
+		stage_popup_buddy_label.add_theme_font_size_override("font_size", 36)
+		if stage_popup_close_button:
+			stage_popup_close_button.custom_minimum_size = Vector2(132, 132)
+			stage_popup_close_button.add_theme_font_size_override("font_size", 58)
 		if stage_popup_booster_row:
-			stage_popup_booster_row.add_theme_constant_override("separation", 12)
+			stage_popup_booster_row.add_theme_constant_override("separation", 24)
 		for booster_button_value in stage_popup_booster_buttons.values():
 			var booster_button := booster_button_value as Button
 			if booster_button:
-				booster_button.custom_minimum_size = Vector2(190, 118)
-				booster_button.add_theme_font_size_override("font_size", 22)
+				booster_button.custom_minimum_size = Vector2(420, 220)
+				booster_button.add_theme_font_size_override("font_size", 38)
 		if stage_popup_start_button:
-			stage_popup_start_button.custom_minimum_size = Vector2(0, 92)
-			stage_popup_start_button.add_theme_font_size_override("font_size", 36)
+			stage_popup_start_button.custom_minimum_size = Vector2(0, 210)
+			stage_popup_start_button.add_theme_font_size_override("font_size", 64)
 
 
 func _layout_stage_world_layer(portrait: bool) -> void:

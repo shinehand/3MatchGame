@@ -393,6 +393,12 @@ func _validate_stage_popup_mobile_viewport_matrix(node: Node, viewport_size: Vec
 		var minimum_commercial_width := float(viewport_size.x) * 0.62
 		if panel_rect.size.x < minimum_commercial_width:
 			errors.append("%s Stage 4 mobile matrix StagePopupPanel should read as a commercial start card at %s, got width %.1f below %.1f." % [STAGE_SELECT_SCENE_PATH, viewport_size, panel_rect.size.x, minimum_commercial_width])
+	elif panel != null:
+		var panel_rect := panel.get_global_rect()
+		var minimum_commercial_width := float(viewport_size.x) * 0.42
+		var minimum_commercial_height := float(viewport_size.y) * 0.54
+		if panel_rect.size.x < minimum_commercial_width or panel_rect.size.y < minimum_commercial_height:
+			errors.append("%s Stage 4 landscape StagePopupPanel should read as a commercial modal at %s, got %s below %.1fx%.1f." % [STAGE_SELECT_SCENE_PATH, viewport_size, panel_rect.size, minimum_commercial_width, minimum_commercial_height])
 	for control_info in [
 		[title_label, "StagePopupTitle"],
 		[goal_label, "StagePopupGoal"],
@@ -415,6 +421,11 @@ func _validate_stage_popup_mobile_viewport_matrix(node: Node, viewport_size: Vec
 		if panel != null and booster_button != null:
 			_validate_control_inside_container(booster_button, panel, STAGE_SELECT_SCENE_PATH, "Stage 4 mobile matrix booster %s" % booster_id, errors)
 	_validate_commercial_touch_target(start_button, COMMERCIAL_UI_PRIMARY_TOUCH, STAGE_SELECT_SCENE_PATH, "StagePopupStartButton commercial CTA", viewport_size, errors)
+	if start_button != null and viewport_size.x > viewport_size.y:
+		var start_rect := start_button.get_global_rect()
+		var minimum_start_height := float(viewport_size.y) * 0.095
+		if start_rect.size.y < minimum_start_height:
+			errors.append("%s StagePopupStartButton should dominate landscape modal as the primary CTA at %s, got height %.1f below %.1f." % [STAGE_SELECT_SCENE_PATH, viewport_size, start_rect.size.y, minimum_start_height])
 	_validate_commercial_touch_target(close_button, COMMERCIAL_UI_ICON_TOUCH, STAGE_SELECT_SCENE_PATH, "StagePopupCloseButton commercial CTA", viewport_size, errors)
 	for booster_id in ["rainbow_paw", "striped", "bomb"]:
 		_validate_commercial_touch_target(booster_buttons.get(booster_id) as Control, COMMERCIAL_UI_SECONDARY_TOUCH, STAGE_SELECT_SCENE_PATH, "StagePopupBoosterButton %s commercial CTA" % booster_id, viewport_size, errors)
@@ -505,6 +516,22 @@ func _validate_collection_viewport_layout(node: Node, viewport_size: Vector2i, e
 	var collection_grid := node.find_child("CollectionGrid", true, false) as GridContainer
 	if collection_grid == null:
 		errors.append("%s missing responsive layout target CollectionGrid at %s." % [COLLECTION_SCENE_PATH, viewport_size])
+		return
+	var first_card := _first_collection_card(node)
+	if first_card == null:
+		errors.append("%s should render at least one commercial animal card at %s." % [COLLECTION_SCENE_PATH, viewport_size])
+		return
+	var portrait := viewport_size.y >= viewport_size.x
+	var card_rect := first_card.get_global_rect()
+	var minimum_card_height := float(viewport_size.y) * (0.13 if portrait else 0.28)
+	if card_rect.size.y < minimum_card_height:
+		errors.append("%s AnimalCard should not collapse into a thin row at %s, got height %.1f below %.1f." % [COLLECTION_SCENE_PATH, viewport_size, card_rect.size.y, minimum_card_height])
+	var preview := first_card.find_child("AnimalPreview", true, false) as Control
+	if preview != null:
+		var preview_rect := preview.get_global_rect()
+		var minimum_preview_side := float(viewport_size.y) * (0.052 if portrait else 0.11)
+		if minf(preview_rect.size.x, preview_rect.size.y) < minimum_preview_side:
+			errors.append("%s AnimalPreview should remain readable at %s, got %s below %.1f." % [COLLECTION_SCENE_PATH, viewport_size, preview_rect.size, minimum_preview_side])
 
 
 func _validate_collection_viewport_text_stress(node: Node, viewport_size: Vector2i, errors: PackedStringArray) -> void:
@@ -512,7 +539,7 @@ func _validate_collection_viewport_text_stress(node: Node, viewport_size: Vector
 	var summary := node.find_child("SummaryLabel", true, false) as Label
 	var detail := node.find_child("DetailLabel", true, false) as Label
 	var back_button := node.find_child("BackButton", true, false) as Button
-	var grid := node.find_child("CollectionGrid", true, false) as GridContainer
+	var scroll := node.find_child("CollectionScroll", true, false) as ScrollContainer
 	var original_summary := "" if summary == null else summary.text
 	var original_detail := "" if detail == null else detail.text
 	var original_back := "" if back_button == null else back_button.text
@@ -523,7 +550,7 @@ func _validate_collection_viewport_text_stress(node: Node, viewport_size: Vector
 	if back_button != null:
 		back_button.text = "홈"
 	await process_frame
-	for control_info in [[header, "HeaderRow"], [summary, "SummaryLabel"], [detail, "DetailLabel"], [back_button, "BackButton"], [grid, "CollectionGrid"]]:
+	for control_info in [[header, "HeaderRow"], [summary, "SummaryLabel"], [detail, "DetailLabel"], [back_button, "BackButton"], [scroll, "CollectionScroll"]]:
 		var control := control_info[0] as Control
 		var label := String(control_info[1])
 		if control != null and control.is_visible_in_tree():
@@ -536,8 +563,8 @@ func _validate_collection_viewport_text_stress(node: Node, viewport_size: Vector
 				_validate_control_inside_container(child_control, header, COLLECTION_SCENE_PATH, "%s text stress" % child_label, errors)
 	if summary != null and detail != null:
 		_validate_no_vertical_overlap(summary, detail, COLLECTION_SCENE_PATH, "SummaryLabel to DetailLabel text stress", errors)
-	if detail != null and grid != null:
-		_validate_no_vertical_overlap(detail, grid, COLLECTION_SCENE_PATH, "DetailLabel to CollectionGrid text stress", errors)
+	if detail != null and scroll != null:
+		_validate_no_vertical_overlap(detail, scroll, COLLECTION_SCENE_PATH, "DetailLabel to CollectionScroll text stress", errors)
 	await _validate_collection_card_text_stress(node, viewport_size, errors)
 	if summary != null:
 		summary.text = original_summary
