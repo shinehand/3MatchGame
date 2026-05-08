@@ -26,6 +26,9 @@ if ! "${godot_command[@]}" >"$validation_stdout" 2>&1; then
   exit 1
 fi
 touch "$validation_log" "$validation_stdout"
+if [ -f "$PAM_RENDER_SNAPSHOT_DIR/manifest.txt" ]; then
+  cp "$PAM_RENDER_SNAPSHOT_DIR/manifest.txt" /tmp/puzzle-render-snapshots-manifest.txt
+fi
 
 blocking_log_patterns="SCRIPT ERROR:|Parse Error:|Invalid access to property|Cannot call method|Attempt to call function|Render snapshot validation error"
 if scan_output="$(validation_search "$blocking_log_patterns" "$validation_log" "$validation_stdout" 2>&1)"; then
@@ -52,6 +55,10 @@ fi
 snapshot_count="$(find "$PAM_RENDER_SNAPSHOT_DIR" -type f -name '*.png' | wc -l | tr -d ' ')"
 if [ "$snapshot_count" -lt 10 ]; then
   echo "Render snapshot validation expected at least 10 PNGs in $PAM_RENDER_SNAPSHOT_DIR, got $snapshot_count."
+  if [ -n "${GITHUB_ACTIONS:-}" ]; then
+    manifest_summary="$(cat "$PAM_RENDER_SNAPSHOT_DIR/manifest.txt" 2>/dev/null | tr '\n' ' ' | cut -c1-3500)"
+    echo "::error title=Render snapshot PNG count failed::expected at least 10 PNGs in $PAM_RENDER_SNAPSHOT_DIR, got $snapshot_count. $manifest_summary"
+  fi
   exit 1
 fi
 

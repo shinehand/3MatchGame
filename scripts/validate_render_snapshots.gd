@@ -20,6 +20,7 @@ const SCENARIOS := [
 ]
 
 var output_dir := ""
+var saved_snapshot_paths := PackedStringArray()
 
 
 func _init() -> void:
@@ -36,6 +37,13 @@ func _run() -> void:
 		for scenario in SCENARIOS:
 			await _capture_scenario(Dictionary(scenario), viewport_size, errors)
 
+	if not errors.is_empty():
+		for error_text in errors:
+			push_error("Render snapshot validation error: %s" % error_text)
+		quit(1)
+		return
+
+	_write_snapshot_manifest(output_dir, saved_snapshot_paths, errors)
 	if not errors.is_empty():
 		for error_text in errors:
 			push_error("Render snapshot validation error: %s" % error_text)
@@ -182,10 +190,23 @@ func _save_and_validate_snapshot(snapshot_id: String, node: Node, setup_id: Stri
 	if save_error != OK:
 		errors.append("%s could not save PNG %s: %s" % [snapshot_id, output_path, error_string(save_error)])
 		return
+	saved_snapshot_paths.append(output_path)
 	_validate_saved_png(output_path, snapshot_id, errors)
 	_validate_image_pixels(image, Rect2i(Vector2i.ZERO, Vector2i(image.get_width(), image.get_height())), "%s full frame" % snapshot_id, 0.08, 10, errors)
 	_validate_scenario_regions(image, node, setup_id, snapshot_id, errors)
 	print("Render snapshot saved: %s" % output_path)
+
+
+func _write_snapshot_manifest(target_dir: String, snapshot_paths: PackedStringArray, errors: PackedStringArray) -> void:
+	var manifest_path := target_dir.path_join("manifest.txt")
+	var file := FileAccess.open(manifest_path, FileAccess.WRITE)
+	if file == null:
+		errors.append("could not write render snapshot manifest: %s" % manifest_path)
+		return
+	file.store_line("Render snapshot output dir: %s" % target_dir)
+	file.store_line("Render snapshot count: %d" % snapshot_paths.size())
+	for snapshot_path in snapshot_paths:
+		file.store_line(snapshot_path)
 
 
 func _validate_saved_png(output_path: String, snapshot_id: String, errors: PackedStringArray) -> void:

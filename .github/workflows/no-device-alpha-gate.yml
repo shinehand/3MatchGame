@@ -94,3 +94,4 @@ jobs:
             /tmp/puzzle-*.txt
             /tmp/puzzle-*.md
             /tmp/puzzle-render-snapshots/*.png
+            /tmp/puzzle-render-snapshots/*.txt
