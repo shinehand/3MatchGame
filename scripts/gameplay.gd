@@ -358,7 +358,7 @@ func _apply_responsive_layout() -> void:
 	var viewport_size := get_viewport_rect().size
 
 	layout_root.vertical = portrait
-	layout_root.add_theme_constant_override("separation", 0 if portrait else 28)
+	layout_root.add_theme_constant_override("separation", 0 if portrait else 20)
 	primary_buttons.vertical = false
 	primary_buttons.alignment = BoxContainer.ALIGNMENT_CENTER
 
@@ -388,7 +388,7 @@ func _apply_responsive_layout() -> void:
 		layout_root.move_child(board_panel, 0)
 		layout_root.move_child(landscape_hud_shell, 1)
 
-	board_panel.custom_minimum_size = Vector2(0, 0) if portrait else Vector2(1000, 0)
+	board_panel.custom_minimum_size = Vector2(0, 0)
 	board_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	board_panel.size_flags_vertical = 0 if portrait else Control.SIZE_EXPAND_FILL
 	board_frame.size_flags_vertical = 0
@@ -408,36 +408,36 @@ func _apply_responsive_layout() -> void:
 	board_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 
 	var portrait_hud_height := clampf(viewport_size.y * 0.22, 250.0, 330.0)
-	var landscape_hud_width := clampf(viewport_size.x * 0.28, 340.0, 480.0)
+	var landscape_hud_width := clampf(viewport_size.x * 0.22, 760.0, 900.0)
 	if landscape_hud_shell != null:
 		landscape_hud_shell.custom_minimum_size = Vector2(0, 0) if portrait else Vector2(landscape_hud_width, 0)
 	if landscape_hud_margin != null:
-		var shell_margin := 14 if portrait else 18
+		var shell_margin := 14 if portrait else 20
 		landscape_hud_margin.add_theme_constant_override("margin_left", shell_margin)
 		landscape_hud_margin.add_theme_constant_override("margin_top", shell_margin)
 		landscape_hud_margin.add_theme_constant_override("margin_right", shell_margin)
 		landscape_hud_margin.add_theme_constant_override("margin_bottom", shell_margin)
-	sidebar_scroll.custom_minimum_size = Vector2(0, portrait_hud_height) if portrait else Vector2(landscape_hud_width - 36.0, 0)
+	sidebar_scroll.custom_minimum_size = Vector2(0, portrait_hud_height) if portrait else Vector2(landscape_hud_width - 40.0, 0)
 	sidebar_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL if portrait else Control.SIZE_FILL
 	sidebar_scroll.size_flags_vertical = Control.SIZE_FILL if portrait else Control.SIZE_EXPAND_FILL
 	sidebar_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	sidebar_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED if portrait else ScrollContainer.SCROLL_MODE_AUTO
-	sidebar.custom_minimum_size = Vector2(0, 0) if portrait else Vector2(landscape_hud_width - 72.0, 0)
-	sidebar.add_theme_constant_override("separation", 12 if portrait else 12)
+	sidebar.custom_minimum_size = Vector2(0, 0) if portrait else Vector2(landscape_hud_width - 80.0, 0)
+	sidebar.add_theme_constant_override("separation", 12 if portrait else 14)
 	sidebar_scroll.scroll_horizontal = 0
 	sidebar_scroll.scroll_vertical = 0
 	sidebar_scroll.visible = not portrait
-	stats_padding.add_theme_constant_override("margin_left", 14 if portrait else 18)
-	stats_padding.add_theme_constant_override("margin_top", 12 if portrait else 18)
-	stats_padding.add_theme_constant_override("margin_right", 14 if portrait else 18)
-	stats_padding.add_theme_constant_override("margin_bottom", 12 if portrait else 18)
-	stats_column.add_theme_constant_override("separation", 6 if portrait else 8)
-	goal_padding.add_theme_constant_override("margin_left", 14 if portrait else 18)
-	goal_padding.add_theme_constant_override("margin_top", 14 if portrait else 18)
-	goal_padding.add_theme_constant_override("margin_right", 14 if portrait else 18)
-	goal_padding.add_theme_constant_override("margin_bottom", 14 if portrait else 18)
-	goal_column.add_theme_constant_override("separation", 6 if portrait else 10)
-	goal_list.add_theme_constant_override("separation", 4 if portrait else 8)
+	stats_padding.add_theme_constant_override("margin_left", 14 if portrait else 22)
+	stats_padding.add_theme_constant_override("margin_top", 12 if portrait else 20)
+	stats_padding.add_theme_constant_override("margin_right", 14 if portrait else 22)
+	stats_padding.add_theme_constant_override("margin_bottom", 12 if portrait else 20)
+	stats_column.add_theme_constant_override("separation", 6 if portrait else 10)
+	goal_padding.add_theme_constant_override("margin_left", 14 if portrait else 22)
+	goal_padding.add_theme_constant_override("margin_top", 14 if portrait else 20)
+	goal_padding.add_theme_constant_override("margin_right", 14 if portrait else 22)
+	goal_padding.add_theme_constant_override("margin_bottom", 14 if portrait else 20)
+	goal_column.add_theme_constant_override("separation", 6 if portrait else 12)
+	goal_list.add_theme_constant_override("separation", 4 if portrait else 10)
 	portrait_goal_summary.add_theme_font_size_override("font_size", 22 if portrait else 18)
 	portrait_goal_summary.add_theme_constant_override("line_spacing", 7 if portrait else 2)
 	portrait_goal_summary.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER if portrait else HORIZONTAL_ALIGNMENT_LEFT
@@ -484,17 +484,22 @@ func _apply_responsive_layout() -> void:
 	goal_list.visible = not portrait
 	if portrait_goal_summary:
 		portrait_goal_summary.visible = portrait
-	stats_card.custom_minimum_size = Vector2(0, 104) if portrait else Vector2.ZERO
+	stats_card.custom_minimum_size = Vector2(0, 104) if portrait else Vector2(0, 300)
 	stats_frame.visible = not portrait
 	goal_frame.visible = not portrait
 	stage_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER if portrait else HORIZONTAL_ALIGNMENT_LEFT
 	stage_value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	stage_value.custom_minimum_size = Vector2(0, 44) if portrait else Vector2.ZERO
-	stage_value.add_theme_font_size_override("font_size", 30 if portrait else 24)
+	stage_value.custom_minimum_size = Vector2(0, 44) if portrait else Vector2(0, 48)
+	stage_value.add_theme_font_size_override("font_size", 30 if portrait else 28)
 	stage_value.add_theme_color_override("font_shadow_color", Color(1.0, 1.0, 1.0, 0.42) if portrait else Color(1.0, 1.0, 1.0, 0.0))
 	stage_value.add_theme_constant_override("shadow_offset_y", 2 if portrait else 0)
-	score_value.add_theme_font_size_override("font_size", 18 if portrait else 22)
-	goal_card.custom_minimum_size = Vector2(0, 126) if portrait else Vector2.ZERO
+	difficulty_value.add_theme_font_size_override("font_size", 20 if portrait else 24)
+	moves_value.add_theme_font_size_override("font_size", 22 if portrait else 26)
+	score_value.add_theme_font_size_override("font_size", 18 if portrait else 24)
+	combo_value.add_theme_font_size_override("font_size", 20 if portrait else 23)
+	goal_header.add_theme_font_size_override("font_size", 22 if portrait else 26)
+	_configure_goal_chips_for_layout(portrait)
+	goal_card.custom_minimum_size = Vector2(0, 126) if portrait else Vector2(0, 500)
 	_configure_action_buttons(portrait)
 	_layout_gameplay_hud(portrait)
 
@@ -3186,7 +3191,7 @@ func _update_hud() -> void:
 		moves_value.text = "남은 이동 %d" % remaining_moves
 		moves_value.add_theme_color_override("font_color", moves_color)
 		score_value.text = "점수 %d" % score
-	combo_value.text = "Combo Gauge  %d / %d%s%s" % [combo_gauge_points, COMBO_GAUGE_MAX, _fever_hud_suffix(), _buddy_hud_suffix()]
+	combo_value.text = "콤보 %d/%d%s%s" % [combo_gauge_points, COMBO_GAUGE_MAX, _fever_hud_suffix(), _buddy_hud_suffix()]
 	combo_gauge.max_value = COMBO_GAUGE_MAX
 	combo_gauge.value = combo_gauge_points
 	if stage_state == "playing" and remaining_moves <= 5 and remaining_moves > 0 and remaining_moves != _last_moves_warning:
@@ -3336,6 +3341,48 @@ func _refresh_goal_chips() -> void:
 		goal_list.get_child(index).visible = false
 
 
+func _configure_goal_chips_for_layout(portrait: bool) -> void:
+	if goal_list == null:
+		return
+	for child in goal_list.get_children():
+		var chip := child as Control
+		if chip == null:
+			continue
+		chip.custom_minimum_size = Vector2(0, 94) if portrait else Vector2(0, 128)
+
+		var padding := chip.get_node_or_null("Padding") as MarginContainer
+		if padding != null:
+			var margin := 14 if portrait else 18
+			padding.add_theme_constant_override("margin_left", margin)
+			padding.add_theme_constant_override("margin_top", margin)
+			padding.add_theme_constant_override("margin_right", margin)
+			padding.add_theme_constant_override("margin_bottom", margin)
+
+		var row := chip.get_node_or_null("Padding/Row") as HBoxContainer
+		if row != null:
+			row.add_theme_constant_override("separation", 12 if portrait else 16)
+
+		var icon_panel := chip.get_node_or_null("Padding/Row/IconPanel") as Control
+		if icon_panel != null:
+			icon_panel.custom_minimum_size = Vector2(62, 62) if portrait else Vector2(76, 76)
+
+		var icon := chip.get_node_or_null("Padding/Row/IconPanel/IconCenter/Icon") as Control
+		if icon != null:
+			icon.custom_minimum_size = Vector2(46, 46) if portrait else Vector2(58, 58)
+
+		var title := chip.get_node_or_null("Padding/Row/Content/Title") as Label
+		if title != null:
+			title.add_theme_font_size_override("font_size", 20 if portrait else 26)
+
+		var progress_label := chip.get_node_or_null("Padding/Row/Content/ProgressLabel") as Label
+		if progress_label != null:
+			progress_label.add_theme_font_size_override("font_size", 18 if portrait else 24)
+
+		var progress_bar := chip.get_node_or_null("Padding/Row/Content/ProgressBar") as ProgressBar
+		if progress_bar != null:
+			progress_bar.custom_minimum_size = Vector2(0, 18) if portrait else Vector2(0, 24)
+
+
 func _rebuild_goal_chips() -> void:
 	for child in goal_list.get_children():
 		child.queue_free()
@@ -3353,6 +3400,7 @@ func _rebuild_goal_chips() -> void:
 		var blocker_chip = GOAL_CHIP_SCENE.instantiate()
 		goal_list.add_child(blocker_chip)
 
+	_configure_goal_chips_for_layout(MobileLayout.is_portrait(self))
 	_refresh_goal_chips()
 
 
