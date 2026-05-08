@@ -119,12 +119,12 @@
 ## Gate 7A. Stage Popup / 시작 부스터
 
 - 스테이지 노드를 누르면 gameplay로 바로 전환되지 않고 Stage Popup이 먼저 열린다.
-- Stage Popup은 목표, 이동 수, 난이도/테마, 보상, 시작 부스터 3종, `START` 버튼을 보여 준다.
+- Stage Popup은 목표, 이동 수, 난이도/테마, 보상, 시작 부스터 3종, `PLAY` 버튼을 보여 준다.
 - Rescue Buddy가 있는 스테이지는 Stage Popup에 Buddy 동물명, 스킬명, 충전 조건, 짧은 효과 설명을 보여 주고, Buddy가 없는 스테이지는 빈 Buddy 영역을 보여 주지 않는다.
 - 시작 부스터 3종은 아이콘과 선택 상태를 가지며, 선택 결과가 `GameSession.selected_pre_boosters`에 저장된다.
-- Stage Popup 닫기와 START 선택값 저장은 scene smoke에서 gameplay 전환 전 상태로 검증된다.
-- Stage 4 Stage Popup의 장문 목표/보상/Buddy/START 문구는 자동 scene smoke에서 panel 밖으로 넘치거나 START CTA와 겹치지 않는다.
-- Stage 4 Stage Popup은 mobile viewport matrix에서 START, close, booster 3종, Buddy preview가 viewport와 panel 안에 남아야 한다.
+- Stage Popup 닫기와 PLAY 선택값 저장은 scene smoke에서 gameplay 전환 전 상태로 검증된다.
+- Stage 4 Stage Popup의 장문 목표/보상/Buddy/PLAY 문구는 자동 scene smoke에서 panel 밖으로 넘치거나 PLAY CTA와 겹치지 않는다.
+- Stage 4 Stage Popup은 mobile viewport matrix에서 PLAY, close, booster 3종, Buddy preview가 viewport와 panel 안에 남아야 한다.
 - Gameplay 시작 시 선택 부스터는 한 번만 소비되고 보드에는 `rainbow`, `row/col`, `bomb` 특수 블록이 각각 배치된다.
 - `stage_start`는 `selected_boosters`와 `start_boosters_applied`를 기록하고, 각 시작 부스터는 `booster_used`의 `source = pre_stage`로 기록된다.
 - Stage Popup 열기/닫기 애니메이션과 모바일 터치감은 실제 기기 또는 시뮬레이터에서 최종 확인한다.

@@ -75,6 +75,7 @@ var home_play_button: Button
 var home_status_label: Label
 var home_title_label: Label
 var home_subtitle_label: Label
+var home_action_panel: PanelContainer
 var home_rabbit: TextureRect
 var home_chick: TextureRect
 var home_animal_strip: HBoxContainer
@@ -275,7 +276,7 @@ func _build_game_home_layer() -> void:
 	var sky_shade := ColorRect.new()
 	sky_shade.name = "SkyShade"
 	sky_shade.set_anchors_preset(Control.PRESET_FULL_RECT)
-	sky_shade.color = Color(0.03, 0.28, 0.56, 0.12)
+	sky_shade.color = Color(0.05, 0.28, 0.50, 0.08)
 	sky_shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	game_home_layer.add_child(sky_shade)
 
@@ -283,7 +284,7 @@ func _build_game_home_layer() -> void:
 	bottom_glow.name = "CandyStageGlow"
 	bottom_glow.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	bottom_glow.offset_top = -260.0
-	bottom_glow.color = Color(1.0, 0.75, 0.26, 0.24)
+	bottom_glow.color = Color(1.0, 0.58, 0.34, 0.20)
 	bottom_glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	game_home_layer.add_child(bottom_glow)
 
@@ -310,14 +311,15 @@ func _build_game_home_layer() -> void:
 	top_hud.alignment = BoxContainer.ALIGNMENT_CENTER
 	top_hud.add_theme_constant_override("separation", 12)
 	game_home_layer.add_child(top_hud)
-	top_hud.add_child(_make_home_badge("하트", "5"))
-	top_hud.add_child(_make_home_badge("골드", str(120 + GameSession.get_total_stars() * 15)))
-	top_hud.add_child(_make_home_badge("별", str(GameSession.get_total_stars())))
+	top_hud.add_child(_make_home_badge("♥", "5"))
+	top_hud.add_child(_make_home_badge("●", str(120 + GameSession.get_total_stars() * 15)))
+	top_hud.add_child(_make_home_badge("★", str(GameSession.get_total_stars())))
 	var top_spacer := Control.new()
 	top_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_hud.add_child(top_spacer)
-	var settings_button := _make_home_icon_button("설정")
+	var settings_button := _make_home_icon_button("⚙")
 	settings_button.name = "HomeTopSettingsButton"
+	settings_button.tooltip_text = "설정"
 	settings_button.pressed.connect(_on_settings_button_pressed)
 	top_hud.add_child(settings_button)
 
@@ -338,7 +340,7 @@ func _build_game_home_layer() -> void:
 	title_stack.add_theme_constant_override("separation", 2)
 	hero_stack.add_child(title_stack)
 
-	home_title_label = _make_home_label("Zoo-Zoo\nPop", 94, Color(1.0, 0.92, 0.20, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
+	home_title_label = _make_home_label("Zoo-Zoo\nPOP", 94, Color(1.0, 0.93, 0.22, 1.0), HORIZONTAL_ALIGNMENT_CENTER)
 	home_title_label.add_theme_color_override("font_shadow_color", Color(0.08, 0.20, 0.42, 0.78))
 	home_title_label.add_theme_constant_override("shadow_offset_y", 8)
 	title_stack.add_child(home_title_label)
@@ -353,20 +355,39 @@ func _build_game_home_layer() -> void:
 	hero_spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	hero_stack.add_child(hero_spacer)
 
+	home_action_panel = PanelContainer.new()
+	home_action_panel.name = "HomeActionPanel"
+	home_action_panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	home_action_panel.add_theme_stylebox_override("panel", _home_style(Color(1, 1, 1, 0.76), Color(1.0, 0.86, 0.28, 0.96), 32, 4))
+	hero_stack.add_child(home_action_panel)
+
+	var action_margin := MarginContainer.new()
+	action_margin.name = "HomeActionMargin"
+	action_margin.add_theme_constant_override("margin_left", 20)
+	action_margin.add_theme_constant_override("margin_top", 16)
+	action_margin.add_theme_constant_override("margin_right", 20)
+	action_margin.add_theme_constant_override("margin_bottom", 16)
+	home_action_panel.add_child(action_margin)
+
+	var action_column := VBoxContainer.new()
+	action_column.name = "HomeActionColumn"
+	action_column.alignment = BoxContainer.ALIGNMENT_CENTER
+	action_column.add_theme_constant_override("separation", 8)
+	action_margin.add_child(action_column)
+
 	home_play_button = _make_home_play_button()
 	home_play_button.pressed.connect(_on_play_button_pressed)
-	hero_stack.add_child(home_play_button)
+	action_column.add_child(home_play_button)
 
 	home_status_label = _make_home_label("Lv.1 준비 완료", 22, Color(1.0, 1.0, 1.0, 0.96), HORIZONTAL_ALIGNMENT_CENTER)
-	home_status_label.add_theme_color_override("font_shadow_color", Color(0.10, 0.20, 0.36, 0.52))
-	home_status_label.add_theme_constant_override("shadow_offset_y", 3)
-	hero_stack.add_child(home_status_label)
+	home_status_label.add_theme_color_override("font_color", Color(0.12, 0.24, 0.34, 1))
+	action_column.add_child(home_status_label)
 
 	home_animal_strip = HBoxContainer.new()
 	home_animal_strip.name = "AnimalStrip"
 	home_animal_strip.alignment = BoxContainer.ALIGNMENT_CENTER
 	home_animal_strip.add_theme_constant_override("separation", 8)
-	hero_stack.add_child(home_animal_strip)
+	action_column.add_child(home_animal_strip)
 	for index in range(ANIMAL_PREVIEW_TEXTURES.size()):
 		home_animal_strip.add_child(_make_animal_token(ANIMAL_PREVIEW_TEXTURES[index], HOME_ANIMAL_PREVIEW_IDS[index]))
 
@@ -374,7 +395,7 @@ func _build_game_home_layer() -> void:
 	home_event_strip.name = "LiveEventStrip"
 	home_event_strip.alignment = BoxContainer.ALIGNMENT_CENTER
 	home_event_strip.add_theme_constant_override("separation", 8)
-	hero_stack.add_child(home_event_strip)
+	action_column.add_child(home_event_strip)
 
 	home_nav_row = HBoxContainer.new()
 	home_nav_row.name = "BottomNav"
@@ -496,15 +517,15 @@ func _make_mascot(node_name: String, texture: Texture2D) -> TextureRect:
 
 func _make_home_badge(label_text: String, value_text: String) -> PanelContainer:
 	var badge := PanelContainer.new()
-	badge.custom_minimum_size = Vector2(124, 58)
-	badge.add_theme_stylebox_override("panel", _home_style(Color(1, 1, 1, 0.78), Color(1, 0.86, 0.26, 0.92), 24, 3))
+	badge.custom_minimum_size = Vector2(112, 56)
+	badge.add_theme_stylebox_override("panel", _home_style(Color(1, 1, 1, 0.84), Color(1, 0.86, 0.28, 0.92), 22, 3))
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 14)
 	margin.add_theme_constant_override("margin_right", 14)
 	margin.add_theme_constant_override("margin_top", 8)
 	margin.add_theme_constant_override("margin_bottom", 8)
 	badge.add_child(margin)
-	var label := _make_home_label("%s %s" % [label_text, value_text], 22, Color(0.13, 0.23, 0.34, 1), HORIZONTAL_ALIGNMENT_CENTER)
+	var label := _make_home_label("%s  %s" % [label_text, value_text], 20, Color(0.13, 0.23, 0.34, 1), HORIZONTAL_ALIGNMENT_CENTER)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	margin.add_child(label)
 	return badge
@@ -549,12 +570,12 @@ func _make_path_node(index: int) -> PanelContainer:
 func _make_home_icon_button(text: String) -> Button:
 	var button := Button.new()
 	button.text = text
-	button.custom_minimum_size = Vector2(146, 72)
-	button.add_theme_font_size_override("font_size", 24)
+	button.custom_minimum_size = Vector2(134, 70)
+	button.add_theme_font_size_override("font_size", 25)
 	button.add_theme_color_override("font_color", Color(0.08, 0.22, 0.34, 1))
-	button.add_theme_stylebox_override("normal", _home_style(Color(1, 1, 1, 0.78), Color(0.50, 0.78, 0.94, 1), 26, 4))
-	button.add_theme_stylebox_override("hover", _home_style(Color(0.91, 0.98, 1.0, 0.92), Color(0.36, 0.76, 0.97, 1), 26, 4))
-	button.add_theme_stylebox_override("pressed", _home_style(Color(1.0, 0.78, 0.90, 0.95), Color(0.96, 0.38, 0.61, 1), 26, 4))
+	button.add_theme_stylebox_override("normal", _home_style(Color(1, 1, 1, 0.84), Color(0.50, 0.78, 0.94, 1), 24, 4))
+	button.add_theme_stylebox_override("hover", _home_style(Color(0.91, 0.98, 1.0, 0.94), Color(0.36, 0.76, 0.97, 1), 24, 4))
+	button.add_theme_stylebox_override("pressed", _home_style(Color(1.0, 0.78, 0.90, 0.96), Color(0.96, 0.38, 0.61, 1), 24, 4))
 	return button
 
 
@@ -565,7 +586,8 @@ func _refresh_home_events() -> void:
 		child.queue_free()
 	var events := LiveEventService.display_events_for(GameSession.get_highest_unlocked_stage_id(), "home")
 	home_event_strip.visible = not events.is_empty()
-	for index in range(mini(events.size(), 2)):
+	var max_visible_events := 1 if MobileLayout.is_portrait(self) else 2
+	for index in range(mini(events.size(), max_visible_events)):
 		var event := Dictionary(events[index])
 		home_event_strip.add_child(_make_home_event_chip(event))
 		_track_live_event_impression(event, "home")
@@ -575,7 +597,7 @@ func _make_home_event_chip(event: Dictionary) -> Button:
 	var chip := Button.new()
 	chip.name = "LiveEventChip_%s" % String(event.get("id", "event"))
 	chip.text = "%s\n%s · %s" % [String(event.get("title", "이벤트")), _event_status_label(_event_status(event)), _event_type_label(String(event.get("type", "")))]
-	chip.custom_minimum_size = Vector2(250, 60)
+	chip.custom_minimum_size = Vector2(236, 60)
 	chip.add_theme_font_size_override("font_size", 16)
 	chip.add_theme_color_override("font_color", Color(0.14, 0.22, 0.31, 1))
 	chip.add_theme_stylebox_override("normal", _home_style(Color(1.0, 0.97, 0.72, 0.86), Color(0.96, 0.48, 0.16, 0.94), 22, 3))
@@ -886,6 +908,7 @@ func _home_style(bg_color: Color, border_color: Color, radius: int, border_width
 	style.corner_radius_bottom_left = radius
 	style.shadow_color = Color(0.08, 0.16, 0.24, 0.22)
 	style.shadow_size = 10
+	style.shadow_offset = Vector2(0, 5)
 	return style
 
 
@@ -988,6 +1011,9 @@ func _start_home_preview_expressions() -> void:
 	for child in home_animal_strip.get_children():
 		if animated >= HOME_MAX_ACTIVE_PREVIEW_EXPRESSIONS:
 			break
+		var child_control := child as Control
+		if child_control != null and not child_control.visible:
+			continue
 		var preview := child.find_child("HomeAnimalPreview", true, false) as TextureRect
 		if preview == null:
 			continue
@@ -1039,6 +1065,9 @@ func _home_preview_expression_states_for_testing() -> Dictionary:
 	if home_animal_strip == null:
 		return states
 	for child in home_animal_strip.get_children():
+		var child_control := child as Control
+		if child_control != null and not child_control.visible:
+			continue
 		var preview := child.find_child("HomeAnimalPreview", true, false) as TextureRect
 		if preview == null:
 			continue
@@ -1129,12 +1158,15 @@ func _layout_game_home(portrait: bool) -> void:
 		home_rabbit.position = Vector2(-mascot_width * 0.22, viewport_size.y - mascot_height - 128.0)
 		home_chick.size = Vector2(mascot_width * 0.86, mascot_height * 0.86)
 		home_chick.position = Vector2(viewport_size.x - mascot_width * 0.64, viewport_size.y - mascot_height * 0.76 - 150.0)
-		home_title_label.add_theme_font_size_override("font_size", 82)
-		home_subtitle_label.add_theme_font_size_override("font_size", 22)
-		home_play_button.custom_minimum_size = Vector2(350, 108)
+		home_title_label.add_theme_font_size_override("font_size", 76)
+		home_subtitle_label.add_theme_font_size_override("font_size", 19)
+		home_play_button.custom_minimum_size = Vector2(318, 96)
+		home_action_panel.custom_minimum_size = Vector2(minf(viewport_size.x - 38.0, 358.0), 0)
 		home_nav_row.offset_top = -108.0
 		home_animal_strip.visible = true
-		home_animal_strip.scale = Vector2(0.74, 0.74)
+		home_animal_strip.scale = Vector2.ONE
+		_layout_home_animal_strip(5)
+		_layout_home_nav_buttons(true)
 		_layout_path_nodes([
 			Vector2(viewport_size.x * 0.58, viewport_size.y * 0.42),
 			Vector2(viewport_size.x * 0.46, viewport_size.y * 0.47),
@@ -1148,12 +1180,15 @@ func _layout_game_home(portrait: bool) -> void:
 		home_rabbit.position = Vector2(viewport_size.x * 0.06, viewport_size.y - mascot_height - 86.0)
 		home_chick.size = Vector2(mascot_width * 0.86, mascot_height * 0.86)
 		home_chick.position = Vector2(viewport_size.x - mascot_width * 0.92 - viewport_size.x * 0.06, viewport_size.y - mascot_height * 0.86 - 88.0)
-		home_title_label.add_theme_font_size_override("font_size", 104)
+		home_title_label.add_theme_font_size_override("font_size", 96)
 		home_subtitle_label.add_theme_font_size_override("font_size", 26)
-		home_play_button.custom_minimum_size = Vector2(480, 128)
+		home_play_button.custom_minimum_size = Vector2(440, 116)
+		home_action_panel.custom_minimum_size = Vector2(590, 0)
 		home_nav_row.offset_top = -110.0
 		home_animal_strip.visible = true
 		home_animal_strip.scale = Vector2.ONE
+		_layout_home_animal_strip(8)
+		_layout_home_nav_buttons(false)
 		_layout_path_nodes([
 			Vector2(viewport_size.x * 0.40, viewport_size.y * 0.58),
 			Vector2(viewport_size.x * 0.46, viewport_size.y * 0.52),
@@ -1162,6 +1197,24 @@ func _layout_game_home(portrait: bool) -> void:
 			Vector2(viewport_size.x * 0.64, viewport_size.y * 0.58),
 			Vector2(viewport_size.x * 0.70, viewport_size.y * 0.52),
 		])
+
+
+func _layout_home_animal_strip(max_visible: int) -> void:
+	if home_animal_strip == null:
+		return
+	for index in range(home_animal_strip.get_child_count()):
+		home_animal_strip.get_child(index).visible = index < max_visible
+
+
+func _layout_home_nav_buttons(portrait: bool) -> void:
+	if home_nav_row == null:
+		return
+	for child in home_nav_row.get_children():
+		var button := child as Button
+		if button == null:
+			continue
+		button.custom_minimum_size = Vector2(112, 66) if portrait else Vector2(140, 72)
+		button.add_theme_font_size_override("font_size", 22 if portrait else 25)
 
 
 func _layout_path_nodes(positions: Array[Vector2]) -> void:

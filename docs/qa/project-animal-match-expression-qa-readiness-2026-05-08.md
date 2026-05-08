@@ -62,7 +62,7 @@ godot --headless --path . --script res://scripts/validate_scene_loads.gd
 
 ## 반려 기준
 
-- Blocker: 보드 셀, 목표 칩, 남은 이동 수, Stage Popup START, 실패/결과 CTA 중 하나라도 실제 viewport에서 조작 불가 또는 판독 불가.
+- Blocker: 보드 셀, 목표 칩, 남은 이동 수, Stage Popup PLAY, 실패/결과 CTA 중 하나라도 실제 viewport에서 조작 불가 또는 판독 불가.
 - Blocker: 빠른 연쇄 또는 특수 조합 후 입력이 2초 이상 회복되지 않거나 stage state가 멈춘다.
 - Major: 표정/VFX/Buddy HUD가 같은 영역을 반복 가려 플레이 의사결정을 방해한다.
 - Major: portrait 또는 landscape 한쪽에서만 safe area, notch, home indicator, 하단 네비게이션과 주요 UI가 겹친다.

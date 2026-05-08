@@ -4,6 +4,7 @@ const CollectionState = preload("res://scripts/collection_state.gd")
 const GameSession = preload("res://scripts/game_session.gd")
 const MobileLayout = preload("res://scripts/mobile_layout.gd")
 const LiveEventService = preload("res://scripts/live_event_service.gd")
+const COLLECTION_BG = preload("res://assets/generated/candy/candy_world_bg.png")
 const ANIMAL_TEXTURE_FALLBACKS := {
 	"lion": "fox",
 	"elephant": "panda",
@@ -17,6 +18,9 @@ const ANIMAL_TEXTURE_FALLBACKS := {
 const MAX_ACTIVE_PREVIEWS := 4
 
 var safe_margin: MarginContainer
+var header_panel: PanelContainer
+var header_margin: MarginContainer
+var back_button: Button
 var collection_scroll: ScrollContainer
 var card_grid: GridContainer
 var summary_label: Label
@@ -53,9 +57,19 @@ func _exit_tree() -> void:
 func _build_layout() -> void:
 	var background := ColorRect.new()
 	background.name = "Background"
-	background.color = Color("f3fbff")
+	background.color = Color("dcf7ff")
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(background)
+
+	var background_texture := TextureRect.new()
+	background_texture.name = "CollectionBackgroundTexture"
+	background_texture.texture = COLLECTION_BG
+	background_texture.set_anchors_preset(Control.PRESET_FULL_RECT)
+	background_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	background_texture.modulate = Color(1, 1, 1, 0.42)
+	background_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(background_texture)
 
 	safe_margin = MarginContainer.new()
 	safe_margin.name = "SafeMargin"
@@ -64,19 +78,42 @@ func _build_layout() -> void:
 
 	var root := VBoxContainer.new()
 	root.name = "LayoutRoot"
-	root.add_theme_constant_override("separation", 14)
+	root.add_theme_constant_override("separation", 12)
 	safe_margin.add_child(root)
+
+	header_panel = PanelContainer.new()
+	header_panel.name = "CollectionHeaderPanel"
+	header_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header_panel.add_theme_stylebox_override("panel", _collection_style(Color(1, 1, 1, 0.84), Color("ffcf3f"), 28, 4))
+	root.add_child(header_panel)
+
+	header_margin = MarginContainer.new()
+	header_margin.add_theme_constant_override("margin_left", 18)
+	header_margin.add_theme_constant_override("margin_top", 14)
+	header_margin.add_theme_constant_override("margin_right", 18)
+	header_margin.add_theme_constant_override("margin_bottom", 14)
+	header_panel.add_child(header_margin)
+
+	var header_column := VBoxContainer.new()
+	header_column.name = "HeaderColumn"
+	header_column.add_theme_constant_override("separation", 8)
+	header_margin.add_child(header_column)
 
 	var header := HBoxContainer.new()
 	header.name = "HeaderRow"
 	header.alignment = BoxContainer.ALIGNMENT_CENTER
 	header.add_theme_constant_override("separation", 12)
-	root.add_child(header)
+	header_column.add_child(header)
 
-	var back_button := Button.new()
+	back_button = Button.new()
 	back_button.name = "BackButton"
-	back_button.text = "← 홈"
-	back_button.custom_minimum_size = Vector2(108, 48)
+	back_button.text = "홈"
+	back_button.custom_minimum_size = Vector2(96, 52)
+	back_button.add_theme_font_size_override("font_size", 20)
+	back_button.add_theme_color_override("font_color", Color("213a55"))
+	back_button.add_theme_stylebox_override("normal", _collection_style(Color("ffffff"), Color("86c3e5"), 18, 3))
+	back_button.add_theme_stylebox_override("hover", _collection_style(Color("e9fbff"), Color("6ec6ff"), 18, 3))
+	back_button.add_theme_stylebox_override("pressed", _collection_style(Color("fff0a8"), Color("ff74a8"), 18, 3))
 	back_button.pressed.connect(_on_back_pressed)
 	header.add_child(back_button)
 
@@ -86,10 +123,12 @@ func _build_layout() -> void:
 
 	var title := Label.new()
 	title.name = "TitleLabel"
-	title.text = "Rescue Book"
+	title.text = "구조 도감"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 34)
+	title.add_theme_font_size_override("font_size", 32)
 	title.add_theme_color_override("font_color", Color("24445f"))
+	title.add_theme_color_override("font_shadow_color", Color(1, 1, 1, 0.60))
+	title.add_theme_constant_override("shadow_offset_y", 2)
 	title_stack.add_child(title)
 
 	summary_label = Label.new()
@@ -100,7 +139,7 @@ func _build_layout() -> void:
 	title_stack.add_child(summary_label)
 
 	var spacer := Control.new()
-	spacer.custom_minimum_size = Vector2(108, 1)
+	spacer.custom_minimum_size = Vector2(96, 1)
 	header.add_child(spacer)
 
 	detail_label = Label.new()
@@ -110,7 +149,7 @@ func _build_layout() -> void:
 	detail_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	detail_label.add_theme_font_size_override("font_size", 18)
 	detail_label.add_theme_color_override("font_color", Color("416076"))
-	root.add_child(detail_label)
+	header_column.add_child(detail_label)
 
 	cosmetic_grid = GridContainer.new()
 	cosmetic_grid.name = "CosmeticEquipGrid"
@@ -119,7 +158,7 @@ func _build_layout() -> void:
 	cosmetic_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	cosmetic_grid.add_theme_constant_override("h_separation", 8)
 	cosmetic_grid.add_theme_constant_override("v_separation", 8)
-	root.add_child(cosmetic_grid)
+	header_column.add_child(cosmetic_grid)
 
 	collection_scroll = ScrollContainer.new()
 	collection_scroll.name = "CollectionScroll"
@@ -146,6 +185,8 @@ func _refresh_cards() -> void:
 	var animals := CollectionState.load_animal_definitions()
 	var rescue_book := GameSession.get_rescue_book_state()
 	var state_animals: Dictionary = Dictionary(rescue_book.get("animals", {}))
+	if selected_animal_id.is_empty() and not animals.is_empty():
+		selected_animal_id = String(Dictionary(animals[0]).get("id", ""))
 	var unlocked_count := 0
 	for animal in animals:
 		if not (animal is Dictionary):
@@ -194,13 +235,14 @@ func _make_animal_card(animal: Dictionary, entry: Dictionary) -> PanelContainer:
 	var animal_id := String(animal.get("id", ""))
 	var unlocked := bool(entry.get("unlocked", false))
 	var is_new := bool(entry.get("is_new", false))
+	var is_selected := animal_id == selected_animal_id
 	var panel := PanelContainer.new()
 	panel.name = "AnimalCard_%s" % animal_id
 	panel.gui_input.connect(_on_animal_card_input.bind(animal, entry))
 	panel.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	panel.custom_minimum_size = Vector2(170, 210)
+	panel.custom_minimum_size = Vector2(170, 224)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_theme_stylebox_override("panel", _card_style(unlocked, is_new))
+	panel.add_theme_stylebox_override("panel", _card_style(unlocked, is_new, is_selected))
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 12)
@@ -217,7 +259,7 @@ func _make_animal_card(animal: Dictionary, entry: Dictionary) -> PanelContainer:
 	var preview := TextureRect.new()
 	preview.name = "AnimalPreview"
 	preview.texture = _load_animal_texture(animal_id)
-	preview.custom_minimum_size = Vector2(84, 84)
+	preview.custom_minimum_size = Vector2(92, 92)
 	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	preview.modulate = Color(1, 1, 1, 1) if unlocked else Color(0.24, 0.28, 0.32, 0.44)
@@ -235,7 +277,7 @@ func _make_animal_card(animal: Dictionary, entry: Dictionary) -> PanelContainer:
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_label.add_theme_font_size_override("font_size", 20)
+	name_label.add_theme_font_size_override("font_size", 21)
 	name_label.add_theme_color_override("font_color", Color("213d55") if unlocked else Color("7f8792"))
 	stack.add_child(name_label)
 
@@ -401,6 +443,7 @@ func _refresh_cosmetic_actions(animal: Dictionary, entry: Dictionary, unlocked: 
 		else:
 			button.text = "Lv.%d 대기" % int(reward_dict.get("level", 0))
 			button.disabled = true
+		_style_cosmetic_button(button, earned, equipped)
 		cosmetic_grid.add_child(button)
 
 
@@ -579,16 +622,48 @@ func _load_animal_texture(animal_id: String) -> Texture2D:
 	return null
 
 
-func _card_style(unlocked: bool, is_new: bool) -> StyleBoxFlat:
+func _collection_style(bg_color: Color, border_color: Color, radius: int, border_width: int) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color("ffffff") if unlocked else Color("e3e8ef")
-	style.border_color = Color("ffd15f") if is_new else (Color("8ee5c5") if unlocked else Color("b7c1cf"))
-	style.set_border_width_all(3 if is_new else 2)
-	style.set_corner_radius_all(22)
-	style.shadow_color = Color(0.15, 0.22, 0.32, 0.18)
-	style.shadow_size = 8
-	style.shadow_offset = Vector2(0, 4)
+	style.bg_color = bg_color
+	style.border_color = border_color
+	style.set_border_width_all(border_width)
+	style.set_corner_radius_all(radius)
+	style.shadow_color = Color(0.10, 0.18, 0.28, 0.18)
+	style.shadow_size = 9
+	style.shadow_offset = Vector2(0, 5)
 	return style
+
+
+func _card_style(unlocked: bool, is_new: bool, is_selected: bool) -> StyleBoxFlat:
+	var bg_color := Color("ffffff") if unlocked else Color("e3e8ef")
+	var border_color := Color("8ee5c5") if unlocked else Color("b7c1cf")
+	var border_width := 2
+	if is_new:
+		bg_color = Color("fff8d9")
+		border_color = Color("ffd15f")
+		border_width = 3
+	if is_selected:
+		bg_color = Color("fff7fb") if unlocked else Color("edf1f6")
+		border_color = Color("ff6fae")
+		border_width = 4
+	var style := _collection_style(bg_color, border_color, 20, border_width)
+	style.shadow_color = Color(0.12, 0.18, 0.28, 0.22 if is_selected else 0.14)
+	style.shadow_size = 12 if is_selected else 7
+	return style
+
+
+func _style_cosmetic_button(button: Button, earned: bool, equipped: bool) -> void:
+	button.add_theme_font_size_override("font_size", 15)
+	button.add_theme_color_override("font_color", Color("213a55"))
+	button.add_theme_color_override("font_disabled_color", Color("6f7a88"))
+	if equipped:
+		button.add_theme_stylebox_override("disabled", _collection_style(Color("fff0a8"), Color("ff74a8"), 16, 3))
+	elif earned:
+		button.add_theme_stylebox_override("normal", _collection_style(Color("ffffff"), Color("70cfff"), 16, 3))
+		button.add_theme_stylebox_override("hover", _collection_style(Color("e9fbff"), Color("6ec6ff"), 16, 3))
+		button.add_theme_stylebox_override("pressed", _collection_style(Color("d8f6ff"), Color("6ec6ff"), 16, 3))
+	else:
+		button.add_theme_stylebox_override("disabled", _collection_style(Color("e8edf4"), Color("b7c1cf"), 16, 2))
 
 
 func _apply_responsive_layout() -> void:
@@ -597,8 +672,24 @@ func _apply_responsive_layout() -> void:
 	MobileLayout.apply_safe_area(safe_margin, self, 18)
 	var viewport_size := get_viewport_rect().size
 	card_grid.columns = 2 if viewport_size.x < 720 else 3
+	card_grid.add_theme_constant_override("h_separation", 10 if viewport_size.x < 720 else 12)
+	card_grid.add_theme_constant_override("v_separation", 10 if viewport_size.x < 720 else 12)
+	if header_panel != null:
+		header_panel.custom_minimum_size = Vector2(0, 0)
+	if header_margin != null:
+		var compact := viewport_size.x < 720
+		header_margin.add_theme_constant_override("margin_left", 14 if compact else 18)
+		header_margin.add_theme_constant_override("margin_top", 12 if compact else 14)
+		header_margin.add_theme_constant_override("margin_right", 14 if compact else 18)
+		header_margin.add_theme_constant_override("margin_bottom", 12 if compact else 14)
+	if back_button != null:
+		back_button.custom_minimum_size = Vector2(84, 50) if viewport_size.x < 720 else Vector2(96, 52)
+	if detail_label != null:
+		detail_label.add_theme_font_size_override("font_size", 16 if viewport_size.x < 720 else 18)
 	if cosmetic_grid != null:
 		cosmetic_grid.columns = 2 if viewport_size.x < 720 else 3
+		cosmetic_grid.add_theme_constant_override("h_separation", 7 if viewport_size.x < 720 else 8)
+		cosmetic_grid.add_theme_constant_override("v_separation", 7 if viewport_size.x < 720 else 8)
 	_queue_preview_motion_sync()
 
 

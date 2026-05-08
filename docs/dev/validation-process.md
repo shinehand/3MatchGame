@@ -117,16 +117,16 @@ zsh scripts/validate_gameplay.sh
 `./scripts/validate_gameplay.sh`의 scene load smoke는 기기 없이 아래 항목을 먼저 막는다.
 
 - `WorldStageNode*` press 경로에서 바로 gameplay로 가지 않고 `StagePopupOverlay`가 표시된다.
-- Stage Popup은 Level 제목, 목표, 이동 수/난이도/테마, 보상, `START` 버튼을 가진다.
+- Stage Popup은 Level 제목, 목표, 이동 수/난이도/테마, 보상, `PLAY` 버튼을 가진다.
 - Buddy가 있는 스테이지의 Stage Popup은 Rescue Buddy 동물명, 스킬명, 충전 조건, 짧은 효과 설명을 보여 준다.
 - Buddy가 없는 스테이지의 Stage Popup은 빈 Buddy 영역을 보여 주지 않는다.
 - Stage Popup은 `rainbow_paw`, `striped`, `bomb` 시작 부스터 3종 버튼과 아이콘을 가진다.
 - 부스터 버튼 선택은 `selected_pre_boosters`와 버튼 pressed 상태에 즉시 반영된다.
 - Stage Popup 닫기는 tween 이후 overlay를 숨기고 panel scale을 복구한다.
-- START 선택값 commit helper는 `GameSession.selected_stage_id`와 `GameSession.selected_pre_boosters`를 gameplay 전환 전에 저장한다.
+- PLAY 선택값 commit helper는 `GameSession.selected_stage_id`와 `GameSession.selected_pre_boosters`를 gameplay 전환 전에 저장한다.
 - Gameplay 시작 시 `GameSession.selected_pre_boosters`가 소비되고, 선택한 3종이 보드 특수 블록과 `stage_start`/`booster_used` analytics에 반영된다.
-- Mobile viewport matrix는 Stage 4 Stage Popup의 panel, title/goal/meta/reward/Buddy labels, START/close/booster buttons가 실제 logical viewport와 panel 안에 남는지 검사한다.
-- Stage 4 Stage Popup에 장문 title/goal/reward/Buddy/START 문구를 넣어도 panel 밖으로 넘치거나 Buddy 문구가 START CTA와 겹치지 않는다.
+- Mobile viewport matrix는 Stage 4 Stage Popup의 panel, title/goal/meta/reward/Buddy labels, PLAY/close/booster buttons가 실제 logical viewport와 panel 안에 남는지 검사한다.
+- Stage 4 Stage Popup에 장문 title/goal/reward/Buddy/PLAY 문구를 넣어도 panel 밖으로 넘치거나 Buddy 문구가 PLAY CTA와 겹치지 않는다.
 
 아래 항목은 no-device readiness로 승인하지 않는다. 실제 기기 또는 시뮬레이터에서 수동 확인해야 한다.
 
@@ -185,12 +185,12 @@ zsh scripts/validate_gameplay.sh
 - 홈 화면에서 이어하기 정보와 스테이지 선택 오버레이가 정상 표시된다.
 - 스테이지 선택에서 잠금/해금/별 수가 정상 표시된다.
 - 스테이지 노드를 누르면 바로 게임으로 가지 않고 Stage Popup이 뜬다.
-- Stage Popup에서 목표, 이동 수, 보상, 아이콘이 있는 시작 부스터 3종, START 버튼이 정상 표시된다.
+- Stage Popup에서 목표, 이동 수, 보상, 아이콘이 있는 시작 부스터 3종, PLAY 버튼이 정상 표시된다.
 - Stage 4 같은 Buddy 스테이지에서는 Stage Popup의 Buddy 문구와 Gameplay HUD Buddy 문구가 같은 동물/스킬을 가리킨다.
 - 자동 scene smoke는 Stage 4 Rescue Buddy HUD가 숨김 없음, 0/3, 2/3, 출동, 완료 상태를 순서대로 표시하는지 확인한다.
 - 자동 scene smoke는 목표 동물 3매치 하나가 Buddy 차지 1회로만 집계되고, 단일 매치만으로 준비 상태가 되지 않는지 확인한다.
 - 자동 scene smoke는 Stage 18 `leap_clear`와 Stage 81 `mighty_push`가 마지막 덤불 목표를 Buddy 단독으로 완료하려 할 때 차단되는지 확인한다.
-- 부스터를 선택하고 START를 누르면 게임 시작 보드에 선택 부스터가 배치된다.
+- 부스터를 선택하고 PLAY를 누르면 게임 시작 보드에 선택 부스터가 배치된다.
 - Rescue Book 카드에서 해금 동물의 토큰/우정 레벨/NEW 상태와 잠김 동물의 해금 스테이지 문구가 정상 표시되는지 확인한다.
 - 라이브 이벤트 노출이 홈, 스테이지 선택, 결과 오버레이, 컬렉션에서 각각 `live_event_impression`으로 기록되는지 확인한다.
 - 홈 화면 버튼 탭 시 짧은 UI 사운드가 재생된다.

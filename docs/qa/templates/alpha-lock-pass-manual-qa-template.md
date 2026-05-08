@@ -83,7 +83,7 @@
 | Scenario ID | Gate | Required scenario | Result | Evidence path | Notes |
 | --- | --- | --- | --- | --- | --- |
 | PAM_QA_040_EXPRESSIONS | PAM-QA-040 expressions | Stage 1 select smile, match expression, low-move worried, portrait/landscape face crop check | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/pam-qa-040-expressions.*` |  |
-| PAM_QA_041_STAGE_POPUP | PAM-QA-041 popup/pre-booster | Stage Popup open/close, START, pre-booster board placement, touch feel | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/pam-qa-041-popup.*` |  |
+| PAM_QA_041_STAGE_POPUP | PAM-QA-041 popup/pre-booster | Stage Popup open/close, PLAY, pre-booster board placement, touch feel | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/pam-qa-041-popup.*` |  |
 | STAGE_POPUP_BUDDY | PAM-QA-041 Buddy preview | Stage Popup Buddy target == HUD Buddy target on Buddy stages | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/stage-popup-buddy.*` |  |
 | RESCUE_BOOK_UNLOCK | Rescue Book unlock | Stage 1-5 clear keeps frog/koala/hamster unlock, NEW, token state | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/rescue-book-unlock.*` |  |
 | RESCUE_BOOK_COSMETIC_EQUIP | PAM-DEV-063 cosmetic equip | Rabbit 40 tokens, rabbit_sprout_frame equipped, 장착중/장착/대기 buttons, save/reopen persistence, animal_cosmetic_equip payload, duplicate/unearned equip blocked | Pending | `output/alpha-lock-pass/YYYY-MM-DD/captures/rescue-book-cosmetic-equip.*` |  |

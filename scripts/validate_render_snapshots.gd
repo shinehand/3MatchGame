@@ -482,11 +482,14 @@ func _validate_scenario_regions(image: Image, node: Node, scenario: Dictionary, 
 	match setup_id:
 		"home":
 			_validate_control_pixels(image, node.find_child("GameHomeLayer", true, false), snapshot_id, "GameHomeLayer", errors)
+			_validate_control_pixels(image, node.find_child("HomeActionPanel", true, false), snapshot_id, "HomeActionPanel", errors)
 			_validate_control_pixels(image, node.find_child("HomePlayButton", true, false), snapshot_id, "HomePlayButton", errors)
 			_validate_control_pixels(image, node.find_child("BottomNav", true, false), snapshot_id, "BottomNav", errors)
 		"stage_popup":
-			_validate_control_pixels(image, node.get("stage_popup_panel") as Control, snapshot_id, "StagePopupPanel", errors)
-			_validate_control_pixels(image, _find_button_with_text(node, "START"), snapshot_id, "StagePopupStartButton", errors)
+			var popup_panel := node.get("stage_popup_panel") as Control
+			_validate_control_pixels(image, popup_panel, snapshot_id, "StagePopupPanel", errors)
+			_validate_control_within_image_bounds(popup_panel, snapshot_id, "StagePopupPanel", errors)
+			_validate_control_pixels(image, _find_button_with_text(popup_panel, "PLAY"), snapshot_id, "StagePopupStartButton", errors)
 			_validate_control_pixels(image, node.get("stage_popup_buddy_label") as Control, snapshot_id, "StagePopupBuddyLabel", errors)
 		"gameplay_stage4":
 			_validate_stage_4_buddy_snapshot_regions(image, node, scenario, snapshot_id, errors)

@@ -159,6 +159,7 @@ var hud_home_button: Button
 var hud_retry_button: Button
 var hud_pause_button: Button
 var hud_booster_dock: Control
+var hud_booster_buttons: Array[Button] = []
 var gameplay_juice_layer: Control
 var stage_intro_label: Label
 var _prev_complete_set: Dictionary = {}
@@ -422,7 +423,7 @@ func _apply_responsive_layout() -> void:
 
 	if gameplay_hud_layer:
 		gameplay_hud_layer.visible = portrait
-	board_margin.add_theme_constant_override("margin_top", 238 if portrait else 24)
+	board_margin.add_theme_constant_override("margin_top", 260 if portrait else 24)
 	tutorial_banner.custom_minimum_size = Vector2(0, 72) if portrait else Vector2.ZERO
 	tutorial_label.add_theme_font_size_override("font_size", 19 if portrait else 24)
 	tutorial_label.add_theme_constant_override("line_spacing", 4 if portrait else 0)
@@ -486,21 +487,22 @@ func _layout_gameplay_hud(portrait: bool) -> void:
 		top_dock.offset_bottom = 112.0 if portrait else 106.0
 	if goal_dock:
 		goal_dock.offset_left = 28.0 if portrait else 36.0
-		goal_dock.offset_top = 124.0 if portrait else 112.0
+		goal_dock.offset_top = 118.0 if portrait else 112.0
 		goal_dock.offset_right = -28.0 if portrait else -36.0
-		goal_dock.offset_bottom = 208.0 if portrait else 174.0
+		goal_dock.offset_bottom = 232.0 if portrait else 174.0
 	if hud_goal_label:
-		hud_goal_label.add_theme_font_size_override("font_size", 22 if portrait else 18)
+		hud_goal_label.add_theme_font_size_override("font_size", 19 if portrait else 18)
 	if hud_combo_label:
-		hud_combo_label.add_theme_font_size_override("font_size", 17 if portrait else 15)
+		hud_combo_label.add_theme_font_size_override("font_size", 15 if portrait else 15)
 	if hud_combo_gauge:
 		hud_combo_gauge.custom_minimum_size = Vector2(180, 16) if portrait else Vector2(150, 14)
 	if hud_booster_dock:
 		hud_booster_dock.visible = portrait
-		hud_booster_dock.offset_left = 72.0 if portrait else 120.0
-		hud_booster_dock.offset_top = -154.0 if portrait else -132.0
-		hud_booster_dock.offset_right = -72.0 if portrait else -120.0
-		hud_booster_dock.offset_bottom = -34.0 if portrait else -24.0
+		hud_booster_dock.offset_left = 24.0 if portrait else 120.0
+		hud_booster_dock.offset_top = -126.0 if portrait else -132.0
+		hud_booster_dock.offset_right = -24.0 if portrait else -120.0
+		hud_booster_dock.offset_bottom = -22.0 if portrait else -24.0
+	_resize_hud_booster_buttons(portrait)
 	_update_gameplay_hud()
 
 
@@ -848,11 +850,13 @@ func _build_gameplay_hud_layer() -> void:
 
 	var booster_row := HBoxContainer.new()
 	booster_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	booster_row.add_theme_constant_override("separation", 18)
+	booster_row.add_theme_constant_override("separation", 12)
 	booster_margin.add_child(booster_row)
-	booster_row.add_child(_make_hud_booster_button("무지개", BOOSTER_RAINBOW_TEXTURE))
-	booster_row.add_child(_make_hud_booster_button("폭탄", BOOSTER_BOMB_TEXTURE))
-	booster_row.add_child(_make_hud_booster_button("줄무늬", BOOSTER_ROW_TEXTURE))
+	hud_booster_buttons.clear()
+	for booster_data in [["무지개", BOOSTER_RAINBOW_TEXTURE], ["폭탄", BOOSTER_BOMB_TEXTURE], ["줄무늬", BOOSTER_ROW_TEXTURE]]:
+		var booster_button := _make_hud_booster_button(String(booster_data[0]), booster_data[1] as Texture2D)
+		hud_booster_buttons.append(booster_button)
+		booster_row.add_child(booster_button)
 
 
 func _add_hud_stat(parent: Control, title: String, value: String, bg_color: Color, border_color: Color) -> Label:
@@ -886,9 +890,11 @@ func _make_hud_icon_button(text: String, tooltip: String) -> Button:
 func _make_hud_booster_button(text: String, texture: Texture2D) -> Button:
 	var button := Button.new()
 	button.text = text
+	button.tooltip_text = text
+	button.set_meta("hud_label", text)
 	button.icon = texture
 	button.expand_icon = true
-	button.custom_minimum_size = Vector2(160, 86)
+	button.custom_minimum_size = Vector2(150, 86)
 	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_font_size_override("font_size", 18)
 	button.add_theme_color_override("font_color", Color("61340b"))
@@ -900,6 +906,21 @@ func _make_hud_booster_button(text: String, texture: Texture2D) -> Button:
 		_set_status("%s 부스터는 스테이지 시작 팝업에서 장착할 수 있습니다." % text)
 	)
 	return button
+
+
+func _resize_hud_booster_buttons(portrait: bool) -> void:
+	for button in hud_booster_buttons:
+		if button == null:
+			continue
+		var label_text := String(button.get_meta("hud_label", button.tooltip_text))
+		if portrait:
+			button.text = ""
+			button.custom_minimum_size = Vector2(92, 74)
+			button.add_theme_font_size_override("font_size", 14)
+		else:
+			button.text = label_text
+			button.custom_minimum_size = Vector2(150, 86)
+			button.add_theme_font_size_override("font_size", 18)
 
 
 func _make_hud_label(text: String, font_size: int, color: Color, alignment: HorizontalAlignment) -> Label:
@@ -926,6 +947,7 @@ func _hud_style(bg_color: Color, border_color: Color, radius: int, border_width:
 	style.corner_radius_bottom_left = radius
 	style.shadow_color = Color(0.08, 0.16, 0.27, 0.16)
 	style.shadow_size = 8
+	style.shadow_offset = Vector2(0, 4)
 	return style
 
 
@@ -3021,7 +3043,12 @@ func _update_gameplay_hud() -> void:
 		var remaining_text := _build_goal_remaining_summary()
 		if remaining_text.is_empty():
 			remaining_text = "구조 완료"
-		hud_goal_label.text = "목표  %s   ·   남은 구조  %s" % [_build_goal_result_summary(), remaining_text]
+		if MobileLayout.is_portrait(self):
+			hud_goal_label.text = "목표: %s\n남은 구조: %s" % [_build_goal_result_summary(), remaining_text]
+			hud_goal_label.add_theme_constant_override("line_spacing", 5)
+		else:
+			hud_goal_label.text = "목표  %s   ·   남은 구조  %s" % [_build_goal_result_summary(), remaining_text]
+			hud_goal_label.add_theme_constant_override("line_spacing", 0)
 	if hud_combo_label:
 		hud_combo_label.text = "콤보 %d/%d%s%s" % [combo_gauge_points, COMBO_GAUGE_MAX, _fever_hud_suffix(), _buddy_hud_suffix()]
 	if hud_combo_gauge:

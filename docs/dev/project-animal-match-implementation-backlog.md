@@ -173,7 +173,7 @@
 
 ### PAM-QA-041: Stage Popup / 시작 부스터 / Buddy Preview 회귀 스모크
 
-- 상태: no-device readiness 자동화됨. Scene load smoke가 `WorldStageNode*` press로 Stage Popup 표시, 목표/이동 수/보상/START/시작 부스터 3종 버튼과 아이콘, 부스터 선택 상태 반영, 닫기 후 overlay 해제, START 선택값 commit helper를 검증한다. Stage 4/51/81 Buddy Preview는 동물명, 스킬명, 충전 조건/효과 설명과 후반 동물 한글명을 검증하고, Stage 1은 Buddy 영역을 숨기는지 검증한다. Gameplay smoke는 `rainbow_paw`, `striped`, `bomb` 선택값이 `GameSession`에서 한 번 소비되고 보드 특수 블록, `stage_start.selected_boosters`, `stage_start.start_boosters_applied`, `booster_used.source = pre_stage`로 이어지는지 검증한다. 남은 작업은 실제 기기에서 팝업 열기/닫기 애니메이션, 터치감, 시작 보드 판독성을 확인하는 것이다.
+- 상태: no-device readiness 자동화됨. Scene load smoke가 `WorldStageNode*` press로 Stage Popup 표시, 목표/이동 수/보상/PLAY/시작 부스터 3종 버튼과 아이콘, 부스터 선택 상태 반영, 닫기 후 overlay 해제, PLAY 선택값 commit helper를 검증한다. Stage 4/51/81 Buddy Preview는 동물명, 스킬명, 충전 조건/효과 설명과 후반 동물 한글명을 검증하고, Stage 1은 Buddy 영역을 숨기는지 검증한다. Gameplay smoke는 `rainbow_paw`, `striped`, `bomb` 선택값이 `GameSession`에서 한 번 소비되고 보드 특수 블록, `stage_start.selected_boosters`, `stage_start.start_boosters_applied`, `booster_used.source = pre_stage`로 이어지는지 검증한다. 남은 작업은 실제 기기에서 팝업 열기/닫기 애니메이션, 터치감, 시작 보드 판독성을 확인하는 것이다.
 - 소유: QA Agent + Development Agent
 - 대상 파일:
   - `scripts/validate_scene_loads.gd`

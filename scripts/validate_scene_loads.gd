@@ -40,7 +40,7 @@ const MVP_BOARD_TEXTURE_SIZE := Vector2i(256, 256)
 const SPECIAL_COMBO_MANUAL_ROWS := ["row+column", "row+row", "column+column", "row+bomb", "column+bomb", "bomb+bomb"]
 const CRITICAL_TEXT_STRESS_TITLE := "[長文QA] Rescue Ready SuperLongLocalizationToken"
 const CRITICAL_TEXT_STRESS_BODY := "[長文QA] 구조 목표가 길어져도 버튼과 본문이 겹치지 않아야 합니다 SuperLongUnbrokenLocalizationToken"
-const CRITICAL_TEXT_STRESS_CTA := "START 구조 시작"
+const CRITICAL_TEXT_STRESS_CTA := "PLAY 구조 시작"
 const MOBILE_VIEWPORT_MATRIX := [
 	Vector2i(1080, 1920),
 	Vector2i(720, 1280),
@@ -379,7 +379,7 @@ func _validate_stage_popup_mobile_viewport_matrix(node: Node, viewport_size: Vec
 	var meta_label := node.get("stage_popup_meta_label") as Control
 	var reward_label := node.get("stage_popup_reward_label") as Control
 	var buddy_label := node.get("stage_popup_buddy_label") as Control
-	var start_button := _find_button_with_text(node, "START")
+	var start_button := _find_button_with_text(panel, "PLAY")
 	var close_button := _find_button_with_text(node, "×")
 	_validate_control_in_viewport(panel, viewport_size, STAGE_SELECT_SCENE_PATH, "Stage 4 mobile matrix StagePopupPanel", errors)
 	for control_info in [
@@ -396,7 +396,7 @@ func _validate_stage_popup_mobile_viewport_matrix(node: Node, viewport_size: Vec
 		_validate_control_in_viewport(control, viewport_size, STAGE_SELECT_SCENE_PATH, "Stage 4 mobile matrix %s" % label, errors)
 		if panel != null and control != null and control != panel:
 			_validate_control_inside_container(control, panel, STAGE_SELECT_SCENE_PATH, "Stage 4 mobile matrix %s" % label, errors)
-	_validate_no_vertical_overlap(buddy_label, start_button, STAGE_SELECT_SCENE_PATH, "Stage 4 mobile matrix Buddy to START", errors)
+	_validate_no_vertical_overlap(buddy_label, start_button, STAGE_SELECT_SCENE_PATH, "Stage 4 mobile matrix Buddy to PLAY", errors)
 	var booster_buttons: Dictionary = Dictionary(node.get("stage_popup_booster_buttons"))
 	for booster_id in ["rainbow_paw", "striped", "bomb"]:
 		var booster_button := booster_buttons.get(booster_id) as Control
@@ -1380,12 +1380,12 @@ func _validate_main_scene(node: Node, errors: PackedStringArray) -> void:
 	elif info_card.visible:
 		errors.append("%s should not show a developer-style info card by default." % MAIN_SCENE_PATH)
 
-	var animal_strip := node.get_node_or_null("GameHomeLayer/HeroStack/AnimalStrip") as HBoxContainer
+	var animal_strip := node.find_child("AnimalStrip", true, false) as HBoxContainer
 	if animal_strip == null:
 		errors.append("%s is missing the 12-animal home preview strip." % MAIN_SCENE_PATH)
 	elif animal_strip.get_child_count() < ANIMAL_IDS.size():
 		errors.append("%s AnimalStrip should show all %d board animals, got %d." % [MAIN_SCENE_PATH, ANIMAL_IDS.size(), animal_strip.get_child_count()])
-	if node.get_node_or_null("GameHomeLayer/HeroStack/LiveEventStrip") == null:
+	if node.find_child("LiveEventStrip", true, false) == null:
 		errors.append("%s is missing LiveEventStrip for live ops surface checks." % MAIN_SCENE_PATH)
 	_validate_main_cta_signal_wiring(node, errors)
 	_validate_main_event_detail_overlay(node, errors)
@@ -3968,7 +3968,7 @@ func _validate_stage_select_cta_signal_wiring(node: Node, errors: PackedStringAr
 		_validate_button_pressed_connection(stage_node, node, "_on_band_route_node_pressed", STAGE_SELECT_SCENE_PATH, "WorldStageNode1", errors)
 	var panel := node.get("stage_popup_panel") as Control
 	_validate_button_pressed_connection(_find_button_with_text(panel, "×"), node, "_on_stage_popup_close_pressed", STAGE_SELECT_SCENE_PATH, "StagePopupCloseButton", errors)
-	_validate_button_pressed_connection(_find_button_with_text(panel, "START"), node, "_on_stage_popup_start_pressed", STAGE_SELECT_SCENE_PATH, "StagePopupStartButton", errors)
+	_validate_button_pressed_connection(_find_button_with_text(panel, "PLAY"), node, "_on_stage_popup_start_pressed", STAGE_SELECT_SCENE_PATH, "StagePopupStartButton", errors)
 	var booster_buttons: Dictionary = Dictionary(node.get("stage_popup_booster_buttons"))
 	for booster_id in ["rainbow_paw", "striped", "bomb"]:
 		_validate_button_pressed_connection(booster_buttons.get(booster_id) as Button, node, "_on_booster_button_pressed", STAGE_SELECT_SCENE_PATH, "StagePopupBoosterButton %s" % booster_id, errors)
@@ -4038,9 +4038,9 @@ func _validate_stage_popup_flow(node: Node, errors: PackedStringArray) -> void:
 	node.call("_show_stage_popup", 1)
 
 	var panel := node.get("stage_popup_panel") as PanelContainer
-	var start_button := _find_button_with_text(panel, "START")
+	var start_button := _find_button_with_text(panel, "PLAY")
 	if start_button == null:
-		errors.append("%s Stage Popup should expose a START button." % STAGE_SELECT_SCENE_PATH)
+		errors.append("%s Stage Popup should expose a PLAY button." % STAGE_SELECT_SCENE_PATH)
 
 	var booster_buttons: Dictionary = Dictionary(node.get("stage_popup_booster_buttons"))
 	for booster_id in ["rainbow_paw", "striped", "bomb"]:
@@ -4085,9 +4085,9 @@ func _validate_stage_popup_runtime(node: Node, errors: PackedStringArray) -> voi
 	node.call("_commit_stage_popup_selection")
 	var committed_boosters := GameSession.get_selected_pre_boosters()
 	if GameSession.get_selected_stage_id() != 1:
-		errors.append("%s Stage Popup START bridge should commit selected stage id 1." % STAGE_SELECT_SCENE_PATH)
+		errors.append("%s Stage Popup PLAY bridge should commit selected stage id 1." % STAGE_SELECT_SCENE_PATH)
 	if committed_boosters.size() != 1 or not committed_boosters.has("rainbow_paw"):
-		errors.append("%s Stage Popup START bridge should commit selected booster rainbow_paw, got %s." % [STAGE_SELECT_SCENE_PATH, str(committed_boosters)])
+		errors.append("%s Stage Popup PLAY bridge should commit selected booster rainbow_paw, got %s." % [STAGE_SELECT_SCENE_PATH, str(committed_boosters)])
 
 	await _validate_stage_popup_text_stress(node, errors)
 
@@ -4113,7 +4113,7 @@ func _validate_stage_popup_text_stress(node: Node, errors: PackedStringArray) ->
 	var meta_label := node.get("stage_popup_meta_label") as Label
 	var reward_label := node.get("stage_popup_reward_label") as Label
 	var buddy_label := node.get("stage_popup_buddy_label") as Label
-	var start_button := _find_button_with_text(node, "START")
+	var start_button := _find_button_with_text(panel, "PLAY")
 	var original_title := "" if title_label == null else title_label.text
 	var original_goal := "" if goal_label == null else goal_label.text
 	var original_meta := "" if meta_label == null else meta_label.text
@@ -4141,7 +4141,7 @@ func _validate_stage_popup_text_stress(node: Node, errors: PackedStringArray) ->
 		var label := String(control_info[1])
 		if control != null and control.is_visible_in_tree():
 			_validate_control_inside_container(control, panel, STAGE_SELECT_SCENE_PATH, "%s text stress" % label, errors)
-	_validate_no_vertical_overlap(buddy_label, start_button, STAGE_SELECT_SCENE_PATH, "StagePopup buddy to START", errors)
+	_validate_no_vertical_overlap(buddy_label, start_button, STAGE_SELECT_SCENE_PATH, "StagePopup buddy to PLAY", errors)
 	if title_label != null:
 		title_label.text = original_title
 	if goal_label != null:

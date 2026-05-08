@@ -148,6 +148,10 @@ var stage_popup_goal_label: Label
 var stage_popup_meta_label: Label
 var stage_popup_reward_label: Label
 var stage_popup_buddy_label: Label
+var stage_popup_margin: MarginContainer
+var stage_popup_column: VBoxContainer
+var stage_popup_booster_row: HBoxContainer
+var stage_popup_start_button: Button
 var stage_popup_booster_buttons: Dictionary = {}
 var stage_select_event_impressions_sent := {}
 
@@ -365,9 +369,9 @@ func _build_stage_world_layer() -> void:
 	var home_nav := _make_world_button("홈", Vector2(112, 66), 22)
 	home_nav.pressed.connect(_on_home_button_pressed)
 	top_hud.add_child(home_nav)
-	top_hud.add_child(_make_world_badge("하트", "5"))
-	top_hud.add_child(_make_world_badge("골드", str(120 + GameSession.get_total_stars() * 15)))
-	top_hud.add_child(_make_world_badge("별", str(GameSession.get_total_stars())))
+	top_hud.add_child(_make_world_badge("♥", "5"))
+	top_hud.add_child(_make_world_badge("●", str(120 + GameSession.get_total_stars() * 15)))
+	top_hud.add_child(_make_world_badge("★", str(GameSession.get_total_stars())))
 	var hud_spacer := Control.new()
 	hud_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_hud.add_child(hud_spacer)
@@ -410,11 +414,11 @@ func _build_stage_world_layer() -> void:
 	var cta_panel := PanelContainer.new()
 	cta_panel.name = "WorldSelectedPanel"
 	cta_panel.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	cta_panel.offset_left = 30.0
-	cta_panel.offset_top = -178.0
-	cta_panel.offset_right = -30.0
-	cta_panel.offset_bottom = -28.0
-	cta_panel.add_theme_stylebox_override("panel", _rounded_style(Color(1, 0.98, 0.78, 0.94), Color("ffbf32"), 34, 6))
+	cta_panel.offset_left = 22.0
+	cta_panel.offset_top = -166.0
+	cta_panel.offset_right = -22.0
+	cta_panel.offset_bottom = -22.0
+	cta_panel.add_theme_stylebox_override("panel", _rounded_style(Color(1, 1, 1, 0.84), Color("ffbf32"), 30, 5))
 	stage_world_layer.add_child(cta_panel)
 
 	var cta_margin := MarginContainer.new()
@@ -433,7 +437,7 @@ func _build_stage_world_layer() -> void:
 	world_selected_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	cta_row.add_child(world_selected_label)
 
-	world_play_button = _make_world_button("출동", Vector2(190, 88), 30)
+	world_play_button = _make_world_button("PLAY", Vector2(190, 88), 30)
 	world_play_button.name = "WorldPlayButton"
 	world_play_button.pressed.connect(_on_world_play_button_pressed)
 	cta_row.add_child(world_play_button)
@@ -441,15 +445,15 @@ func _build_stage_world_layer() -> void:
 
 func _make_world_badge(label_text: String, value_text: String) -> PanelContainer:
 	var badge := PanelContainer.new()
-	badge.custom_minimum_size = Vector2(124, 60)
-	badge.add_theme_stylebox_override("panel", _rounded_style(Color(1, 1, 1, 0.90), Color("ffcf3f"), 24, 4))
+	badge.custom_minimum_size = Vector2(112, 58)
+	badge.add_theme_stylebox_override("panel", _rounded_style(Color(1, 1, 1, 0.88), Color("ffcf3f"), 22, 3))
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 12)
 	margin.add_theme_constant_override("margin_right", 12)
 	margin.add_theme_constant_override("margin_top", 8)
 	margin.add_theme_constant_override("margin_bottom", 8)
 	badge.add_child(margin)
-	var label := _make_world_label("%s %s" % [label_text, value_text], 20, Color("213a55"), HORIZONTAL_ALIGNMENT_CENTER)
+	var label := _make_world_label("%s  %s" % [label_text, value_text], 20, Color("213a55"), HORIZONTAL_ALIGNMENT_CENTER)
 	margin.add_child(label)
 	return badge
 
@@ -499,20 +503,20 @@ func _build_stage_popup() -> void:
 	stage_popup_panel.add_theme_stylebox_override("panel", _rounded_style(Color(1.0, 0.98, 0.90, 0.98), Color(1.0, 0.77, 0.18, 1.0), 34, 8))
 	center.add_child(stage_popup_panel)
 
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 28)
-	margin.add_theme_constant_override("margin_top", 28)
-	margin.add_theme_constant_override("margin_right", 28)
-	margin.add_theme_constant_override("margin_bottom", 28)
-	stage_popup_panel.add_child(margin)
+	stage_popup_margin = MarginContainer.new()
+	stage_popup_margin.add_theme_constant_override("margin_left", 28)
+	stage_popup_margin.add_theme_constant_override("margin_top", 28)
+	stage_popup_margin.add_theme_constant_override("margin_right", 28)
+	stage_popup_margin.add_theme_constant_override("margin_bottom", 28)
+	stage_popup_panel.add_child(stage_popup_margin)
 
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 18)
-	margin.add_child(column)
+	stage_popup_column = VBoxContainer.new()
+	stage_popup_column.add_theme_constant_override("separation", 18)
+	stage_popup_margin.add_child(stage_popup_column)
 
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", 12)
-	column.add_child(header)
+	stage_popup_column.add_child(header)
 
 	stage_popup_title_label = _make_popup_label("Level Ready", 38, Color("213a55"), HORIZONTAL_ALIGNMENT_LEFT)
 	stage_popup_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -532,47 +536,47 @@ func _build_stage_popup() -> void:
 	stage_popup_goal_label = _make_popup_label("목표", 26, Color("513d30"), HORIZONTAL_ALIGNMENT_CENTER)
 	stage_popup_goal_label.custom_minimum_size = Vector2(0, 104)
 	stage_popup_goal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	column.add_child(stage_popup_goal_label)
+	stage_popup_column.add_child(stage_popup_goal_label)
 
 	stage_popup_meta_label = _make_popup_label("이동 · 난이도", 24, Color("2f617d"), HORIZONTAL_ALIGNMENT_CENTER)
 	stage_popup_meta_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	column.add_child(stage_popup_meta_label)
+	stage_popup_column.add_child(stage_popup_meta_label)
 
 	stage_popup_reward_label = _make_popup_label("보상", 24, Color("7a4d11"), HORIZONTAL_ALIGNMENT_CENTER)
 	stage_popup_reward_label.custom_minimum_size = Vector2(0, 76)
 	stage_popup_reward_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	column.add_child(stage_popup_reward_label)
+	stage_popup_column.add_child(stage_popup_reward_label)
 
 	stage_popup_buddy_label = _make_popup_label("", 23, Color("31506a"), HORIZONTAL_ALIGNMENT_CENTER)
 	stage_popup_buddy_label.name = "StagePopupBuddyLabel"
 	stage_popup_buddy_label.custom_minimum_size = Vector2(0, 92)
 	stage_popup_buddy_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	stage_popup_buddy_label.add_theme_stylebox_override("normal", _rounded_style(Color(0.90, 0.97, 1.0, 0.72), Color("86c3e5"), 24, 3))
-	column.add_child(stage_popup_buddy_label)
+	stage_popup_column.add_child(stage_popup_buddy_label)
 
 	var booster_title := _make_popup_label("시작 부스터", 28, Color("213a55"), HORIZONTAL_ALIGNMENT_CENTER)
-	column.add_child(booster_title)
+	stage_popup_column.add_child(booster_title)
 
-	var booster_row := HBoxContainer.new()
-	booster_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	booster_row.add_theme_constant_override("separation", 12)
-	column.add_child(booster_row)
+	stage_popup_booster_row = HBoxContainer.new()
+	stage_popup_booster_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	stage_popup_booster_row.add_theme_constant_override("separation", 12)
+	stage_popup_column.add_child(stage_popup_booster_row)
 	for booster_id in ["rainbow_paw", "striped", "bomb"]:
 		var button := _make_booster_button(booster_id)
 		stage_popup_booster_buttons[booster_id] = button
-		booster_row.add_child(button)
+		stage_popup_booster_row.add_child(button)
 
-	var start_button := Button.new()
-	start_button.text = "START"
-	start_button.custom_minimum_size = Vector2(0, 92)
-	start_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	start_button.add_theme_font_size_override("font_size", 36)
-	start_button.add_theme_color_override("font_color", Color("6a3e07"))
-	start_button.add_theme_stylebox_override("normal", _rounded_style(Color("ffd85a"), Color("f28c26"), 28, 5))
-	start_button.add_theme_stylebox_override("hover", _rounded_style(Color("ffe67d"), Color("f28c26"), 28, 5))
-	start_button.add_theme_stylebox_override("pressed", _rounded_style(Color("ffbf42"), Color("f28c26"), 28, 5))
-	start_button.pressed.connect(_on_stage_popup_start_pressed)
-	column.add_child(start_button)
+	stage_popup_start_button = Button.new()
+	stage_popup_start_button.text = "PLAY"
+	stage_popup_start_button.custom_minimum_size = Vector2(0, 92)
+	stage_popup_start_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stage_popup_start_button.add_theme_font_size_override("font_size", 36)
+	stage_popup_start_button.add_theme_color_override("font_color", Color("6a3e07"))
+	stage_popup_start_button.add_theme_stylebox_override("normal", _rounded_style(Color("ffd85a"), Color("f28c26"), 28, 5))
+	stage_popup_start_button.add_theme_stylebox_override("hover", _rounded_style(Color("ffe67d"), Color("f28c26"), 28, 5))
+	stage_popup_start_button.add_theme_stylebox_override("pressed", _rounded_style(Color("ffbf42"), Color("f28c26"), 28, 5))
+	stage_popup_start_button.pressed.connect(_on_stage_popup_start_pressed)
+	stage_popup_column.add_child(stage_popup_start_button)
 
 
 func _make_popup_label(text: String, font_size: int, color: Color, alignment: HorizontalAlignment) -> Label:
@@ -614,6 +618,7 @@ func _rounded_style(bg_color: Color, border_color: Color, radius: int, border_wi
 	style.corner_radius_bottom_left = radius
 	style.shadow_color = Color(0.16, 0.22, 0.28, 0.16)
 	style.shadow_size = 10
+	style.shadow_offset = Vector2(0, 5)
 	return style
 
 
@@ -621,14 +626,14 @@ func _show_stage_popup(stage_id: int) -> void:
 	selected_popup_stage_id = stage_id
 	selected_pre_boosters = []
 	var stage_def := _stage_def_by_id(stage_id)
-	stage_popup_title_label.text = "Level %d · %s" % [stage_id, String(stage_def.get("name", "Stage"))]
+	stage_popup_title_label.text = "Level %d" % stage_id
 	stage_popup_goal_label.text = _build_stage_popup_goal_text(stage_def)
-	stage_popup_meta_label.text = "이동 %d회 · 난이도 %s · %s" % [
+	stage_popup_meta_label.text = "%s · 이동 %d · %s" % [
+		String(stage_def.get("name", "Stage")),
 		int(stage_def.get("moves", 0)),
-		String(stage_def.get("difficulty", "Easy")),
 		_theme_display_name(String(stage_def.get("theme_key", "meadow_1"))),
 	]
-	stage_popup_reward_label.text = "클리어 보상  골드 %d · 별 최대 3개 · 다음 구조 노드 해금" % _stage_gold_reward(stage_def)
+	stage_popup_reward_label.text = "보상  골드 %d · 별 3개 · 다음 노드 해금" % _stage_gold_reward(stage_def)
 	var buddy_text := _build_stage_popup_buddy_text(stage_def)
 	stage_popup_buddy_label.visible = not buddy_text.is_empty()
 	stage_popup_buddy_label.text = buddy_text
@@ -651,15 +656,17 @@ func _stage_def_by_id(stage_id: int) -> Dictionary:
 
 func _build_stage_popup_goal_text(stage_def: Dictionary) -> String:
 	var lines: Array[String] = ["목표"]
+	var target_parts: Array[String] = []
 	var targets: Dictionary = Dictionary(stage_def.get("target_collect", {}))
 	for animal_id in targets.keys():
-		lines.append("%s %d마리 구조" % [_animal_name(String(animal_id)), int(targets[animal_id])])
+		target_parts.append("%s %d" % [_animal_name(String(animal_id)), int(targets[animal_id])])
 	var target_score := int(stage_def.get("target_score", 0))
 	if target_score > 0:
-		lines.append("점수 %d 달성" % target_score)
+		target_parts.append("점수 %d" % target_score)
 	var target_blockers := int(stage_def.get("target_blockers", 0))
 	if target_blockers > 0:
-		lines.append("덤불 %d개 제거" % target_blockers)
+		target_parts.append("덤불 %d" % target_blockers)
+	lines.append(" · ".join(target_parts))
 	return "\n".join(lines)
 
 
@@ -831,8 +838,9 @@ func _refresh_stage_world_layer(stage_def: Dictionary, meta: Dictionary) -> void
 		stage_defs.size(),
 		GameSession.get_total_stars(),
 	]
-	world_selected_label.text = "%s\n%s" % [
-		_build_selected_stage_title(stage_def, meta),
+	world_selected_label.text = "Level %d  %s\n%s" % [
+		stage_id,
+		String(stage_def.get("difficulty", "Easy")),
 		_build_goal_summary(stage_def).trim_prefix("목표: "),
 	]
 	_refresh_stage_select_events()
@@ -1550,6 +1558,7 @@ func _queue_layout_refresh() -> void:
 func _apply_responsive_layout() -> void:
 	var portrait := MobileLayout.is_portrait(self)
 	MobileLayout.apply_safe_area(safe_margin, self, 16 if portrait else 14)
+	var viewport_size := get_viewport_rect().size
 	layout_root.visible = false
 	if stage_world_layer:
 		stage_world_layer.visible = true
@@ -1559,8 +1568,7 @@ func _apply_responsive_layout() -> void:
 	stage_grid.columns = 4 if portrait else 7
 	stage_grid.add_theme_constant_override("h_separation", 14 if portrait else 18)
 	stage_grid.add_theme_constant_override("v_separation", 16 if portrait else 20)
-	if stage_popup_panel:
-		stage_popup_panel.custom_minimum_size = Vector2(700, 840) if portrait else Vector2(720, 800)
+	_layout_stage_popup(portrait, viewport_size)
 	_layout_stage_world_layer(portrait)
 	_refresh_stage_select_events()
 	_layout_map_juice_layer(portrait)
@@ -1568,6 +1576,66 @@ func _apply_responsive_layout() -> void:
 	story_panel.custom_minimum_size = Vector2(0, 420) if portrait else Vector2(420, 0)
 	stage_panel.custom_minimum_size = Vector2(0, 760) if portrait else Vector2(0, 0)
 	home_button.custom_minimum_size = Vector2(180, 72) if portrait else Vector2(220, 78)
+
+
+func _layout_stage_popup(portrait: bool, viewport_size: Vector2) -> void:
+	if stage_popup_panel == null:
+		return
+
+	if portrait:
+		stage_popup_panel.custom_minimum_size = Vector2(minf(viewport_size.x - 28.0, 362.0), minf(viewport_size.y - 34.0, 762.0))
+		if stage_popup_margin:
+			stage_popup_margin.add_theme_constant_override("margin_left", 20)
+			stage_popup_margin.add_theme_constant_override("margin_top", 20)
+			stage_popup_margin.add_theme_constant_override("margin_right", 20)
+			stage_popup_margin.add_theme_constant_override("margin_bottom", 20)
+		if stage_popup_column:
+			stage_popup_column.add_theme_constant_override("separation", 10)
+		stage_popup_title_label.add_theme_font_size_override("font_size", 30)
+		stage_popup_goal_label.custom_minimum_size = Vector2(0, 72)
+		stage_popup_goal_label.add_theme_font_size_override("font_size", 22)
+		stage_popup_meta_label.add_theme_font_size_override("font_size", 18)
+		stage_popup_reward_label.custom_minimum_size = Vector2(0, 48)
+		stage_popup_reward_label.add_theme_font_size_override("font_size", 18)
+		stage_popup_buddy_label.custom_minimum_size = Vector2(0, 64)
+		stage_popup_buddy_label.add_theme_font_size_override("font_size", 17)
+		if stage_popup_booster_row:
+			stage_popup_booster_row.add_theme_constant_override("separation", 8)
+		for booster_button_value in stage_popup_booster_buttons.values():
+			var booster_button := booster_button_value as Button
+			if booster_button:
+				booster_button.custom_minimum_size = Vector2(92, 84)
+				booster_button.add_theme_font_size_override("font_size", 14)
+		if stage_popup_start_button:
+			stage_popup_start_button.custom_minimum_size = Vector2(0, 72)
+			stage_popup_start_button.add_theme_font_size_override("font_size", 30)
+	else:
+		stage_popup_panel.custom_minimum_size = Vector2(minf(viewport_size.x - 48.0, 720.0), minf(viewport_size.y - 34.0, 800.0))
+		if stage_popup_margin:
+			stage_popup_margin.add_theme_constant_override("margin_left", 28)
+			stage_popup_margin.add_theme_constant_override("margin_top", 28)
+			stage_popup_margin.add_theme_constant_override("margin_right", 28)
+			stage_popup_margin.add_theme_constant_override("margin_bottom", 28)
+		if stage_popup_column:
+			stage_popup_column.add_theme_constant_override("separation", 18)
+		stage_popup_title_label.add_theme_font_size_override("font_size", 38)
+		stage_popup_goal_label.custom_minimum_size = Vector2(0, 104)
+		stage_popup_goal_label.add_theme_font_size_override("font_size", 26)
+		stage_popup_meta_label.add_theme_font_size_override("font_size", 24)
+		stage_popup_reward_label.custom_minimum_size = Vector2(0, 76)
+		stage_popup_reward_label.add_theme_font_size_override("font_size", 24)
+		stage_popup_buddy_label.custom_minimum_size = Vector2(0, 92)
+		stage_popup_buddy_label.add_theme_font_size_override("font_size", 23)
+		if stage_popup_booster_row:
+			stage_popup_booster_row.add_theme_constant_override("separation", 12)
+		for booster_button_value in stage_popup_booster_buttons.values():
+			var booster_button := booster_button_value as Button
+			if booster_button:
+				booster_button.custom_minimum_size = Vector2(190, 118)
+				booster_button.add_theme_font_size_override("font_size", 22)
+		if stage_popup_start_button:
+			stage_popup_start_button.custom_minimum_size = Vector2(0, 92)
+			stage_popup_start_button.add_theme_font_size_override("font_size", 36)
 
 
 func _layout_stage_world_layer(portrait: bool) -> void:
