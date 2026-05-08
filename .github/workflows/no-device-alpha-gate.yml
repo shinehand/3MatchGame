@@ -51,6 +51,9 @@ jobs:
       - name: Analytics contract validation
         run: zsh scripts/validate_analytics_contract.sh
 
+      - name: Provider readiness validation
+        run: zsh scripts/validate_provider_readiness.sh
+
       - name: Android export config validation
         run: zsh scripts/validate_android_export_config.sh
 

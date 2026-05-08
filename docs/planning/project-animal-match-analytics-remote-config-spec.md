@@ -89,6 +89,7 @@
 혼합 보상은 `reward_type=mixed`로 기록하고, 선택 파라미터 `reward_breakdown`에 `gold`, `tokens`, `boosters` 구성 요소를 함께 남긴다.
 원격 설정 노출은 세션별 `variant_id + config_key` 기준으로 중복 기록을 막고, 선택 파라미터 `remote_config_version`, `source`를 함께 남길 수 있다.
 SDK 공급자 결정 전 분석 이벤트는 `AnalyticsGateway`의 `local_buffer` provider로 queued dispatch 상태를 남긴다. 이 local buffer는 `user://` JSON 큐로 보존되어 다음 세션 reload 후에도 순서를 유지하며, adapter가 `flush_queued_events`로 성공 전송한 항목은 pending queue에서 제거한다. 실제 Firebase/GameAnalytics/custom SDK는 `configure_flush_adapter(provider_id, Callable)` 뒤에 연결하며, adapter callback이 받은 event payload를 변조해도 pending queue 원본은 오염되지 않아야 한다. 큐는 최대 320개로 제한하고 깨진 JSON 파일은 stale replay 없이 무시한다. 필수 파라미터가 빠졌거나 계약에 없는 이벤트는 로컬 디버그 저장에는 남기되 provider queue에는 싣지 않고 `rejected_contract`로 격리한다.
+`data/provider_readiness.json`은 실제 SDK 공급자 선택 전 상태를 machine-readable manifest로 고정한다. `scripts/validate_provider_readiness.sh`는 analytics `local_buffer`, monetization `local_simulator`, adapter hook, source/result canonicalization, provider result 원문 보존, queue/request log 상한이 코드와 일치하는지 검증한다.
 
 ## 3. 원격 설정 키
 
@@ -138,3 +139,4 @@ SDK 공급자 결정 전 분석 이벤트는 `AnalyticsGateway`의 `local_buffer
 - 원격 설정 누락 시 기본값으로 안전하게 동작한다.
 - 디버그 빌드에서 이벤트 로그를 사람이 읽을 수 있다.
 - 보상형 광고와 IAP 실패/취소 케이스가 재화나 하트를 잘못 소모하지 않는다.
+- SDK 공급자 선택 전 provider readiness manifest가 코드 상수와 일치하고, 실제 provider 연결은 manifest에 적힌 adapter hook 뒤에서만 이루어진다.

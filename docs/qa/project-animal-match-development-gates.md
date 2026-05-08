@@ -172,6 +172,7 @@
 - 필수 분석 이벤트와 파라미터가 디버그 로그에 누락 없이 기록된다.
 - 자동 scene smoke가 런타임에서 실제 기록된 분석 이벤트의 필수 파라미터 누락, `remote_config_exposure` 전체 key 노출, 이벤트 기간/오프라인 상태, 사용자-facing 상태 문구, `event_join`, `event_progress`, `event_reward_claim` idempotency 회귀를 잡는다.
 - SDK 공급자 결정 전 `AnalyticsGateway`는 `configure_flush_adapter(provider_id, Callable)`로 실제 provider 경계를 고정하고, adapter partial failure 시 성공 prefix만 제거하며 callback payload 변조가 pending queue를 오염시키지 않는지 scene smoke가 검증한다.
+- `data/provider_readiness.json`은 analytics/monetization provider-neutral 상태를 기록하고, `zsh scripts/validate_provider_readiness.sh`가 코드 상수, adapter hook, source/result canonicalization, queue/request log 상한과 일치하는지 검증한다.
 - 라이브 이벤트 노출은 `home`, `stage_select`, `result_overlay`, `collection` placement별 `live_event_impression` 기록 경로를 가진다.
 - A/B 테스트 노출은 현재 로드된 remote config key마다 `remote_config_exposure` 이벤트로 1회 이상 기록된다.
 - 원격 설정 변경 후 이전 기본값으로 롤백 가능하다.

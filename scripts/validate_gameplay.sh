@@ -7,13 +7,13 @@ validation_require_godot
 
 blocking_log_patterns="SCRIPT ERROR:|Parse Error:|Invalid access to property|Cannot call method|Attempt to call function|Failed loading resource|Unable to open file:|GameSession: failed to open save file|Scene load validation error"
 
-echo "[1/11] Stage data structure validation"
+echo "[1/12] Stage data structure validation"
 zsh scripts/validate_stage_data.sh
 
-echo "[2/11] Stage balance validation"
+echo "[2/12] Stage balance validation"
 zsh scripts/validate_stage_balance.sh
 
-echo "[3/11] Android export config validation"
+echo "[3/12] Android export config validation"
 android_export_config_stdout="/tmp/puzzle-android-export-config.stdout"
 rm -f "$android_export_config_stdout"
 if ! zsh scripts/validate_android_export_config.sh >"$android_export_config_stdout" 2>&1; then
@@ -23,7 +23,17 @@ if ! zsh scripts/validate_android_export_config.sh >"$android_export_config_stdo
 fi
 cat "$android_export_config_stdout"
 
-echo "[4/11] Godot import cache"
+echo "[4/12] Provider readiness validation"
+provider_readiness_stdout="/tmp/puzzle-provider-readiness.stdout"
+rm -f "$provider_readiness_stdout"
+if ! zsh scripts/validate_provider_readiness.sh >"$provider_readiness_stdout" 2>&1; then
+  echo "Provider readiness validation failed."
+  cat "$provider_readiness_stdout"
+  exit 1
+fi
+cat "$provider_readiness_stdout"
+
+echo "[5/12] Godot import cache"
 import_log="/tmp/puzzle-import-cache.log"
 import_stdout="/tmp/puzzle-import-cache.stdout"
 rm -f "$import_log" "$import_stdout"
@@ -32,10 +42,11 @@ if ! godot --headless --quiet --path . --import --quit --log-file "$import_log" 
   cat "$import_stdout"
   exit 1
 fi
+touch "$import_log" "$import_stdout"
 validation_fail_on_matches "Godot import" "$blocking_log_patterns" "$import_log" "$import_stdout"
 echo "Godot import cache prepared."
 
-echo "[5/11] Focused scene load smoke"
+echo "[6/12] Focused scene load smoke"
 scene_log="/tmp/puzzle-scene-load-validate.log"
 scene_stdout="/tmp/puzzle-scene-load-validate.stdout"
 rm -f "$scene_log" "$scene_stdout"
@@ -44,6 +55,7 @@ if ! godot --headless --quiet --path . --log-file "$scene_log" --script res://sc
   cat "$scene_stdout"
   exit 1
 fi
+touch "$scene_log" "$scene_stdout"
 validation_fail_on_matches "Focused scene load smoke" "$blocking_log_patterns" "$scene_log" "$scene_stdout"
 if validation_search "Scene load validation passed" "$scene_stdout" >/dev/null 2>&1; then
   true
@@ -51,7 +63,7 @@ else
   echo "Scene load validation passed."
 fi
 
-echo "[6/11] Headless main load"
+echo "[7/12] Headless main load"
 headless_log="/tmp/puzzle-headless-validate.log"
 headless_stdout="/tmp/puzzle-headless-validate.stdout"
 rm -f "$headless_log" "$headless_stdout"
@@ -60,10 +72,11 @@ if ! godot --headless --quiet --path . --log-file "$headless_log" --quit >"$head
   cat "$headless_stdout"
   exit 1
 fi
+touch "$headless_log" "$headless_stdout"
 validation_fail_on_matches "Headless main load" "$blocking_log_patterns" "$headless_log" "$headless_stdout"
 echo "No script/runtime errors reported in headless log."
 
-echo "[7/11] Texture loading anti-pattern scan"
+echo "[8/12] Texture loading anti-pattern scan"
 if validation_search "Image\.load_from_file|ProjectSettings\.globalize_path" scripts >/tmp/puzzle_texture_scan.log 2>&1; then
   echo "Direct file-based texture loading found:"
   cat /tmp/puzzle_texture_scan.log
@@ -75,7 +88,7 @@ elif [ "$?" -gt 1 ]; then
 fi
 echo "No direct file-based texture loading in scripts."
 
-echo "[8/11] Alpha QA packet integrity"
+echo "[9/12] Alpha QA packet integrity"
 alpha_packet_stdout="/tmp/puzzle-alpha-qa-packet-dry-run.stdout"
 rm -f "$alpha_packet_stdout"
 if ! zsh scripts/create_alpha_qa_packet.sh --dry-run >"$alpha_packet_stdout" 2>&1; then
@@ -85,7 +98,7 @@ if ! zsh scripts/create_alpha_qa_packet.sh --dry-run >"$alpha_packet_stdout" 2>&
 fi
 echo "Alpha QA packet template and dry-run passed."
 
-echo "[9/11] Alpha QA report validator contract"
+echo "[10/12] Alpha QA report validator contract"
 alpha_report_contract_stdout="/tmp/puzzle-alpha-qa-report-contract.stdout"
 rm -f "$alpha_report_contract_stdout"
 if ! zsh scripts/validate_alpha_qa_report_contract.sh >"$alpha_report_contract_stdout" 2>&1; then
@@ -95,7 +108,7 @@ if ! zsh scripts/validate_alpha_qa_report_contract.sh >"$alpha_report_contract_s
 fi
 cat "$alpha_report_contract_stdout"
 
-echo "[10/11] Android QA script dry-run contracts"
+echo "[11/12] Android QA script dry-run contracts"
 android_debug_stdout="/tmp/puzzle-android-debug-dry-run.stdout"
 android_device_stdout="/tmp/puzzle-android-device-dry-run.stdout"
 manual_device_stdout="/tmp/puzzle-manual-device-dry-run.stdout"
@@ -125,7 +138,7 @@ if ! GODOT_ANDROID_KEYSTORE_RELEASE_PATH="$release_keystore" GODOT_ANDROID_KEYST
 fi
 echo "Android QA script dry-run contracts passed."
 
-echo "[11/11] Manual smoke checklist"
+echo "[12/12] Manual smoke checklist"
 cat <<'EOF'
 - 앱 실행 직후 캔디 배경, 큰 `Zoo-Zoo Pop` 로고, 움직이는 동물 캔디, 진행바가 있는 로딩 화면이 먼저 보이는지 확인
 - 홈 화면에서 큰 `Zoo-Zoo Pop` 로고, 동물 마스코트, `PLAY`, `맵`, `도감`, `설정`이 게임 화면처럼 보이는지 확인

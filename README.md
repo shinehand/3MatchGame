@@ -50,6 +50,7 @@ Godot 4 기반 모바일 3매치 퍼즐 게임 프로젝트입니다.
 - 자동 점검: `./scripts/validate_gameplay.sh`
 - 스테이지 데이터 점검: `zsh scripts/validate_stage_data.sh`
 - 스테이지 밸런스 점검: `zsh scripts/validate_stage_balance.sh`
+- Provider readiness 점검: `zsh scripts/validate_provider_readiness.sh`
 - Android export 설정 점검: `zsh scripts/validate_android_export_config.sh`
 - Android debug 환경 점검: `zsh scripts/check_android_setup.sh`
 - Android debug APK 생성/서명 검증: `zsh scripts/export_android_debug.sh`

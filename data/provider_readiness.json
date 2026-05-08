@@ -1,0 +1,126 @@
+{
+  "version": 1,
+  "open_decision": "OPEN-007",
+  "real_sdk_credentials_required": false,
+  "readiness_validation_command": "zsh scripts/validate_provider_readiness.sh",
+  "external_gates": [
+    "real_sdk_credentials",
+    "android_real_device_install_run",
+    "release_keystore",
+    "store_products",
+    "receipt_validation"
+  ],
+  "analytics": {
+    "status": "provider_neutral",
+    "production_sdk": "none",
+    "gateway_script": "res://scripts/analytics_gateway.gd",
+    "contract_validation_command": "zsh scripts/validate_analytics_contract.sh",
+    "default_provider_id": "local_buffer",
+    "adapter_hook": "configure_flush_adapter(provider_id, Callable)",
+    "queue_path": "user://analytics_gateway_queue.json",
+    "max_queue_size": 320,
+    "valid_dispatch_status": "queued",
+    "sent_dispatch_status": "sent",
+    "contract_invalid_status": "rejected_contract",
+    "flush_contracts": [
+      "disk_persisted_queue",
+      "sequential_flush_order",
+      "partial_failure_keeps_rejected_and_unattempted",
+      "adapter_payload_mutation_guard",
+      "bounded_queue_eviction",
+      "corrupt_queue_tolerance"
+    ],
+    "smoke_coverage": [
+      "GameSession saved event",
+      "AnalyticsGateway local_buffer queued",
+      "disk reload preserves queue",
+      "flush drains in order exactly once",
+      "contract violation rejected_contract not queued"
+    ]
+  },
+  "monetization": {
+    "status": "provider_neutral",
+    "production_ad_sdk": "none",
+    "production_iap_sdk": "none",
+    "gateway_script": "res://scripts/monetization_gateway.gd",
+    "scene_smoke_script": "res://scripts/validate_scene_loads.gd",
+    "default_provider_id": "local_simulator",
+    "adapter_hook": "configure_continue_adapter(provider_id, Callable)",
+    "sources": [
+      "rewarded_ad",
+      "iap",
+      "coins"
+    ],
+    "source_aliases": {
+      "rewarded": "rewarded_ad",
+      "purchase": "iap",
+      "coin": "coins"
+    },
+    "results": [
+      "completed",
+      "failed",
+      "pending"
+    ],
+    "result_aliases": {
+      "completed": [
+        "completed",
+        "complete",
+        "success",
+        "succeeded",
+        "ok",
+        "granted",
+        "rewarded",
+        "purchased"
+      ],
+      "failed": [
+        "failed",
+        "fail",
+        "failure",
+        "error",
+        "errored",
+        "timeout",
+        "timed_out",
+        "cancel",
+        "cancelled",
+        "canceled",
+        "aborted",
+        "denied",
+        "rejected",
+        "expired",
+        "unavailable"
+      ],
+      "pending": [
+        "pending",
+        "start",
+        "started",
+        "in_progress",
+        "processing",
+        "running",
+        "queued",
+        "requested",
+        "loading",
+        "deferred",
+        "awaiting_callback"
+      ]
+    },
+    "unknown_result_policy": "failed",
+    "unsupported_source_status": "rejected_invalid_source",
+    "provider_result_preservation": "details.provider_result",
+    "default_placement": "fail_offer",
+    "default_reward_type": "extra_moves",
+    "default_ad_network": "local_simulator",
+    "default_product_id": "fail_offer_continue_pack",
+    "default_price": 0.99,
+    "default_currency": "USD",
+    "max_request_log": 120,
+    "smoke_coverage": [
+      "request log source/stage_id/fail_reason/provider_id/status/result",
+      "invalid source rejected_invalid_source",
+      "queued result priority over adapter",
+      "adapter deep-copy payload",
+      "result alias canonicalization",
+      "pending duplicate tap does not create second request",
+      "provider_result preserves cancel semantics"
+    ]
+  }
+}

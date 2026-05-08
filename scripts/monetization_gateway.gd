@@ -117,7 +117,7 @@ static func reset_for_testing() -> void:
 static func _pop_queued_result(source: String) -> Dictionary:
 	for index in range(_queued_results.size()):
 		var queued_result: Dictionary = Dictionary(_queued_results[index])
-		var queued_source := String(queued_result.get("source", "")).strip_edges().to_lower()
+		var queued_source := str(queued_result.get("source", "")).strip_edges().to_lower()
 		if queued_source == source or queued_source == "*":
 			_queued_results.remove_at(index)
 			return queued_result
@@ -130,9 +130,9 @@ static func _request_continue_from_adapter(source: String, stage_id: int, fail_o
 	var request_payload := {
 		"source": source,
 		"stage_id": stage_id,
-		"fail_type": String(fail_offer.get("type", fail_offer.get("fail_type", ""))),
-		"offer_type": String(fail_offer.get("offer_type", "")),
-		"placement": String(payload_details.get("placement", DEFAULT_PLACEMENT)),
+		"fail_type": str(fail_offer.get("type", fail_offer.get("fail_type", ""))),
+		"offer_type": str(fail_offer.get("offer_type", "")),
+		"placement": str(payload_details.get("placement", DEFAULT_PLACEMENT)),
 		"provider_id": _provider_id,
 		"details": payload_details,
 		"fail_offer": fail_offer.duplicate(true),
@@ -147,7 +147,7 @@ static func _normalize_adapter_response(adapter_response) -> Dictionary:
 		response["details"] = Dictionary(response.get("details", {})).duplicate(true)
 		return response
 	if adapter_response is String:
-		return {"result": String(adapter_response)}
+		return {"result": str(adapter_response)}
 	if adapter_response is bool:
 		return {"result": RESULT_COMPLETED if bool(adapter_response) else RESULT_FAILED}
 	return {
@@ -157,7 +157,7 @@ static func _normalize_adapter_response(adapter_response) -> Dictionary:
 
 
 static func _normalize_result(result_value, default_result: String) -> String:
-	var result := String(result_value).strip_edges().to_lower()
+	var result := str(result_value).strip_edges().to_lower()
 	if result.is_empty():
 		return _normalize_default_result(default_result)
 	match result:
@@ -171,7 +171,7 @@ static func _normalize_result(result_value, default_result: String) -> String:
 
 
 static func _preserve_provider_result(details: Dictionary, result_value, canonical_result: String) -> void:
-	var raw_result := String(result_value).strip_edges().to_lower()
+	var raw_result := str(result_value).strip_edges().to_lower()
 	if raw_result.is_empty() or raw_result == canonical_result or details.has("provider_result"):
 		return
 	details["provider_result"] = raw_result
@@ -213,7 +213,7 @@ static func _default_details(source: String, stage_id: int, fail_offer: Dictiona
 
 static func _merge_details(target: Dictionary, source: Dictionary) -> void:
 	for key in source.keys():
-		if String(key) == "result":
+		if str(key) == "result":
 			continue
 		target[key] = source[key]
 
@@ -238,12 +238,12 @@ static func _log_request(source: String, stage_id: int, fail_offer: Dictionary, 
 	var entry := {
 		"source": source,
 		"stage_id": stage_id,
-		"fail_type": String(fail_offer.get("type", fail_offer.get("fail_type", ""))),
-		"offer_type": String(fail_offer.get("offer_type", "")),
-		"placement": String(details.get("placement", DEFAULT_PLACEMENT)),
-		"provider_id": String(details.get("provider_id", _provider_id)),
-		"result": String(gateway_result.get("result", "")),
-		"request_status": String(gateway_result.get("request_status", "")),
+		"fail_type": str(fail_offer.get("type", fail_offer.get("fail_type", ""))),
+		"offer_type": str(fail_offer.get("offer_type", "")),
+		"placement": str(details.get("placement", DEFAULT_PLACEMENT)),
+		"provider_id": str(details.get("provider_id", _provider_id)),
+		"result": str(gateway_result.get("result", "")),
+		"request_status": str(gateway_result.get("request_status", "")),
 		"details": details,
 	}
 	_request_log.append(entry)
