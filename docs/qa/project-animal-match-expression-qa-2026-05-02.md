@@ -63,5 +63,5 @@ bash scripts/validate_gameplay.sh
 ## 재확인 필요
 
 - 실제 디바이스에서 portrait/landscape 수동 확인 필요.
-- `lion`, `elephant`는 현재 fallback texture를 사용하므로 최종 에셋 추가 후 다시 확인 필요.
+- `lion`, `elephant`는 전용 기본 블록 texture가 추가되었으므로 실제 디바이스에서 64px 미리보기/보드 판독성과 후속 표정 atlas 품질을 다시 확인해야 한다.
 - expression과 match/drop VFX가 매우 빠른 연쇄 상황에서 과하게 겹치지 않는지 플레이 QA 필요.

@@ -36,6 +36,7 @@ const ANIMAL_TEXTURE_FALLBACKS := {
 }
 const ANIMAL_PROFILE_PATH := "res://data/animal_animation_profiles.json"
 const IMPLEMENTED_LIVE_EVENT_PLACEMENTS := ["home", "stage_select", "result_overlay", "collection"]
+const MVP_BOARD_TEXTURE_SIZE := Vector2i(256, 256)
 const SPECIAL_COMBO_MANUAL_ROWS := ["row+column", "row+row", "column+column", "row+bomb", "column+bomb", "bomb+bomb"]
 const CRITICAL_TEXT_STRESS_TITLE := "[長文QA] Rescue Ready SuperLongLocalizationToken"
 const CRITICAL_TEXT_STRESS_BODY := "[長文QA] 구조 목표가 길어져도 버튼과 본문이 겹치지 않아야 합니다 SuperLongUnbrokenLocalizationToken"
@@ -4629,3 +4630,7 @@ func _validate_animal_texture_manifest(errors: PackedStringArray) -> void:
 		var texture := load(texture_path)
 		if not (texture is Texture2D):
 			errors.append("Animal direct texture did not load as Texture2D: %s." % texture_path)
+			continue
+		var texture_2d := texture as Texture2D
+		if texture_2d.get_width() != MVP_BOARD_TEXTURE_SIZE.x or texture_2d.get_height() != MVP_BOARD_TEXTURE_SIZE.y:
+			errors.append("Animal direct texture should be %dx%d: %s is %dx%d." % [MVP_BOARD_TEXTURE_SIZE.x, MVP_BOARD_TEXTURE_SIZE.y, texture_path, texture_2d.get_width(), texture_2d.get_height()])

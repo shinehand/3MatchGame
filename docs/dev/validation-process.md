@@ -20,7 +20,7 @@
 - 출시 스테이지 100개 로드 여부 검증
 - 밴드별 이동 수/덤불 수 밸런스 검증
 - Godot 임포트 캐시 준비 (`.godot/`가 없는 클린 체크아웃 대응)
-- 핵심 씬 로드 스모크 체크 (`main`, `stage_select`, `gameplay`, 카드/타일/목표 칩)
+- 핵심 씬 로드 스모크 체크 (`main`, `stage_select`, `gameplay`, 카드/타일/목표 칩, MVP 보드 12종 기본 블록 256px Texture2D)
 - 실제 홈 첫 화면의 `GameHomeLayer` CTA/하단 내비게이션과 설정 overlay 토글 확인
 - Home, Stage Select, Gameplay Overlay, Rescue Book의 핵심 CTA `pressed` signal이 의도한 handler에 연결되어 있는지 확인
 - 게임플레이 보드 64칸 생성과 스테이지 선택 카드 100장 생성 확인

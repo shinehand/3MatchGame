@@ -49,7 +49,7 @@
 
 - MVP 보드 로스터는 12종이다.
 - 글로벌 런칭 콘텐츠 목표는 보드 12종과 컬렉션/이벤트 예비 6종을 합친 18종이며, 시즌 운영은 24종까지 확장한다.
-- 현재 코드와 validator는 12종을 인식하며, `lion`, `elephant`는 최종 에셋 전까지 명시 fallback을 사용한다.
+- 현재 코드와 validator는 12종을 인식하며, `lion`, `elephant`는 전용 256px 기본 블록 PNG를 사용한다. 명시 fallback은 에셋 누락 시 보드를 깨뜨리지 않는 방어 경로로만 남긴다.
 - 한 스테이지의 `animal_pool`은 5-6종으로 제한한다.
 - 스테이지 JSON 원본은 `spawn_profile.pool/weights`, 런타임 정규화 필드는 `animal_pool/spawn_weights`를 기준으로 한다.
 - 피버 MVP 지속은 `3회 플레이어 이동`으로 고정한다.

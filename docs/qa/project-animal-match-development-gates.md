@@ -55,7 +55,8 @@
 ## Gate 3. 12종 로스터
 
 - `rabbit`, `bear`, `cat`, `chick`, `frog`, `dog`, `panda`, `pig`, `penguin`, `fox`, `lion`, `elephant`가 코드와 validator에서 같은 기준으로 존재한다.
-- 에셋이 없는 동물은 명시 fallback으로 표시된다.
+- MVP 보드 12종은 `assets/generated/candy/{id}_candy_block.png` 전용 256px 기본 블록 Texture2D로 직접 로드된다.
+- 컬렉션 전용 동물이나 atlas/overlay 에셋 누락은 명시 fallback으로 표시되어 게임 진행을 막지 않는다.
 - 목표 UI와 결과 UI에서 동물명이 누락되지 않는다.
 
 ## Gate 4. 표정 애니메이션

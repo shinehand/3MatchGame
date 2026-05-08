@@ -7,7 +7,7 @@
 ## 현재 상태 요약
 
 - 구현됨: 8x8 보드, 스와이프, 매치 판정, 낙하/리필, 특수 블록, 콤보 게이지, 덤불 장애물, HUD, 100개 스테이지 로딩/검증.
-- 구현됨: 12종 동물 로스터 인식, `lion`/`elephant` 명시 fallback, 스테이지 `roster_group`, 표정 fallback API와 idle blink scheduler.
+- 구현됨: 12종 동물 로스터 인식, `lion`/`elephant` 전용 256px 기본 블록 PNG, 스테이지 `roster_group`, 표정 fallback API와 idle blink scheduler.
 - 문서 기준 신규 요구: 피버 3턴 MVP, Rescue Buddy 1종 자동 스킬, Rescue Book 컬렉션 메타, 실패 유형별 제안 정책, 분석 이벤트 계약.
 - 기획 협의 기준: `docs/planning/project-animal-match-planning-council-synthesis.md`를 우선 참조한다.
 
@@ -29,7 +29,7 @@
 
 - 상태: 완료됨. 유지보수 시 회귀 검증용 카드로 사용한다.
 - 소유: Development Agent
-- 선행: Art Director가 `lion`, `elephant` 임시 에셋 또는 fallback 정책 승인
+- 선행: Art Director가 12종 기본 블록 에셋 또는 fallback 정책 승인
 - 대상 파일:
   - `scripts/gameplay.gd`
   - `scripts/stage_data_validator.gd`
@@ -39,7 +39,7 @@
   - `ANIMAL_NAMES`에 `사자`, `코끼리`를 추가한다.
   - `_slot_color()`에 사자/코끼리 색을 추가한다.
   - validator의 `VALID_ANIMALS`를 12종으로 맞춘다.
-  - 에셋이 없으면 기존 동물 texture fallback을 명시적으로 사용한다.
+  - 기본 블록 에셋 누락 시 기존 동물 texture fallback을 방어 경로로 사용한다.
 - 완료 기준:
   - 새 동물 id가 스테이지 데이터, 목표 텍스트, 타일 표시, 검증기에서 모두 통과한다.
 - 검증:
@@ -48,7 +48,7 @@
 
 ### PAM-DEV-011: 12종 에셋 경로와 import 규칙 정리
 
-- 상태: 완료됨. `lion`, `elephant` 전용 `assets/generated/candy/{animal_id}_candy_block.png` 에셋을 추가했고, 런타임 fallback은 에셋 누락 방어용으로 유지한다.
+- 상태: 완료됨. `lion`, `elephant` 전용 `assets/generated/candy/{animal_id}_candy_block.png` 256px 기본 블록 에셋을 추가했고, scene smoke가 MVP 보드 12종 직접 Texture2D/256x256 로드를 검증한다. 런타임 fallback은 에셋 누락 방어용으로 유지한다.
 - 소유: Art + Development Agent
 - 대상 파일:
   - `docs/art/project-animal-match-visual-style-guide.md`
@@ -57,10 +57,10 @@
 - 작업:
   - 12종 기본 블록 파일명을 1차 런타임 기준 `assets/generated/candy/{animal_id}_candy_block.png`로 통일한다.
   - 표정 확장 파일명은 `animal_{id}_{expression}.png` 및 atlas 규칙으로 분리한다.
-  - `lion_candy_block.png`, `elephant_candy_block.png`를 추가하거나 fallback 이미지를 둔다.
+  - `lion_candy_block.png`, `elephant_candy_block.png`를 전용 기본 블록으로 유지한다.
   - 에셋 import 후 Godot에서 Texture2D로 로드되는지 확인한다.
 - 완료 기준:
-  - `_load_animal_textures()`와 scene load 검증이 12종 모두 null 없이 로드하거나 명시 fallback을 사용함을 확인한다.
+  - `_load_animal_textures()`와 scene load 검증이 12종 모두 직접 기본 블록 Texture2D로 로드됨을 확인한다.
 
 ## P2. 스테이지 데이터와 밸런스 정리
 

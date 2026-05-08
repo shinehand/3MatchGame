@@ -177,7 +177,7 @@
 
 ## 8. 개발자 구현 우선순위
 
-1. `lion`, `elephant`가 코드/validator/에셋 fallback에서 완전한 12종 로스터로 작동하는지 먼저 닫는다.
+1. `lion`, `elephant` 전용 기본 블록 에셋은 닫혔으므로, 코드/validator는 12종 직접 Texture2D 로드를 유지하고 후속은 실제 디바이스 보드 판독성과 표정 atlas QA로 분리한다.
 2. Stage 1-10의 풀 크기와 `mechanics.enabled`를 튜토리얼 게이트에 맞춘다.
 3. Stage 11-100의 반복 5종 풀을 밴드별 5-6종 회전 풀로 재작성한다.
 4. validator에 해금 순서, 풀 밖 weight, 밴드별 active cell, finale 태그, 하드 연속 경고를 추가한다.
