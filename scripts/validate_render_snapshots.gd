@@ -13,6 +13,7 @@ const SNAPSHOT_VIEWPORTS := [
 ]
 const SCENARIOS := [
 	{"id": "home", "scene": MAIN_SCENE_PATH, "setup": "home"},
+	{"id": "stage_select_world_map", "scene": STAGE_SELECT_SCENE_PATH, "setup": "stage_select_world_map"},
 	{"id": "stage_popup", "scene": STAGE_SELECT_SCENE_PATH, "setup": "stage_popup"},
 	{"id": "gameplay_stage4_buddy_initial", "scene": GAMEPLAY_SCENE_PATH, "setup": "gameplay_stage4", "buddy_state": "initial", "buddy_charges": 0},
 	{"id": "gameplay_stage4_buddy_charged", "scene": GAMEPLAY_SCENE_PATH, "setup": "gameplay_stage4", "buddy_state": "charged", "buddy_charges": 2},
@@ -481,10 +482,14 @@ func _validate_saved_png(output_path: String, snapshot_id: String, errors: Packe
 func _validate_scenario_regions(image: Image, node: Node, scenario: Dictionary, setup_id: String, snapshot_id: String, errors: PackedStringArray) -> void:
 	match setup_id:
 		"home":
+			var home_play_button := node.find_child("HomePlayButton", true, false) as Control
 			_validate_control_pixels(image, node.find_child("GameHomeLayer", true, false), snapshot_id, "GameHomeLayer", errors)
 			_validate_control_pixels(image, node.find_child("HomeActionPanel", true, false), snapshot_id, "HomeActionPanel", errors)
-			_validate_control_pixels(image, node.find_child("HomePlayButton", true, false), snapshot_id, "HomePlayButton", errors)
+			_validate_control_pixels(image, home_play_button, snapshot_id, "HomePlayButton", errors)
+			_validate_control_image_minimum_size(image, home_play_button, snapshot_id, "HomePlayButton", Vector2(210, 48) if image.get_height() >= image.get_width() else Vector2(220, 48), errors)
 			_validate_control_pixels(image, node.find_child("BottomNav", true, false), snapshot_id, "BottomNav", errors)
+		"stage_select_world_map":
+			_validate_stage_select_world_map_snapshot_regions(image, node, snapshot_id, errors)
 		"stage_popup":
 			var popup_panel := node.get("stage_popup_panel") as Control
 			_validate_control_pixels(image, popup_panel, snapshot_id, "StagePopupPanel", errors)
@@ -506,6 +511,32 @@ func _validate_scenario_regions(image: Image, node: Node, scenario: Dictionary, 
 			_validate_control_pixels(image, node.find_child("CollectionGrid", true, false) as Control, snapshot_id, "CollectionGrid", errors)
 			_validate_control_pixels(image, node.find_child("SummaryLabel", true, false) as Control, snapshot_id, "SummaryLabel", errors)
 			_validate_collection_snapshot_regions(image, node, snapshot_id, errors)
+
+
+func _validate_stage_select_world_map_snapshot_regions(image: Image, node: Node, snapshot_id: String, errors: PackedStringArray) -> void:
+	var world_layer := node.find_child("StageWorldLayer", true, false) as Control
+	var path_root := node.find_child("WorldMapPathRoot", true, false) as Control
+	var play_button := node.find_child("WorldPlayButton", true, false) as Control
+	var popup_overlay := node.find_child("StagePopupOverlay", true, false) as CanvasItem
+	_validate_control_pixels(image, world_layer, snapshot_id, "StageWorldLayer", errors)
+	_validate_control_pixels(image, path_root, snapshot_id, "WorldMapPathRoot", errors)
+	_validate_control_pixels(image, play_button, snapshot_id, "WorldPlayButton", errors)
+	_validate_control_within_image_bounds(play_button, snapshot_id, "WorldPlayButton", errors)
+	_validate_control_image_minimum_size(image, play_button, snapshot_id, "WorldPlayButton", Vector2(92, 44) if image.get_height() >= image.get_width() else Vector2(190, 48), errors)
+	if popup_overlay != null and popup_overlay.visible:
+		errors.append("%s should capture the default world map without StagePopupOverlay visible." % snapshot_id)
+	if path_root == null:
+		return
+	var visible_stage_nodes := 0
+	for candidate in path_root.find_children("WorldStageNode*", "Button", true, false):
+		var button := candidate as Control
+		if button == null or not button.is_visible_in_tree():
+			continue
+		visible_stage_nodes += 1
+		_validate_control_pixels(image, button, snapshot_id, String(button.name), errors)
+		_validate_control_within_image_bounds(button, snapshot_id, String(button.name), errors)
+	if visible_stage_nodes != 10:
+		errors.append("%s should render 10 visible world stage nodes, got %d." % [snapshot_id, visible_stage_nodes])
 
 
 func _validate_collection_snapshot_regions(image: Image, node: Node, snapshot_id: String, errors: PackedStringArray) -> void:
@@ -807,6 +838,14 @@ func _validate_control_within_image_bounds(control: Control, snapshot_id: String
 	var viewport_size := root.get_visible_rect().size
 	if rect.position.x < -1.0 or rect.position.y < -1.0 or rect.position.x + rect.size.x > viewport_size.x + 1.0 or rect.position.y + rect.size.y > viewport_size.y + 1.0:
 		errors.append("%s control region %s should fit inside viewport bounds, got %s in %s." % [snapshot_id, label, rect, viewport_size])
+
+
+func _validate_control_image_minimum_size(image: Image, control: Control, snapshot_id: String, label: String, minimum_size: Vector2, errors: PackedStringArray) -> void:
+	if control == null:
+		return
+	var rect := _control_rect_to_image_bounds(control.get_global_rect(), image.get_width(), image.get_height())
+	if float(rect.size.x) < minimum_size.x or float(rect.size.y) < minimum_size.y:
+		errors.append("%s %s should remain commercially readable in the PNG at least %s, got %s." % [snapshot_id, label, minimum_size, rect.size])
 
 
 func _validate_controls_do_not_overlap(a: Control, b: Control, snapshot_id: String, a_label: String, b_label: String, errors: PackedStringArray) -> void:

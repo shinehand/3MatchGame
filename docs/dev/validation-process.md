@@ -29,7 +29,7 @@
 - Meta modal/card readability gate: Collection landscape 첫 카드가 얇은 row로 무너지지 않는지, 동물 preview가 충분히 큰지, Stage Popup landscape panel과 `PLAY` CTA가 상용 start modal 위계를 유지하는지 확인
 - Result overlay density gate: Stage 1 성공 overlay와 Stage 25 near-miss 실패 overlay의 본문 visible line을 6개 이하로 유지해 보상/다음 행동 또는 실패 원인/다음 한 수 중심의 상용 카드 판독성을 확인
 - Critical UI text stress: Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay에 장문 pseudo-localization title/body/CTA를 주입해 viewport/panel bounds와 CTA overlap을 확인
-- Render snapshot smoke: `390x844`, `844x390`에서 Home, Stage Popup, Stage 4 Gameplay Buddy HUD 4상태, Stage 1 성공 결과 overlay, Stage 25 실패 overlay, Stage 31 특수 조합 6종, Collection을 실제 PNG 30장으로 저장하고 non-blank/varied pixel, 핵심 UI region, Buddy 라벨/게이지/analytics, 성공 결과 보상/CTA, 특수 조합 label/flash/ring 렌더를 확인
+- Render snapshot smoke: `390x844`, `844x390`에서 Home, Stage Select World Map, Stage Popup, Stage 4 Gameplay Buddy HUD 4상태, Stage 1 성공 결과 overlay, Stage 25 실패 overlay, Stage 31 특수 조합 6종, Collection을 실제 PNG 32장으로 저장하고 non-blank/varied pixel, 핵심 UI region, Home/World Map PLAY CTA 이미지 크기, Buddy 라벨/게이지/analytics, 성공 결과 보상/CTA, 특수 조합 label/flash/ring 렌더를 확인
 - LiveOps config validation. `remote_config.json`과 `live_events.json`의 unlock key, placement, offline fallback, disabled season pass, remote config exposure 계약을 독립 검증한다.
 - Godot 헤드리스 로드
 - 파일 직접 읽기 안티패턴 스캔

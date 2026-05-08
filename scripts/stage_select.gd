@@ -1648,16 +1648,41 @@ func _layout_stage_popup(portrait: bool, viewport_size: Vector2) -> void:
 func _layout_stage_world_layer(portrait: bool) -> void:
 	if stage_world_layer == null:
 		return
+	var viewport_size := get_viewport_rect().size
 	if world_title_label:
 		world_title_label.add_theme_font_size_override("font_size", 60 if portrait else 68)
 	if world_subtitle_label:
 		world_subtitle_label.add_theme_font_size_override("font_size", 24 if portrait else 28)
 	if world_selected_label:
-		world_selected_label.add_theme_font_size_override("font_size", 23 if portrait else 26)
+		world_selected_label.add_theme_font_size_override("font_size", int(clampf(viewport_size.y * (0.014 if portrait else 0.020), 23.0 if portrait else 34.0, 30.0 if portrait else 44.0)))
 	if world_play_button:
-		world_play_button.custom_minimum_size = Vector2(196, 92) if portrait else Vector2(236, 98)
+		if portrait:
+			world_play_button.custom_minimum_size = Vector2(clampf(viewport_size.x * 0.24, 260.0, 330.0), clampf(viewport_size.y * 0.058, 126.0, 138.0))
+			world_play_button.add_theme_font_size_override("font_size", int(clampf(viewport_size.y * 0.020, 34.0, 42.0)))
+		else:
+			world_play_button.custom_minimum_size = Vector2(clampf(viewport_size.x * 0.24, 820.0, 1040.0), clampf(viewport_size.y * 0.132, 230.0, 286.0))
+			world_play_button.add_theme_font_size_override("font_size", int(clampf(viewport_size.y * 0.040, 64.0, 82.0)))
+	var selected_panel := stage_world_layer.find_child("WorldSelectedPanel", true, false) as PanelContainer
+	if selected_panel != null:
+		if portrait:
+			selected_panel.offset_left = 22.0
+			selected_panel.offset_top = -190.0
+			selected_panel.offset_right = -22.0
+			selected_panel.offset_bottom = -22.0
+		else:
+			selected_panel.offset_left = 72.0
+			selected_panel.offset_top = -clampf(viewport_size.y * 0.24, 390.0, 500.0)
+			selected_panel.offset_right = -72.0
+			selected_panel.offset_bottom = -42.0
+		var margin := selected_panel.get_child(0) as MarginContainer
+		if margin != null:
+			var horizontal := 22 if portrait else 56
+			var vertical := 18 if portrait else 38
+			margin.add_theme_constant_override("margin_left", horizontal)
+			margin.add_theme_constant_override("margin_top", vertical)
+			margin.add_theme_constant_override("margin_right", horizontal)
+			margin.add_theme_constant_override("margin_bottom", vertical)
 	if world_event_strip:
-		var viewport_size := get_viewport_rect().size
 		var strip_width := minf(viewport_size.x - 48.0, 226.0 if portrait else 460.0)
 		world_event_strip.offset_left = -strip_width - (24.0 if portrait else 34.0)
 		world_event_strip.offset_top = 104.0 if portrait else 112.0

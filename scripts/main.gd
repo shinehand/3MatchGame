@@ -562,6 +562,7 @@ func _make_path_node(index: int) -> PanelContainer:
 	panel.add_child(center)
 	var label_text := "GO" if current else str(index + 1)
 	var label := _make_home_label(label_text, 24, Color(0.10, 0.23, 0.34, 1), HORIZONTAL_ALIGNMENT_CENTER)
+	label.name = "PathNodeLabel"
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	center.add_child(label)
 	return panel
@@ -1153,6 +1154,8 @@ func _layout_game_home(portrait: bool) -> void:
 	var viewport_size := get_viewport_rect().size
 	var mascot_height := viewport_size.y * (0.38 if portrait else 0.52)
 	var mascot_width := mascot_height * 0.76
+	var action_margin := home_action_panel.find_child("HomeActionMargin", true, false) as MarginContainer
+	var action_column := home_action_panel.find_child("HomeActionColumn", true, false) as VBoxContainer
 	if portrait:
 		home_rabbit.size = Vector2(mascot_width, mascot_height)
 		home_rabbit.position = Vector2(-mascot_width * 0.22, viewport_size.y - mascot_height - 128.0)
@@ -1160,11 +1163,17 @@ func _layout_game_home(portrait: bool) -> void:
 		home_chick.position = Vector2(viewport_size.x - mascot_width * 0.64, viewport_size.y - mascot_height * 0.76 - 150.0)
 		home_title_label.add_theme_font_size_override("font_size", 76)
 		home_subtitle_label.add_theme_font_size_override("font_size", 19)
-		home_play_button.custom_minimum_size = Vector2(318, 96)
-		home_action_panel.custom_minimum_size = Vector2(minf(viewport_size.x - 38.0, 358.0), 0)
+		home_play_button.custom_minimum_size = Vector2(clampf(viewport_size.x * 0.62, 318.0, 680.0), clampf(viewport_size.y * 0.074, 96.0, 148.0))
+		home_play_button.add_theme_font_size_override("font_size", int(clampf(viewport_size.y * 0.030, 34.0, 56.0)))
+		home_status_label.add_theme_font_size_override("font_size", int(clampf(viewport_size.y * 0.014, 18.0, 28.0)))
+		home_action_panel.custom_minimum_size = Vector2(clampf(viewport_size.x * 0.72, minf(viewport_size.x - 38.0, 358.0), 760.0), 0)
+		_layout_home_action_margin(action_margin, 20, 16)
+		if action_column:
+			action_column.add_theme_constant_override("separation", 8)
 		home_nav_row.offset_top = -108.0
 		home_animal_strip.visible = true
 		home_animal_strip.scale = Vector2.ONE
+		_layout_home_animal_tokens(62.0, 50.0, 8)
 		_layout_home_animal_strip(5)
 		_layout_home_nav_buttons(true)
 		_layout_path_nodes([
@@ -1182,11 +1191,17 @@ func _layout_game_home(portrait: bool) -> void:
 		home_chick.position = Vector2(viewport_size.x - mascot_width * 0.92 - viewport_size.x * 0.06, viewport_size.y - mascot_height * 0.86 - 88.0)
 		home_title_label.add_theme_font_size_override("font_size", 96)
 		home_subtitle_label.add_theme_font_size_override("font_size", 26)
-		home_play_button.custom_minimum_size = Vector2(440, 116)
-		home_action_panel.custom_minimum_size = Vector2(590, 0)
+		home_play_button.custom_minimum_size = Vector2(clampf(viewport_size.x * 0.28, 880.0, 1160.0), clampf(viewport_size.y * 0.135, 240.0, 300.0))
+		home_play_button.add_theme_font_size_override("font_size", int(clampf(viewport_size.y * 0.044, 70.0, 88.0)))
+		home_status_label.add_theme_font_size_override("font_size", int(clampf(viewport_size.y * 0.018, 28.0, 36.0)))
+		home_action_panel.custom_minimum_size = Vector2(clampf(viewport_size.x * 0.36, 1040.0, 1320.0), 0)
+		_layout_home_action_margin(action_margin, 46, 30)
+		if action_column:
+			action_column.add_theme_constant_override("separation", 18)
 		home_nav_row.offset_top = -110.0
 		home_animal_strip.visible = true
 		home_animal_strip.scale = Vector2.ONE
+		_layout_home_animal_tokens(clampf(viewport_size.y * 0.090, 136.0, 176.0), clampf(viewport_size.y * 0.068, 102.0, 134.0), 18)
 		_layout_home_animal_strip(8)
 		_layout_home_nav_buttons(false)
 		_layout_path_nodes([
@@ -1197,6 +1212,29 @@ func _layout_game_home(portrait: bool) -> void:
 			Vector2(viewport_size.x * 0.64, viewport_size.y * 0.58),
 			Vector2(viewport_size.x * 0.70, viewport_size.y * 0.52),
 		])
+
+
+func _layout_home_action_margin(margin: MarginContainer, horizontal: int, vertical: int) -> void:
+	if margin == null:
+		return
+	margin.add_theme_constant_override("margin_left", horizontal)
+	margin.add_theme_constant_override("margin_top", vertical)
+	margin.add_theme_constant_override("margin_right", horizontal)
+	margin.add_theme_constant_override("margin_bottom", vertical)
+
+
+func _layout_home_animal_tokens(token_side: float, icon_side: float, separation: int) -> void:
+	if home_animal_strip == null:
+		return
+	home_animal_strip.add_theme_constant_override("separation", separation)
+	for child in home_animal_strip.get_children():
+		var panel := child as PanelContainer
+		if panel == null:
+			continue
+		panel.custom_minimum_size = Vector2(token_side, token_side)
+		var icon := panel.find_child("HomeAnimalPreview", true, false) as TextureRect
+		if icon != null:
+			icon.custom_minimum_size = Vector2(icon_side, icon_side)
 
 
 func _layout_home_animal_strip(max_visible: int) -> void:
@@ -1220,8 +1258,16 @@ func _layout_home_nav_buttons(portrait: bool) -> void:
 func _layout_path_nodes(positions: Array[Vector2]) -> void:
 	if home_path_root == null:
 		return
+	var viewport_size := get_viewport_rect().size
+	var portrait := viewport_size.y >= viewport_size.x
+	var node_side := 72.0 if portrait else clampf(viewport_size.y * 0.075, 112.0, 148.0)
+	var node_font := 24 if portrait else int(clampf(viewport_size.y * 0.030, 44.0, 60.0))
 	for index in range(mini(home_path_root.get_child_count(), positions.size())):
 		var node := home_path_root.get_child(index) as Control
 		var target_position: Vector2 = positions[index]
-		node.size = Vector2(72, 72)
+		node.size = Vector2(node_side, node_side)
+		node.custom_minimum_size = node.size
 		node.position = target_position - node.size * 0.5
+		var label := node.find_child("PathNodeLabel", true, false) as Label
+		if label != null:
+			label.add_theme_font_size_override("font_size", node_font)

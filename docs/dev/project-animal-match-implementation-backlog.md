@@ -639,9 +639,24 @@
   - `844x390` Stage Popup에서 panel이 화면 중심의 상용 modal 크기를 가지며 `PLAY`가 가장 강한 CTA로 보인다.
   - scene smoke가 Collection 카드/preview collapse, Stage Popup landscape panel 크기, `PLAY` CTA 높이 회귀를 차단한다.
 
+### PAM-UX-115: Home & World Map First Impression Polish
+
+- 상태: 완료됨. Home의 `HomeActionPanel`, `HomePlayButton`, 동물 preview strip, 경로 노드를 viewport 비율 기반으로 키워 `canvas_items` stretch landscape에서 PLAY가 작은 개발용 버튼처럼 보이던 문제를 줄였다. Stage Select World Map의 하단 선택 패널과 `WorldPlayButton`도 landscape 논리 viewport에서 실제 PNG 픽셀 크기가 유지되도록 상향했고, render snapshot smoke에 `stage_select_world_map` 시나리오를 추가해 popup이 닫힌 기본 월드맵, `WorldMapPathRoot`, `WorldPlayButton`, 10개 `WorldStageNode*` 렌더를 검증한다.
+- 소유: Art Agent + Development Agent + QA Agent
+- 대상 파일:
+  - `scripts/main.gd`
+  - `scripts/stage_select.gd`
+  - `scripts/validate_render_snapshots.gd`
+  - `docs/dev/validation-process.md`
+  - `docs/qa/project-animal-match-development-gates.md`
+- 완료 기준:
+  - `390x844`, `844x390` Home snapshot에서 PLAY CTA가 첫 화면의 주 행동으로 읽히고, 동물 preview와 경로 노드가 지나치게 작아지지 않는다.
+  - `390x844`, `844x390` Stage Select World Map snapshot에서 popup이 닫힌 기본 월드맵, 10개 stage node, 하단 `PLAY` CTA가 렌더된다.
+  - render snapshot smoke가 Home/World Map `PLAY` CTA의 실제 PNG 이미지 크기 회귀를 차단한다.
+
 ## 추천 구현 순서
 
-완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`, `PAM-UX-114`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
+완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`, `PAM-UX-114`, `PAM-UX-115`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
 
 다음 고가치 순서:
 
