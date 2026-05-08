@@ -582,7 +582,7 @@
 
 ### PAM-QA-104: No-device Render Snapshot Smoke
 
-- 상태: 완료됨. `scripts/validate_render_snapshots.gd`/`.sh`가 Home, Stage Popup, Stage 4 Gameplay Buddy HUD 4상태, Stage 1 성공 결과 overlay, Stage 25 실패 overlay, Stage 31 특수 조합 6종, Collection을 `390x844`와 `844x390` PNG 30장으로 저장하고 파일 크기, viewport 크기, non-blank/varied pixel, 핵심 UI region 렌더 픽셀을 검증한다. Stage 4 Buddy 스냅샷은 0/3, 2/3, 출동, 완료 상태의 라벨/게이지/landscape combo text와 `buddy_skill_charge`/`buddy_skill_ready`/`buddy_skill_trigger` payload를 확인한다. Stage 1 성공 스냅샷은 실제 클리어 후 보상/별/Zoo-Zoo Time/다음 CTA/홈 CTA와 `stage_complete`/Stage 2 해금을 확인한다. Stage 31 조합 스냅샷은 실제 `_resolve_swap`을 시작한 직후 조합별 label/flash/ring 픽셀, echo ring 필요 여부, filename combo type, `special_combo_trigger` analytics payload, transient VFX cleanup을 함께 확인한다. Collection 스냅샷은 `rabbit` 40토큰과 `rabbit_sprout_frame` 장착 fixture의 상세 reward track, `CosmeticEquipGrid`, `장착중` 버튼 region을 확인한다. 로컬 또는 지원되는 Xvfb 환경에서는 blocking으로 실행하고, GitHub-hosted no-device CI는 Xvfb renderer 실패가 전체 gate를 막지 않도록 non-blocking artifact attempt로 실행한다.
+- 상태: 완료됨. `scripts/validate_render_snapshots.gd`/`.sh`가 Home, Stage Select World Map, Stage Popup, Stage 4 Gameplay Buddy HUD 4상태, Stage 1 성공 결과 overlay, Stage 25 실패 overlay, Stage 31 특수 조합 6종, Collection을 `390x844`와 `844x390` PNG 정확히 32장으로 저장하고 파일 크기, viewport 크기, non-blank/varied pixel, 핵심 UI region 렌더 픽셀을 검증한다. Stage 4 Buddy 스냅샷은 0/3, 2/3, 출동, 완료 상태의 라벨/게이지/landscape `LandscapeHudShell`/combo text와 `buddy_skill_charge`/`buddy_skill_ready`/`buddy_skill_trigger` payload를 확인한다. Stage 1 성공 스냅샷은 실제 클리어 후 보상/별/Zoo-Zoo Time/다음 CTA/홈 CTA와 `stage_complete`/Stage 2 해금을 확인한다. Stage 31 조합 스냅샷은 실제 `_resolve_swap`을 시작한 직후 조합별 label/flash/ring 픽셀, echo ring 필요 여부, filename combo type, `special_combo_trigger` analytics payload, transient VFX cleanup을 함께 확인한다. Collection 스냅샷은 `rabbit` 40토큰과 `rabbit_sprout_frame` 장착 fixture의 상세 reward track, `CosmeticEquipGrid`, `장착중` 버튼 region을 확인한다. 로컬 또는 지원되는 Xvfb 환경에서는 blocking으로 실행하고, GitHub-hosted no-device CI는 Xvfb renderer 실패가 전체 gate를 막지 않도록 non-blocking artifact attempt로 실행한다.
 - 소유: QA Agent + Development Agent
 - 대상 파일:
   - `scripts/validate_render_snapshots.gd`
@@ -668,9 +668,25 @@
   - `390x844`, `844x390` Stage Select World Map snapshot에서 popup이 닫힌 기본 월드맵, 10개 stage node, 하단 `PLAY` CTA가 렌더된다.
   - render snapshot smoke가 Home/World Map `PLAY` CTA의 실제 PNG 이미지 크기 회귀를 차단한다.
 
+### PAM-UX-116: Gameplay Landscape Unified HUD Shell
+
+- 상태: 완료됨. Gameplay landscape의 우측 정보 영역을 `LandscapeHudShell` 하나로 감싸 목표, 이동 수, 콤보, 버튼이 흩어진 카드 묶음이 아니라 하나의 캔디풍 플레이 HUD 패널로 읽히게 했다. 내부 `StatsCard`/`GoalCard`는 투명도가 높은 섹션 카드로 낮추고, shell 폭을 viewport 비율 기반 compact rail로 제한해 보드가 계속 화면의 주인공으로 남는다. render snapshot gate는 Stage 4 Buddy landscape 스냅샷에서 shell 픽셀, viewport bounds, BoardFrame 비겹침을 확인하고, `.sh`는 현재 시나리오 수와 같은 PNG 32장 정확 매칭으로 누락 회귀를 막는다.
+- 소유: Art Agent + Development Agent + QA Agent
+- 대상 파일:
+  - `scripts/gameplay.gd`
+  - `scripts/validate_scene_loads.gd`
+  - `scripts/validate_render_snapshots.gd`
+  - `scripts/validate_render_snapshots.sh`
+  - `docs/dev/validation-process.md`
+  - `docs/qa/project-animal-match-development-gates.md`
+- 완료 기준:
+  - `844x390` Stage 4 gameplay snapshot에서 `LandscapeHudShell`이 보드와 겹치지 않고 하나의 compact HUD panel로 렌더된다.
+  - mobile viewport matrix가 landscape shell 폭, bounds, BoardFrame 비겹침을 검증한다.
+  - render snapshot smoke가 정확히 32개 PNG 산출을 요구해 Home/World Map/Gameplay/Collection snapshot 누락을 실패시킨다.
+
 ## 추천 구현 순서
 
-완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-058`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`, `PAM-UX-114`, `PAM-UX-115`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
+완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-058`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`, `PAM-UX-114`, `PAM-UX-115`, `PAM-UX-116`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
 
 다음 고가치 순서:
 

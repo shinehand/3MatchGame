@@ -146,6 +146,8 @@ var overlay_action := ""
 var tutorial_enabled := false
 var tutorial_step := -1
 var portrait_goal_summary: Label
+var landscape_hud_shell: PanelContainer
+var landscape_hud_margin: MarginContainer
 var gameplay_hud_layer: Control
 var hud_level_label: Label
 var hud_moves_label: Label
@@ -195,6 +197,7 @@ func _ready() -> void:
 	_load_animal_textures()
 	_load_ui_textures()
 	_ensure_portrait_goal_summary()
+	_build_landscape_hud_shell()
 	_build_gameplay_juice_layer()
 	_build_gameplay_hud_layer()
 	_apply_candy_runtime_skin()
@@ -366,14 +369,24 @@ func _apply_responsive_layout() -> void:
 				old_parent.remove_child(sidebar_scroll)
 			board_column.add_child(sidebar_scroll)
 		board_column.move_child(sidebar_scroll, 2)
+		if landscape_hud_shell != null:
+			landscape_hud_shell.visible = false
 	else:
-		if sidebar_scroll.get_parent() != layout_root:
+		if landscape_hud_shell == null:
+			_build_landscape_hud_shell()
+		if landscape_hud_shell.get_parent() != layout_root:
+			var shell_parent := landscape_hud_shell.get_parent()
+			if shell_parent:
+				shell_parent.remove_child(landscape_hud_shell)
+			layout_root.add_child(landscape_hud_shell)
+		if sidebar_scroll.get_parent() != landscape_hud_margin:
 			var old_parent := sidebar_scroll.get_parent()
 			if old_parent:
 				old_parent.remove_child(sidebar_scroll)
-			layout_root.add_child(sidebar_scroll)
+			landscape_hud_margin.add_child(sidebar_scroll)
+		landscape_hud_shell.visible = true
 		layout_root.move_child(board_panel, 0)
-		layout_root.move_child(sidebar_scroll, 1)
+		layout_root.move_child(landscape_hud_shell, 1)
 
 	board_panel.custom_minimum_size = Vector2(0, 0) if portrait else Vector2(1000, 0)
 	board_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -395,13 +408,22 @@ func _apply_responsive_layout() -> void:
 	board_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 
 	var portrait_hud_height := clampf(viewport_size.y * 0.22, 250.0, 330.0)
-	sidebar_scroll.custom_minimum_size = Vector2(0, portrait_hud_height) if portrait else Vector2(980, 0)
+	var landscape_hud_width := clampf(viewport_size.x * 0.28, 340.0, 480.0)
+	if landscape_hud_shell != null:
+		landscape_hud_shell.custom_minimum_size = Vector2(0, 0) if portrait else Vector2(landscape_hud_width, 0)
+	if landscape_hud_margin != null:
+		var shell_margin := 14 if portrait else 18
+		landscape_hud_margin.add_theme_constant_override("margin_left", shell_margin)
+		landscape_hud_margin.add_theme_constant_override("margin_top", shell_margin)
+		landscape_hud_margin.add_theme_constant_override("margin_right", shell_margin)
+		landscape_hud_margin.add_theme_constant_override("margin_bottom", shell_margin)
+	sidebar_scroll.custom_minimum_size = Vector2(0, portrait_hud_height) if portrait else Vector2(landscape_hud_width - 36.0, 0)
 	sidebar_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL if portrait else Control.SIZE_FILL
 	sidebar_scroll.size_flags_vertical = Control.SIZE_FILL if portrait else Control.SIZE_EXPAND_FILL
 	sidebar_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	sidebar_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED if portrait else ScrollContainer.SCROLL_MODE_AUTO
-	sidebar.custom_minimum_size = Vector2(0, 0) if portrait else Vector2(980, 0)
-	sidebar.add_theme_constant_override("separation", 12 if portrait else 16)
+	sidebar.custom_minimum_size = Vector2(0, 0) if portrait else Vector2(landscape_hud_width - 72.0, 0)
+	sidebar.add_theme_constant_override("separation", 12 if portrait else 12)
 	sidebar_scroll.scroll_horizontal = 0
 	sidebar_scroll.scroll_vertical = 0
 	sidebar_scroll.visible = not portrait
@@ -718,8 +740,10 @@ func _apply_candy_runtime_skin() -> void:
 	board_frame.add_theme_stylebox_override("panel", _board_tray_style())
 	board_shine.color = Color(1, 1, 1, 0.22)
 	combo_banner.modulate = Color(1, 1, 1, 0.96)
-	stats_card.add_theme_stylebox_override("panel", _hud_style(Color("ffd65d"), Color("ff8b25"), 26, 5))
-	goal_card.add_theme_stylebox_override("panel", _hud_style(Color("ff9fc9"), Color("ff5c9a"), 26, 5))
+	if landscape_hud_shell != null:
+		landscape_hud_shell.add_theme_stylebox_override("panel", _landscape_hud_shell_style())
+	stats_card.add_theme_stylebox_override("panel", _hud_style(Color(1.0, 0.94, 0.56, 0.78), Color("ffbf32"), 24, 3))
+	goal_card.add_theme_stylebox_override("panel", _hud_style(Color(1.0, 0.70, 0.86, 0.76), Color("ff74a8"), 24, 3))
 	status_card.add_theme_stylebox_override("panel", _hud_style(Color(1, 1, 1, 0.86), Color("70cfff"), 24, 4))
 	retry_button.add_theme_stylebox_override("normal", _hud_style(Color("ffd55a"), Color("f38a22"), 24, 4))
 	next_stage_button.add_theme_stylebox_override("normal", _hud_style(Color("70ec96"), Color("1fa96b"), 24, 4))
@@ -742,6 +766,35 @@ func _board_tray_style() -> StyleBoxFlat:
 	style.shadow_size = 24
 	style.shadow_offset = Vector2(0, 12)
 	return style
+
+
+func _build_landscape_hud_shell() -> void:
+	if landscape_hud_shell != null:
+		return
+	if layout_root == null or sidebar_scroll == null:
+		return
+
+	landscape_hud_shell = PanelContainer.new()
+	landscape_hud_shell.name = "LandscapeHudShell"
+	landscape_hud_shell.visible = false
+	landscape_hud_shell.size_flags_horizontal = Control.SIZE_FILL
+	landscape_hud_shell.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	landscape_hud_shell.add_theme_stylebox_override("panel", _landscape_hud_shell_style())
+	layout_root.add_child(landscape_hud_shell)
+	layout_root.move_child(landscape_hud_shell, min(1, layout_root.get_child_count() - 1))
+
+	landscape_hud_margin = MarginContainer.new()
+	landscape_hud_margin.name = "LandscapeHudMargin"
+	landscape_hud_margin.add_theme_constant_override("margin_left", 16)
+	landscape_hud_margin.add_theme_constant_override("margin_top", 16)
+	landscape_hud_margin.add_theme_constant_override("margin_right", 16)
+	landscape_hud_margin.add_theme_constant_override("margin_bottom", 16)
+	landscape_hud_shell.add_child(landscape_hud_margin)
+
+	var current_parent := sidebar_scroll.get_parent()
+	if current_parent != null:
+		current_parent.remove_child(sidebar_scroll)
+	landscape_hud_margin.add_child(sidebar_scroll)
 
 
 func _build_gameplay_hud_layer() -> void:
@@ -1063,6 +1116,14 @@ func _hud_style(bg_color: Color, border_color: Color, radius: int, border_width:
 	style.shadow_color = Color(0.08, 0.16, 0.27, 0.16)
 	style.shadow_size = 8
 	style.shadow_offset = Vector2(0, 4)
+	return style
+
+
+func _landscape_hud_shell_style() -> StyleBoxFlat:
+	var style := _hud_style(Color(1.0, 0.99, 0.86, 0.92), Color("ffbf32"), 34, 5)
+	style.shadow_color = Color(0.08, 0.18, 0.32, 0.24)
+	style.shadow_size = 18
+	style.shadow_offset = Vector2(0, 8)
 	return style
 
 

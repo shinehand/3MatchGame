@@ -602,15 +602,17 @@ func _validate_stage_4_buddy_snapshot_regions(image: Image, node: Node, scenario
 		_validate_controls_do_not_overlap(goal_dock, board_frame, snapshot_id, "HudGoalDock", "BoardFrame", errors)
 		_validate_controls_do_not_overlap(booster_dock, board_frame, snapshot_id, "HudBoosterDock", "BoardFrame", errors)
 	else:
+		var landscape_shell := node.find_child("LandscapeHudShell", true, false) as Control
 		var stats_card := node.find_child("StatsCard", true, false) as Control
 		var goal_card := node.find_child("GoalCard", true, false) as Control
 		var combo_value := node.get("combo_value") as Label
 		var combo_gauge := node.get("combo_gauge") as ProgressBar
-		for control_info in [[stats_card, "StatsCard"], [goal_card, "GoalCard"], [combo_value, "ComboValue"], [combo_gauge, "ComboGauge"]]:
+		for control_info in [[landscape_shell, "LandscapeHudShell"], [stats_card, "StatsCard"], [goal_card, "GoalCard"], [combo_value, "ComboValue"], [combo_gauge, "ComboGauge"]]:
 			var control := control_info[0] as Control
 			var label := String(control_info[1])
 			_validate_control_pixels(image, control, snapshot_id, label, errors)
 			_validate_control_within_image_bounds(control, snapshot_id, label, errors)
+		_validate_controls_do_not_overlap(landscape_shell, board_frame, snapshot_id, "LandscapeHudShell", "BoardFrame", errors)
 		_validate_controls_do_not_overlap(stats_card, board_frame, snapshot_id, "StatsCard", "BoardFrame", errors)
 		_validate_controls_do_not_overlap(goal_card, board_frame, snapshot_id, "GoalCard", "BoardFrame", errors)
 

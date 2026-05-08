@@ -55,13 +55,13 @@ else
   fi
 fi
 
-expected_snapshot_count=30
+expected_snapshot_count=32
 snapshot_count="$(find "$PAM_RENDER_SNAPSHOT_DIR" -type f -name '*.png' | wc -l | tr -d ' ')"
-if [ "$snapshot_count" -lt "$expected_snapshot_count" ]; then
-  echo "Render snapshot validation expected at least $expected_snapshot_count PNGs in $PAM_RENDER_SNAPSHOT_DIR, got $snapshot_count."
+if [ "$snapshot_count" -ne "$expected_snapshot_count" ]; then
+  echo "Render snapshot validation expected exactly $expected_snapshot_count PNGs in $PAM_RENDER_SNAPSHOT_DIR, got $snapshot_count."
   if [ -n "${GITHUB_ACTIONS:-}" ]; then
     manifest_summary="$(cat "$PAM_RENDER_SNAPSHOT_DIR/manifest.txt" 2>/dev/null | tr '\n' ' ' | cut -c1-3500)"
-    echo "::error title=Render snapshot PNG count failed::expected at least $expected_snapshot_count PNGs in $PAM_RENDER_SNAPSHOT_DIR, got $snapshot_count. $manifest_summary"
+    echo "::error title=Render snapshot PNG count failed::expected exactly $expected_snapshot_count PNGs in $PAM_RENDER_SNAPSHOT_DIR, got $snapshot_count. $manifest_summary"
   fi
   exit 1
 fi
