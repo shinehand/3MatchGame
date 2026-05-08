@@ -395,6 +395,27 @@
   - 홈 이벤트 상세에서 `event_join`, `event_progress`, `event_reward_claim` 계약과 중복 수령 방지 검증이 통과한다.
   - 원격 설정 노출은 `remote_config_exposure`로 기록되고, 이벤트 기간/오프라인 fallback 상태와 사용자-facing 상태 문구가 scene smoke에서 검증된다.
 
+### PAM-LIVEOPS-081: Live Ops Remote Config Contract Validator
+
+- 상태: 완료됨. `scripts/validate_liveops_config.gd`/`.sh`가 `data/events/remote_config.json`과 `data/events/live_events.json`을 `LiveEventService` 계약에 맞춰 독립 검증한다. 필수 remote config/exposure key, event type별 unlock key, tuning 값 범위, placement coverage, enabled 이벤트의 unlock 전/후 query 결과, offline fallback status, disabled `season_pass` 비노출, `remote_config_exposure` 필수 payload와 세션 중복 방지를 검사한다. `validate_gameplay.sh`와 no-device CI가 이 gate를 실행한다.
+- 소유: Development Agent + QA Agent + PM Lead
+- 대상 파일:
+  - `data/events/remote_config.json`
+  - `data/events/live_events.json`
+  - `scripts/live_event_service.gd`
+  - `scripts/validate_liveops_config.gd`
+  - `scripts/validate_liveops_config.sh`
+  - `scripts/validate_gameplay.sh`
+  - `.github/workflows/no-device-alpha-gate.yml`
+  - `docs/planning/project-animal-match-decision-register.md`
+  - `docs/planning/project-animal-match-analytics-remote-config-spec.md`
+  - `docs/dev/validation-process.md`
+  - `docs/qa/project-animal-match-development-gates.md`
+- 완료 기준:
+  - LiveOps data/config 회귀가 scene smoke에 도달하기 전 독립 gate에서 실패한다.
+  - `season_pass` 해금 레벨은 `season_pass_unlock_level` 원격 설정으로 제어하고, 실제 store product/SDK evidence 전까지 alpha fixture는 disabled 상태를 유지한다.
+  - 이 gate는 실제 live backend, store product, Ads/IAP/Analytics SDK provider credentials QA를 대체하지 않는다.
+
 ### PAM-ANA-090: 분석 이벤트 계약 검증기 추가
 
 - 상태: 완료됨. `data/analytics_events.json`와 `scripts/validate_analytics_contract.gd`가 앱/스테이지/오퍼/이벤트/Fever/Buddy/Collection 필수 이벤트와 파라미터를 검증한다. `GameSession`은 런타임 이벤트 필수 파라미터 누락을 경고하고, provider-neutral `AnalyticsGateway`에 저장된 이벤트를 dispatch한다. scene smoke가 `stage_start`, `rescue_book_open`, Level 1-5 첫 세션 카드 해금의 `animal_unlock`, 활성 live ops 노출의 `live_event_impression`, 이벤트 참여/진행/보상 수령의 `event_join`, `event_progress`, `event_reward_claim` 실제 기록과 gateway `local_buffer` queued dispatch, disk reload 보존, 순차 flush 후 pending queue 제거, `configure_flush_adapter(provider_id, Callable)` SDK adapter hook, adapter partial failure, adapter payload mutation guard, corrupt queue tolerance, 320개 bounded queue eviction, 계약 위반 이벤트의 `rejected_contract` 격리를 검사한다.
@@ -533,7 +554,7 @@
 
 ## 추천 구현 순서
 
-완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`)는 회귀 검증 대상으로 유지한다.
+완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`)는 회귀 검증 대상으로 유지한다.
 
 다음 고가치 순서:
 

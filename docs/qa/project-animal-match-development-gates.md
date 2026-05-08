@@ -171,6 +171,7 @@
 ## Gate 10. 라이브 운영/분석
 
 - 원격 설정 누락 시 기본값으로 안전하게 동작한다.
+- `zsh scripts/validate_liveops_config.sh`가 `remote_config.json`과 `live_events.json`의 unlock key, range, placement, offline fallback, disabled `season_pass`, exposure payload 계약을 독립 검증한다.
 - 이벤트 미시작/진행 중/종료/오프라인 상태가 홈/스테이지 선택 칩, 홈 상세, 결과 오버레이, 컬렉션 상세에서 사용자-facing 문구로 표시된다.
 - 원격 설정 적용은 세션별 `remote_config_exposure`로 기록되고, `variant_id`, `config_key`, `config_value_hash`가 비어 있지 않다.
 - 이벤트 보상 수령은 idempotent하게 처리되어 중복 수령되지 않는다.
@@ -181,6 +182,7 @@
 - SDK 공급자 결정 전 `AnalyticsGateway`는 `configure_flush_adapter(provider_id, Callable)`로 실제 provider 경계를 고정하고, adapter partial failure 시 성공 prefix만 제거하며 callback payload 변조가 pending queue를 오염시키지 않는지 scene smoke가 검증한다.
 - `data/provider_readiness.json`은 analytics/monetization provider-neutral 상태를 기록하고, `zsh scripts/validate_provider_readiness.sh`가 코드 상수, adapter hook, source/result canonicalization, queue/request log 상한과 일치하는지 검증한다.
 - 라이브 이벤트 노출은 `home`, `stage_select`, `result_overlay`, `collection` placement별 `live_event_impression` 기록 경로를 가진다.
+- `season_pass` 해금 레벨은 `season_pass_unlock_level`로 제어하지만, store product/SDK evidence 전까지 alpha fixture는 disabled 상태이며 active/display 이벤트로 노출되면 안 된다.
 - A/B 테스트 노출은 현재 로드된 remote config key마다 `remote_config_exposure` 이벤트로 1회 이상 기록된다.
 - 원격 설정 변경 후 이전 기본값으로 롤백 가능하다.
 

@@ -25,12 +25,12 @@
 | DEC-016 | Near Miss 기준은 남은 목표 2개 이하 또는 목표 진행률 80% 이상 | Locked | `FailOfferPolicy` 기본값과 remote config `near_miss_goal_threshold`, `near_miss_progress_threshold`로 조정 가능 | UX/Balance/Tech |
 | DEC-017 | 분석 SDK 공급자 선택 전 이벤트 경계는 `AnalyticsGateway` `local_buffer` queued dispatch로 고정 | Accepted | 계약 위반 이벤트는 `rejected_contract`로 격리하고, Firebase/GameAnalytics/custom adapter는 `configure_flush_adapter(provider_id, Callable)` 뒤에 연결 | Tech/PM |
 | DEC-018 | SDK 공급자 선택 전 provider readiness는 `data/provider_readiness.json` manifest와 validator로 고정 | Accepted | Analytics `local_buffer`, Monetization `local_simulator`, adapter hook, source/result canonicalization, provider_result 보존, queue/request log 상한을 `validate_provider_readiness.sh`가 코드와 대조 | Tech/QA |
+| DEC-019 | 시즌 패스 해금 레벨은 `season_pass_unlock_level` 원격 설정으로 제어 | Accepted | baseline은 Stage 21이며, 실제 store product/SDK evidence 전까지 alpha `season_pass` fixture는 disabled로 유지하고 `validate_liveops_config.sh`가 검증 | BM/Tech/QA |
 
 ## 2. 아직 열려 있는 결정
 
 | ID | 질문 | 후보 | 결정 필요 시점 | 소유 |
 | --- | --- | --- | --- | --- |
-| OPEN-006 | 시즌 패스 해금 레벨 | 20 고정 또는 원격 설정 | PAM-DEV-080 전 | BM |
 | OPEN-007 | 분석 SDK 실제 공급자 | Firebase, GameAnalytics, custom adapter | SDK adapter 연결 전. 선택된 provider는 `data/provider_readiness.json`의 adapter 계약을 지켜야 함 | Tech/PM |
 | OPEN-008 | 최종 `lion`, `elephant` 전용 에셋 제작 시점 | MVP 전, 소프트 런칭 전, 이벤트 전 | PAM-DEV-011 후속 | Art/PM |
 | OPEN-009 | 13-18번 컬렉션 동물의 보드 투입 순서 | koala, hamster, deer, seal, sheep, turtle 중 이벤트 성과 기준 | 시즌 1 보드 확장 전 | Planning/Balance |
@@ -53,5 +53,4 @@
 
 1. `OPEN-007`: 분석 SDK 실제 공급자와 adapter 연결 범위.
 2. `OPEN-009`: 컬렉션 전용 동물의 보드 투입 우선순위.
-3. `OPEN-006`: 시즌 패스 해금 레벨 원격 설정 여부.
-4. `OPEN-008`: lion/elephant 전용 에셋 제작 시점.
+3. `OPEN-008`: lion/elephant 전용 에셋 제작 시점.

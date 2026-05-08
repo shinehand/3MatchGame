@@ -95,18 +95,22 @@ SDK 공급자 결정 전 분석 이벤트는 `AnalyticsGateway`의 `local_buffer
 
 | 키 | 기본값 | 범위 | 사용처 |
 | --- | --- | --- | --- |
-| `ftue_variant` | `soft_v1` | string | FTUE 문구/노출 방식 |
+| `remote_config_version` | `2026.05.liveops.v1` | string | 원격 설정 버전 |
+| `variant_id` | `baseline` | string | 노출 variant |
 | `heart_spend_start_level` | `11` | 1-999 | 하트 소모 시작 |
+| `rewarded_ad_start_level` | `11` | 1-999 | 보상형 광고 제안 시작 |
 | `iap_offer_start_level` | `16` | 1-999 | 직접 IAP 제안 시작 |
 | `rewarded_continue_moves` | `3` | 1-10 | 광고 계속하기 이동 수 |
 | `coin_continue_moves` | `5` | 1-10 | 코인 계속하기 이동 수 |
 | `near_miss_goal_threshold` | `2` | 1-5 | Near Miss 남은 목표 |
 | `near_miss_progress_threshold` | `0.8` | 0.5-0.98 | Near Miss 진행률 |
-| `starter_mission_unlock_level` | `5` | 1-30 | 스타터 미션 해금 |
-| `collection_event_unlock_level` | `12` | 1-50 | 수집 이벤트 해금 |
-| `season_pass_unlock_level` | `20` | 1-80 | 시즌 패스 해금 |
+| `daily_reward_unlock_level` | `2` | 1-30 | 일일 보급 해금 |
+| `starter_missions_unlock_level` | `3` | 1-30 | 스타터 미션 해금 |
+| `collection_event_unlock_level` | `9` | 1-50 | 수집 이벤트 해금 |
+| `season_pass_unlock_level` | `21` | 1-80 | 시즌 패스 해금 |
 | `interstitial_min_level` | `16` | 1-999 | 전면 광고 최소 레벨 |
-| `interstitial_cooldown_minutes` | `10` | 1-120 | 전면 광고 쿨다운 |
+
+`scripts/validate_liveops_config.sh`는 `data/events/remote_config.json`의 필수 key, unlock key와 `LiveEventService.REMOTE_CONFIG_EXPOSURE_KEYS` 일치, range, disabled `season_pass` alpha fixture를 자동 검증한다.
 
 ## 4. 데이터 품질 규칙
 

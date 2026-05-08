@@ -246,19 +246,20 @@ Level 1-5는 실패 가능성을 낮추고, Level 1-10은 하트 소모와 광�
 
 | 키 | 기본값 | 용도 |
 | --- | --- | --- |
-| `ftue_variant` | `soft_v1` | 튜토리얼 노출 방식 A/B |
+| `remote_config_version` | `2026.05.liveops.v1` | 원격 설정 버전 |
+| `variant_id` | `baseline` | 노출 variant |
 | `heart_spend_start_level` | `11` | 하트 소모 시작 레벨 |
+| `rewarded_ad_start_level` | `11` | 보상형 광고 제안 시작 레벨 |
 | `iap_offer_start_level` | `16` | IAP 직접 제안 시작 레벨 |
 | `rewarded_continue_moves` | `3` | 광고 계속하기 이동 수 |
 | `coin_continue_moves` | `5` | 코인 계속하기 이동 수 |
 | `near_miss_goal_threshold` | `2` | Near Miss 판정 남은 목표 수 |
 | `near_miss_progress_threshold` | `0.8` | Near Miss 판정 진행률 |
-| `starter_mission_unlock_level` | `5` | 스타터 미션 해금 |
-| `collection_event_unlock_level` | `12` | 수집 이벤트 해금 |
-| `season_pass_unlock_level` | `20` | 시즌 패스 해금 |
-| `event_featured_animal_id` | `fox` | 주간 이벤트 대표 동물 |
+| `daily_reward_unlock_level` | `2` | 일일 보급 해금 |
+| `starter_missions_unlock_level` | `3` | 스타터 미션 해금 |
+| `collection_event_unlock_level` | `9` | 수집 이벤트 해금 |
+| `season_pass_unlock_level` | `21` | 시즌 패스 해금 |
 | `interstitial_min_level` | `16` | 전면 광고 최소 레벨 |
-| `interstitial_cooldown_minutes` | `10` | 전면 광고 쿨다운 |
 
 ### 7.4 롤백 기준
 

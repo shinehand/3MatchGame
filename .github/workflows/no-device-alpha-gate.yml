@@ -54,6 +54,9 @@ jobs:
       - name: Provider readiness validation
         run: zsh scripts/validate_provider_readiness.sh
 
+      - name: LiveOps config validation
+        run: zsh scripts/validate_liveops_config.sh
+
       - name: Render snapshot smoke
         continue-on-error: true
         run: zsh scripts/validate_render_snapshots.sh
@@ -82,6 +85,9 @@ jobs:
 
           Android QA helper contract smoke validates CLI dry-run safety only; it does not
           create APKs, sign builds, install to a device, or prove real-device evidence.
+
+          LiveOps config validation checks local JSON contracts only; it does not prove
+          Firebase Remote Config, backend scheduling, store products, or provider delivery.
 
           It does not replace:
 

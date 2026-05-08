@@ -27,6 +27,7 @@
 - Mobile viewport matrix smoke: `1080x1920`, `720x1280`, `390x844`, `1920x1080`, `1280x720`, `844x390` 요청 window에서 실제 logical viewport 기준 레이아웃을 확인
 - Critical UI text stress: Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay에 장문 pseudo-localization title/body/CTA를 주입해 viewport/panel bounds와 CTA overlap을 확인
 - Render snapshot smoke: `390x844`, `844x390`에서 Home, Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay, Rescue Book을 실제 PNG로 저장하고 non-blank/varied pixel 및 핵심 UI region 렌더를 확인
+- LiveOps config validation. `remote_config.json`과 `live_events.json`의 unlock key, placement, offline fallback, disabled season pass, remote config exposure 계약을 독립 검증한다.
 - Godot 헤드리스 로드
 - 파일 직접 읽기 안티패턴 스캔
 - Alpha QA packet dry-run 및 템플릿 계약 검증. 대표 코스, Device Evidence Pack, Stage Data Smoke Coverage, Focused Device Gate Matrix, Stage 31 Special Combo Evidence, Rescue Buddy Stage Matrix, Failure Continue Gateway, Analytics Gateway Local Buffer가 빠지면 실패한다.
@@ -43,6 +44,7 @@ zsh scripts/validate_stage_data.sh
 zsh scripts/validate_stage_balance.sh
 zsh scripts/validate_analytics_contract.sh
 zsh scripts/validate_provider_readiness.sh
+zsh scripts/validate_liveops_config.sh
 zsh scripts/validate_render_snapshots.sh  # GitHub-hosted runner에서는 non-blocking artifact attempt
 zsh scripts/validate_android_export_config.sh
 zsh scripts/validate_android_qa_helpers_contract.sh
@@ -52,6 +54,8 @@ zsh scripts/validate_gameplay.sh
 이 CI는 Android 실기기 설치, release keystore 서명 증거, 실제 광고/IAP/analytics SDK provider 연동을 증명하지 않는다. 해당 항목은 아래 Android evidence script와 최종 Alpha QA report validator로 별도 승인해야 한다. workflow는 성공/실패와 관계없이 `/tmp/puzzle-*` 검증 로그, caveat 문서, 가능하면 `/tmp/puzzle-render-snapshots/*.png` 렌더 스냅샷을 `no-device-alpha-gate-logs` artifact로 업로드한다.
 
 `zsh scripts/validate_provider_readiness.sh`는 `data/provider_readiness.json`이 analytics `local_buffer`와 monetization `local_simulator`의 provider-neutral 계약을 실제 코드 상수와 맞게 고정하는지 검사한다. 이 gate는 `OPEN-007` 실제 SDK 공급자 선택을 완료했다는 뜻이 아니라, Firebase/GameAnalytics/광고/IAP provider를 붙이기 전 adapter hook, source/result canonicalization, queue/rejected_contract, request log, provider_result 보존 규칙을 CI가 지키게 하는 준비도 검사다.
+
+`zsh scripts/validate_liveops_config.sh`는 `data/events/remote_config.json`과 `data/events/live_events.json`을 `LiveEventService` 계약에 맞춰 독립 검증한다. 이 gate는 필수 remote config key와 exposure key, event type별 unlock key, positive/ranged tuning 값, `home`/`stage_select`/`result_overlay`/`collection` placement coverage, enabled 이벤트의 unlock 전/후 query 결과, offline fallback status, disabled `season_pass` 비노출, `remote_config_exposure` 중복 방지와 필수 payload를 검사한다. `season_pass` 해금은 `season_pass_unlock_level` 원격 설정으로 제어하지만, 실제 store product/SDK evidence 전까지 현재 alpha fixture는 disabled 상태여야 한다.
 
 `zsh scripts/validate_render_snapshots.sh`는 표시 렌더러가 있는 로컬 환경에서는 일반 Godot 실행, CI에서는 `xvfb-run`으로 Home, Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay, Collection 스냅샷을 `390x844`와 `844x390` PNG로 저장한다. 이 gate는 blank/transparent/offscreen/missing texture 회귀를 잡기 위한 no-device preflight이며, 실기기 screenshot/video/logcat evidence를 대체하지 않는다. GitHub-hosted runner의 Xvfb renderer가 실패할 수 있어 workflow에서는 non-blocking artifact attempt로 실행하고, `validate_gameplay.sh`는 GitHub Actions 안에서 이 단계만 skip caveat를 출력한다. 로컬 또는 지원되는 Xvfb 환경에서는 `zsh scripts/validate_render_snapshots.sh`를 blocking으로 실행해야 한다.
 
