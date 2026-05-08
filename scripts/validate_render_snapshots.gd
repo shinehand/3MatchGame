@@ -756,8 +756,11 @@ func _validate_stage_select_world_map_snapshot_regions(image: Image, node: Node,
 		visible_stage_nodes += 1
 		_validate_control_pixels(image, button, snapshot_id, String(button.name), errors)
 		_validate_control_within_image_bounds(button, snapshot_id, String(button.name), errors)
+		_validate_control_image_minimum_size(image, button, snapshot_id, String(button.name), Vector2(38, 38) if not portrait else Vector2(36, 36), errors)
 	if visible_stage_nodes != 10:
 		errors.append("%s should render 10 visible world stage nodes, got %d." % [snapshot_id, visible_stage_nodes])
+	var selected_node := node.find_child("WorldStageNode%d" % GameSession.get_selected_stage_id(), true, false) as Control
+	_validate_control_image_minimum_size(image, selected_node, snapshot_id, "WorldStageCurrentNode", Vector2(45, 45) if not portrait else Vector2(44, 44), errors)
 
 
 func _validate_stage_select_world_progress_snapshot_regions(image: Image, node: Node, snapshot_id: String, errors: PackedStringArray) -> void:

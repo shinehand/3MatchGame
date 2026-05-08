@@ -1089,11 +1089,11 @@ func _world_node_positions() -> Array[Vector2]:
 	var viewport_size: Vector2 = get_viewport_rect().size
 	var portrait: bool = MobileLayout.is_portrait(self)
 	var left: float = 72.0 if portrait else viewport_size.x * 0.15
-	var top: float = viewport_size.y * 0.25 if portrait else 246.0
+	var top: float = viewport_size.y * (0.25 if portrait else 0.15)
 	var width: float = viewport_size.x - left * 2.0
 	var bottom_reserved: float = 198.0
 	var available_height := viewport_size.y - top - bottom_reserved
-	var height: float = viewport_size.y * 0.46 if portrait else clampf(available_height, 520.0, 820.0)
+	var height: float = viewport_size.y * 0.46 if portrait else minf(clampf(viewport_size.y * 0.48, 760.0, 940.0), available_height)
 	var positions: Array[Vector2] = []
 	for normalized: Vector2 in WORLD_NODE_POSITIONS:
 		positions.append(Vector2(left + normalized.x * width, top + normalized.y * height))
@@ -1105,35 +1105,39 @@ func _add_world_connector(from_position: Vector2, to_position: Vector2) -> void:
 	var length := delta.length()
 	if length <= 0.0:
 		return
+	var portrait := MobileLayout.is_portrait(self)
+	var path_height := 15.0 if portrait else 24.0
+	var shadow_height := 24.0 if portrait else 36.0
+	var dot_size := 22.0 if portrait else 34.0
 	var shadow := PanelContainer.new()
 	shadow.name = "WorldPathShadow"
-	shadow.size = Vector2(length, 24)
-	shadow.pivot_offset = Vector2(0, 12)
-	shadow.position = from_position + Vector2(3, 7)
+	shadow.size = Vector2(length, shadow_height)
+	shadow.pivot_offset = Vector2(0, shadow_height * 0.5)
+	shadow.position = from_position + (Vector2(3, 7) if portrait else Vector2(5, 10))
 	shadow.rotation = delta.angle()
 	shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	shadow.add_theme_stylebox_override("panel", _rounded_style(Color(0.08, 0.18, 0.32, 0.22), Color(0, 0, 0, 0), 12, 0))
+	shadow.add_theme_stylebox_override("panel", _rounded_style(Color(0.08, 0.18, 0.32, 0.22), Color(0, 0, 0, 0), int(shadow_height * 0.5), 0))
 	world_path_root.add_child(shadow)
 
 	var path := PanelContainer.new()
 	path.name = "WorldPathConnector"
-	path.size = Vector2(length, 15)
-	path.pivot_offset = Vector2(0, 7.5)
+	path.size = Vector2(length, path_height)
+	path.pivot_offset = Vector2(0, path_height * 0.5)
 	path.position = from_position
 	path.rotation = delta.angle()
 	path.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	path.add_theme_stylebox_override("panel", _rounded_style(Color("ffd949"), Color("ff9c24"), 8, 3))
+	path.add_theme_stylebox_override("panel", _rounded_style(Color("ffd949"), Color("ff9c24"), int(path_height * 0.55), 4 if portrait else 5))
 	world_path_root.add_child(path)
 
-	var dot_count := clampi(int(length / 48.0), 2, 7)
+	var dot_count := clampi(int(length / (48.0 if portrait else 64.0)), 2, 7)
 	for dot_index in range(dot_count):
 		var t := float(dot_index + 1) / float(dot_count + 1)
 		var dot := PanelContainer.new()
-		dot.size = Vector2(22, 22)
+		dot.size = Vector2(dot_size, dot_size)
 		dot.position = from_position.lerp(to_position, t) - dot.size * 0.5
 		dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var dot_color: Color = WORLD_CANDY_COLORS[(dot_index + dot_count) % WORLD_CANDY_COLORS.size()]
-		dot.add_theme_stylebox_override("panel", _rounded_style(dot_color, Color(1, 1, 1, 0.82), 14, 2))
+		dot.add_theme_stylebox_override("panel", _rounded_style(dot_color, Color(1, 1, 1, 0.82), int(dot_size * 0.55), 2 if portrait else 3))
 		world_path_root.add_child(dot)
 		dot.name = "WorldPathCandyDot%d_%d" % [dot_index, world_path_root.get_child_count()]
 
@@ -1145,9 +1149,9 @@ func _make_stage_world_node(stage_def: Dictionary, center_position: Vector2) -> 
 	var current := stage_id == GameSession.get_selected_stage_id()
 	var finale := stage_id % 10 == 0
 	var portrait := MobileLayout.is_portrait(self)
-	var node_size := (112.0 if portrait else 150.0) if not finale else (124.0 if portrait else 166.0)
+	var node_size := (112.0 if portrait else 212.0) if not finale else (124.0 if portrait else 230.0)
 	if current:
-		node_size = 132.0 if portrait else 180.0
+		node_size = 132.0 if portrait else 254.0
 
 	var button := Button.new()
 	button.name = "WorldStageNode%d" % stage_id
@@ -1303,7 +1307,7 @@ func _add_world_node_lock_badge(button: Button) -> void:
 
 
 func _world_node_ui_scale(button: Button) -> float:
-	return clampf(button.size.x / 132.0, 0.90, 1.36)
+	return clampf(button.size.x / 132.0, 0.90, 1.90)
 
 
 func _compact_stars_text(best_stars: int) -> String:

@@ -405,6 +405,8 @@ func _validate_stage_select_viewport_layout(node: Node, viewport_size: Vector2i,
 			if world_control != null and world_control.visible:
 				visible_world_nodes += 1
 				_validate_control_in_viewport(world_control, viewport_size, STAGE_SELECT_SCENE_PATH, String(world_control.name), errors)
+				if viewport_size.x > viewport_size.y and world_control.get_global_rect().size.x < 190.0:
+					errors.append("%s %s should remain a commercial-size landscape world map node at %s, got %s." % [STAGE_SELECT_SCENE_PATH, String(world_control.name), viewport_size, world_control.get_global_rect().size])
 		if visible_world_nodes != 10:
 			errors.append("%s expected 10 visible world stage nodes at %s, got %d." % [STAGE_SELECT_SCENE_PATH, viewport_size, visible_world_nodes])
 

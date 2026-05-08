@@ -26,7 +26,7 @@
 - 각 snapshot은 파일 생성, 요청 viewport 크기, non-blank/varied pixel, 핵심 UI region의 실제 렌더 픽셀을 검증한다.
 - Home Live Event ended detail snapshot은 `active`/`offline`/`upcoming`/`ended` 상태 배지/CTA 계약과 종료 상태의 `EventDetailOverlay`, 상태 배지 문구, 진행 카드, 보상 칩 텍스트, `EventDetailPanel`/progress card/reward chip/claim CTA의 PNG 최소 크기, disabled `EventClaimButton`의 `종료됨` 상태를 검증한다.
 - Home Settings Overlay snapshot은 ON/OFF 상태별 설정 panel, title, auto-save summary, sound/haptics toggle, close CTA의 픽셀, bounds, 텍스트, 최소 이미지 크기를 검증한다.
-- Stage Select World Map/Progress snapshot은 Stage 1-3 클리어, Stage 4 current, Stage 5 locked fixture에서 current ring/PLAY ribbon, cleared star tray, locked badge, finale ribbon, 하단 선택 패널 비겹침, `WorldSelectedChipRow`의 목표/이동/보상 chip 텍스트와 PNG 최소 크기를 검증한다.
+- Stage Select World Map/Progress snapshot은 Stage 1-3 클리어, Stage 4 current, Stage 5 locked fixture에서 current ring/PLAY ribbon, cleared star tray, locked badge, finale ribbon, world node/current node PNG 최소 크기, 하단 선택 패널 비겹침, `WorldSelectedChipRow`의 목표/이동/보상 chip 텍스트와 PNG 최소 크기를 검증한다.
 - Stage 1 성공 결과 snapshot은 보상/별/Zoo-Zoo Time/`OverlayChipGrid` 보상 칩/`다음 스테이지`/`홈으로` CTA, 특히 landscape에서 작은 modal로 축소되지 않는 panel/mascot/chip/CTA PNG 최소 크기, `stage_complete` analytics, Stage 2 해금을 검증한다.
 - Stage 25 실패 snapshot은 near-miss 본문, 목표/핵심/다음 action chip, `+3 이동 받고 계속`/`재도전` CTA, 특히 landscape에서 작은 modal로 축소되지 않는 panel/mascot/chip/CTA PNG 최소 크기를 검증한다.
 - Stage 4 Buddy HUD snapshot은 0/3, 2/3, 출동, 완료 상태에서 portrait 라벨/게이지, `StageIntroCard`/READY chip, landscape `LandscapeHudShell`/combo text가 읽히고, shell이 실제 PNG 너비의 20% 이상을 확보하며, `BoardFrame`과 `LandscapeHudShell` 사이 gap이 실제 PNG 너비의 14% 이하로 유지되고, `LandscapeSupportCard`와 landscape action CTA가 실제 PNG에 렌더되며, `buddy_skill_charge`/`buddy_skill_ready`/`buddy_skill_trigger` analytics payload가 중복 없이 기록되는지 검증한다.
@@ -45,6 +45,7 @@
 - Home과 Stage Select World Map의 `PLAY` CTA는 render snapshot PNG에서도 충분한 이미지 픽셀 크기를 가져야 하며, 논리 viewport 터치 타깃만 통과하고 실제 스냅샷에서 작은 개발용 버튼처럼 보이면 실패해야 한다.
 - Home Live Event 상세는 landscape에서 작은 정보 상자로 보이면 실패해야 하며, `EventDetailPanel`, progress card, reward chip, claim CTA가 상용 이벤트 카드 위계를 유지해야 한다.
 - Stage Select World Map의 `WorldSelectedPanel`은 빈 흰 tray처럼 보이면 안 되며, 선택 스테이지 제목, 목표/이동/보상 chip, `PLAY` CTA가 panel 안에서 겹치지 않고 함께 렌더되어야 한다.
+- Stage Select landscape 월드맵 경로는 상단의 작은 점선 constellation처럼 보이면 안 되며, `WorldStageNode*`, current ring, PLAY/finale/lock/star decorations가 실제 PNG에서 판독 가능한 크기를 유지해야 한다.
 - Collection portrait는 2열 앨범 카드로 읽혀야 하며, header/cosmetic reward action은 표처럼 길어지지 않는 compact ribbon이어야 한다. Landscape는 얇은 표처럼 눌리지 않고 6열 앨범 카드 그리드로 유지되어야 한다. Scene smoke가 portrait/landscape column 수, 첫 카드 높이, 동물 preview 크기, cosmetic ribbon 높이를 검증한다.
 - Gameplay portrait는 `HudTopDock`, `HudGoalDock`, `HudBoosterDock`이 BoardFrame과 겹치지 않아야 하고, landscape `LandscapeHudShell`은 BoardFrame과 겹치지 않는 하나의 compact HUD 패널이어야 하며, 실제 render snapshot에서도 얇은 debug rail, 비어 있는 하단 패널, 또는 BoardFrame과 멀리 떨어진 별도 섬처럼 보이면 안 된다. Landscape action CTA는 shell 안에서 commercial touch target을 유지해야 한다. Landscape BoardFrame은 빈 tray처럼 과신장되면 안 된다.
 - Gameplay 시작 연출은 `StageIntroCard`와 READY/GO chip이 있는 compact start badge여야 하며, raw multi-line `LEVEL/READY` text overlay나 landscape HUD 침범으로 돌아가면 실패한다.
