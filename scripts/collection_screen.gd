@@ -858,12 +858,12 @@ func _collection_card_minimum_size(viewport_size: Vector2) -> Vector2:
 	var portrait := viewport_size.y >= viewport_size.x
 	if portrait:
 		return Vector2(0, maxf(340.0, viewport_size.y * 0.145))
-	return Vector2(0, maxf(450.0, viewport_size.y * 0.24))
+	return Vector2(0, maxf(450.0, viewport_size.y * 0.26))
 
 
 func _collection_preview_size(viewport_size: Vector2) -> Vector2:
 	var portrait := viewport_size.y >= viewport_size.x
-	var side := maxf(144.0, viewport_size.y * (0.065 if portrait else 0.115))
+	var side := maxf(144.0, viewport_size.y * (0.065 if portrait else 0.125))
 	return Vector2(side, side)
 
 
