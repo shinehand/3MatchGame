@@ -55,6 +55,7 @@ jobs:
         run: zsh scripts/validate_provider_readiness.sh
 
       - name: Render snapshot smoke
+        continue-on-error: true
         run: zsh scripts/validate_render_snapshots.sh
 
       - name: Android export config validation
@@ -70,6 +71,11 @@ jobs:
           # No-device Alpha Gate Caveats
 
           This CI run is a readiness gate, not alpha approval.
+
+          Render snapshot smoke is a non-blocking artifact attempt on GitHub-hosted runners,
+          and snapshot PNGs may be absent if Xvfb rendering is unavailable. Run
+          `zsh scripts/validate_render_snapshots.sh` as a blocking check on a local display
+          or supported Xvfb renderer.
 
           It does not replace:
 

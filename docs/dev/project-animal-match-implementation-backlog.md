@@ -499,7 +499,7 @@
 
 ### PAM-QA-104: No-device Render Snapshot Smoke
 
-- 상태: 완료됨. `scripts/validate_render_snapshots.gd`/`.sh`가 Home, Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay, Collection을 `390x844`와 `844x390` PNG로 저장하고 파일 크기, viewport 크기, non-blank/varied pixel, 핵심 UI region 렌더 픽셀을 검증한다. 로컬에서는 표시 렌더러로 Godot를 실행하고, no-device CI는 `xvfb-run`으로 snapshot을 생성해 artifact에 남긴다.
+- 상태: 완료됨. `scripts/validate_render_snapshots.gd`/`.sh`가 Home, Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay, Collection을 `390x844`와 `844x390` PNG로 저장하고 파일 크기, viewport 크기, non-blank/varied pixel, 핵심 UI region 렌더 픽셀을 검증한다. 로컬 또는 지원되는 Xvfb 환경에서는 blocking으로 실행하고, GitHub-hosted no-device CI는 Xvfb renderer 실패가 전체 gate를 막지 않도록 non-blocking artifact attempt로 실행한다.
 - 소유: QA Agent + Development Agent
 - 대상 파일:
   - `scripts/validate_render_snapshots.gd`

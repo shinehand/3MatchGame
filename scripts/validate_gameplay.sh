@@ -66,12 +66,16 @@ fi
 echo "[7/13] Render snapshot smoke"
 render_snapshot_stdout="/tmp/puzzle-render-snapshots.stdout"
 rm -f "$render_snapshot_stdout"
-if ! zsh scripts/validate_render_snapshots.sh >"$render_snapshot_stdout" 2>&1; then
-  echo "Render snapshot smoke failed."
+if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
+  echo "Render snapshot smoke skipped in GitHub Actions; run zsh scripts/validate_render_snapshots.sh on a local display or supported Xvfb renderer."
+else
+  if ! zsh scripts/validate_render_snapshots.sh >"$render_snapshot_stdout" 2>&1; then
+    echo "Render snapshot smoke failed."
+    cat "$render_snapshot_stdout"
+    exit 1
+  fi
   cat "$render_snapshot_stdout"
-  exit 1
 fi
-cat "$render_snapshot_stdout"
 
 echo "[8/13] Headless main load"
 headless_log="/tmp/puzzle-headless-validate.log"

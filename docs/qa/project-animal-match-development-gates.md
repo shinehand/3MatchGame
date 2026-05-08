@@ -24,6 +24,7 @@
 
 - `zsh scripts/validate_render_snapshots.sh`는 Home, Stage Popup, Stage 4 Gameplay HUD, Stage 25 실패 overlay, Collection을 `390x844`와 `844x390` PNG로 저장한다.
 - 각 snapshot은 파일 생성, 요청 viewport 크기, non-blank/varied pixel, 핵심 UI region의 실제 렌더 픽셀을 검증한다.
+- GitHub-hosted runner에서는 Xvfb renderer 실패가 전체 no-device gate를 막지 않도록 non-blocking artifact attempt로만 실행하며, 로컬 또는 지원되는 Xvfb 환경에서는 blocking으로 실행한다.
 - 이 gate는 blank/transparent/offscreen/missing texture 회귀를 차단하지만, 최종 Android 실기기 screenshot/video/logcat evidence를 대체하지 않는다.
 
 ## Gate 1. 문서 일치
