@@ -62,9 +62,12 @@ const ANIMAL_PREVIEW_TEXTURES := [
 @onready var stage_grid: GridContainer = $StageOverlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/StageScroll/StageGrid
 @onready var settings_overlay: ColorRect = $SettingsOverlay
 @onready var settings_overlay_panel: PanelContainer = $SettingsOverlay/OverlayCenter/OverlayPanel
+@onready var settings_title_label: Label = $SettingsOverlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/SettingsTitle
 @onready var settings_summary_label: Label = $SettingsOverlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/SettingsSummaryLabel
+@onready var settings_buttons: VBoxContainer = $SettingsOverlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/SettingsButtons
 @onready var sound_toggle_button: Button = $SettingsOverlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/SettingsButtons/SoundToggleButton
 @onready var haptics_toggle_button: Button = $SettingsOverlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/SettingsButtons/HapticsToggleButton
+@onready var settings_close_button: Button = $SettingsOverlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/SettingsCloseButton
 
 var stage_defs: Array = []
 var _home_tweens: Array[Tween] = []
@@ -262,9 +265,38 @@ func _on_stage_card_pressed(stage_id: int) -> void:
 
 
 func _refresh_settings_overlay() -> void:
-	settings_summary_label.text = "사운드와 햅틱은 홈에서 바로 조정하고 저장됩니다.\n현재 값은 다음 플레이부터 그대로 유지됩니다."
-	sound_toggle_button.text = "사운드: %s" % ("ON" if GameSession.get_sound_enabled() else "OFF")
-	haptics_toggle_button.text = "햅틱: %s" % ("ON" if GameSession.get_haptics_enabled() else "OFF")
+	var sound_enabled := GameSession.get_sound_enabled()
+	var haptics_enabled := GameSession.get_haptics_enabled()
+	settings_overlay_panel.add_theme_stylebox_override("panel", _home_style(Color(1.0, 0.98, 0.90, 0.98), Color(1.0, 0.63, 0.18, 1), 30, 5))
+	settings_title_label.text = "설정"
+	settings_title_label.add_theme_font_size_override("font_size", 44)
+	settings_title_label.add_theme_color_override("font_color", Color(0.12, 0.23, 0.34, 1))
+	settings_title_label.add_theme_color_override("font_shadow_color", Color(1.0, 0.92, 0.38, 0.68))
+	settings_title_label.add_theme_constant_override("shadow_offset_y", 3)
+	settings_summary_label.text = "자동 저장됨\n사운드와 햅틱을 바로 조정합니다."
+	settings_summary_label.add_theme_font_size_override("font_size", 27)
+	settings_summary_label.add_theme_color_override("font_color", Color(0.20, 0.31, 0.42, 1))
+	sound_toggle_button.text = "사운드: %s" % ("ON" if sound_enabled else "OFF")
+	haptics_toggle_button.text = "햅틱: %s" % ("ON" if haptics_enabled else "OFF")
+	_apply_settings_toggle_button_style(sound_toggle_button, sound_enabled)
+	_apply_settings_toggle_button_style(haptics_toggle_button, haptics_enabled)
+	settings_close_button.add_theme_stylebox_override("normal", _home_style(Color(1.0, 0.84, 0.28, 0.96), Color(1.0, 0.49, 0.12, 1), 26, 4))
+	settings_close_button.add_theme_stylebox_override("hover", _home_style(Color(1.0, 0.92, 0.44, 1), Color(1.0, 0.49, 0.12, 1), 26, 4))
+	settings_close_button.add_theme_stylebox_override("pressed", _home_style(Color(1.0, 0.74, 0.24, 1), Color(0.90, 0.36, 0.10, 1), 26, 4))
+	settings_close_button.add_theme_font_size_override("font_size", 36)
+	settings_close_button.add_theme_color_override("font_color", Color(0.40, 0.24, 0.03, 1))
+
+
+func _apply_settings_toggle_button_style(button: Button, enabled: bool) -> void:
+	var bg_color := Color(0.77, 1.0, 0.70, 0.95) if enabled else Color(0.86, 0.92, 0.96, 0.95)
+	var border_color := Color(0.28, 0.78, 0.36, 1) if enabled else Color(0.48, 0.66, 0.78, 1)
+	var hover_color := Color(0.86, 1.0, 0.78, 1) if enabled else Color(0.92, 0.97, 1.0, 1)
+	var pressed_color := Color(0.66, 0.94, 0.58, 1) if enabled else Color(0.78, 0.88, 0.94, 1)
+	button.add_theme_stylebox_override("normal", _home_style(bg_color, border_color, 28, 4))
+	button.add_theme_stylebox_override("hover", _home_style(hover_color, border_color, 28, 4))
+	button.add_theme_stylebox_override("pressed", _home_style(pressed_color, border_color, 28, 4))
+	button.add_theme_font_size_override("font_size", 32)
+	button.add_theme_color_override("font_color", Color(0.12, 0.23, 0.34, 1))
 
 
 func _build_game_home_layer() -> void:
@@ -1290,7 +1322,13 @@ func _apply_responsive_layout() -> void:
 
 	stage_grid.columns = 2 if portrait else 3
 	stage_overlay_panel.custom_minimum_size = Vector2(760, 1040) if portrait else Vector2(1120, 760)
-	settings_overlay_panel.custom_minimum_size = Vector2(760, 780) if portrait else Vector2(920, 620)
+	settings_overlay_panel.custom_minimum_size = Vector2(700, 720) if portrait else Vector2(900, 900)
+	settings_summary_label.custom_minimum_size = Vector2(0, 104) if portrait else Vector2(0, 124)
+	if settings_buttons:
+		settings_buttons.add_theme_constant_override("separation", 14 if portrait else 18)
+	sound_toggle_button.custom_minimum_size = Vector2(0, 126) if portrait else Vector2(0, 220)
+	haptics_toggle_button.custom_minimum_size = Vector2(0, 126) if portrait else Vector2(0, 220)
+	settings_close_button.custom_minimum_size = Vector2(280, 150) if portrait else Vector2(340, 260)
 	if event_detail_panel:
 		event_detail_panel.custom_minimum_size = Vector2(700, 760) if portrait else Vector2(820, 620)
 	if event_detail_body_label:

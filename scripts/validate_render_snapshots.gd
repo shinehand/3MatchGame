@@ -13,6 +13,8 @@ const SNAPSHOT_VIEWPORTS := [
 ]
 const SCENARIOS := [
 	{"id": "home", "scene": MAIN_SCENE_PATH, "setup": "home"},
+	{"id": "home_settings_overlay", "scene": MAIN_SCENE_PATH, "setup": "home_settings_overlay"},
+	{"id": "home_settings_overlay_off", "scene": MAIN_SCENE_PATH, "setup": "home_settings_overlay_off"},
 	{"id": "home_live_event_ended_detail", "scene": MAIN_SCENE_PATH, "setup": "home_event_detail_ended"},
 	{"id": "stage_select_world_map", "scene": STAGE_SELECT_SCENE_PATH, "setup": "stage_select_world_map"},
 	{"id": "stage_select_world_progress", "scene": STAGE_SELECT_SCENE_PATH, "setup": "stage_select_world_progress"},
@@ -243,6 +245,10 @@ func _settle_scene(node: Node, frame_count: int = 5) -> void:
 func _apply_scenario_setup(node: Node, scenario: Dictionary, errors: PackedStringArray) -> void:
 	var setup_id := str(scenario.get("setup", ""))
 	match setup_id:
+		"home_settings_overlay":
+			await _prepare_home_settings_overlay(node, errors, true)
+		"home_settings_overlay_off":
+			await _prepare_home_settings_overlay(node, errors, false)
 		"home_event_detail_ended":
 			await _prepare_home_ended_event_detail(node, errors)
 		"stage_popup":
@@ -261,6 +267,16 @@ func _apply_scenario_setup(node: Node, scenario: Dictionary, errors: PackedStrin
 			await _prepare_stage_31_special_combo(node, scenario, errors)
 		_:
 			await process_frame
+
+
+func _prepare_home_settings_overlay(node: Node, errors: PackedStringArray, enabled: bool) -> void:
+	if not node.has_method("_on_settings_button_pressed"):
+		errors.append("%s should expose _on_settings_button_pressed for home settings render snapshot." % MAIN_SCENE_PATH)
+		return
+	GameSession.set_sound_enabled(enabled)
+	GameSession.set_haptics_enabled(enabled)
+	node.call("_on_settings_button_pressed")
+	await process_frame
 
 
 func _prepare_home_ended_event_detail(node: Node, errors: PackedStringArray) -> void:
@@ -560,6 +576,10 @@ func _validate_scenario_regions(image: Image, node: Node, scenario: Dictionary, 
 			_validate_control_pixels(image, home_play_button, snapshot_id, "HomePlayButton", errors)
 			_validate_control_image_minimum_size(image, home_play_button, snapshot_id, "HomePlayButton", Vector2(210, 48) if image.get_height() >= image.get_width() else Vector2(220, 48), errors)
 			_validate_control_pixels(image, node.find_child("BottomNav", true, false), snapshot_id, "BottomNav", errors)
+		"home_settings_overlay":
+			_validate_home_settings_overlay_snapshot_regions(image, node, snapshot_id, errors, true)
+		"home_settings_overlay_off":
+			_validate_home_settings_overlay_snapshot_regions(image, node, snapshot_id, errors, false)
 		"home_event_detail_ended":
 			_validate_home_event_detail_snapshot_regions(image, node, snapshot_id, errors)
 		"stage_select_world_map":
@@ -636,6 +656,37 @@ func _validate_home_event_detail_snapshot_regions(image: Image, node: Node, snap
 		errors.append("%s ended event detail claim button should be disabled." % snapshot_id)
 	if claim_button.text != "종료됨":
 		errors.append("%s ended event detail claim button should read 종료됨, got %s." % [snapshot_id, claim_button.text])
+
+
+func _validate_home_settings_overlay_snapshot_regions(image: Image, node: Node, snapshot_id: String, errors: PackedStringArray, expected_enabled: bool) -> void:
+	var overlay := node.get_node_or_null("SettingsOverlay") as Control
+	var panel := node.get_node_or_null("SettingsOverlay/OverlayCenter/OverlayPanel") as Control
+	var title_label := node.get_node_or_null("SettingsOverlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/SettingsTitle") as Label
+	var summary_label := node.get_node_or_null("SettingsOverlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/SettingsSummaryLabel") as Label
+	var sound_button := node.get_node_or_null("SettingsOverlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/SettingsButtons/SoundToggleButton") as Button
+	var haptics_button := node.get_node_or_null("SettingsOverlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/SettingsButtons/HapticsToggleButton") as Button
+	var close_button := node.get_node_or_null("SettingsOverlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/SettingsCloseButton") as Button
+	for control_info in [[overlay, "SettingsOverlay"], [panel, "SettingsPanel"], [title_label, "SettingsTitle"], [summary_label, "SettingsSummaryLabel"], [sound_button, "SoundToggleButton"], [haptics_button, "HapticsToggleButton"], [close_button, "SettingsCloseButton"]]:
+		var control := control_info[0] as Control
+		var label := String(control_info[1])
+		_validate_control_pixels(image, control, snapshot_id, label, errors)
+		_validate_control_within_image_bounds(control, snapshot_id, label, errors)
+	for button_info in [[sound_button, "SoundToggleButton"], [haptics_button, "HapticsToggleButton"], [close_button, "SettingsCloseButton"]]:
+		_validate_control_image_minimum_size(image, button_info[0] as Control, snapshot_id, String(button_info[1]), Vector2(88, 44), errors)
+	if overlay == null or not overlay.visible:
+		errors.append("%s should render SettingsOverlay visible." % snapshot_id)
+	if title_label == null or title_label.text != "설정":
+		errors.append("%s settings title should read 설정, got %s." % [snapshot_id, "" if title_label == null else title_label.text])
+	if summary_label == null or not summary_label.text.contains("자동 저장") or not summary_label.text.contains("사운드") or not summary_label.text.contains("햅틱"):
+		errors.append("%s settings summary should explain auto-save sound/haptics, got %s." % [snapshot_id, "" if summary_label == null else summary_label.text])
+	var expected_sound_text := "사운드: %s" % ("ON" if expected_enabled else "OFF")
+	var expected_haptics_text := "햅틱: %s" % ("ON" if expected_enabled else "OFF")
+	if sound_button == null or sound_button.text != expected_sound_text:
+		errors.append("%s sound toggle should read %s, got %s." % [snapshot_id, expected_sound_text, "" if sound_button == null else sound_button.text])
+	if haptics_button == null or haptics_button.text != expected_haptics_text:
+		errors.append("%s haptics toggle should read %s, got %s." % [snapshot_id, expected_haptics_text, "" if haptics_button == null else haptics_button.text])
+	if close_button == null or close_button.text != "닫기":
+		errors.append("%s settings close button should read 닫기, got %s." % [snapshot_id, "" if close_button == null else close_button.text])
 
 
 func _label_texts_under(root: Node) -> Array[String]:

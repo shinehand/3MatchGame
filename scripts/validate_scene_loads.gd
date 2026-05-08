@@ -1728,16 +1728,29 @@ func _validate_main_settings_runtime(node: Node, errors: PackedStringArray) -> v
 	var settings_overlay := node.get_node_or_null("SettingsOverlay") as CanvasItem
 	if settings_overlay == null or not settings_overlay.visible:
 		errors.append("%s settings smoke should open SettingsOverlay." % MAIN_SCENE_PATH)
+	var settings_panel := node.get_node_or_null("SettingsOverlay/OverlayCenter/OverlayPanel") as Control
+	var settings_summary_label := node.get_node_or_null("SettingsOverlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/SettingsSummaryLabel") as Control
+	var sound_toggle_button := node.get_node_or_null("SettingsOverlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/SettingsButtons/SoundToggleButton") as Button
+	var haptics_toggle_button := node.get_node_or_null("SettingsOverlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/SettingsButtons/HapticsToggleButton") as Button
+	var settings_close_button := node.get_node_or_null("SettingsOverlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/SettingsCloseButton") as Button
+	var viewport_size := Vector2i(root.get_visible_rect().size)
+	for control_info in [[settings_panel, "SettingsPanel"], [settings_summary_label, "SettingsSummaryLabel"], [sound_toggle_button, "SoundToggleButton"], [haptics_toggle_button, "HapticsToggleButton"], [settings_close_button, "SettingsCloseButton"]]:
+		var control := control_info[0] as Control
+		var label := String(control_info[1])
+		_validate_control_in_viewport(control, viewport_size, MAIN_SCENE_PATH, "%s settings overlay" % label, errors)
+		if settings_panel != null:
+			_validate_control_inside_container(control, settings_panel, MAIN_SCENE_PATH, "%s settings overlay" % label, errors)
+	_validate_commercial_touch_target(sound_toggle_button, COMMERCIAL_UI_SECONDARY_TOUCH, MAIN_SCENE_PATH, "SoundToggleButton settings CTA", viewport_size, errors)
+	_validate_commercial_touch_target(haptics_toggle_button, COMMERCIAL_UI_SECONDARY_TOUCH, MAIN_SCENE_PATH, "HapticsToggleButton settings CTA", viewport_size, errors)
+	_validate_commercial_touch_target(settings_close_button, COMMERCIAL_UI_SECONDARY_TOUCH, MAIN_SCENE_PATH, "SettingsCloseButton settings CTA", viewport_size, errors)
 
 	node.call("_on_sound_toggle_button_pressed")
-	var sound_toggle_button := node.get_node_or_null("SettingsOverlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/SettingsButtons/SoundToggleButton") as Button
 	if GameSession.get_sound_enabled() or bool(feedback.get("sound_enabled")):
 		errors.append("%s sound toggle should persist OFF and apply it to Feedback." % MAIN_SCENE_PATH)
 	if sound_toggle_button == null or sound_toggle_button.text != "사운드: OFF":
 		errors.append("%s sound toggle button should show 사운드: OFF after disabling." % MAIN_SCENE_PATH)
 
 	node.call("_on_haptics_toggle_button_pressed")
-	var haptics_toggle_button := node.get_node_or_null("SettingsOverlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/SettingsButtons/HapticsToggleButton") as Button
 	if GameSession.get_haptics_enabled() or bool(feedback.get("haptics_enabled")):
 		errors.append("%s haptics toggle should persist OFF and apply it to Feedback." % MAIN_SCENE_PATH)
 	if haptics_toggle_button == null or haptics_toggle_button.text != "햅틱: OFF":

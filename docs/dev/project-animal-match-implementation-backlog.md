@@ -601,7 +601,7 @@
 
 ### PAM-QA-104: No-device Render Snapshot Smoke
 
-- 상태: 완료됨. `scripts/validate_render_snapshots.gd`/`.sh`가 Home, Home Live Event ended detail, Stage Select World Map, Stage Select World Progress, Stage Popup, Stage 4 Gameplay Buddy HUD 4상태, Stage 1 성공 결과 overlay, Stage 25 실패 overlay, Stage 31 특수 조합 6종, Collection을 `390x844`와 `844x390` PNG 정확히 36장으로 저장하고 파일 크기, viewport 크기, non-blank/varied pixel, 핵심 UI region 렌더 픽셀을 검증한다. Stage Select World Progress 스냅샷은 Stage 1-3 클리어, Stage 4 current, Stage 5 locked fixture에서 current ring/PLAY ribbon, cleared star tray, locked badge, finale ribbon, 하단 선택 패널 비겹침을 확인한다. Home Live Event ended detail 스냅샷은 이벤트 상세 overlay, 상태 배지, 진행 카드, 보상 칩, disabled `종료됨` CTA를 확인한다. Stage 4 Buddy 스냅샷은 0/3, 2/3, 출동, 완료 상태의 라벨/게이지/landscape `LandscapeHudShell`/combo text와 `buddy_skill_charge`/`buddy_skill_ready`/`buddy_skill_trigger` payload를 확인한다. Stage 1 성공 스냅샷은 실제 클리어 후 보상/별/Zoo-Zoo Time/다음 CTA/홈 CTA와 `stage_complete`/Stage 2 해금을 확인한다. Stage 31 조합 스냅샷은 실제 `_resolve_swap`을 시작한 직후 조합별 label/flash/ring 픽셀, echo ring 필요 여부, filename combo type, `special_combo_trigger` analytics payload, transient VFX cleanup을 함께 확인한다. Collection 스냅샷은 `rabbit` 40토큰과 `rabbit_sprout_frame` 장착 fixture의 상세 reward track, `CosmeticEquipGrid`, `장착중` 버튼 region을 확인한다. 로컬 또는 지원되는 Xvfb 환경에서는 blocking으로 실행하고, GitHub-hosted no-device CI는 Xvfb renderer 실패가 전체 gate를 막지 않도록 non-blocking artifact attempt로 실행한다.
+- 상태: 완료됨. `scripts/validate_render_snapshots.gd`/`.sh`가 Home, Home Settings Overlay ON/OFF, Home Live Event ended detail, Stage Select World Map, Stage Select World Progress, Stage Popup, Stage 4 Gameplay Buddy HUD 4상태, Stage 1 성공 결과 overlay, Stage 25 실패 overlay, Stage 31 특수 조합 6종, Collection을 `390x844`와 `844x390` PNG 정확히 40장으로 저장하고 파일 크기, viewport 크기, non-blank/varied pixel, 핵심 UI region 렌더 픽셀을 검증한다. Home Settings Overlay 스냅샷은 ON/OFF 상태별 설정 panel, title, auto-save summary, sound/haptics toggle, close CTA의 픽셀, bounds, 텍스트, 최소 이미지 크기를 확인한다. Stage Select World Progress 스냅샷은 Stage 1-3 클리어, Stage 4 current, Stage 5 locked fixture에서 current ring/PLAY ribbon, cleared star tray, locked badge, finale ribbon, 하단 선택 패널 비겹침을 확인한다. Home Live Event ended detail 스냅샷은 이벤트 상세 overlay, 상태 배지, 진행 카드, 보상 칩, disabled `종료됨` CTA를 확인한다. Stage 4 Buddy 스냅샷은 0/3, 2/3, 출동, 완료 상태의 라벨/게이지/landscape `LandscapeHudShell`/combo text와 `buddy_skill_charge`/`buddy_skill_ready`/`buddy_skill_trigger` payload를 확인한다. Stage 1 성공 스냅샷은 실제 클리어 후 보상/별/Zoo-Zoo Time/다음 CTA/홈 CTA와 `stage_complete`/Stage 2 해금을 확인한다. Stage 31 조합 스냅샷은 실제 `_resolve_swap`을 시작한 직후 조합별 label/flash/ring 픽셀, echo ring 필요 여부, filename combo type, `special_combo_trigger` analytics payload, transient VFX cleanup을 함께 확인한다. Collection 스냅샷은 `rabbit` 40토큰과 `rabbit_sprout_frame` 장착 fixture의 상세 reward track, `CosmeticEquipGrid`, `장착중` 버튼 region을 확인한다. 로컬 또는 지원되는 Xvfb 환경에서는 blocking으로 실행하고, GitHub-hosted no-device CI는 Xvfb renderer 실패가 전체 gate를 막지 않도록 non-blocking artifact attempt로 실행한다.
 - 소유: QA Agent + Development Agent
 - 대상 파일:
   - `scripts/validate_render_snapshots.gd`
@@ -689,7 +689,7 @@
 
 ### PAM-UX-116: Gameplay Landscape Unified HUD Shell
 
-- 상태: 완료됨. Gameplay landscape의 우측 정보 영역을 `LandscapeHudShell` 하나로 감싸 목표, 이동 수, 콤보, 버튼이 흩어진 카드 묶음이 아니라 하나의 캔디풍 플레이 HUD 패널로 읽히게 했다. 내부 `StatsCard`/`GoalCard`는 투명도가 높은 섹션 카드로 낮추고, shell 폭을 viewport 비율 기반 compact rail로 제한해 보드가 계속 화면의 주인공으로 남는다. render snapshot gate는 Stage 4 Buddy landscape 스냅샷에서 shell 픽셀, viewport bounds, BoardFrame 비겹침을 확인하고, `.sh`는 현재 시나리오 수와 같은 PNG 36장 정확 매칭으로 누락 회귀를 막는다.
+- 상태: 완료됨. Gameplay landscape의 우측 정보 영역을 `LandscapeHudShell` 하나로 감싸 목표, 이동 수, 콤보, 버튼이 흩어진 카드 묶음이 아니라 하나의 캔디풍 플레이 HUD 패널로 읽히게 했다. 내부 `StatsCard`/`GoalCard`는 투명도가 높은 섹션 카드로 낮추고, shell 폭을 viewport 비율 기반 compact rail로 제한해 보드가 계속 화면의 주인공으로 남는다. render snapshot gate는 Stage 4 Buddy landscape 스냅샷에서 shell 픽셀, viewport bounds, BoardFrame 비겹침을 확인하고, `.sh`는 현재 시나리오 수와 같은 PNG 40장 정확 매칭으로 누락 회귀를 막는다.
 - 소유: Art Agent + Development Agent + QA Agent
 - 대상 파일:
   - `scripts/gameplay.gd`
@@ -701,7 +701,7 @@
 - 완료 기준:
   - `844x390` Stage 4 gameplay snapshot에서 `LandscapeHudShell`이 보드와 겹치지 않고 하나의 compact HUD panel로 렌더된다.
   - mobile viewport matrix가 landscape shell 폭, bounds, BoardFrame 비겹침을 검증한다.
-  - render snapshot smoke가 정확히 36개 PNG 산출을 요구해 Home/LiveOps/World Map/Gameplay/Collection snapshot 누락을 실패시킨다.
+  - render snapshot smoke가 정확히 40개 PNG 산출을 요구해 Home/Settings/LiveOps/World Map/Gameplay/Collection snapshot 누락을 실패시킨다.
 
 ### PAM-LIVEOPS-118: Home Event Detail Commercial Render Snapshot
 
@@ -716,7 +716,7 @@
 - 완료 기준:
   - Home 이벤트 상세가 active/upcoming/ended/offline 상태를 상태 배지와 CTA 상태로 즉시 구분한다.
   - 종료 이벤트 상세에서는 reward chip이 렌더되지만 claim CTA가 `종료됨` disabled 상태다.
-  - render snapshot smoke가 정확히 36개 PNG를 요구하며 이벤트 상세 시나리오 누락을 실패시킨다.
+  - render snapshot smoke가 정확히 40개 PNG를 요구하며 이벤트 상세 시나리오 누락을 실패시킨다.
 
 ### PAM-UX-119: Stage Select World Progress Commercial Polish
 
@@ -731,11 +731,27 @@
 - 완료 기준:
   - Stage Select World Map에서 현재/클리어/잠김/피날레 상태가 각각 별도 장식으로 즉시 구분된다.
   - Portrait에서 하단 선택 패널이 주요 경로 노드와 겹치지 않는다.
-  - render snapshot smoke가 정확히 36개 PNG를 요구하며 진행 상태 시나리오 누락을 실패시킨다.
+  - render snapshot smoke가 정확히 40개 PNG를 요구하며 진행 상태 시나리오 누락을 실패시킨다.
+
+### PAM-UX-120: Home Settings Overlay Commercial Snapshot
+
+- 상태: 완료됨. Home Settings overlay를 밝은 캔디풍 옵션 카드로 맞추고, summary를 `자동 저장됨` 중심으로 줄이며, sound/haptics toggle을 ON/OFF 상태별 pill 스타일로 구분했다. `home_settings_overlay`와 `home_settings_overlay_off` render snapshot은 ON/OFF 상태별 설정 panel, title, auto-save summary, sound/haptics toggle, close CTA의 픽셀, bounds, 텍스트, 최소 이미지 크기를 `390x844`와 `844x390` PNG로 검증한다. scene smoke는 overlay를 실제로 열어 내부 toggle/close CTA의 viewport bounds와 secondary touch target도 검증한다.
+- 소유: Art Agent + Development Agent + QA Agent
+- 대상 파일:
+  - `scripts/main.gd`
+  - `scripts/validate_render_snapshots.gd`
+  - `scripts/validate_render_snapshots.sh`
+  - `scripts/validate_scene_loads.gd`
+  - `docs/dev/validation-process.md`
+  - `docs/qa/project-animal-match-development-gates.md`
+- 완료 기준:
+  - Settings overlay가 개발용 텍스트 패널이 아니라 상용 옵션 카드로 보인다.
+  - sound/haptics toggle과 close CTA가 표시, bounds, 텍스트, 최소 터치 타깃 검증을 통과한다.
+  - render snapshot smoke가 정확히 40개 PNG를 요구하며 settings overlay 시나리오 누락을 실패시킨다.
 
 ## 추천 구현 순서
 
-완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-058`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`, `PAM-UX-114`, `PAM-UX-115`, `PAM-UX-116`, `PAM-LIVEOPS-118`, `PAM-UX-119`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
+완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-058`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`, `PAM-UX-114`, `PAM-UX-115`, `PAM-UX-116`, `PAM-LIVEOPS-118`, `PAM-UX-119`, `PAM-UX-120`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
 
 다음 고가치 순서:
 

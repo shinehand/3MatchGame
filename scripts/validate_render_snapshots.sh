@@ -55,7 +55,7 @@ else
   fi
 fi
 
-expected_snapshot_count=36
+expected_snapshot_count=40
 snapshot_count="$(find "$PAM_RENDER_SNAPSHOT_DIR" -type f -name '*.png' | wc -l | tr -d ' ')"
 if [ "$snapshot_count" -ne "$expected_snapshot_count" ]; then
   echo "Render snapshot validation expected exactly $expected_snapshot_count PNGs in $PAM_RENDER_SNAPSHOT_DIR, got $snapshot_count."
