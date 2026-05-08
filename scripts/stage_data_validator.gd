@@ -2,6 +2,12 @@ extends RefCounted
 
 const BOARD_ROWS := 8
 const BOARD_COLS := 8
+const BOARD_NEIGHBOR_OFFSETS := [
+	Vector2i(1, 0),
+	Vector2i(-1, 0),
+	Vector2i(0, 1),
+	Vector2i(0, -1),
+]
 const VALID_ANIMALS := ["rabbit", "bear", "cat", "chick", "frog", "dog", "panda", "pig", "penguin", "fox", "lion", "elephant"]
 const VALID_ROSTER_GROUPS := [
 	"forest_early",
@@ -175,20 +181,25 @@ static func validate_stages(stages: Array) -> PackedStringArray:
 			continue
 
 		var active_cells := 0
+		var board_mask_shape_valid := true
 		for row in range(BOARD_ROWS):
 			var mask_row := String(board_mask[row])
 			if mask_row.length() != BOARD_COLS:
 				errors.append("stage %d board_mask row %d must have %d columns" % [stage_id, row, BOARD_COLS])
+				board_mask_shape_valid = false
 				continue
 			for col in range(BOARD_COLS):
 				var cell_text := mask_row[col]
 				if cell_text != "0" and cell_text != "1":
 					errors.append("stage %d board_mask row %d col %d must be 0 or 1" % [stage_id, row, col])
+					board_mask_shape_valid = false
 				if cell_text == "1":
 					active_cells += 1
 
 		if active_cells <= 0:
 			errors.append("stage %d has no active cells in board_mask" % stage_id)
+		elif board_mask_shape_valid:
+			_validate_board_mask_topology(board_mask, stage_id, errors)
 
 		var collect_targets: Dictionary = stage.get("target_collect", {})
 		for animal_id in collect_targets.keys():
@@ -396,3 +407,53 @@ static func _mask_cell_is_active(board_mask: Array, row: int, col: int) -> bool:
 	if col < 0 or col >= mask_row.length():
 		return false
 	return mask_row[col] == "1"
+
+
+static func _validate_board_mask_topology(board_mask: Array, stage_id: int, errors: PackedStringArray) -> void:
+	var visited := {}
+	var component_sizes: Array[int] = []
+	for row in range(BOARD_ROWS):
+		for col in range(BOARD_COLS):
+			if not _mask_cell_is_active(board_mask, row, col):
+				continue
+			var key := _board_cell_key(row, col)
+			if visited.has(key):
+				continue
+			component_sizes.append(_flood_fill_board_mask_component(board_mask, Vector2i(row, col), visited))
+
+	if component_sizes.size() > 1:
+		errors.append("stage %d board_mask active cells must be 4-way connected; found %d components with sizes [%s]" % [stage_id, component_sizes.size(), _component_sizes_text(component_sizes)])
+	for component_size in component_sizes:
+		if component_size < 3:
+			errors.append("stage %d board_mask component size %d is too small for match-3 play" % [stage_id, component_size])
+
+
+static func _flood_fill_board_mask_component(board_mask: Array, start: Vector2i, visited: Dictionary) -> int:
+	var queue: Array[Vector2i] = [start]
+	visited[_board_cell_key(start.x, start.y)] = true
+	var cursor := 0
+	while cursor < queue.size():
+		var cell := queue[cursor]
+		cursor += 1
+		for offset_value in BOARD_NEIGHBOR_OFFSETS:
+			var offset: Vector2i = offset_value
+			var next: Vector2i = cell + offset
+			if not _mask_cell_is_active(board_mask, next.x, next.y):
+				continue
+			var key := _board_cell_key(next.x, next.y)
+			if visited.has(key):
+				continue
+			visited[key] = true
+			queue.append(next)
+	return queue.size()
+
+
+static func _board_cell_key(row: int, col: int) -> String:
+	return "%d:%d" % [row, col]
+
+
+static func _component_sizes_text(component_sizes: Array[int]) -> String:
+	var parts := PackedStringArray()
+	for component_size in component_sizes:
+		parts.append(str(component_size))
+	return ", ".join(parts)

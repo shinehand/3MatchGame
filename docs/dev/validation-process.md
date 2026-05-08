@@ -18,6 +18,7 @@
 
 - 스테이지 JSON 구조 검증
 - 출시 스테이지 100개 로드 여부 검증
+- `board_mask` active cell이 4방향으로 하나의 component를 이루고, 1-2칸 고립 component가 없는지 topology contract fixture와 production data로 검증
 - 밴드별 이동 수/덤불 수 밸런스 검증
 - Godot 임포트 캐시 준비 (`.godot/`가 없는 클린 체크아웃 대응)
 - 핵심 씬 로드 스모크 체크 (`main`, `stage_select`, `gameplay`, 카드/타일/목표 칩, MVP 보드 12종 기본 블록 256px Texture2D)

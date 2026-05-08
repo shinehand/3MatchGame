@@ -58,6 +58,7 @@
 ## Gate 2. 스테이지 데이터
 
 - `data/stages/*.json`이 모두 로드된다.
+- 각 스테이지의 `board_mask` active cell은 하나의 4방향 연결 영역이어야 하며, 1-2칸짜리 고립 component는 match-3 플레이 공간으로 허용하지 않는다.
 - 각 스테이지의 `spawn_profile.pool`은 기본 5-6종이다.
 - 튜토리얼 구간은 4-5종을 허용한다.
 - 목표 동물은 반드시 pool과 weights에 포함된다.

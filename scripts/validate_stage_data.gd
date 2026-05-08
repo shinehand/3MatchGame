@@ -28,6 +28,9 @@ func _init() -> void:
 	if not _validate_buddy_tuning_policy(stages):
 		quit(1)
 		return
+	if not _validate_board_mask_topology_policy(stages):
+		quit(1)
+		return
 
 	print("Stage validation passed: loaded %d stages." % stages.size())
 	quit()
@@ -41,6 +44,14 @@ func _validate_buddy_tuning_policy(stages: Array) -> bool:
 	if not _expect_validator_rejects("Easy Buddy max_uses 2", _stage_variant(stages, 4, {"buddy_max_uses": 2}), "must allow 1 max uses"):
 		return false
 	if not _expect_validator_rejects("Hard one-shot Buddy max_uses 2", _stage_variant(stages, 51, {"buddy_max_uses": 2}), "must allow 1 max uses"):
+		return false
+	return true
+
+
+func _validate_board_mask_topology_policy(stages: Array) -> bool:
+	if not _expect_validator_rejects("Disconnected board_mask", _stage_variant(stages, 1, {"board_mask": _disconnected_board_mask()}), "board_mask active cells must be 4-way connected"):
+		return false
+	if not _expect_validator_rejects("Tiny board_mask island", _stage_variant(stages, 1, {"board_mask": _tiny_island_board_mask()}), "board_mask component size 1 is too small"):
 		return false
 	return true
 
@@ -70,3 +81,29 @@ func _expect_validator_rejects(case_name: String, stages: Array, expected_error_
 			return true
 	push_error("%s should fail StageDataValidator with '%s', got: %s" % [case_name, expected_error_text, "; ".join(errors)])
 	return false
+
+
+func _disconnected_board_mask() -> Array:
+	return [
+		"11110000",
+		"11110000",
+		"11110000",
+		"00000000",
+		"00000000",
+		"00001111",
+		"00001111",
+		"00001111",
+	]
+
+
+func _tiny_island_board_mask() -> Array:
+	return [
+		"10000000",
+		"00000000",
+		"00000000",
+		"00000000",
+		"00000000",
+		"00000000",
+		"00000000",
+		"00000000",
+	]

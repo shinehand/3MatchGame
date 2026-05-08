@@ -310,6 +310,20 @@
 - 완료 기준:
   - 후반 100레벨 진행에 회복 레벨과 피날레 리듬이 생긴다.
 
+### PAM-DEV-058: Board Mask Topology Validator
+
+- 상태: 완료됨. `StageDataValidator`가 각 stage `board_mask` active cell을 4방향 flood-fill로 검사해 하나의 연결 component인지 확인하고, 1-2칸짜리 고립 component는 match-3 플레이 공간으로 허용하지 않는다. `validate_stage_data.gd`는 disconnected mask와 1칸 island fixture가 반드시 실패하는 contract smoke를 포함한다.
+- 소유: Development Agent + QA Agent
+- 대상 파일:
+  - `scripts/stage_data_validator.gd`
+  - `scripts/validate_stage_data.gd`
+  - `docs/dev/validation-process.md`
+  - `docs/qa/project-animal-match-development-gates.md`
+- 완료 기준:
+  - production 100 stages는 topology 검사를 통과한다.
+  - 분리된 active island, 1-2칸짜리 active component가 stage data validation에서 실패한다.
+  - 향후 의도적 분리 섬/포털 규칙이 필요하면 별도 명시 필드와 런타임 해석을 먼저 추가해야 한다.
+
 ## P6. FTUE, 컬렉션, 운영 메타
 
 ### PAM-UX-060: FTUE 1-10레벨 동기 설계 확정
@@ -656,7 +670,7 @@
 
 ## 추천 구현 순서
 
-완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`, `PAM-UX-114`, `PAM-UX-115`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
+완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-058`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`, `PAM-UX-114`, `PAM-UX-115`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
 
 다음 고가치 순서:
 
