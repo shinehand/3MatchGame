@@ -362,6 +362,23 @@ func _validate_stage_select_viewport_layout(node: Node, viewport_size: Vector2i,
 	if stage_world_layer != null and not stage_world_layer.visible:
 		errors.append("%s StageWorldLayer should remain visible at %s." % [STAGE_SELECT_SCENE_PATH, viewport_size])
 	_validate_control_in_viewport(node.find_child("WorldPlayButton", true, false), viewport_size, STAGE_SELECT_SCENE_PATH, "WorldPlayButton", errors)
+	var selected_panel := node.find_child("WorldSelectedPanel", true, false) as Control
+	var selected_info := node.find_child("WorldSelectedInfoColumn", true, false) as Control
+	var selected_chip_row := node.find_child("WorldSelectedChipRow", true, false) as Control
+	var goal_chip := node.find_child("WorldSelectedGoalChip", true, false) as Button
+	var moves_chip := node.find_child("WorldSelectedMovesChip", true, false) as Button
+	var reward_chip := node.find_child("WorldSelectedRewardChip", true, false) as Button
+	var world_play := node.find_child("WorldPlayButton", true, false) as Control
+	for control_info in [[selected_panel, "WorldSelectedPanel"], [selected_info, "WorldSelectedInfoColumn"], [selected_chip_row, "WorldSelectedChipRow"], [goal_chip, "WorldSelectedGoalChip"], [moves_chip, "WorldSelectedMovesChip"], [reward_chip, "WorldSelectedRewardChip"]]:
+		var control := control_info[0] as Control
+		var label := String(control_info[1])
+		_validate_control_in_viewport(control, viewport_size, STAGE_SELECT_SCENE_PATH, label, errors)
+		if selected_panel != null and control != null and control != selected_panel:
+			_validate_control_inside_container(control, selected_panel, STAGE_SELECT_SCENE_PATH, "%s selected panel" % label, errors)
+	_validate_no_rect_overlap(selected_info, world_play, STAGE_SELECT_SCENE_PATH, "WorldSelectedInfoColumn to WorldPlayButton", errors)
+	var chip_text := ("" if goal_chip == null else goal_chip.text) + " " + ("" if moves_chip == null else moves_chip.text) + " " + ("" if reward_chip == null else reward_chip.text)
+	if not chip_text.contains("목표") or not chip_text.contains("이동") or not chip_text.contains("보상"):
+		errors.append("%s WorldSelectedPanel should summarize the selected stage with goal, moves, and reward chips at %s." % [STAGE_SELECT_SCENE_PATH, viewport_size])
 	var world_path_root := node.get_node_or_null("StageWorldLayer/WorldMapPathRoot")
 	if world_path_root != null:
 		var visible_world_nodes := 0

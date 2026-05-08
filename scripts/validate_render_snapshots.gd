@@ -702,15 +702,41 @@ func _validate_stage_select_world_map_snapshot_regions(image: Image, node: Node,
 	var world_layer := node.find_child("StageWorldLayer", true, false) as Control
 	var path_root := node.find_child("WorldMapPathRoot", true, false) as Control
 	var selected_panel := node.find_child("WorldSelectedPanel", true, false) as Control
+	var selected_info := node.find_child("WorldSelectedInfoColumn", true, false) as Control
+	var selected_title := node.find_child("WorldSelectedTitleLabel", true, false) as Label
+	var selected_chip_row := node.find_child("WorldSelectedChipRow", true, false) as Control
+	var goal_chip := node.find_child("WorldSelectedGoalChip", true, false) as Button
+	var moves_chip := node.find_child("WorldSelectedMovesChip", true, false) as Button
+	var reward_chip := node.find_child("WorldSelectedRewardChip", true, false) as Button
 	var play_button := node.find_child("WorldPlayButton", true, false) as Control
 	var popup_overlay := node.find_child("StagePopupOverlay", true, false) as CanvasItem
 	_validate_control_pixels(image, world_layer, snapshot_id, "StageWorldLayer", errors)
 	_validate_control_pixels(image, path_root, snapshot_id, "WorldMapPathRoot", errors)
 	_validate_control_pixels(image, selected_panel, snapshot_id, "WorldSelectedPanel", errors)
+	_validate_control_pixels(image, selected_info, snapshot_id, "WorldSelectedInfoColumn", errors)
+	_validate_control_pixels(image, selected_chip_row, snapshot_id, "WorldSelectedChipRow", errors)
+	for chip_info in [[goal_chip, "WorldSelectedGoalChip"], [moves_chip, "WorldSelectedMovesChip"], [reward_chip, "WorldSelectedRewardChip"]]:
+		var chip := chip_info[0] as Control
+		var label := String(chip_info[1])
+		_validate_control_pixels(image, chip, snapshot_id, label, errors)
+		_validate_control_within_image_bounds(chip, snapshot_id, label, errors)
 	_validate_control_pixels(image, play_button, snapshot_id, "WorldPlayButton", errors)
 	_validate_control_within_image_bounds(selected_panel, snapshot_id, "WorldSelectedPanel", errors)
+	_validate_control_within_image_bounds(selected_info, snapshot_id, "WorldSelectedInfoColumn", errors)
+	_validate_control_within_image_bounds(selected_chip_row, snapshot_id, "WorldSelectedChipRow", errors)
 	_validate_control_within_image_bounds(play_button, snapshot_id, "WorldPlayButton", errors)
 	_validate_control_image_minimum_size(image, play_button, snapshot_id, "WorldPlayButton", Vector2(92, 44) if image.get_height() >= image.get_width() else Vector2(190, 48), errors)
+	var portrait := image.get_height() >= image.get_width()
+	var chip_min := Vector2(50, 18) if portrait else Vector2(78, 22)
+	_validate_control_image_minimum_size(image, goal_chip, snapshot_id, "WorldSelectedGoalChip", chip_min, errors)
+	_validate_control_image_minimum_size(image, moves_chip, snapshot_id, "WorldSelectedMovesChip", chip_min, errors)
+	_validate_control_image_minimum_size(image, reward_chip, snapshot_id, "WorldSelectedRewardChip", chip_min, errors)
+	_validate_controls_do_not_overlap(selected_info, play_button, snapshot_id, "WorldSelectedInfoColumn", "WorldPlayButton", errors)
+	var chip_text := _button_text(goal_chip) + " " + _button_text(moves_chip) + " " + _button_text(reward_chip)
+	if selected_title == null or not selected_title.text.contains("Level"):
+		errors.append("%s WorldSelectedTitleLabel should show the selected Level." % snapshot_id)
+	if not chip_text.contains("목표") or not chip_text.contains("이동") or not chip_text.contains("보상"):
+		errors.append("%s WorldSelectedPanel should expose selected-stage goal, moves, and reward chips." % snapshot_id)
 	if popup_overlay != null and popup_overlay.visible:
 		errors.append("%s should capture the default world map without StagePopupOverlay visible." % snapshot_id)
 	if path_root == null:

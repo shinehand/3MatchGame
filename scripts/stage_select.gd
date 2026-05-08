@@ -140,6 +140,10 @@ var world_path_root: Control
 var world_event_strip: HBoxContainer
 var world_play_button: Button
 var world_selected_label: Label
+var world_selected_chip_row: HBoxContainer
+var world_selected_goal_chip: Button
+var world_selected_moves_chip: Button
+var world_selected_reward_chip: Button
 var world_node_buttons: Array[Button] = []
 var stage_popup_overlay: ColorRect
 var stage_popup_panel: PanelContainer
@@ -430,13 +434,36 @@ func _build_stage_world_layer() -> void:
 	cta_panel.add_child(cta_margin)
 
 	var cta_row := HBoxContainer.new()
+	cta_row.name = "WorldSelectedContentRow"
 	cta_row.add_theme_constant_override("separation", 16)
 	cta_margin.add_child(cta_row)
 
+	var selected_column := VBoxContainer.new()
+	selected_column.name = "WorldSelectedInfoColumn"
+	selected_column.alignment = BoxContainer.ALIGNMENT_CENTER
+	selected_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	selected_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	selected_column.add_theme_constant_override("separation", 8)
+	cta_row.add_child(selected_column)
+
 	world_selected_label = _make_world_label("Stage", 24, Color("213a55"), HORIZONTAL_ALIGNMENT_LEFT)
+	world_selected_label.name = "WorldSelectedTitleLabel"
 	world_selected_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	world_selected_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	cta_row.add_child(world_selected_label)
+	selected_column.add_child(world_selected_label)
+
+	world_selected_chip_row = HBoxContainer.new()
+	world_selected_chip_row.name = "WorldSelectedChipRow"
+	world_selected_chip_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	world_selected_chip_row.add_theme_constant_override("separation", 8)
+	selected_column.add_child(world_selected_chip_row)
+
+	world_selected_goal_chip = _make_world_info_chip("WorldSelectedGoalChip", "목표")
+	world_selected_moves_chip = _make_world_info_chip("WorldSelectedMovesChip", "이동")
+	world_selected_reward_chip = _make_world_info_chip("WorldSelectedRewardChip", "보상")
+	world_selected_chip_row.add_child(world_selected_goal_chip)
+	world_selected_chip_row.add_child(world_selected_moves_chip)
+	world_selected_chip_row.add_child(world_selected_reward_chip)
 
 	world_play_button = _make_world_button("PLAY", Vector2(190, 88), 30)
 	world_play_button.name = "WorldPlayButton"
@@ -469,6 +496,42 @@ func _make_world_button(text: String, min_size: Vector2, font_size: int) -> Butt
 	button.add_theme_stylebox_override("hover", _rounded_style(Color("ffe978"), Color("f28c26"), 30, 5))
 	button.add_theme_stylebox_override("pressed", _rounded_style(Color("ffbd3f"), Color("e86e18"), 30, 5))
 	return button
+
+
+func _make_world_info_chip(node_name: String, text: String) -> Button:
+	var chip := Button.new()
+	chip.name = node_name
+	chip.text = text
+	chip.disabled = true
+	chip.focus_mode = Control.FOCUS_NONE
+	chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	chip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	chip.custom_minimum_size = Vector2(150, 46)
+	chip.add_theme_font_size_override("font_size", 20)
+	chip.add_theme_color_override("font_color", Color("213a55"))
+	chip.add_theme_color_override("font_disabled_color", Color("213a55"))
+	chip.add_theme_stylebox_override("normal", _world_info_chip_style(node_name))
+	chip.add_theme_stylebox_override("disabled", _world_info_chip_style(node_name))
+	return chip
+
+
+func _world_info_chip_style(node_name: String) -> StyleBoxFlat:
+	var bg_color := Color("e5f8ff")
+	var border_color := Color("73c9ef")
+	if node_name.contains("Goal"):
+		bg_color = Color("e8ffd9")
+		border_color = Color("63cf81")
+	elif node_name.contains("Moves"):
+		bg_color = Color("fff3bb")
+		border_color = Color("ffbf32")
+	elif node_name.contains("Reward"):
+		bg_color = Color("ffe5f0")
+		border_color = Color("ff77aa")
+	var style := _rounded_style(bg_color, border_color, 18, 3)
+	style.shadow_color = Color(0.10, 0.16, 0.24, 0.10)
+	style.shadow_size = 4
+	style.shadow_offset = Vector2(0, 2)
+	return style
 
 
 func _make_world_label(text: String, font_size: int, color: Color, alignment: HorizontalAlignment) -> Label:
@@ -844,14 +907,23 @@ func _refresh_stage_world_layer(stage_def: Dictionary, meta: Dictionary) -> void
 		stage_defs.size(),
 		GameSession.get_total_stars(),
 	]
-	world_selected_label.text = "Level %d  %s\n%s" % [
+	world_selected_label.text = "Level %d · %s" % [
 		stage_id,
 		String(stage_def.get("difficulty", "Easy")),
-		_build_goal_summary(stage_def).trim_prefix("목표: "),
 	]
+	_refresh_world_selected_chips(stage_def)
 	_refresh_stage_select_events()
 	_rebuild_world_decorations()
 	_rebuild_stage_world_nodes()
+
+
+func _refresh_world_selected_chips(stage_def: Dictionary) -> void:
+	if world_selected_goal_chip:
+		world_selected_goal_chip.text = "목표  %s" % _build_goal_summary(stage_def).trim_prefix("목표: ")
+	if world_selected_moves_chip:
+		world_selected_moves_chip.text = "이동  %d" % int(stage_def.get("moves", 0))
+	if world_selected_reward_chip:
+		world_selected_reward_chip.text = "보상  %dG" % _stage_gold_reward(stage_def)
 
 
 func _refresh_stage_select_events() -> void:
@@ -1723,7 +1795,14 @@ func _layout_stage_world_layer(portrait: bool) -> void:
 	if world_subtitle_label:
 		world_subtitle_label.add_theme_font_size_override("font_size", 24 if portrait else 28)
 	if world_selected_label:
-		world_selected_label.add_theme_font_size_override("font_size", int(clampf(viewport_size.y * (0.014 if portrait else 0.020), 23.0 if portrait else 34.0, 30.0 if portrait else 44.0)))
+		world_selected_label.add_theme_font_size_override("font_size", int(clampf(viewport_size.y * (0.014 if portrait else 0.022), 23.0 if portrait else 36.0, 30.0 if portrait else 48.0)))
+	if world_selected_chip_row:
+		world_selected_chip_row.add_theme_constant_override("separation", 6 if portrait else 14)
+	for chip in [world_selected_goal_chip, world_selected_moves_chip, world_selected_reward_chip]:
+		if chip == null:
+			continue
+		chip.custom_minimum_size = Vector2(0, clampf(viewport_size.y * (0.056 if portrait else 0.104), 52.0 if portrait else 112.0, 68.0 if portrait else 136.0))
+		chip.add_theme_font_size_override("font_size", int(clampf(viewport_size.y * (0.012 if portrait else 0.024), 18.0 if portrait else 34.0, 22.0 if portrait else 44.0)))
 	if world_play_button:
 		if portrait:
 			world_play_button.custom_minimum_size = Vector2(clampf(viewport_size.x * 0.24, 250.0, 320.0), clampf(viewport_size.y * 0.052, 112.0, 126.0))
@@ -1735,22 +1814,25 @@ func _layout_stage_world_layer(portrait: bool) -> void:
 	if selected_panel != null:
 		if portrait:
 			selected_panel.offset_left = 22.0
-			selected_panel.offset_top = -164.0
+			selected_panel.offset_top = -186.0
 			selected_panel.offset_right = -22.0
 			selected_panel.offset_bottom = -18.0
 		else:
 			selected_panel.offset_left = 72.0
-			selected_panel.offset_top = -clampf(viewport_size.y * 0.24, 390.0, 500.0)
+			selected_panel.offset_top = -clampf(viewport_size.y * 0.28, 456.0, 540.0)
 			selected_panel.offset_right = -72.0
 			selected_panel.offset_bottom = -42.0
 		var margin := selected_panel.get_child(0) as MarginContainer
 		if margin != null:
 			var horizontal := 22 if portrait else 56
-			var vertical := 14 if portrait else 38
+			var vertical := 10 if portrait else 30
 			margin.add_theme_constant_override("margin_left", horizontal)
 			margin.add_theme_constant_override("margin_top", vertical)
 			margin.add_theme_constant_override("margin_right", horizontal)
 			margin.add_theme_constant_override("margin_bottom", vertical)
+		var selected_column := selected_panel.find_child("WorldSelectedInfoColumn", true, false) as VBoxContainer
+		if selected_column:
+			selected_column.add_theme_constant_override("separation", 5 if portrait else 12)
 	if world_event_strip:
 		var strip_width := minf(viewport_size.x - 48.0, 226.0 if portrait else 460.0)
 		world_event_strip.offset_left = -strip_width - (24.0 if portrait else 34.0)
