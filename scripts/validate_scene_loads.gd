@@ -447,9 +447,19 @@ func _validate_gameplay_viewport_layout(node: Node, viewport_size: Vector2i, err
 		_validate_control_in_viewport(node.find_child("HudBoosterDock", true, false), viewport_size, GAMEPLAY_SCENE_PATH, "HudBoosterDock", errors)
 	else:
 		var landscape_shell := node.find_child("LandscapeHudShell", true, false) as Control
+		var support_card := node.find_child("TipsCard", true, false) as Control
+		var retry_button := node.find_child("RetryButton", true, false) as Control
+		var next_button := node.find_child("NextStageButton", true, false) as Control
+		var quit_button := node.find_child("QuitButton", true, false) as Control
 		_validate_control_in_viewport(landscape_shell, viewport_size, GAMEPLAY_SCENE_PATH, "LandscapeHudShell", errors)
 		_validate_control_in_viewport(node.find_child("StatsCard", true, false), viewport_size, GAMEPLAY_SCENE_PATH, "StatsCard landscape", errors)
 		_validate_control_in_viewport(node.find_child("GoalCard", true, false), viewport_size, GAMEPLAY_SCENE_PATH, "GoalCard landscape", errors)
+		_validate_control_in_viewport(support_card, viewport_size, GAMEPLAY_SCENE_PATH, "LandscapeSupportCard", errors)
+		for button_info in [[retry_button, "RetryButton landscape"], [next_button, "NextStageButton landscape"], [quit_button, "QuitButton landscape"]]:
+			var action_button := button_info[0] as Control
+			var action_label := String(button_info[1])
+			_validate_control_in_viewport(action_button, viewport_size, GAMEPLAY_SCENE_PATH, action_label, errors)
+			_validate_control_inside_container(action_button, landscape_shell, GAMEPLAY_SCENE_PATH, action_label, errors)
 		if landscape_shell != null and landscape_shell.is_visible_in_tree():
 			var shell_rect := landscape_shell.get_global_rect()
 			var min_shell_width: float = 320.0 if viewport_size.x < 1800 else 720.0
@@ -464,6 +474,10 @@ func _validate_gameplay_viewport_layout(node: Node, viewport_size: Vector2i, err
 				var max_board_to_shell_gap: float = float(viewport_size.x) * 0.14
 				if board_to_shell_gap > max_board_to_shell_gap:
 					errors.append("%s LandscapeHudShell should stay visually grouped with BoardFrame at landscape %s, got gap %.1f above %.1f." % [GAMEPLAY_SCENE_PATH, viewport_size, board_to_shell_gap, max_board_to_shell_gap])
+		if support_card != null and support_card.is_visible_in_tree():
+			var min_support_height: float = float(viewport_size.y) * 0.12
+			if support_card.get_global_rect().size.y < min_support_height:
+				errors.append("%s LandscapeSupportCard should fill the lower side HUD instead of leaving an empty panel at %s, got height %.1f below %.1f." % [GAMEPLAY_SCENE_PATH, viewport_size, support_card.get_global_rect().size.y, min_support_height])
 		if board_frame != null:
 			var max_landscape_board_height: float = float(viewport_size.y) * 0.92
 			if board_frame.get_global_rect().size.y > max_landscape_board_height:
@@ -684,6 +698,15 @@ func _validate_commercial_ui_readability_gate(scene_path: String, node: Node, vi
 				for booster_button in hud_boosters:
 					if booster_button is Control and (booster_button as Control).is_visible_in_tree():
 						_validate_commercial_touch_target(booster_button, COMMERCIAL_UI_SECONDARY_TOUCH, scene_path, "%s commercial booster CTA" % String((booster_button as Control).name), viewport_size, errors)
+			if viewport_size.x > viewport_size.y:
+				for button_info in [
+					[node.find_child("RetryButton", true, false), "RetryButton landscape"],
+					[node.find_child("NextStageButton", true, false), "NextStageButton landscape"],
+					[node.find_child("QuitButton", true, false), "QuitButton landscape"],
+				]:
+					var button_control := button_info[0] as Control
+					if button_control != null and button_control.is_visible_in_tree():
+						_validate_commercial_touch_target(button_control, COMMERCIAL_UI_SECONDARY_TOUCH, scene_path, "%s commercial CTA" % String(button_info[1]), viewport_size, errors)
 		COLLECTION_SCENE_PATH:
 			_validate_commercial_touch_target(node.find_child("BackButton", true, false), COMMERCIAL_UI_SECONDARY_TOUCH, scene_path, "BackButton commercial CTA", viewport_size, errors)
 			var first_card := _first_collection_card(node)

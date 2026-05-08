@@ -841,9 +841,13 @@ func _validate_stage_4_buddy_snapshot_regions(image: Image, node: Node, scenario
 		var landscape_shell := node.find_child("LandscapeHudShell", true, false) as Control
 		var stats_card := node.find_child("StatsCard", true, false) as Control
 		var goal_card := node.find_child("GoalCard", true, false) as Control
+		var support_card := node.find_child("TipsCard", true, false) as Control
+		var retry_button := node.find_child("RetryButton", true, false) as Control
+		var next_button := node.find_child("NextStageButton", true, false) as Control
+		var quit_button := node.find_child("QuitButton", true, false) as Control
 		var combo_value := node.get("combo_value") as Label
 		var combo_gauge := node.get("combo_gauge") as ProgressBar
-		for control_info in [[landscape_shell, "LandscapeHudShell"], [stats_card, "StatsCard"], [goal_card, "GoalCard"], [combo_value, "ComboValue"], [combo_gauge, "ComboGauge"]]:
+		for control_info in [[landscape_shell, "LandscapeHudShell"], [stats_card, "StatsCard"], [goal_card, "GoalCard"], [support_card, "LandscapeSupportCard"], [retry_button, "RetryButton"], [next_button, "NextStageButton"], [quit_button, "QuitButton"], [combo_value, "ComboValue"], [combo_gauge, "ComboGauge"]]:
 			var control := control_info[0] as Control
 			var label := String(control_info[1])
 			_validate_control_pixels(image, control, snapshot_id, label, errors)
@@ -851,10 +855,12 @@ func _validate_stage_4_buddy_snapshot_regions(image: Image, node: Node, scenario
 		_validate_control_image_minimum_size(image, landscape_shell, snapshot_id, "LandscapeHudShell", Vector2(float(image.get_width()) * 0.20, float(image.get_height()) * 0.84), errors)
 		_validate_control_image_minimum_size(image, stats_card, snapshot_id, "StatsCard", Vector2(float(image.get_width()) * 0.17, 58.0), errors)
 		_validate_control_image_minimum_size(image, goal_card, snapshot_id, "GoalCard", Vector2(float(image.get_width()) * 0.17, 108.0), errors)
+		_validate_control_image_minimum_size(image, support_card, snapshot_id, "LandscapeSupportCard", Vector2(float(image.get_width()) * 0.17, float(image.get_height()) * 0.12), errors)
 		_validate_control_image_horizontal_gap(image, board_frame, landscape_shell, snapshot_id, "BoardFrame", "LandscapeHudShell", float(image.get_width()) * 0.14, errors)
 		_validate_controls_do_not_overlap(landscape_shell, board_frame, snapshot_id, "LandscapeHudShell", "BoardFrame", errors)
 		_validate_controls_do_not_overlap(stats_card, board_frame, snapshot_id, "StatsCard", "BoardFrame", errors)
 		_validate_controls_do_not_overlap(goal_card, board_frame, snapshot_id, "GoalCard", "BoardFrame", errors)
+		_validate_controls_do_not_overlap(support_card, board_frame, snapshot_id, "LandscapeSupportCard", "BoardFrame", errors)
 
 	_validate_stage_4_buddy_state(node, scenario, snapshot_id, errors)
 	_validate_stage_4_buddy_analytics(scenario, snapshot_id, errors)

@@ -473,7 +473,7 @@ func _apply_responsive_layout() -> void:
 	overlay_primary_button.add_theme_font_size_override("font_size", 26 if portrait else 24)
 	stats_card.visible = not portrait
 	status_card.visible = false
-	tips_card.visible = false
+	_configure_landscape_support_card(portrait)
 	combo_value.visible = not portrait
 	combo_gauge.visible = true
 	combo_gauge.custom_minimum_size = Vector2(0, 18 if portrait else 20)
@@ -503,6 +503,7 @@ func _apply_responsive_layout() -> void:
 	goal_card.custom_minimum_size = Vector2(0, 126) if portrait else Vector2(0, 500)
 	_configure_action_buttons(portrait)
 	_layout_gameplay_hud(portrait)
+	_update_tips()
 
 	_update_board_surface_size()
 
@@ -594,6 +595,17 @@ func _configure_action_buttons(portrait: bool) -> void:
 			continue
 		icon_button.custom_minimum_size = Vector2(74, 66) if portrait else Vector2(68, 62)
 		icon_button.add_theme_font_size_override("font_size", 31 if portrait else 30)
+
+
+func _configure_landscape_support_card(portrait: bool) -> void:
+	tips_card.visible = not portrait
+	tips_card.custom_minimum_size = Vector2.ZERO if portrait else Vector2(0, 240)
+	tips_card.size_flags_vertical = 0 if portrait else Control.SIZE_EXPAND_FILL
+	tips_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	tips_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	tips_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	tips_label.add_theme_font_size_override("font_size", 18 if portrait else 28)
+	tips_label.add_theme_constant_override("line_spacing", 4 if portrait else 10)
 
 
 func _pick_kind_without_match(row: int, col: int) -> String:
@@ -751,6 +763,7 @@ func _apply_candy_runtime_skin() -> void:
 	stats_card.add_theme_stylebox_override("panel", _hud_style(Color(1.0, 0.94, 0.56, 0.78), Color("ffbf32"), 24, 3))
 	goal_card.add_theme_stylebox_override("panel", _hud_style(Color(1.0, 0.70, 0.86, 0.76), Color("ff74a8"), 24, 3))
 	status_card.add_theme_stylebox_override("panel", _hud_style(Color(1, 1, 1, 0.86), Color("70cfff"), 24, 4))
+	tips_card.add_theme_stylebox_override("panel", _hud_style(Color(0.90, 1.0, 0.96, 0.88), Color("54d6a8"), 24, 4))
 	retry_button.add_theme_stylebox_override("normal", _hud_style(Color("ffd55a"), Color("f38a22"), 24, 4))
 	next_stage_button.add_theme_stylebox_override("normal", _hud_style(Color("70ec96"), Color("1fa96b"), 24, 4))
 	quit_button.add_theme_stylebox_override("normal", _hud_style(Color("ffffff"), Color("86c3e5"), 24, 4))
@@ -3969,6 +3982,9 @@ func _is_cell_active_xy(row: int, col: int) -> bool:
 
 
 func _update_tips() -> void:
+	if not MobileLayout.is_portrait(self):
+		tips_label.text = "지원 도구\n부스터 준비 · Buddy 충전"
+		return
 	if tutorial_enabled:
 		tips_label.text = "%s\n%s" % [_soft_tutorial_label(), _tutorial_message()]
 		return
