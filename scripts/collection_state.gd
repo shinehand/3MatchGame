@@ -110,6 +110,19 @@ static func reward_track_for_animal(animal_id: String) -> Array:
 	return Array(animal_definition_by_id(animal_id).get("friendship_rewards", [])).duplicate(true)
 
 
+static func reward_entry_by_id(animal_id: String, reward_id: String) -> Dictionary:
+	var normalized_reward_id := reward_id.strip_edges()
+	if normalized_reward_id.is_empty():
+		return {}
+	for reward in reward_track_for_animal(animal_id):
+		if not (reward is Dictionary):
+			continue
+		var reward_dict: Dictionary = reward
+		if String(reward_dict.get("reward_id", "")).strip_edges() == normalized_reward_id:
+			return reward_dict.duplicate(true)
+	return {}
+
+
 static func reward_entries_earned_between(animal_id: String, level_before: int, level_after: int) -> Array:
 	var earned := []
 	for reward in reward_track_for_animal(animal_id):

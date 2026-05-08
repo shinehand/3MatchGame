@@ -140,6 +140,22 @@
     ]
   },
   {
+    "name": "animal_cosmetic_equip",
+    "required_params": [
+      "session_id",
+      "animal_id",
+      "cosmetic_id",
+      "cosmetic_type",
+      "entry_point",
+      "source",
+      "friendship_level",
+      "token_balance"
+    ],
+    "optional_params": [
+      "previous_cosmetic_id"
+    ]
+  },
+  {
     "name": "live_event_impression",
     "required_params": [
       "session_id",

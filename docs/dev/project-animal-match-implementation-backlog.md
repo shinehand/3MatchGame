@@ -371,6 +371,21 @@
 - 완료 기준:
   - 12종 카드가 잠김/해금/신규 상태를 표시하고, 표정 미리보기를 성능 제한 안에서 보여 준다.
 
+### PAM-DEV-063: Rescue Book Cosmetic Equip MVP
+
+- 상태: 완료됨. `CollectionState.reward_entry_by_id()`와 `GameSession.equip_rescue_book_cosmetic()`이 해금 동물의 획득한 friendship cosmetic reward만 대표 `equipped_cosmetic` 슬롯에 저장하고, 성공 시 `animal_cosmetic_equip` analytics를 기록한다. `collection_screen` 상세 영역은 획득 reward를 장착 버튼으로 표시하고, 장착 중/미획득 상태를 disabled 버튼으로 구분한다. Scene smoke는 `rabbit` 40토큰 fixture에서 `rabbit_sprout_frame` 장착, save persistence, 중복/미획득 장착 차단, 카드 라벨/버튼 상태, analytics payload를 검증한다.
+- 소유: Development Agent + QA Agent
+- 대상 파일:
+  - `scripts/collection_state.gd`
+  - `scripts/game_session.gd`
+  - `scripts/collection_screen.gd`
+  - `data/analytics_events.json`
+  - `scripts/validate_scene_loads.gd`
+- 완료 기준:
+  - 획득한 cosmetic reward만 장착 가능하다.
+  - 같은 cosmetic 재장착과 미획득 reward 장착은 저장 상태와 analytics를 바꾸지 않는다.
+  - 실제 cosmetic 아트 적용, 홈/보드/프로필 반영, 타입별 동시 장착은 후속 작업으로 분리한다.
+
 ### PAM-DEV-070: 실패 유형 분류와 제안 정책 구현
 
 - 상태: 완료됨. `FailOfferPolicy`가 Near Miss, Strategic Miss, First Fail, Repeat Fail, Hard Level Fail을 분류하고, Level 1-10 광고/IAP/하트 제안 차단과 실패 횟수 저장 기반 반복 실패 분기를 검증한다.

@@ -21,6 +21,7 @@ var collection_scroll: ScrollContainer
 var card_grid: GridContainer
 var summary_label: Label
 var detail_label: Label
+var cosmetic_grid: GridContainer
 var preview_nodes: Dictionary = {}
 var _preview_tweens: Array[Tween] = []
 var _active_preview_ids: Array[String] = []
@@ -110,6 +111,15 @@ func _build_layout() -> void:
 	detail_label.add_theme_font_size_override("font_size", 18)
 	detail_label.add_theme_color_override("font_color", Color("416076"))
 	root.add_child(detail_label)
+
+	cosmetic_grid = GridContainer.new()
+	cosmetic_grid.name = "CosmeticEquipGrid"
+	cosmetic_grid.columns = 3
+	cosmetic_grid.visible = false
+	cosmetic_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cosmetic_grid.add_theme_constant_override("h_separation", 8)
+	cosmetic_grid.add_theme_constant_override("v_separation", 8)
+	root.add_child(cosmetic_grid)
 
 	collection_scroll = ScrollContainer.new()
 	collection_scroll.name = "CollectionScroll"
@@ -297,14 +307,17 @@ func _update_detail_for_selected(animals: Array, state_animals: Dictionary) -> v
 				String(animal_dict.get("personality", "구조 완료")),
 			]
 			detail_label.text = _detail_with_event_line("%s\n%s" % [base_detail, _friendship_reward_track_text(animal_dict, entry)])
+			_refresh_cosmetic_actions(animal_dict, entry, true)
 		else:
 			detail_label.text = _detail_with_event_line("%s · Stage %d에서 해금 예정 · %s" % [
 				String(animal_dict.get("display_name", animal_id)),
 				int(animal_dict.get("unlock_stage", 1)),
 				String(animal_dict.get("personality", "아직 구조 전")),
 			])
+			_refresh_cosmetic_actions(animal_dict, entry, false)
 		return
 	detail_label.text = _detail_with_event_line("구조한 친구들의 해금 상태와 토큰, 우정 레벨을 확인합니다.")
+	_clear_cosmetic_actions()
 
 
 func _earned_reward_count(animal: Dictionary, entry: Dictionary) -> int:
@@ -350,6 +363,65 @@ func _reward_type_label(reward_type: String) -> String:
 		"title_badge":
 			return "배지"
 	return "코스메틱"
+
+
+func _refresh_cosmetic_actions(animal: Dictionary, entry: Dictionary, unlocked: bool) -> void:
+	_clear_cosmetic_actions()
+	if cosmetic_grid == null or not unlocked:
+		return
+	var rewards := Array(animal.get("friendship_rewards", []))
+	if rewards.is_empty():
+		return
+	var animal_id := String(animal.get("id", ""))
+	var earned_rewards := Array(entry.get("earned_rewards", []))
+	var equipped_cosmetic := String(entry.get("equipped_cosmetic", animal.get("default_cosmetic", "none")))
+	cosmetic_grid.visible = true
+	for reward in rewards:
+		if not (reward is Dictionary):
+			continue
+		var reward_dict: Dictionary = reward
+		var reward_id := String(reward_dict.get("reward_id", "")).strip_edges()
+		if reward_id.is_empty():
+			continue
+		var reward_type := String(reward_dict.get("reward_type", "cosmetic"))
+		var earned := earned_rewards.has(reward_id)
+		var equipped := equipped_cosmetic == reward_id
+		var button := Button.new()
+		button.name = "CosmeticButton_%s" % _safe_node_suffix(reward_id)
+		button.custom_minimum_size = Vector2(132, 40)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		button.tooltip_text = reward_id
+		if equipped:
+			button.text = "장착중 %s" % _reward_type_label(reward_type)
+			button.disabled = true
+		elif earned:
+			button.text = "장착 %s" % _reward_type_label(reward_type)
+			button.pressed.connect(_on_cosmetic_reward_pressed.bind(animal_id, reward_id))
+		else:
+			button.text = "Lv.%d 대기" % int(reward_dict.get("level", 0))
+			button.disabled = true
+		cosmetic_grid.add_child(button)
+
+
+func _clear_cosmetic_actions() -> void:
+	if cosmetic_grid == null:
+		return
+	for child in cosmetic_grid.get_children():
+		cosmetic_grid.remove_child(child)
+		child.queue_free()
+	cosmetic_grid.visible = false
+
+
+func _safe_node_suffix(value: String) -> String:
+	return value.strip_edges().replace(" ", "_").replace("/", "_").replace(":", "_").replace(".", "_")
+
+
+func _on_cosmetic_reward_pressed(animal_id: String, reward_id: String) -> void:
+	var result := GameSession.equip_rescue_book_cosmetic(animal_id, reward_id, "collection_detail")
+	if bool(result.get("equipped", false)):
+		selected_animal_id = animal_id
+		_refresh_cards()
 
 
 func _detail_with_event_line(base_text: String) -> String:
@@ -525,6 +597,8 @@ func _apply_responsive_layout() -> void:
 	MobileLayout.apply_safe_area(safe_margin, self, 18)
 	var viewport_size := get_viewport_rect().size
 	card_grid.columns = 2 if viewport_size.x < 720 else 3
+	if cosmetic_grid != null:
+		cosmetic_grid.columns = 2 if viewport_size.x < 720 else 3
 	_queue_preview_motion_sync()
 
 

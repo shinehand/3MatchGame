@@ -21,7 +21,7 @@
 | DEC-012 | 피버 충전은 기존 Combo Gauge 6칸 충전 완료 시 발동하고, 보상은 3턴 지속 | Locked | PAM-DEV-052 구현 완료. 별도 초 단위/수치 게이지는 MVP 후 재검토 | Systems/Balance |
 | DEC-013 | 첫 Rescue Buddy 대상은 Stage 4의 rabbit `quick_refill` | Locked | PAM-DEV-053 1차 구현 완료. 목표 동물 매치 3회 충전 후 1회 자동 발동 | Planning/Tech |
 | DEC-014 | Rescue Book 첫 해금 동물은 rabbit 고정 | Locked | FTUE 표와 Level 4 첫 카드 해금 기준 확정 | UX |
-| DEC-015 | 우정 레벨 보상은 MVP에서 cosmetic 중심 | Accepted | 초반 pay-to-win 방지. booster/event XP는 소프트 런칭 이후 실험 | BM/UX |
+| DEC-015 | 우정 레벨 보상은 MVP에서 cosmetic 중심 | Accepted | 초반 pay-to-win 방지. 획득 cosmetic은 Rescue Book 대표 슬롯 장착까지만 지원하고, booster/event XP와 타입별 동시 장착은 소프트 런칭 이후 실험 | BM/UX |
 | DEC-016 | Near Miss 기준은 남은 목표 2개 이하 또는 목표 진행률 80% 이상 | Locked | `FailOfferPolicy` 기본값과 remote config `near_miss_goal_threshold`, `near_miss_progress_threshold`로 조정 가능 | UX/Balance/Tech |
 | DEC-017 | 분석 SDK 공급자 선택 전 이벤트 경계는 `AnalyticsGateway` `local_buffer` queued dispatch로 고정 | Accepted | 계약 위반 이벤트는 `rejected_contract`로 격리하고, Firebase/GameAnalytics/custom adapter는 `configure_flush_adapter(provider_id, Callable)` 뒤에 연결 | Tech/PM |
 | DEC-018 | SDK 공급자 선택 전 provider readiness는 `data/provider_readiness.json` manifest와 validator로 고정 | Accepted | Analytics `local_buffer`, Monetization `local_simulator`, adapter hook, source/result canonicalization, provider_result 보존, queue/request log 상한을 `validate_provider_readiness.sh`가 코드와 대조 | Tech/QA |

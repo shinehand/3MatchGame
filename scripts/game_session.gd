@@ -561,6 +561,55 @@ static func _first_stage_token_reward_animal(target_animals: Array) -> String:
 	return ""
 
 
+static func equip_rescue_book_cosmetic(animal_id: String, cosmetic_id: String, entry_point: String = "collection_detail") -> Dictionary:
+	load_state()
+	var normalized_animal_id := animal_id.strip_edges()
+	var normalized_cosmetic_id := cosmetic_id.strip_edges()
+	if normalized_animal_id.is_empty() or normalized_cosmetic_id.is_empty():
+		return {"equipped": false, "reason": "invalid_request"}
+
+	var state := CollectionState.normalize_state(Dictionary(_save_data.get("rescue_book", {})))
+	var animals: Dictionary = Dictionary(state.get("animals", {}))
+	if not animals.has(normalized_animal_id):
+		return {"equipped": false, "reason": "unknown_animal", "animal_id": normalized_animal_id, "cosmetic_id": normalized_cosmetic_id}
+	var entry := Dictionary(animals[normalized_animal_id])
+	if not bool(entry.get("unlocked", false)):
+		return {"equipped": false, "reason": "locked_animal", "animal_id": normalized_animal_id, "cosmetic_id": normalized_cosmetic_id}
+
+	var reward_entry := CollectionState.reward_entry_by_id(normalized_animal_id, normalized_cosmetic_id)
+	if reward_entry.is_empty():
+		return {"equipped": false, "reason": "unknown_cosmetic", "animal_id": normalized_animal_id, "cosmetic_id": normalized_cosmetic_id}
+	if not Array(entry.get("earned_rewards", [])).has(normalized_cosmetic_id):
+		return {"equipped": false, "reason": "unearned_cosmetic", "animal_id": normalized_animal_id, "cosmetic_id": normalized_cosmetic_id}
+
+	var previous_cosmetic_id := String(entry.get("equipped_cosmetic", "none"))
+	if previous_cosmetic_id == normalized_cosmetic_id:
+		return {"equipped": false, "reason": "already_equipped", "animal_id": normalized_animal_id, "cosmetic_id": normalized_cosmetic_id}
+
+	entry["equipped_cosmetic"] = normalized_cosmetic_id
+	animals[normalized_animal_id] = entry
+	state["animals"] = animals
+	_save_data["rescue_book"] = state
+	save_state()
+	record_analytics_event("animal_cosmetic_equip", {
+		"animal_id": normalized_animal_id,
+		"cosmetic_id": normalized_cosmetic_id,
+		"cosmetic_type": String(reward_entry.get("reward_type", "cosmetic")),
+		"entry_point": entry_point,
+		"source": "rescue_book",
+		"friendship_level": int(entry.get("friendship_level", 1)),
+		"token_balance": int(entry.get("tokens", 0)),
+		"previous_cosmetic_id": previous_cosmetic_id,
+	})
+	return {
+		"equipped": true,
+		"animal_id": normalized_animal_id,
+		"cosmetic_id": normalized_cosmetic_id,
+		"cosmetic_type": String(reward_entry.get("reward_type", "cosmetic")),
+		"previous_cosmetic_id": previous_cosmetic_id,
+	}
+
+
 static func mark_rescue_book_seen(animal_id: String) -> void:
 	load_state()
 	var state := CollectionState.normalize_state(Dictionary(_save_data.get("rescue_book", {})))

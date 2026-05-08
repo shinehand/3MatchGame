@@ -697,7 +697,7 @@ func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
 			"remote_config_exposure":
 				_validate_remote_config_exposure_payload(params, errors)
 				remote_config_keys_seen[String(params.get("config_key", ""))] = true
-	for required_event in ["rescue_book_open", "animal_unlock", "animal_token_gain", "animal_friendship_level_up", "stage_start", "special_combo_trigger", "remote_config_exposure", "event_join", "event_progress", "event_reward_claim", "buddy_skill_charge", "buddy_skill_ready", "buddy_skill_trigger", "buddy_skill_blocked", "fail_offer_show", "fail_offer_select", "fail_offer_dismiss", "ad_reward_complete", "ad_reward_fail", "iap_purchase_start", "iap_purchase_complete", "iap_purchase_restore", "iap_purchase_cancel", "iap_purchase_fail", "extra_moves_grant"]:
+	for required_event in ["rescue_book_open", "animal_unlock", "animal_token_gain", "animal_friendship_level_up", "animal_cosmetic_equip", "stage_start", "special_combo_trigger", "remote_config_exposure", "event_join", "event_progress", "event_reward_claim", "buddy_skill_charge", "buddy_skill_ready", "buddy_skill_trigger", "buddy_skill_blocked", "fail_offer_show", "fail_offer_select", "fail_offer_dismiss", "ad_reward_complete", "ad_reward_fail", "iap_purchase_start", "iap_purchase_complete", "iap_purchase_restore", "iap_purchase_cancel", "iap_purchase_fail", "extra_moves_grant"]:
 		if not seen_names.has(required_event):
 			errors.append("runtime analytics should emit %s during scene smoke." % required_event)
 	for placement in IMPLEMENTED_LIVE_EVENT_PLACEMENTS:
@@ -3767,6 +3767,37 @@ func _validate_collection_card_input_runtime(node: Node, grid: Node, errors: Pac
 	var rabbit_state_after_input := Dictionary(Dictionary(GameSession.get_rescue_book_state().get("animals", {})).get("rabbit", {}))
 	if bool(rabbit_state_after_input.get("is_new", true)) or int(rabbit_state_after_input.get("tokens", 0)) != 40 or int(rabbit_state_after_input.get("friendship_level", 1)) < 3 or not Array(rabbit_state_after_input.get("earned_rewards", [])).has("rabbit_sprout_frame"):
 		errors.append("%s Rescue Book card input should persist rabbit seen state without losing tokens, friendship level, or rewards." % COLLECTION_SCENE_PATH)
+
+	var cosmetic_grid := node.find_child("CosmeticEquipGrid", true, false) as GridContainer
+	if cosmetic_grid == null or not cosmetic_grid.visible:
+		errors.append("%s Rescue Book detail should show cosmetic equip actions for earned reward tracks." % COLLECTION_SCENE_PATH)
+	var equip_events_before := _analytics_event_count("animal_cosmetic_equip")
+	if node.has_method("_on_cosmetic_reward_pressed"):
+		node.call("_on_cosmetic_reward_pressed", "rabbit", "rabbit_sprout_frame")
+	else:
+		errors.append("%s should expose _on_cosmetic_reward_pressed for cosmetic equip smoke." % COLLECTION_SCENE_PATH)
+	var rabbit_state_after_equip := Dictionary(Dictionary(GameSession.get_rescue_book_state().get("animals", {})).get("rabbit", {}))
+	if String(rabbit_state_after_equip.get("equipped_cosmetic", "")) != "rabbit_sprout_frame":
+		errors.append("%s earned rabbit cosmetic should equip and persist in rescue_book state." % COLLECTION_SCENE_PATH)
+	var save_after_equip := _validation_save_data()
+	var saved_rabbit := Dictionary(Dictionary(Dictionary(save_after_equip.get("rescue_book", {})).get("animals", {})).get("rabbit", {}))
+	if String(saved_rabbit.get("equipped_cosmetic", "")) != "rabbit_sprout_frame":
+		errors.append("%s earned rabbit cosmetic should persist to save data." % COLLECTION_SCENE_PATH)
+	if _analytics_event_count("animal_cosmetic_equip") != equip_events_before + 1:
+		errors.append("%s cosmetic equip should emit exactly one animal_cosmetic_equip event." % COLLECTION_SCENE_PATH)
+	var equip_event := _last_analytics_event_by_name("animal_cosmetic_equip")
+	var equip_params: Dictionary = Dictionary(equip_event.get("params", {}))
+	if String(equip_params.get("animal_id", "")) != "rabbit" or String(equip_params.get("cosmetic_id", "")) != "rabbit_sprout_frame" or String(equip_params.get("cosmetic_type", "")) != "card_frame" or String(equip_params.get("entry_point", "")) != "collection_detail" or String(equip_params.get("source", "")) != "rescue_book" or int(equip_params.get("friendship_level", 0)) != 3 or int(equip_params.get("token_balance", 0)) != 40:
+		errors.append("%s animal_cosmetic_equip should identify rabbit_sprout_frame collection equip payload." % COLLECTION_SCENE_PATH)
+	if node.has_method("_on_cosmetic_reward_pressed"):
+		node.call("_on_cosmetic_reward_pressed", "rabbit", "rabbit_sprout_frame")
+		node.call("_on_cosmetic_reward_pressed", "rabbit", "rabbit_rescuer_badge")
+	var rabbit_state_after_blocked_equips := Dictionary(Dictionary(GameSession.get_rescue_book_state().get("animals", {})).get("rabbit", {}))
+	if String(rabbit_state_after_blocked_equips.get("equipped_cosmetic", "")) != "rabbit_sprout_frame" or _analytics_event_count("animal_cosmetic_equip") != equip_events_before + 1:
+		errors.append("%s duplicate or unearned cosmetic equip should not mutate state or emit analytics." % COLLECTION_SCENE_PATH)
+	var equip_button := node.find_child("CosmeticButton_rabbit_sprout_frame", true, false) as Button
+	if equip_button == null or not equip_button.disabled or not equip_button.text.contains("장착중"):
+		errors.append("%s equipped cosmetic button should show disabled 장착중 state." % COLLECTION_SCENE_PATH)
 
 
 func _validate_collection_preview_motion_runtime(node: Node, errors: PackedStringArray) -> void:

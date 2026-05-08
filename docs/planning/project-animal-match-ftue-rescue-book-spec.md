@@ -102,7 +102,8 @@ RescueBook
 - MVP 런타임 지급은 첫 클리어 기준 첫 번째 목표 동물 1종에 `+3 tokens`를 지급하고, `stage_id + animal_id` claim key로 중복 지급을 막는다.
 - 실패 시 토큰은 지급하지 않는다. 단, 이벤트 미션은 `attempt` 보상을 별도로 둘 수 있다.
 - Level 4 첫 카드 해금은 고정 보상이다.
-- 우정 레벨 보상은 초반에는 cosmetic 중심으로 둔다.
+- 우정 레벨 보상은 초반에는 cosmetic 중심으로 두고, 획득한 cosmetic reward만 Rescue Book 상세에서 대표 슬롯에 장착할 수 있다.
+- 같은 cosmetic 재장착과 미획득 reward 장착 시도는 저장 상태와 analytics를 바꾸지 않는다.
 - 스킬 성능 보상은 소프트 런칭 지표 확인 전까지 보류한다.
 
 ## 6. 진입점
