@@ -28,7 +28,7 @@
 - Home Settings Overlay snapshot은 ON/OFF 상태별 설정 panel, title, auto-save summary, sound/haptics toggle, close CTA의 픽셀, bounds, 텍스트, 최소 이미지 크기를 검증한다.
 - Stage Select World Progress snapshot은 Stage 1-3 클리어, Stage 4 current, Stage 5 locked fixture에서 current ring/PLAY ribbon, cleared star tray, locked badge, finale ribbon, 하단 선택 패널 비겹침을 검증한다.
 - Stage 1 성공 결과 snapshot은 보상/별/Zoo-Zoo Time/`다음 스테이지`/`홈으로` CTA, `stage_complete` analytics, Stage 2 해금을 검증한다.
-- Stage 4 Buddy HUD snapshot은 0/3, 2/3, 출동, 완료 상태에서 portrait 라벨/게이지와 landscape `LandscapeHudShell`/combo text가 읽히고, shell이 실제 PNG 너비의 20% 이상을 확보하며, `buddy_skill_charge`/`buddy_skill_ready`/`buddy_skill_trigger` analytics payload가 중복 없이 기록되는지 검증한다.
+- Stage 4 Buddy HUD snapshot은 0/3, 2/3, 출동, 완료 상태에서 portrait 라벨/게이지와 landscape `LandscapeHudShell`/combo text가 읽히고, shell이 실제 PNG 너비의 20% 이상을 확보하며, `BoardFrame`과 `LandscapeHudShell` 사이 gap이 실제 PNG 너비의 14% 이하로 유지되고, `buddy_skill_charge`/`buddy_skill_ready`/`buddy_skill_trigger` analytics payload가 중복 없이 기록되는지 검증한다.
 - Stage 31 특수 조합 snapshot은 실제 `_resolve_swap` 발동 직후 조합별 label/flash/ring, explosive echo ring 필요 여부, filename combo type, `special_combo_trigger` analytics payload, transient VFX cleanup을 검증한다.
 - Collection snapshot은 `rabbit` 40토큰과 `rabbit_sprout_frame` 장착 fixture에서 상세 reward track, `CosmeticEquipGrid`, `장착중` 버튼 region을 검증한다.
 - GitHub-hosted runner에서는 Xvfb renderer 실패가 전체 no-device gate를 막지 않도록 non-blocking artifact attempt로만 실행하며, 로컬 또는 지원되는 Xvfb 환경에서는 blocking으로 실행한다.
@@ -43,7 +43,7 @@
 - Stage Popup landscape는 화면 중앙의 상용 modal 크기를 가져야 하며, `PLAY` CTA는 booster/close보다 강한 primary CTA 높이와 면적을 유지해야 한다.
 - Home과 Stage Select World Map의 `PLAY` CTA는 render snapshot PNG에서도 충분한 이미지 픽셀 크기를 가져야 하며, 논리 viewport 터치 타깃만 통과하고 실제 스냅샷에서 작은 개발용 버튼처럼 보이면 실패해야 한다.
 - Collection landscape는 얇은 표처럼 눌리지 않고 앨범 카드 그리드로 읽혀야 하며, scene smoke가 첫 카드 높이와 동물 preview 크기를 검증한다.
-- Gameplay portrait는 `HudTopDock`, `HudGoalDock`, `HudBoosterDock`이 BoardFrame과 겹치지 않아야 하고, landscape `LandscapeHudShell`은 BoardFrame과 겹치지 않는 하나의 compact HUD 패널이어야 하며, 실제 render snapshot에서도 얇은 debug rail로 눌리지 않아야 한다. Landscape BoardFrame은 빈 tray처럼 과신장되면 안 된다.
+- Gameplay portrait는 `HudTopDock`, `HudGoalDock`, `HudBoosterDock`이 BoardFrame과 겹치지 않아야 하고, landscape `LandscapeHudShell`은 BoardFrame과 겹치지 않는 하나의 compact HUD 패널이어야 하며, 실제 render snapshot에서도 얇은 debug rail로 눌리거나 BoardFrame과 멀리 떨어진 별도 섬처럼 보이면 안 된다. Landscape BoardFrame은 빈 tray처럼 과신장되면 안 된다.
 - 결과/실패 overlay는 보상/다음 행동 또는 실패 원인/다음 한 수 중심으로 6개 이하의 visible line을 유지해 debug log처럼 과밀해지지 않아야 한다.
 - 이 gate는 논리 px 기반 no-device 회귀 방지용이며, 실제 Android 물리 터치감과 색감은 최종 device evidence에서 별도 승인한다.
 

@@ -792,9 +792,25 @@
   - `LandscapeHudShell`은 보드와 겹치지 않고 실제 PNG 너비의 20% 이상을 확보한다.
   - `validate_gameplay.sh`와 render snapshot smoke 40개가 통과한다.
 
+### PAM-UX-124: Gameplay Landscape Board-HUD Cluster Polish
+
+- 상태: 완료됨. Gameplay landscape에서 보드와 `LandscapeHudShell` 사이가 과하게 벌어져 좌우 배경이 빈 공간처럼 보이던 문제를 줄였다. 가로 모드에서는 `BoardPanel`이 남은 폭을 전부 확장하지 않도록 바꾸고 `LayoutRoot`를 중앙 정렬해 보드와 HUD가 하나의 플레이 클러스터로 붙어 보이게 했다. 보드 패널 높이도 콘텐츠 중심으로 줄여 아래까지 늘어진 개발용 panel 느낌을 제거했고, scene/render snapshot gate가 `BoardFrame`과 `LandscapeHudShell` 사이 실제 간격 상한을 검증한다.
+- 소유: Art Agent + Development Agent + QA Agent
+- 대상 파일:
+  - `scripts/gameplay.gd`
+  - `scripts/validate_scene_loads.gd`
+  - `scripts/validate_render_snapshots.gd`
+  - `docs/dev/validation-process.md`
+  - `docs/qa/project-animal-match-development-gates.md`
+  - `docs/dev/project-animal-match-implementation-backlog.md`
+- 완료 기준:
+  - `844x390` gameplay landscape snapshot에서 보드와 HUD가 분리된 섬처럼 보이지 않고 중앙의 한 gameplay cluster로 읽힌다.
+  - `BoardFrame`과 `LandscapeHudShell`은 겹치지 않으면서 실제 PNG 너비의 14%를 넘는 빈 gap을 만들지 않는다.
+  - `validate_gameplay.sh`와 render snapshot smoke 40개가 통과한다.
+
 ## 추천 구현 순서
 
-완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-058`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`, `PAM-UX-114`, `PAM-UX-115`, `PAM-UX-116`, `PAM-LIVEOPS-118`, `PAM-UX-119`, `PAM-UX-120`, `PAM-UX-121`, `PAM-UX-122`, `PAM-UX-123`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
+완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-058`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`, `PAM-UX-114`, `PAM-UX-115`, `PAM-UX-116`, `PAM-LIVEOPS-118`, `PAM-UX-119`, `PAM-UX-120`, `PAM-UX-121`, `PAM-UX-122`, `PAM-UX-123`, `PAM-UX-124`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
 
 다음 고가치 순서:
 

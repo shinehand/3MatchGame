@@ -456,8 +456,14 @@ func _validate_gameplay_viewport_layout(node: Node, viewport_size: Vector2i, err
 			var max_shell_width: float = min(560.0, float(viewport_size.x) * 0.46) if viewport_size.x < 1800 else min(960.0, float(viewport_size.x) * 0.32)
 			if shell_rect.size.x < min_shell_width or shell_rect.size.x > max_shell_width:
 				errors.append("%s LandscapeHudShell should read as one compact commercial side HUD at %s, got width %.1f outside %.1f..%.1f." % [GAMEPLAY_SCENE_PATH, viewport_size, shell_rect.size.x, min_shell_width, max_shell_width])
-			if board_frame != null and board_frame.is_visible_in_tree() and shell_rect.intersects(board_frame.get_global_rect()):
-				errors.append("%s LandscapeHudShell should not overlap BoardFrame at landscape %s." % [GAMEPLAY_SCENE_PATH, viewport_size])
+			if board_frame != null and board_frame.is_visible_in_tree():
+				var board_rect := board_frame.get_global_rect()
+				if shell_rect.intersects(board_rect):
+					errors.append("%s LandscapeHudShell should not overlap BoardFrame at landscape %s." % [GAMEPLAY_SCENE_PATH, viewport_size])
+				var board_to_shell_gap: float = shell_rect.position.x - (board_rect.position.x + board_rect.size.x)
+				var max_board_to_shell_gap: float = float(viewport_size.x) * 0.14
+				if board_to_shell_gap > max_board_to_shell_gap:
+					errors.append("%s LandscapeHudShell should stay visually grouped with BoardFrame at landscape %s, got gap %.1f above %.1f." % [GAMEPLAY_SCENE_PATH, viewport_size, board_to_shell_gap, max_board_to_shell_gap])
 		if board_frame != null:
 			var max_landscape_board_height: float = float(viewport_size.y) * 0.92
 			if board_frame.get_global_rect().size.y > max_landscape_board_height:

@@ -358,6 +358,7 @@ func _apply_responsive_layout() -> void:
 	var viewport_size := get_viewport_rect().size
 
 	layout_root.vertical = portrait
+	layout_root.alignment = BoxContainer.ALIGNMENT_BEGIN if portrait else BoxContainer.ALIGNMENT_CENTER
 	layout_root.add_theme_constant_override("separation", 0 if portrait else 20)
 	primary_buttons.vertical = false
 	primary_buttons.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -389,8 +390,8 @@ func _apply_responsive_layout() -> void:
 		layout_root.move_child(landscape_hud_shell, 1)
 
 	board_panel.custom_minimum_size = Vector2(0, 0)
-	board_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	board_panel.size_flags_vertical = 0 if portrait else Control.SIZE_EXPAND_FILL
+	board_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL if portrait else Control.SIZE_FILL
+	board_panel.size_flags_vertical = 0 if portrait else Control.SIZE_SHRINK_CENTER
 	board_frame.size_flags_vertical = 0
 	board_margin.add_theme_constant_override("margin_left", 14 if portrait else 24)
 	board_margin.add_theme_constant_override("margin_top", 14 if portrait else 24)

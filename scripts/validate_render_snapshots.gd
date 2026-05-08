@@ -851,6 +851,7 @@ func _validate_stage_4_buddy_snapshot_regions(image: Image, node: Node, scenario
 		_validate_control_image_minimum_size(image, landscape_shell, snapshot_id, "LandscapeHudShell", Vector2(float(image.get_width()) * 0.20, float(image.get_height()) * 0.84), errors)
 		_validate_control_image_minimum_size(image, stats_card, snapshot_id, "StatsCard", Vector2(float(image.get_width()) * 0.17, 58.0), errors)
 		_validate_control_image_minimum_size(image, goal_card, snapshot_id, "GoalCard", Vector2(float(image.get_width()) * 0.17, 108.0), errors)
+		_validate_control_image_horizontal_gap(image, board_frame, landscape_shell, snapshot_id, "BoardFrame", "LandscapeHudShell", float(image.get_width()) * 0.14, errors)
 		_validate_controls_do_not_overlap(landscape_shell, board_frame, snapshot_id, "LandscapeHudShell", "BoardFrame", errors)
 		_validate_controls_do_not_overlap(stats_card, board_frame, snapshot_id, "StatsCard", "BoardFrame", errors)
 		_validate_controls_do_not_overlap(goal_card, board_frame, snapshot_id, "GoalCard", "BoardFrame", errors)
@@ -1087,6 +1088,16 @@ func _validate_control_image_minimum_size(image: Image, control: Control, snapsh
 	var rect := _control_rect_to_image_bounds(control.get_global_rect(), image.get_width(), image.get_height())
 	if float(rect.size.x) < minimum_size.x or float(rect.size.y) < minimum_size.y:
 		errors.append("%s %s should remain commercially readable in the PNG at least %s, got %s." % [snapshot_id, label, minimum_size, rect.size])
+
+
+func _validate_control_image_horizontal_gap(image: Image, left_control: Control, right_control: Control, snapshot_id: String, left_label: String, right_label: String, max_gap: float, errors: PackedStringArray) -> void:
+	if left_control == null or right_control == null:
+		return
+	var left_rect := _control_rect_to_image_bounds(left_control.get_global_rect(), image.get_width(), image.get_height())
+	var right_rect := _control_rect_to_image_bounds(right_control.get_global_rect(), image.get_width(), image.get_height())
+	var gap := float(right_rect.position.x - (left_rect.position.x + left_rect.size.x))
+	if gap > max_gap:
+		errors.append("%s %s and %s should read as one gameplay cluster in the PNG, got horizontal gap %.1f above %.1f." % [snapshot_id, left_label, right_label, gap, max_gap])
 
 
 func _validate_controls_do_not_overlap(a: Control, b: Control, snapshot_id: String, a_label: String, b_label: String, errors: PackedStringArray) -> void:
