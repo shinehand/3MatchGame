@@ -24,7 +24,7 @@
 
 - `zsh scripts/validate_render_snapshots.sh`는 Home, Home Settings Overlay ON/OFF, Home Live Event ended detail, Stage Select World Map, Stage Select World Progress, Stage Popup, Stage 4 Gameplay Buddy HUD 4상태, Stage 1 성공 결과 overlay, Stage 25 실패 overlay, Stage 31 특수 조합 6종, Collection을 `390x844`와 `844x390` PNG 정확히 40장으로 저장한다.
 - 각 snapshot은 파일 생성, 요청 viewport 크기, non-blank/varied pixel, 핵심 UI region의 실제 렌더 픽셀을 검증한다.
-- Home Live Event ended detail snapshot은 `active`/`offline`/`upcoming`/`ended` 상태 배지/CTA 계약과 종료 상태의 `EventDetailOverlay`, 상태 배지 문구, 진행 카드, 보상 칩 텍스트, disabled `EventClaimButton`의 `종료됨` 상태를 검증한다.
+- Home Live Event ended detail snapshot은 `active`/`offline`/`upcoming`/`ended` 상태 배지/CTA 계약과 종료 상태의 `EventDetailOverlay`, 상태 배지 문구, 진행 카드, 보상 칩 텍스트, `EventDetailPanel`/progress card/reward chip/claim CTA의 PNG 최소 크기, disabled `EventClaimButton`의 `종료됨` 상태를 검증한다.
 - Home Settings Overlay snapshot은 ON/OFF 상태별 설정 panel, title, auto-save summary, sound/haptics toggle, close CTA의 픽셀, bounds, 텍스트, 최소 이미지 크기를 검증한다.
 - Stage Select World Map/Progress snapshot은 Stage 1-3 클리어, Stage 4 current, Stage 5 locked fixture에서 current ring/PLAY ribbon, cleared star tray, locked badge, finale ribbon, 하단 선택 패널 비겹침, `WorldSelectedChipRow`의 목표/이동/보상 chip 텍스트와 PNG 최소 크기를 검증한다.
 - Stage 1 성공 결과 snapshot은 보상/별/Zoo-Zoo Time/`OverlayChipGrid` 보상 칩/`다음 스테이지`/`홈으로` CTA, panel/mascot/chip/CTA PNG 최소 크기, `stage_complete` analytics, Stage 2 해금을 검증한다.
@@ -43,6 +43,7 @@
 - Stage Popup portrait는 좁은 debug card가 아니라 viewport 폭의 상용 start card로 읽혀야 하며, scene smoke가 최소 폭을 검증한다.
 - Stage Popup landscape는 화면 중앙의 상용 modal 크기를 가져야 하며, `PLAY` CTA는 booster/close보다 강한 primary CTA 높이와 면적을 유지해야 한다.
 - Home과 Stage Select World Map의 `PLAY` CTA는 render snapshot PNG에서도 충분한 이미지 픽셀 크기를 가져야 하며, 논리 viewport 터치 타깃만 통과하고 실제 스냅샷에서 작은 개발용 버튼처럼 보이면 실패해야 한다.
+- Home Live Event 상세는 landscape에서 작은 정보 상자로 보이면 실패해야 하며, `EventDetailPanel`, progress card, reward chip, claim CTA가 상용 이벤트 카드 위계를 유지해야 한다.
 - Stage Select World Map의 `WorldSelectedPanel`은 빈 흰 tray처럼 보이면 안 되며, 선택 스테이지 제목, 목표/이동/보상 chip, `PLAY` CTA가 panel 안에서 겹치지 않고 함께 렌더되어야 한다.
 - Collection portrait는 2열 앨범 카드로 읽혀야 하며, header/cosmetic reward action은 표처럼 길어지지 않는 compact ribbon이어야 한다. Landscape는 얇은 표처럼 눌리지 않고 6열 앨범 카드 그리드로 유지되어야 한다. Scene smoke가 portrait/landscape column 수, 첫 카드 높이, 동물 preview 크기, cosmetic ribbon 높이를 검증한다.
 - Gameplay portrait는 `HudTopDock`, `HudGoalDock`, `HudBoosterDock`이 BoardFrame과 겹치지 않아야 하고, landscape `LandscapeHudShell`은 BoardFrame과 겹치지 않는 하나의 compact HUD 패널이어야 하며, 실제 render snapshot에서도 얇은 debug rail, 비어 있는 하단 패널, 또는 BoardFrame과 멀리 떨어진 별도 섬처럼 보이면 안 된다. Landscape action CTA는 shell 안에서 commercial touch target을 유지해야 한다. Landscape BoardFrame은 빈 tray처럼 과신장되면 안 된다.

@@ -308,6 +308,8 @@ func _validate_main_event_detail_text_stress(node: Node, viewport_size: Vector2i
 	var panel := overlay.find_child("OverlayPanel", true, false) as Control
 	var header := overlay.find_child("EventDetailHeader", true, false) as Control
 	var title_label := overlay.find_child("EventDetailTitleLabel", true, false) as Label
+	var progress_card := overlay.find_child("EventDetailProgressCard", true, false) as Control
+	var reward_row := overlay.find_child("EventRewardChipRow", true, false) as Control
 	var body_label := overlay.find_child("EventDetailBodyLabel", true, false) as Label
 	var close_button := overlay.find_child("EventDetailCloseButton", true, false) as Button
 	var claim_button := overlay.find_child("EventClaimButton", true, false) as Button
@@ -334,6 +336,22 @@ func _validate_main_event_detail_text_stress(node: Node, viewport_size: Vector2i
 			_validate_control_in_viewport(control, viewport_size, MAIN_SCENE_PATH, "%s text stress" % label, errors)
 			if panel != null:
 				_validate_control_inside_container(control, panel, MAIN_SCENE_PATH, "%s text stress" % label, errors)
+	var portrait := viewport_size.y >= viewport_size.x
+	if panel != null:
+		var panel_rect := panel.get_global_rect()
+		var minimum_panel_width := float(viewport_size.x) * (0.62 if portrait else 0.40)
+		var minimum_panel_height := float(viewport_size.y) * (0.32 if portrait else 0.54)
+		if panel_rect.size.x < minimum_panel_width or panel_rect.size.y < minimum_panel_height:
+			errors.append("%s EventDetailPanel should read as a commercial live event card at %s, got %s below %.1fx%.1f." % [MAIN_SCENE_PATH, viewport_size, panel_rect.size, minimum_panel_width, minimum_panel_height])
+	for control_info in [[progress_card, "EventDetailProgressCard"], [reward_row, "EventRewardChipRow"]]:
+		var control := control_info[0] as Control
+		var label := String(control_info[1])
+		if control != null and control.is_visible_in_tree():
+			_validate_control_in_viewport(control, viewport_size, MAIN_SCENE_PATH, "%s commercial event detail" % label, errors)
+			if panel != null:
+				_validate_control_inside_container(control, panel, MAIN_SCENE_PATH, "%s commercial event detail" % label, errors)
+	_validate_commercial_touch_target(claim_button, COMMERCIAL_UI_PRIMARY_TOUCH, MAIN_SCENE_PATH, "EventClaimButton commercial CTA", viewport_size, errors)
+	_validate_commercial_touch_target(close_button, COMMERCIAL_UI_ICON_TOUCH, MAIN_SCENE_PATH, "EventDetailCloseButton commercial CTA", viewport_size, errors)
 	if header != null:
 		_validate_control_inside_container(title_label, header, MAIN_SCENE_PATH, "EventDetailTitleLabel header text stress", errors)
 		_validate_control_inside_container(close_button, header, MAIN_SCENE_PATH, "EventDetailCloseButton header text stress", errors)

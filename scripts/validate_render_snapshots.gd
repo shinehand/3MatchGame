@@ -634,6 +634,13 @@ func _validate_home_event_detail_snapshot_regions(image: Image, node: Node, snap
 		var label := String(control_info[1])
 		_validate_control_pixels(image, control, snapshot_id, label, errors)
 		_validate_control_within_image_bounds(control, snapshot_id, label, errors)
+	var portrait := image.get_height() >= image.get_width()
+	_validate_control_image_minimum_size(image, panel, snapshot_id, "EventDetailPanel", Vector2(image.get_width() * (0.62 if portrait else 0.40), image.get_height() * (0.32 if portrait else 0.54)), errors)
+	_validate_control_image_minimum_size(image, progress_card, snapshot_id, "EventDetailProgressCard", Vector2(image.get_width() * (0.54 if portrait else 0.35), image.get_height() * (0.045 if portrait else 0.085)), errors)
+	_validate_control_image_minimum_size(image, claim_button, snapshot_id, "EventClaimButton", Vector2(image.get_width() * (0.54 if portrait else 0.34), image.get_height() * (0.040 if portrait else 0.070)), errors)
+	if reward_row != null:
+		for child in reward_row.get_children():
+			_validate_control_image_minimum_size(image, child as Control, snapshot_id, "EventRewardChip", Vector2(image.get_width() * (0.13 if portrait else 0.070), image.get_height() * (0.026 if portrait else 0.048)), errors)
 	if overlay == null or not overlay.visible:
 		errors.append("%s should render EventDetailOverlay visible." % snapshot_id)
 	if status_label == null or status_label.text != "종료됨":

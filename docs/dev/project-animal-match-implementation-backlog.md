@@ -906,9 +906,25 @@
   - Landscape gameplay intro card가 `BoardFrame` 중심에 있고 `LandscapeHudShell`을 침범하지 않는다.
   - `validate_gameplay.sh`와 render snapshot smoke 40개가 통과한다.
 
+### PAM-UX-131: Home Event Detail Commercial Card Scale
+
+- 상태: 완료됨. Home live event 상세 overlay가 landscape render snapshot에서 작은 정보 상자처럼 보이던 문제를 줄였다. `EventDetailPanel`을 viewport 비율 기반 상용 이벤트 카드 크기로 키우고, title/status badge/meta/progress card/reward chip/claim CTA의 여백·타이포·최소 크기를 portrait/landscape별로 함께 조정했다. Render snapshot은 `home_live_event_ended_detail`에서 panel/progress card/reward chip/claim CTA의 실제 PNG 최소 크기를 검증하고, scene smoke는 긴 문구 스트레스에서도 이벤트 카드가 viewport 안에 있고 CTA/닫기 버튼이 상용 터치 타깃을 유지하는지 확인한다.
+- 소유: Art Agent + Development Agent + QA Agent
+- 대상 파일:
+  - `scripts/main.gd`
+  - `scripts/validate_scene_loads.gd`
+  - `scripts/validate_render_snapshots.gd`
+  - `docs/dev/validation-process.md`
+  - `docs/qa/project-animal-match-development-gates.md`
+  - `docs/dev/project-animal-match-implementation-backlog.md`
+- 완료 기준:
+  - `390x844`와 `844x390` Home Live Event ended detail snapshot에서 이벤트 상세 panel, progress card, reward chip, claim CTA가 작은 개발용 팝업처럼 보이지 않는 실제 PNG 크기를 가진다.
+  - 긴 이벤트 제목/본문 스트레스에서도 title, close, progress, reward, claim CTA가 panel 안에서 겹치지 않는다.
+  - `validate_gameplay.sh`와 render snapshot smoke 40개가 통과한다.
+
 ## 추천 구현 순서
 
-완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-058`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`, `PAM-UX-114`, `PAM-UX-115`, `PAM-UX-116`, `PAM-LIVEOPS-118`, `PAM-UX-119`, `PAM-UX-120`, `PAM-UX-121`, `PAM-UX-122`, `PAM-UX-123`, `PAM-UX-124`, `PAM-UX-125`, `PAM-UX-126`, `PAM-UX-127`, `PAM-UX-128`, `PAM-UX-129`, `PAM-UX-130`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
+완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-058`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`, `PAM-UX-114`, `PAM-UX-115`, `PAM-UX-116`, `PAM-LIVEOPS-118`, `PAM-UX-119`, `PAM-UX-120`, `PAM-UX-121`, `PAM-UX-122`, `PAM-UX-123`, `PAM-UX-124`, `PAM-UX-125`, `PAM-UX-126`, `PAM-UX-127`, `PAM-UX-128`, `PAM-UX-129`, `PAM-UX-130`, `PAM-UX-131`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
 
 다음 고가치 순서:
 

@@ -501,12 +501,14 @@ func _build_event_detail_overlay() -> void:
 	var top_row := HBoxContainer.new()
 	top_row.name = "EventDetailHeader"
 	top_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	top_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_row.add_theme_constant_override("separation", 12)
 	column.add_child(top_row)
 
 	event_detail_title_label = _make_home_label("라이브 이벤트", 36, Color(0.12, 0.23, 0.34, 1), HORIZONTAL_ALIGNMENT_LEFT)
 	event_detail_title_label.name = "EventDetailTitleLabel"
 	event_detail_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	event_detail_title_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	top_row.add_child(event_detail_title_label)
 
 	event_detail_status_badge = PanelContainer.new()
@@ -529,6 +531,7 @@ func _build_event_detail_overlay() -> void:
 	event_detail_meta_label.name = "EventDetailMetaLabel"
 	event_detail_meta_label.custom_minimum_size = Vector2(0, 44)
 	event_detail_meta_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	event_detail_meta_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	column.add_child(event_detail_meta_label)
 
 	var progress_card := PanelContainer.new()
@@ -699,6 +702,7 @@ func _show_event_detail(event: Dictionary) -> void:
 	_refresh_event_detail_summary_widgets(_selected_event)
 	event_detail_body_label.text = _build_event_detail_body(_selected_event)
 	_refresh_event_claim_button()
+	_layout_event_detail_overlay(MobileLayout.is_portrait(self))
 	event_detail_overlay.visible = true
 	Feedback.play_ui_tap()
 
@@ -781,13 +785,25 @@ func _refresh_event_reward_chips(event: Dictionary) -> void:
 func _make_event_reward_chip(text: String) -> PanelContainer:
 	var chip := PanelContainer.new()
 	chip.name = "EventRewardChip"
-	chip.custom_minimum_size = Vector2(150, 52)
-	chip.add_theme_stylebox_override("panel", _home_style(Color(1.0, 0.95, 0.64, 0.94), Color(1.0, 0.58, 0.18, 0.94), 20, 3))
 	var label := _make_home_label(text, 18, Color(0.26, 0.19, 0.08, 1), HORIZONTAL_ALIGNMENT_CENTER)
 	label.name = "EventRewardChipLabel"
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	chip.add_child(label)
+	_style_event_reward_chip(chip, MobileLayout.is_portrait(self))
 	return chip
+
+
+func _style_event_reward_chip(chip: PanelContainer, portrait: bool) -> void:
+	if chip == null:
+		return
+	chip.custom_minimum_size = Vector2(190, 70) if portrait else Vector2(320, 108)
+	chip.add_theme_stylebox_override("panel", _home_style(Color(1.0, 0.95, 0.64, 0.94), Color(1.0, 0.58, 0.18, 0.94), 24 if portrait else 30, 4))
+	var label := chip.find_child("EventRewardChipLabel", true, false) as Label
+	if label != null:
+		label.custom_minimum_size = Vector2(172, 62) if portrait else Vector2(292, 96)
+		label.add_theme_font_size_override("font_size", 21 if portrait else 33)
 
 
 func _build_event_detail_body(event: Dictionary) -> String:
@@ -1329,10 +1345,83 @@ func _apply_responsive_layout() -> void:
 	sound_toggle_button.custom_minimum_size = Vector2(0, 126) if portrait else Vector2(0, 220)
 	haptics_toggle_button.custom_minimum_size = Vector2(0, 126) if portrait else Vector2(0, 220)
 	settings_close_button.custom_minimum_size = Vector2(280, 150) if portrait else Vector2(340, 260)
-	if event_detail_panel:
-		event_detail_panel.custom_minimum_size = Vector2(700, 760) if portrait else Vector2(820, 620)
-	if event_detail_body_label:
-		event_detail_body_label.custom_minimum_size = Vector2(0, 150) if portrait else Vector2(0, 118)
+	_layout_event_detail_overlay(portrait)
+
+
+func _layout_event_detail_overlay(portrait: bool) -> void:
+	if event_detail_panel == null:
+		return
+	var viewport_size := get_viewport_rect().size
+	var panel_width := clampf(viewport_size.x * (0.76 if portrait else 0.44), 760.0 if portrait else 1520.0, 900.0 if portrait else 1880.0)
+	var panel_height := clampf(viewport_size.y * (0.37 if portrait else 0.62), 820.0 if portrait else 1080.0, 960.0 if portrait else 1220.0)
+	event_detail_panel.custom_minimum_size = Vector2(panel_width, panel_height)
+	event_detail_panel.add_theme_stylebox_override("panel", _home_style(Color(1.0, 0.98, 0.90, 0.98), Color(1.0, 0.63, 0.18, 1), 34 if portrait else 38, 6))
+
+	var margin := event_detail_panel.find_child("OverlayMargin", true, false) as MarginContainer
+	if margin != null:
+		var horizontal_margin := 42 if portrait else 56
+		var vertical_margin := 36 if portrait else 44
+		margin.add_theme_constant_override("margin_left", horizontal_margin)
+		margin.add_theme_constant_override("margin_top", vertical_margin)
+		margin.add_theme_constant_override("margin_right", horizontal_margin)
+		margin.add_theme_constant_override("margin_bottom", vertical_margin)
+
+	var column := event_detail_panel.find_child("OverlayColumn", true, false) as VBoxContainer
+	if column != null:
+		column.add_theme_constant_override("separation", 20 if portrait else 24)
+
+	var header := event_detail_panel.find_child("EventDetailHeader", true, false) as HBoxContainer
+	if header != null:
+		header.add_theme_constant_override("separation", 14 if portrait else 20)
+
+	if event_detail_title_label != null:
+		event_detail_title_label.custom_minimum_size = Vector2(380, 64) if portrait else Vector2(900, 88)
+		event_detail_title_label.add_theme_font_size_override("font_size", 42 if portrait else 58)
+	if event_detail_status_badge != null:
+		event_detail_status_badge.custom_minimum_size = Vector2(144, 60) if portrait else Vector2(220, 84)
+	if event_detail_status_label != null:
+		event_detail_status_label.add_theme_font_size_override("font_size", 20 if portrait else 31)
+
+	var close_button := event_detail_panel.find_child("EventDetailCloseButton", true, false) as Button
+	if close_button != null:
+		close_button.custom_minimum_size = Vector2(128, 66) if portrait else Vector2(178, 86)
+		close_button.add_theme_font_size_override("font_size", 25 if portrait else 34)
+
+	if event_detail_meta_label != null:
+		event_detail_meta_label.custom_minimum_size = Vector2(0, 52) if portrait else Vector2(0, 70)
+		event_detail_meta_label.add_theme_font_size_override("font_size", 24 if portrait else 35)
+
+	var progress_card := event_detail_panel.find_child("EventDetailProgressCard", true, false) as PanelContainer
+	if progress_card != null:
+		progress_card.custom_minimum_size = Vector2(0, 116) if portrait else Vector2(0, 190)
+		progress_card.add_theme_stylebox_override("panel", _home_style(Color(1.0, 1.0, 1.0, 0.84), Color(0.45, 0.78, 1.0, 0.92), 26 if portrait else 32, 4 if portrait else 5))
+		var progress_margin: MarginContainer = null
+		if progress_card.get_child_count() > 0:
+			progress_margin = progress_card.get_child(0) as MarginContainer
+		if progress_margin != null:
+			progress_margin.add_theme_constant_override("margin_left", 22 if portrait else 34)
+			progress_margin.add_theme_constant_override("margin_top", 14 if portrait else 24)
+			progress_margin.add_theme_constant_override("margin_right", 22 if portrait else 34)
+			progress_margin.add_theme_constant_override("margin_bottom", 14 if portrait else 24)
+
+	if event_detail_progress_label != null:
+		event_detail_progress_label.add_theme_font_size_override("font_size", 24 if portrait else 40)
+		event_detail_progress_label.add_theme_constant_override("line_spacing", 4 if portrait else 7)
+
+	if event_detail_reward_row != null:
+		event_detail_reward_row.custom_minimum_size = Vector2(0, 78) if portrait else Vector2(0, 130)
+		event_detail_reward_row.add_theme_constant_override("separation", 12 if portrait else 18)
+		for child in event_detail_reward_row.get_children():
+			_style_event_reward_chip(child as PanelContainer, portrait)
+
+	if event_detail_body_label != null:
+		event_detail_body_label.custom_minimum_size = Vector2(0, 156) if portrait else Vector2(0, 190)
+		event_detail_body_label.add_theme_font_size_override("font_size", 23 if portrait else 34)
+		event_detail_body_label.add_theme_constant_override("line_spacing", 4 if portrait else 7)
+
+	if event_claim_button != null:
+		event_claim_button.custom_minimum_size = Vector2(0, 98) if portrait else Vector2(0, 156)
+		event_claim_button.add_theme_font_size_override("font_size", 32 if portrait else 46)
 
 
 func _layout_game_home(portrait: bool) -> void:
