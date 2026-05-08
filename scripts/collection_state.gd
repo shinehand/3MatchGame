@@ -25,11 +25,13 @@ static func make_default_state() -> Dictionary:
 		var animal_id := String(Dictionary(animal).get("id", ""))
 		if animal_id.is_empty():
 			continue
+		var friendship_level := 1
 		animals[animal_id] = {
 			"unlocked": int(Dictionary(animal).get("unlock_stage", 1)) <= 1,
 			"tokens": 0,
-			"friendship_level": 1,
+			"friendship_level": friendship_level,
 			"equipped_cosmetic": String(Dictionary(animal).get("default_cosmetic", "none")),
+			"earned_rewards": _earned_reward_ids_for_definition(Dictionary(animal), friendship_level),
 			"is_new": int(Dictionary(animal).get("unlock_stage", 1)) <= 1,
 		}
 	return {"animals": animals}
@@ -45,8 +47,12 @@ static func normalize_state(raw_state: Dictionary) -> Dictionary:
 		var raw_entry: Dictionary = Dictionary(raw_animals.get(animal_id, {}))
 		base_entry["unlocked"] = bool(raw_entry.get("unlocked", base_entry.get("unlocked", false)))
 		base_entry["tokens"] = max(0, int(raw_entry.get("tokens", base_entry.get("tokens", 0))))
-		base_entry["friendship_level"] = max(1, int(raw_entry.get("friendship_level", base_entry.get("friendship_level", 1))))
+		base_entry["friendship_level"] = clampi(max(1, int(raw_entry.get("friendship_level", base_entry.get("friendship_level", 1)))), 1, FRIENDSHIP_MAX_LEVEL)
 		base_entry["equipped_cosmetic"] = String(raw_entry.get("equipped_cosmetic", base_entry.get("equipped_cosmetic", "none")))
+		base_entry["earned_rewards"] = _merge_reward_ids(
+			Array(raw_entry.get("earned_rewards", base_entry.get("earned_rewards", []))),
+			_earned_reward_ids_for_animal(animal_id, int(base_entry.get("friendship_level", 1)))
+		)
 		base_entry["is_new"] = bool(raw_entry.get("is_new", base_entry.get("is_new", false)))
 		normalized_animals[animal_id] = base_entry
 	normalized["animals"] = normalized_animals
@@ -80,6 +86,10 @@ static func add_tokens(raw_state: Dictionary, animal_id: String, token_count: in
 	var entry: Dictionary = Dictionary(animals[animal_id])
 	entry["tokens"] = max(0, int(entry.get("tokens", 0)) + token_count)
 	entry["friendship_level"] = _friendship_level_for_tokens(int(entry.get("tokens", 0)))
+	entry["earned_rewards"] = _merge_reward_ids(
+		Array(entry.get("earned_rewards", [])),
+		_earned_reward_ids_for_animal(animal_id, int(entry.get("friendship_level", 1)))
+	)
 	animals[animal_id] = entry
 	state["animals"] = animals
 	return state
@@ -87,3 +97,54 @@ static func add_tokens(raw_state: Dictionary, animal_id: String, token_count: in
 
 static func _friendship_level_for_tokens(token_count: int) -> int:
 	return clampi(1 + int(max(0, token_count) / FRIENDSHIP_TOKEN_STEP), 1, FRIENDSHIP_MAX_LEVEL)
+
+
+static func animal_definition_by_id(animal_id: String) -> Dictionary:
+	for animal in load_animal_definitions():
+		if animal is Dictionary and String(Dictionary(animal).get("id", "")) == animal_id:
+			return Dictionary(animal).duplicate(true)
+	return {}
+
+
+static func reward_track_for_animal(animal_id: String) -> Array:
+	return Array(animal_definition_by_id(animal_id).get("friendship_rewards", [])).duplicate(true)
+
+
+static func reward_entries_earned_between(animal_id: String, level_before: int, level_after: int) -> Array:
+	var earned := []
+	for reward in reward_track_for_animal(animal_id):
+		if not (reward is Dictionary):
+			continue
+		var reward_dict: Dictionary = reward
+		var reward_level := int(reward_dict.get("level", 0))
+		if reward_level > level_before and reward_level <= level_after:
+			earned.append(reward_dict.duplicate(true))
+	return earned
+
+
+static func _earned_reward_ids_for_animal(animal_id: String, friendship_level: int) -> Array:
+	return _earned_reward_ids_for_definition(animal_definition_by_id(animal_id), friendship_level)
+
+
+static func _earned_reward_ids_for_definition(animal: Dictionary, friendship_level: int) -> Array:
+	var earned := []
+	for reward in Array(animal.get("friendship_rewards", [])):
+		if not (reward is Dictionary):
+			continue
+		var reward_dict: Dictionary = reward
+		var reward_id := String(reward_dict.get("reward_id", "")).strip_edges()
+		if reward_id.is_empty() or int(reward_dict.get("level", 0)) > friendship_level:
+			continue
+		if not earned.has(reward_id):
+			earned.append(reward_id)
+	return earned
+
+
+static func _merge_reward_ids(existing_ids: Array, required_ids: Array) -> Array:
+	var merged := []
+	for reward_id_value in existing_ids + required_ids:
+		var reward_id := String(reward_id_value).strip_edges()
+		if reward_id.is_empty() or merged.has(reward_id):
+			continue
+		merged.append(reward_id)
+	return merged

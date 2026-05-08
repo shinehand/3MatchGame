@@ -352,7 +352,7 @@
 
 ### PAM-DEV-060: Rescue Book 데이터 모델과 저장 구현
 
-- 상태: 완료됨. `data/animals.json`, `CollectionState`, `GameSession` 저장 경로가 18종 해금/토큰/우정 레벨/장착 cosmetic/new badge를 저장·정규화하고, token 누적으로 friendship level이 상승한다.
+- 상태: 완료됨. `data/animals.json`, `CollectionState`, `GameSession` 저장 경로가 18종 해금/토큰/우정 레벨/장착 cosmetic/new badge를 저장·정규화하고, token 누적으로 friendship level이 상승한다. `rabbit`, `frog`, `koala`는 Lv.1-5 cosmetic friendship reward track을 가지며, 레벨 기준 보상을 자동 획득해 `earned_rewards`에 idempotent하게 저장한다. `GameSession.add_rescue_book_tokens()`는 `animal_token_gain`과 `animal_friendship_level_up` analytics를 기록한다.
 - 소유: Development Agent
 - 대상 파일 후보:
   - 신규 `scripts/collection_state.gd`
@@ -363,7 +363,7 @@
 
 ### PAM-DEV-061: Rescue Book UI 구현
 
-- 상태: 완료됨. `collection_screen`이 18종 카드의 잠김/해금/NEW/토큰/우정 레벨을 표시하고, 클릭/터치 시 상세 패널 갱신 및 NEW 배지 확인 처리를 수행한다.
+- 상태: 완료됨. `collection_screen`이 18종 카드의 잠김/해금/NEW/토큰/우정 레벨을 표시하고, 클릭/터치 시 상세 패널 갱신 및 NEW 배지 확인 처리를 수행한다. Reward track이 있는 동물은 카드에 보상 획득 수를 표시하고 상세에 Lv.1-5 `획득`/`대기` cosmetic 보상 트랙을 텍스트로 보여 준다.
 - 소유: Development Agent + Art Agent
 - 대상 파일 후보:
   - 신규 `scenes/collection_screen.tscn`
@@ -418,7 +418,7 @@
 
 ### PAM-ANA-090: 분석 이벤트 계약 검증기 추가
 
-- 상태: 완료됨. `data/analytics_events.json`와 `scripts/validate_analytics_contract.gd`가 앱/스테이지/오퍼/이벤트/Fever/Buddy/Collection 필수 이벤트와 파라미터를 검증한다. `GameSession`은 런타임 이벤트 필수 파라미터 누락을 경고하고, provider-neutral `AnalyticsGateway`에 저장된 이벤트를 dispatch한다. scene smoke가 `stage_start`, `rescue_book_open`, Level 1-5 첫 세션 카드 해금의 `animal_unlock`, 활성 live ops 노출의 `live_event_impression`, 이벤트 참여/진행/보상 수령의 `event_join`, `event_progress`, `event_reward_claim` 실제 기록과 gateway `local_buffer` queued dispatch, disk reload 보존, 순차 flush 후 pending queue 제거, `configure_flush_adapter(provider_id, Callable)` SDK adapter hook, adapter partial failure, adapter payload mutation guard, corrupt queue tolerance, 320개 bounded queue eviction, 계약 위반 이벤트의 `rejected_contract` 격리를 검사한다.
+- 상태: 완료됨. `data/analytics_events.json`와 `scripts/validate_analytics_contract.gd`가 앱/스테이지/오퍼/이벤트/Fever/Buddy/Collection 필수 이벤트와 파라미터를 검증한다. `GameSession`은 런타임 이벤트 필수 파라미터 누락을 경고하고, provider-neutral `AnalyticsGateway`에 저장된 이벤트를 dispatch한다. scene smoke가 `stage_start`, `rescue_book_open`, Level 1-5 첫 세션 카드 해금의 `animal_unlock`, Rescue Book 토큰/우정 보상의 `animal_token_gain`/`animal_friendship_level_up`, 활성 live ops 노출의 `live_event_impression`, 이벤트 참여/진행/보상 수령의 `event_join`, `event_progress`, `event_reward_claim` 실제 기록과 gateway `local_buffer` queued dispatch, disk reload 보존, 순차 flush 후 pending queue 제거, `configure_flush_adapter(provider_id, Callable)` SDK adapter hook, adapter partial failure, adapter payload mutation guard, corrupt queue tolerance, 320개 bounded queue eviction, 계약 위반 이벤트의 `rejected_contract` 격리를 검사한다.
 - 소유: Technical Lead + QA Agent
 - 대상 파일 후보:
   - `docs/planning/project-animal-match-analytics-remote-config-spec.md`

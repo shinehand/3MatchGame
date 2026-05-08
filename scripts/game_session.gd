@@ -461,10 +461,52 @@ static func get_rescue_book_state() -> Dictionary:
 	return state.duplicate(true)
 
 
-static func add_rescue_book_tokens(animal_id: String, token_count: int) -> void:
+static func add_rescue_book_tokens(animal_id: String, token_count: int, source: String = "debug_grant", stage_id: int = 0, event_id: String = "") -> void:
 	load_state()
-	_save_data["rescue_book"] = CollectionState.add_tokens(Dictionary(_save_data.get("rescue_book", {})), animal_id, token_count)
+	var before_state := CollectionState.normalize_state(Dictionary(_save_data.get("rescue_book", {})))
+	var before_entry := Dictionary(Dictionary(before_state.get("animals", {})).get(animal_id, {}))
+	_save_data["rescue_book"] = CollectionState.add_tokens(before_state, animal_id, token_count)
+	var after_state := CollectionState.normalize_state(Dictionary(_save_data.get("rescue_book", {})))
+	_save_data["rescue_book"] = after_state
+	var after_entry := Dictionary(Dictionary(after_state.get("animals", {})).get(animal_id, {}))
 	save_state()
+	if token_count > 0 and not after_entry.is_empty():
+		_track_rescue_book_token_gain(animal_id, token_count, source, stage_id, event_id, before_entry, after_entry)
+
+
+static func _track_rescue_book_token_gain(animal_id: String, token_count: int, source: String, stage_id: int, event_id: String, before_entry: Dictionary, after_entry: Dictionary) -> void:
+	var token_params := {
+		"animal_id": animal_id,
+		"amount": token_count,
+		"source": source,
+		"stage_id": stage_id,
+		"token_balance": int(after_entry.get("tokens", 0)),
+		"level_before": int(before_entry.get("friendship_level", 1)),
+		"level_after": int(after_entry.get("friendship_level", 1)),
+	}
+	if not event_id.is_empty():
+		token_params["event_id"] = event_id
+	record_analytics_event("animal_token_gain", token_params)
+
+	var level_before := int(before_entry.get("friendship_level", 1))
+	var level_after := int(after_entry.get("friendship_level", 1))
+	for reward in CollectionState.reward_entries_earned_between(animal_id, level_before, level_after):
+		if not (reward is Dictionary):
+			continue
+		var reward_dict: Dictionary = reward
+		var level_params := {
+			"animal_id": animal_id,
+			"level_before": level_before,
+			"level_after": int(reward_dict.get("level", level_after)),
+			"reward_id": String(reward_dict.get("reward_id", "")),
+			"reward_type": String(reward_dict.get("reward_type", "")),
+			"source": source,
+			"stage_id": stage_id,
+			"token_balance": int(after_entry.get("tokens", 0)),
+		}
+		if not event_id.is_empty():
+			level_params["event_id"] = event_id
+		record_analytics_event("animal_friendship_level_up", level_params)
 
 
 static func mark_rescue_book_seen(animal_id: String) -> void:

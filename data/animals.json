@@ -7,8 +7,15 @@
     "board_enabled": true,
     "collection_enabled": true,
     "animation_profile": "rabbit_v1",
-    "default_cosmetic": "none",
-    "buddy_skill_id": "rabbit_line_rescue"
+    "default_cosmetic": "rabbit_icon_basic",
+    "buddy_skill_id": "rabbit_line_rescue",
+    "friendship_rewards": [
+      { "level": 1, "reward_type": "profile_icon", "reward_id": "rabbit_icon_basic" },
+      { "level": 2, "reward_type": "expression", "reward_id": "rabbit_smile_plus" },
+      { "level": 3, "reward_type": "card_frame", "reward_id": "rabbit_sprout_frame" },
+      { "level": 4, "reward_type": "title_badge", "reward_id": "rabbit_rescuer_badge" },
+      { "level": 5, "reward_type": "profile_icon", "reward_id": "rabbit_star_icon" }
+    ]
   },
   {
     "id": "bear",
@@ -51,8 +58,15 @@
     "board_enabled": true,
     "collection_enabled": true,
     "animation_profile": "frog_v1",
-    "default_cosmetic": "none",
-    "buddy_skill_id": "frog_jump_shuffle"
+    "default_cosmetic": "frog_icon_basic",
+    "buddy_skill_id": "frog_jump_shuffle",
+    "friendship_rewards": [
+      { "level": 1, "reward_type": "profile_icon", "reward_id": "frog_icon_basic" },
+      { "level": 2, "reward_type": "expression", "reward_id": "frog_hop_smile" },
+      { "level": 3, "reward_type": "card_frame", "reward_id": "frog_lily_frame" },
+      { "level": 4, "reward_type": "title_badge", "reward_id": "frog_helper_badge" },
+      { "level": 5, "reward_type": "profile_icon", "reward_id": "frog_star_icon" }
+    ]
   },
   {
     "id": "dog",
@@ -139,7 +153,14 @@
     "board_enabled": false,
     "collection_enabled": true,
     "animation_profile": "koala_v1",
-    "default_cosmetic": "none"
+    "default_cosmetic": "koala_icon_basic",
+    "friendship_rewards": [
+      { "level": 1, "reward_type": "profile_icon", "reward_id": "koala_icon_basic" },
+      { "level": 2, "reward_type": "card_frame", "reward_id": "koala_leaf_frame" },
+      { "level": 3, "reward_type": "expression", "reward_id": "koala_cozy_smile" },
+      { "level": 4, "reward_type": "title_badge", "reward_id": "koala_keeper_badge" },
+      { "level": 5, "reward_type": "profile_icon", "reward_id": "koala_star_icon" }
+    ]
   },
   {
     "id": "hamster",

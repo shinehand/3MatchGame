@@ -697,7 +697,7 @@ func _validate_runtime_analytics_events(errors: PackedStringArray) -> void:
 			"remote_config_exposure":
 				_validate_remote_config_exposure_payload(params, errors)
 				remote_config_keys_seen[String(params.get("config_key", ""))] = true
-	for required_event in ["rescue_book_open", "animal_unlock", "stage_start", "special_combo_trigger", "remote_config_exposure", "event_join", "event_progress", "event_reward_claim", "buddy_skill_charge", "buddy_skill_ready", "buddy_skill_trigger", "buddy_skill_blocked", "fail_offer_show", "fail_offer_select", "fail_offer_dismiss", "ad_reward_complete", "ad_reward_fail", "iap_purchase_start", "iap_purchase_complete", "iap_purchase_restore", "iap_purchase_cancel", "iap_purchase_fail", "extra_moves_grant"]:
+	for required_event in ["rescue_book_open", "animal_unlock", "animal_token_gain", "animal_friendship_level_up", "stage_start", "special_combo_trigger", "remote_config_exposure", "event_join", "event_progress", "event_reward_claim", "buddy_skill_charge", "buddy_skill_ready", "buddy_skill_trigger", "buddy_skill_blocked", "fail_offer_show", "fail_offer_select", "fail_offer_dismiss", "ad_reward_complete", "ad_reward_fail", "iap_purchase_start", "iap_purchase_complete", "iap_purchase_restore", "iap_purchase_cancel", "iap_purchase_fail", "extra_moves_grant"]:
 		if not seen_names.has(required_event):
 			errors.append("runtime analytics should emit %s during scene smoke." % required_event)
 	for placement in IMPLEMENTED_LIVE_EVENT_PLACEMENTS:
@@ -3657,14 +3657,33 @@ func _validate_collection_card_label_state(node: Node, errors: PackedStringArray
 		errors.append("%s is missing CollectionGrid for Rescue Book card state smoke." % COLLECTION_SCENE_PATH)
 		return
 
-	GameSession.add_rescue_book_tokens("rabbit", 40)
+	var token_gain_events_before := _analytics_event_count("animal_token_gain")
+	var friendship_events_before := _analytics_event_count("animal_friendship_level_up")
+	GameSession.add_rescue_book_tokens("rabbit", 40, "scene_smoke", 4)
 	GameSession.mark_rescue_book_seen("bear")
 	node.call("_refresh_cards")
 
 	var refreshed_card_texts := _collection_card_label_texts_after(grid, 0)
 	var rabbit_text := _first_text_containing(refreshed_card_texts, "토끼")
-	if not rabbit_text.contains("Lv.3") or not rabbit_text.contains("토큰 40") or not rabbit_text.contains("NEW"):
-		errors.append("%s AnimalCard_rabbit should show Lv.3, token count, and NEW state after token fixture, got: %s." % [COLLECTION_SCENE_PATH, rabbit_text])
+	if not rabbit_text.contains("Lv.3") or not rabbit_text.contains("토큰 40") or not rabbit_text.contains("NEW") or not rabbit_text.contains("보상 3/5"):
+		errors.append("%s AnimalCard_rabbit should show Lv.3, token count, NEW, and 3/5 reward state after token fixture, got: %s." % [COLLECTION_SCENE_PATH, rabbit_text])
+	var rabbit_state := Dictionary(Dictionary(GameSession.get_rescue_book_state().get("animals", {})).get("rabbit", {}))
+	var rabbit_rewards := Array(rabbit_state.get("earned_rewards", []))
+	for reward_id in ["rabbit_icon_basic", "rabbit_smile_plus", "rabbit_sprout_frame"]:
+		if not rabbit_rewards.has(reward_id):
+			errors.append("%s rabbit reward track should auto-earn %s at 40 tokens." % [COLLECTION_SCENE_PATH, reward_id])
+	if _analytics_event_count("animal_token_gain") <= token_gain_events_before:
+		errors.append("%s Rescue Book token fixture should emit animal_token_gain." % COLLECTION_SCENE_PATH)
+	if _analytics_event_count("animal_friendship_level_up") <= friendship_events_before:
+		errors.append("%s Rescue Book token fixture should emit animal_friendship_level_up." % COLLECTION_SCENE_PATH)
+	var token_gain_event := _last_analytics_event_by_name("animal_token_gain")
+	var token_gain_params: Dictionary = Dictionary(token_gain_event.get("params", {}))
+	if String(token_gain_params.get("animal_id", "")) != "rabbit" or int(token_gain_params.get("amount", 0)) != 40 or String(token_gain_params.get("source", "")) != "scene_smoke" or int(token_gain_params.get("stage_id", 0)) != 4 or int(token_gain_params.get("token_balance", 0)) != 40:
+		errors.append("%s animal_token_gain should identify the rabbit scene smoke grant." % COLLECTION_SCENE_PATH)
+	var friendship_event := _last_analytics_event_by_name("animal_friendship_level_up")
+	var friendship_params: Dictionary = Dictionary(friendship_event.get("params", {}))
+	if String(friendship_params.get("animal_id", "")) != "rabbit" or int(friendship_params.get("level_after", 0)) < 2 or String(friendship_params.get("reward_id", "")).is_empty():
+		errors.append("%s animal_friendship_level_up should identify the rabbit reward unlock." % COLLECTION_SCENE_PATH)
 
 	var bear_text := _first_text_containing(refreshed_card_texts, "곰")
 	if bear_text.contains("NEW"):
@@ -3700,16 +3719,16 @@ func _validate_collection_card_input_runtime(node: Node, grid: Node, errors: Pac
 		errors.append("%s Rescue Book card input should select rabbit, got %s." % [COLLECTION_SCENE_PATH, String(node.get("selected_animal_id"))])
 
 	var detail_label := node.find_child("DetailLabel", true, false) as Label
-	if detail_label == null or not detail_label.text.contains("토끼") or not detail_label.text.contains("Lv.3") or not detail_label.text.contains("토큰 40"):
-		errors.append("%s Rescue Book card input should refresh DetailLabel with selected rabbit state." % COLLECTION_SCENE_PATH)
+	if detail_label == null or not detail_label.text.contains("토끼") or not detail_label.text.contains("Lv.3") or not detail_label.text.contains("토큰 40") or not detail_label.text.contains("우정 보상") or not detail_label.text.contains("획득") or not detail_label.text.contains("대기"):
+		errors.append("%s Rescue Book card input should refresh DetailLabel with selected rabbit reward track." % COLLECTION_SCENE_PATH)
 
 	var after_input_texts := _collection_card_label_texts_after(grid, 0)
 	var rabbit_after_input_text := _first_text_containing(after_input_texts, "토끼")
 	if rabbit_after_input_text.contains("NEW"):
 		errors.append("%s AnimalCard_rabbit should clear NEW after card input, got: %s." % [COLLECTION_SCENE_PATH, rabbit_after_input_text])
 	var rabbit_state_after_input := Dictionary(Dictionary(GameSession.get_rescue_book_state().get("animals", {})).get("rabbit", {}))
-	if bool(rabbit_state_after_input.get("is_new", true)) or int(rabbit_state_after_input.get("tokens", 0)) != 40 or int(rabbit_state_after_input.get("friendship_level", 1)) < 3:
-		errors.append("%s Rescue Book card input should persist rabbit seen state without losing tokens or friendship level." % COLLECTION_SCENE_PATH)
+	if bool(rabbit_state_after_input.get("is_new", true)) or int(rabbit_state_after_input.get("tokens", 0)) != 40 or int(rabbit_state_after_input.get("friendship_level", 1)) < 3 or not Array(rabbit_state_after_input.get("earned_rewards", [])).has("rabbit_sprout_frame"):
+		errors.append("%s Rescue Book card input should persist rabbit seen state without losing tokens, friendship level, or rewards." % COLLECTION_SCENE_PATH)
 
 
 func _validate_collection_preview_motion_runtime(node: Node, errors: PackedStringArray) -> void:
@@ -4569,6 +4588,19 @@ func _validate_rescue_book_model(errors: PackedStringArray) -> void:
 			errors.append("Rescue Book animal %s must be collection_enabled." % animal_id)
 		if String(animal_dict.get("animation_profile", "")).is_empty():
 			errors.append("Rescue Book animal %s missing animation_profile." % animal_id)
+		if ["rabbit", "frog", "koala"].has(animal_id):
+			var rewards := Array(animal_dict.get("friendship_rewards", []))
+			if rewards.size() != 5:
+				errors.append("Rescue Book animal %s should define five MVP friendship rewards." % animal_id)
+			for reward in rewards:
+				if not (reward is Dictionary):
+					errors.append("Rescue Book animal %s friendship reward must be a dictionary." % animal_id)
+					continue
+				var reward_dict: Dictionary = reward
+				if int(reward_dict.get("level", 0)) < 1 or int(reward_dict.get("level", 0)) > 5:
+					errors.append("Rescue Book animal %s friendship reward has invalid level." % animal_id)
+				if String(reward_dict.get("reward_id", "")).is_empty() or String(reward_dict.get("reward_type", "")).is_empty():
+					errors.append("Rescue Book animal %s friendship reward must include reward_id and reward_type." % animal_id)
 
 	if board_ids.size() != ANIMAL_IDS.size():
 		errors.append("Board roster expected %d board_enabled animals, got %d." % [ANIMAL_IDS.size(), board_ids.size()])
@@ -4590,6 +4622,12 @@ func _validate_rescue_book_model(errors: PackedStringArray) -> void:
 		errors.append("Rescue Book token grant should persist token balance.")
 	if int(rabbit_entry.get("friendship_level", 1)) < 3:
 		errors.append("Rescue Book friendship level should advance from token balance.")
+	var earned_rewards := Array(rabbit_entry.get("earned_rewards", []))
+	for reward_id in ["rabbit_icon_basic", "rabbit_smile_plus", "rabbit_sprout_frame"]:
+		if not earned_rewards.has(reward_id):
+			errors.append("Rescue Book friendship reward %s should be earned by Lv.3." % reward_id)
+	if CollectionState.reward_entries_earned_between("rabbit", 1, 3).size() != 2:
+		errors.append("Rescue Book reward diff should return the Lv.2 and Lv.3 rabbit rewards.")
 
 
 func _validate_animation_profiles(animals: Array, errors: PackedStringArray) -> void:

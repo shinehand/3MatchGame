@@ -245,7 +245,11 @@ func _make_animal_card(animal: Dictionary, entry: Dictionary) -> PanelContainer:
 
 	var cosmetic_label := Label.new()
 	cosmetic_label.name = "AnimalCosmeticLabel"
+	var earned_reward_count := _earned_reward_count(animal, entry)
+	var total_reward_count := Array(animal.get("friendship_rewards", [])).size()
 	cosmetic_label.text = "코스메틱: %s" % String(entry.get("equipped_cosmetic", animal.get("default_cosmetic", "none")))
+	if total_reward_count > 0:
+		cosmetic_label.text += " · 보상 %d/%d" % [earned_reward_count, total_reward_count]
 	cosmetic_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cosmetic_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	cosmetic_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -286,12 +290,13 @@ func _update_detail_for_selected(animals: Array, state_animals: Dictionary) -> v
 		var entry: Dictionary = Dictionary(state_animals.get(animal_id, {}))
 		var unlocked := bool(entry.get("unlocked", false))
 		if unlocked:
-			detail_label.text = _detail_with_event_line("%s · Lv.%d · 토큰 %d · %s" % [
+			var base_detail := "%s · Lv.%d · 토큰 %d · %s" % [
 				String(animal_dict.get("display_name", animal_id)),
 				int(entry.get("friendship_level", 1)),
 				int(entry.get("tokens", 0)),
 				String(animal_dict.get("personality", "구조 완료")),
-			])
+			]
+			detail_label.text = _detail_with_event_line("%s\n%s" % [base_detail, _friendship_reward_track_text(animal_dict, entry)])
 		else:
 			detail_label.text = _detail_with_event_line("%s · Stage %d에서 해금 예정 · %s" % [
 				String(animal_dict.get("display_name", animal_id)),
@@ -300,6 +305,51 @@ func _update_detail_for_selected(animals: Array, state_animals: Dictionary) -> v
 			])
 		return
 	detail_label.text = _detail_with_event_line("구조한 친구들의 해금 상태와 토큰, 우정 레벨을 확인합니다.")
+
+
+func _earned_reward_count(animal: Dictionary, entry: Dictionary) -> int:
+	var earned_rewards := Array(entry.get("earned_rewards", []))
+	var count := 0
+	for reward in Array(animal.get("friendship_rewards", [])):
+		if not (reward is Dictionary):
+			continue
+		var reward_id := String(Dictionary(reward).get("reward_id", ""))
+		if earned_rewards.has(reward_id):
+			count += 1
+	return count
+
+
+func _friendship_reward_track_text(animal: Dictionary, entry: Dictionary) -> String:
+	var rewards := Array(animal.get("friendship_rewards", []))
+	if rewards.is_empty():
+		return "우정 보상  준비 중"
+	var earned_rewards := Array(entry.get("earned_rewards", []))
+	var pieces := PackedStringArray()
+	for reward in rewards:
+		if not (reward is Dictionary):
+			continue
+		var reward_dict: Dictionary = reward
+		var reward_id := String(reward_dict.get("reward_id", ""))
+		var reward_state := "획득" if earned_rewards.has(reward_id) else "대기"
+		pieces.append("Lv.%d %s %s" % [
+			int(reward_dict.get("level", 0)),
+			reward_state,
+			_reward_type_label(String(reward_dict.get("reward_type", ""))),
+		])
+	return "우정 보상  %s" % " · ".join(pieces)
+
+
+func _reward_type_label(reward_type: String) -> String:
+	match reward_type:
+		"profile_icon":
+			return "아이콘"
+		"expression":
+			return "표정"
+		"card_frame":
+			return "프레임"
+		"title_badge":
+			return "배지"
+	return "코스메틱"
 
 
 func _detail_with_event_line(base_text: String) -> String:

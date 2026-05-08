@@ -107,6 +107,39 @@
     ]
   },
   {
+    "name": "animal_token_gain",
+    "required_params": [
+      "session_id",
+      "animal_id",
+      "amount",
+      "source",
+      "stage_id",
+      "token_balance"
+    ],
+    "optional_params": [
+      "event_id",
+      "level_before",
+      "level_after"
+    ]
+  },
+  {
+    "name": "animal_friendship_level_up",
+    "required_params": [
+      "session_id",
+      "animal_id",
+      "level_before",
+      "level_after",
+      "reward_id"
+    ],
+    "optional_params": [
+      "reward_type",
+      "source",
+      "stage_id",
+      "token_balance",
+      "event_id"
+    ]
+  },
+  {
     "name": "live_event_impression",
     "required_params": [
       "session_id",
