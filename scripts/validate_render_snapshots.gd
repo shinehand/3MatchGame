@@ -786,12 +786,12 @@ func _validate_special_combo_snapshot_regions(image: Image, node: Node, scenario
 	_validate_control_pixels(image, flash, snapshot_id, "SpecialComboFlash", errors)
 	_validate_control_pixels(image, ring, snapshot_id, "SpecialComboRing", errors)
 	_validate_canvas_item_alpha(flash, snapshot_id, "SpecialComboFlash", 0.08, errors)
-	_validate_canvas_item_alpha(ring, snapshot_id, "SpecialComboRing", 0.08, errors)
+	_validate_special_combo_texture_fx(ring, snapshot_id, "SpecialComboRing", 0.04, errors)
 
 	if bool(scenario.get("requires_echo", false)):
 		var echo_ring := node.find_child("SpecialComboEchoRing", true, false) as Control
 		_validate_control_pixels(image, echo_ring, snapshot_id, "SpecialComboEchoRing", errors)
-		_validate_canvas_item_alpha(echo_ring, snapshot_id, "SpecialComboEchoRing", 0.06, errors)
+		_validate_special_combo_texture_fx(echo_ring, snapshot_id, "SpecialComboEchoRing", 0.03, errors)
 
 	var board_root := node.get_node_or_null("FxLayer/BoardFxRoot")
 	if board_root == null:
@@ -866,6 +866,33 @@ func _validate_canvas_item_alpha(node: CanvasItem, snapshot_id: String, label: S
 		return
 	if node.modulate.a < min_alpha:
 		errors.append("%s %s alpha %.3f should be >= %.3f during render snapshot." % [snapshot_id, label, node.modulate.a, min_alpha])
+
+
+func _validate_special_combo_texture_fx(control: Control, snapshot_id: String, label: String, min_effective_alpha: float, errors: PackedStringArray) -> void:
+	if control == null:
+		return
+	var texture_rect := control as TextureRect
+	if texture_rect == null:
+		errors.append("%s %s should be a TextureRect special combo VFX node." % [snapshot_id, label])
+		return
+	if texture_rect.texture == null:
+		errors.append("%s %s should keep a non-null ring texture." % [snapshot_id, label])
+	var effective_alpha := _canvas_item_effective_alpha(texture_rect)
+	if effective_alpha < min_effective_alpha:
+		errors.append("%s %s effective alpha %.3f should be >= %.3f during render snapshot." % [snapshot_id, label, effective_alpha, min_effective_alpha])
+	if minf(absf(texture_rect.scale.x), absf(texture_rect.scale.y)) < 0.35:
+		errors.append("%s %s scale %s should show the ring animation after trigger." % [snapshot_id, label, texture_rect.scale])
+
+
+func _canvas_item_effective_alpha(node: CanvasItem) -> float:
+	var alpha := node.modulate.a
+	var current := node.get_parent()
+	while current != null:
+		var canvas_parent := current as CanvasItem
+		if canvas_parent != null:
+			alpha *= canvas_parent.modulate.a
+		current = current.get_parent()
+	return alpha
 
 
 func _control_rect_to_image_bounds(rect: Rect2, image_width: int, image_height: int) -> Rect2i:
