@@ -90,7 +90,7 @@ zsh scripts/validate_gameplay.sh
 - `match`: 제거 직전 우선순위가 가장 높고 `blink`, `smile`, `worried`가 덮지 못한다.
 - `worried`: 이동 수 3 이하 HUD 갱신 경로에서 목표 타일 일부에만 표시되고 동시에 4개 이하로 제한된다.
 - `fever`: 표정 자체는 Tween 기반이며 목표 UI, 특수 배지, 이동 수 HUD 판독성은 논리 앵커 smoke로 1차 확인한다.
-- Mobile viewport matrix는 Stage 4 세로 HUD의 `BoardFrame`, `HudGoalDock`, `HudBoosterDock`, `HudBuddyGauge`, `PortraitGoalSummary` bounds와 HUD/보드 겹침을 검사한다.
+- Mobile viewport matrix는 Stage 4 세로 HUD의 `BoardFrame`, `HudTopDock`, `HudGoalDock`, `HudBoosterDock`, `HudBuddyGauge`, `PortraitGoalSummary` bounds와 HUD/보드 겹침을 검사한다. Stage Popup portrait 최소 폭과 landscape BoardFrame 과신장도 함께 막아 상용 start card와 보드 중심 레이아웃이 유지되는지 확인한다.
 
 아래 항목은 no-device readiness로 승인하지 않는다. 실제 기기 또는 시뮬레이터에서 portrait/landscape 물리 viewport를 확인해야 한다.
 

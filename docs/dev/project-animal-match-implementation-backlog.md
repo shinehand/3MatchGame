@@ -595,9 +595,24 @@
   - Stage node, icon-only booster처럼 텍스트 대신 자식 라벨/아이콘/tooltip을 쓰는 버튼은 오탐 없이 식별성을 검증한다.
   - no-device scene smoke와 `validate_gameplay.sh`가 CTA 크기·대비 회귀를 실패시킨다.
 
+### PAM-UX-112: Commercial Gameplay HUD Layout Polish
+
+- 상태: 완료됨. 세로 gameplay HUD에 목표를 문장형 설명 대신 `HudGoalChipRow`의 동물/장애물/점수 칩으로 압축 표시하고, Stage Popup portrait 카드를 넓혀 목표, Buddy, 부스터, `PLAY` CTA가 상용 캐주얼 퍼즐처럼 한눈에 읽히도록 조정했다. 가로 gameplay는 보드 타일을 키우고 사이드바가 남은 폭을 과점하지 않도록 고정 폭 rail로 정리해 보드가 화면의 주인공으로 남는다.
+- 소유: Art Agent + Development Agent + QA Agent
+- 대상 파일:
+  - `scripts/gameplay.gd`
+  - `scripts/stage_select.gd`
+  - `scripts/validate_scene_loads.gd`
+  - `docs/dev/validation-process.md`
+  - `docs/qa/project-animal-match-development-gates.md`
+- 완료 기준:
+  - `390x844` render snapshot에서 gameplay 목표가 칩형 HUD로 읽히고 Stage Popup이 좁은 정보 상자가 아니라 상용형 start card 폭을 가진다.
+  - `844x390` render snapshot에서 BoardFrame이 빈 tray로 늘어나지 않고 사이드바가 화면 절반을 점유하지 않는다.
+  - scene smoke가 Stage Popup portrait 최소 폭, `HudTopDock`/`HudGoalDock`/`HudBoosterDock` bounds, landscape BoardFrame 과신장 방지를 검증한다.
+
 ## 추천 구현 순서
 
-완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
+완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
 
 다음 고가치 순서:
 
