@@ -8,6 +8,7 @@ cd "$ROOT_DIR"
 TEMPLATE_PATH="docs/qa/templates/alpha-lock-pass-manual-qa-template.md"
 VALIDATOR="scripts/validate_alpha_qa_report.sh"
 HEAD_COMMIT="$(git rev-parse HEAD)"
+HEAD_SHORT="$(git rev-parse --short HEAD)"
 TODAY="$(date +%Y-%m-%d)"
 FIXTURE_ROOT="output/alpha-lock-pass/contract-smoke"
 DEBUG_APK="build/android/zoo-zoo-pop-debug.apk"
@@ -59,6 +60,7 @@ write_known_evidence() {
 	local captures_dir="$1"
 	cat >"$captures_dir/android-debug-export.txt" <<EOF
 # Android Debug Export Evidence
+Commit: $HEAD_SHORT
 Export result: PASS
 Signature verify result: PASS
 Install result: PASS
@@ -66,6 +68,7 @@ EOF
 
 	cat >"$captures_dir/android-release-export.txt" <<EOF
 # Android Release Export Evidence
+Commit: $HEAD_SHORT
 Signing mode: release
 Release export result: PASS
 Artifact SHA-256: contract-fixture-sha256
@@ -76,6 +79,7 @@ EOF
 
 	cat >"$captures_dir/android-device-evidence.txt" <<EOF
 # Android Device Evidence
+Commit: $HEAD_SHORT
 Capture result: PASS
 Launch result: PASS
 Portrait screenshot result: PASS
@@ -224,6 +228,26 @@ expect_failure "missing-cosmetic-row" "$missing_cosmetic_report"
 wrong_commit_report="$(make_pass_fixture wrong-commit)"
 perl -0pi -e 's/^- Build source commit:.*$/- Build source commit: deadbeef/m' "$wrong_commit_report"
 expect_failure "wrong-commit" "$wrong_commit_report"
+
+stale_debug_evidence_report="$(make_pass_fixture stale-debug-evidence)"
+perl -0pi -e 's/^Commit:.*$/Commit: deadbeef/m' "$FIXTURE_ROOT/stale-debug-evidence/captures/android-debug-export.txt"
+expect_failure "stale-debug-evidence" "$stale_debug_evidence_report"
+
+stale_release_evidence_report="$(make_pass_fixture stale-release-evidence)"
+perl -0pi -e 's/^Commit:.*$/Commit: deadbeef/m' "$FIXTURE_ROOT/stale-release-evidence/captures/android-release-export.txt"
+expect_failure "stale-release-evidence" "$stale_release_evidence_report"
+
+stale_device_evidence_report="$(make_pass_fixture stale-device-evidence)"
+perl -0pi -e 's/^Commit:.*$/Commit: deadbeef/m' "$FIXTURE_ROOT/stale-device-evidence/captures/android-device-evidence.txt"
+expect_failure "stale-device-evidence" "$stale_device_evidence_report"
+
+stale_manual_evidence_report="$(make_pass_fixture stale-manual-evidence)"
+perl -0pi -e 's/^Build source commit:.*$/Build source commit: deadbeef/m' "$FIXTURE_ROOT/stale-manual-evidence/captures/manual-device-checks.txt"
+expect_failure "stale-manual-evidence" "$stale_manual_evidence_report"
+
+placeholder_manual_evidence_report="$(make_pass_fixture placeholder-manual-evidence)"
+perl -0pi -e 's/^Build source commit:.*$/Build source commit: Pending/m' "$FIXTURE_ROOT/placeholder-manual-evidence/captures/sound-toggle-notes.md"
+expect_failure "placeholder-manual-evidence" "$placeholder_manual_evidence_report"
 
 blocked_device_report="$(make_pass_fixture blocked-device)"
 perl -0pi -e 's/Capture result: PASS/Capture result: BLOCKED/' "$FIXTURE_ROOT/blocked-device/captures/android-device-evidence.txt"

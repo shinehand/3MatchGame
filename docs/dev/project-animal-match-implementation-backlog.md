@@ -515,7 +515,7 @@
 
 ### PAM-QA-102: Alpha QA Report Validator Contract Smoke
 
-- 상태: 완료됨. `scripts/validate_alpha_qa_report_contract.sh`가 임시 alpha report/evidence fixture를 생성해 `validate_alpha_qa_report.sh`의 PASS 계약과 negative fixture 실패 계약을 자동 검증한다. PASS fixture는 현재 HEAD, `Overall result: Pass`, `QA result: Approve`, 필수 evidence content를 채우고, negative fixture는 `Pending` 잔존, evidence 누락, Rescue Book cosmetic equip 필수 행 삭제, wrong commit, `Capture result: BLOCKED`, release `Install result: NOT_REQUESTED`가 반드시 실패하는지 확인한다. `validate_gameplay.sh`와 no-device CI는 이 contract smoke를 포함한다.
+- 상태: 완료됨. `scripts/validate_alpha_qa_report_contract.sh`가 임시 alpha report/evidence fixture를 생성해 `validate_alpha_qa_report.sh`의 PASS 계약과 negative fixture 실패 계약을 자동 검증한다. PASS fixture는 현재 HEAD, `Overall result: Pass`, `QA result: Approve`, 필수 evidence content와 evidence 내부 commit을 채우고, negative fixture는 `Pending` 잔존, evidence 누락, Rescue Book cosmetic equip 필수 행 삭제, wrong report commit, stale debug/release/device/manual evidence commit, placeholder evidence commit, `Capture result: BLOCKED`, release `Install result: NOT_REQUESTED`가 반드시 실패하는지 확인한다. `validate_gameplay.sh`와 no-device CI는 이 contract smoke를 포함한다.
 - 소유: QA Agent + Development Agent
 - 대상 파일:
   - `scripts/validate_alpha_qa_report_contract.sh`
@@ -526,6 +526,7 @@
   - `docs/qa/project-animal-match-development-gates.md`
 - 완료 기준:
   - 최종 alpha report validator가 허술해져 unresolved 결과나 빈 evidence를 통과시키는 회귀가 no-device에서 잡힌다.
+  - 보고서 metadata뿐 아니라 Android export/device/manual evidence 내부 commit이 현재 HEAD와 맞지 않으면 실패한다.
   - 실제 기기/keystore/SDK evidence는 여전히 최종 report와 device evidence gate에서 별도 승인한다.
 
 ### PAM-QA-105: Android QA Helper Contract Smoke

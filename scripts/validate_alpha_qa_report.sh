@@ -197,16 +197,49 @@ require_evidence_field_value() {
 	esac
 }
 
+require_evidence_commit_matches_current_head() {
+	local evidence_path="$1"
+	local field_label="$2"
+	local evidence_name="${evidence_path##*/}"
+	local commit_value
+	local normalized_commit
+	local head_commit
+	commit_value="$(evidence_field_value "$evidence_path" "$field_label" | awk '{print $1}')"
+	commit_value="${commit_value//\`/}"
+	commit_value="${commit_value//\"/}"
+	case "$commit_value" in
+		""|unknown|null|Pending|PENDING|pending|TBD|tbd|TODO|todo|N/A|n/a|"-")
+			add_failure "${evidence_name} field '${field_label}' is unresolved: ${commit_value:-empty}"
+			return
+			;;
+	esac
+	normalized_commit="$(print -r -- "$commit_value" | tr '[:upper:]' '[:lower:]')"
+	if ! print -r -- "$normalized_commit" | grep -Eq '^[0-9a-f]{7,40}$'; then
+		add_failure "${evidence_name} field '${field_label}' commit must be a 7-40 char git SHA prefix: ${commit_value}"
+		return
+	fi
+	if [ "${#normalized_commit}" -lt 7 ]; then
+		add_failure "${evidence_name} field '${field_label}' commit is too short: ${commit_value}"
+		return
+	fi
+	head_commit="$(git rev-parse HEAD)"
+	if [ "${head_commit:0:${#normalized_commit}}" != "$normalized_commit" ]; then
+		add_failure "${evidence_name} field '${field_label}' '${commit_value}' does not match current HEAD ${head_commit}"
+	fi
+}
+
 validate_known_evidence_file() {
 	local evidence_path="$1"
 	local evidence_name="${evidence_path##*/}"
 	case "$evidence_name" in
 		android-debug-export.txt)
+			require_evidence_commit_matches_current_head "$evidence_path" "Commit"
 			require_evidence_text "$evidence_path" "$evidence_name" "Export result: PASS"
 			require_evidence_text "$evidence_path" "$evidence_name" "Signature verify result: PASS"
 			reject_evidence_regex "$evidence_path" "$evidence_name" '(Export|Signature verify|Install) result: (FAIL|BLOCKED)'
 			;;
 		android-release-export.txt)
+			require_evidence_commit_matches_current_head "$evidence_path" "Commit"
 			require_evidence_text "$evidence_path" "$evidence_name" "Signing mode: release"
 			require_evidence_text "$evidence_path" "$evidence_name" "Release export result: PASS"
 			require_evidence_text "$evidence_path" "$evidence_name" "Artifact SHA-256:"
@@ -216,6 +249,7 @@ validate_known_evidence_file() {
 			reject_evidence_regex "$evidence_path" "$evidence_name" '(Release export|Signature verify|Install|Launch) result: (FAIL|BLOCKED|NOT_REQUESTED)'
 			;;
 		android-device-evidence.txt)
+			require_evidence_commit_matches_current_head "$evidence_path" "Commit"
 			require_evidence_text "$evidence_path" "$evidence_name" "Capture result: PASS"
 			require_evidence_text "$evidence_path" "$evidence_name" "Launch result: PASS"
 			require_evidence_text "$evidence_path" "$evidence_name" "Portrait screenshot result: PASS"
@@ -242,7 +276,7 @@ validate_known_evidence_file() {
 		manual-device-checks.txt)
 			require_evidence_text "$evidence_path" "$evidence_name" "Manual checks result: PASS"
 			require_evidence_field_value "$evidence_path" "Test timestamp"
-			require_evidence_field_value "$evidence_path" "Build source commit"
+			require_evidence_commit_matches_current_head "$evidence_path" "Build source commit"
 			require_evidence_field_value "$evidence_path" "Build artifact"
 			require_evidence_field_value "$evidence_path" "Tester"
 			require_evidence_field_value "$evidence_path" "Device"
@@ -252,7 +286,7 @@ validate_known_evidence_file() {
 		sound-toggle-notes.md|haptics-toggle-notes.md|touch-latency-notes.md)
 			require_evidence_text "$evidence_path" "$evidence_name" "Manual result: PASS"
 			require_evidence_field_value "$evidence_path" "Test timestamp"
-			require_evidence_field_value "$evidence_path" "Build source commit"
+			require_evidence_commit_matches_current_head "$evidence_path" "Build source commit"
 			require_evidence_field_value "$evidence_path" "Build artifact"
 			require_evidence_field_value "$evidence_path" "Tester"
 			require_evidence_field_value "$evidence_path" "Device"
