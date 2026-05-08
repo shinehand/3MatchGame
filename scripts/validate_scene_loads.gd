@@ -3798,6 +3798,17 @@ func _validate_collection_card_input_runtime(node: Node, grid: Node, errors: Pac
 	var equip_button := node.find_child("CosmeticButton_rabbit_sprout_frame", true, false) as Button
 	if equip_button == null or not equip_button.disabled or not equip_button.text.contains("장착중"):
 		errors.append("%s equipped cosmetic button should show disabled 장착중 state." % COLLECTION_SCENE_PATH)
+	var rabbit_card_after_equip := grid.find_child("AnimalCard_rabbit", true, false) as PanelContainer
+	var equipped_badge: PanelContainer = null
+	var equipped_badge_label: Label = null
+	if rabbit_card_after_equip != null:
+		equipped_badge = rabbit_card_after_equip.find_child("EquippedCosmeticBadge_rabbit_sprout_frame", true, false) as PanelContainer
+		if equipped_badge != null:
+			equipped_badge_label = equipped_badge.find_child("EquippedCosmeticBadgeLabel", true, false) as Label
+	if rabbit_card_after_equip == null or String(rabbit_card_after_equip.get_meta("equipped_cosmetic", "")) != "rabbit_sprout_frame" or String(rabbit_card_after_equip.get_meta("equipped_cosmetic_type", "")) != "card_frame":
+		errors.append("%s equipped cosmetic should refresh AnimalCard_rabbit frame metadata." % COLLECTION_SCENE_PATH)
+	if equipped_badge_label == null or not equipped_badge_label.text.contains("장착 프레임"):
+		errors.append("%s equipped cosmetic should render a 장착 프레임 badge on AnimalCard_rabbit." % COLLECTION_SCENE_PATH)
 
 
 func _validate_collection_preview_motion_runtime(node: Node, errors: PackedStringArray) -> void:

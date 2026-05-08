@@ -236,13 +236,20 @@ func _make_animal_card(animal: Dictionary, entry: Dictionary) -> PanelContainer:
 	var unlocked := bool(entry.get("unlocked", false))
 	var is_new := bool(entry.get("is_new", false))
 	var is_selected := animal_id == selected_animal_id
+	var equipped_reward := _equipped_reward_entry(animal, entry)
+	var equipped_reward_type := String(equipped_reward.get("reward_type", ""))
+	var equipped_cosmetic := String(entry.get("equipped_cosmetic", animal.get("default_cosmetic", "none")))
+	var has_equipped_visual := unlocked and not equipped_reward.is_empty()
 	var panel := PanelContainer.new()
 	panel.name = "AnimalCard_%s" % animal_id
+	panel.set_meta("animal_id", animal_id)
+	panel.set_meta("equipped_cosmetic", equipped_cosmetic)
+	panel.set_meta("equipped_cosmetic_type", equipped_reward_type)
 	panel.gui_input.connect(_on_animal_card_input.bind(animal, entry))
 	panel.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	panel.custom_minimum_size = Vector2(170, 224)
+	panel.custom_minimum_size = Vector2(170, 244)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_theme_stylebox_override("panel", _card_style(unlocked, is_new, is_selected))
+	panel.add_theme_stylebox_override("panel", _card_style(unlocked, is_new, is_selected, equipped_reward_type if has_equipped_visual else ""))
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 12)
@@ -295,11 +302,14 @@ func _make_animal_card(animal: Dictionary, entry: Dictionary) -> PanelContainer:
 		status_label.text = "Stage %d 해금" % int(animal.get("unlock_stage", 1))
 	stack.add_child(status_label)
 
+	if has_equipped_visual:
+		stack.add_child(_make_equipped_cosmetic_badge(equipped_cosmetic, equipped_reward_type))
+
 	var cosmetic_label := Label.new()
 	cosmetic_label.name = "AnimalCosmeticLabel"
 	var earned_reward_count := _earned_reward_count(animal, entry)
 	var total_reward_count := Array(animal.get("friendship_rewards", [])).size()
-	cosmetic_label.text = "코스메틱: %s" % String(entry.get("equipped_cosmetic", animal.get("default_cosmetic", "none")))
+	cosmetic_label.text = "코스메틱: %s" % _equipped_cosmetic_copy(animal, entry, equipped_reward)
 	if total_reward_count > 0:
 		cosmetic_label.text += " · 보상 %d/%d" % [earned_reward_count, total_reward_count]
 	cosmetic_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -405,6 +415,53 @@ func _reward_type_label(reward_type: String) -> String:
 		"title_badge":
 			return "배지"
 	return "코스메틱"
+
+
+func _equipped_reward_entry(animal: Dictionary, entry: Dictionary) -> Dictionary:
+	var equipped_cosmetic := String(entry.get("equipped_cosmetic", animal.get("default_cosmetic", "none"))).strip_edges()
+	if equipped_cosmetic.is_empty() or equipped_cosmetic == "none":
+		return {}
+	var earned_rewards := Array(entry.get("earned_rewards", []))
+	if not earned_rewards.has(equipped_cosmetic):
+		return {}
+	for reward in Array(animal.get("friendship_rewards", [])):
+		if not (reward is Dictionary):
+			continue
+		var reward_dict: Dictionary = reward
+		if String(reward_dict.get("reward_id", "")).strip_edges() == equipped_cosmetic:
+			return reward_dict
+	return {}
+
+
+func _equipped_cosmetic_copy(animal: Dictionary, entry: Dictionary, equipped_reward: Dictionary) -> String:
+	var equipped_cosmetic := String(entry.get("equipped_cosmetic", animal.get("default_cosmetic", "none"))).strip_edges()
+	if equipped_cosmetic.is_empty():
+		return "none"
+	if equipped_reward.is_empty():
+		return equipped_cosmetic
+	return "장착 %s · %s" % [_reward_type_label(String(equipped_reward.get("reward_type", ""))), equipped_cosmetic]
+
+
+func _make_equipped_cosmetic_badge(reward_id: String, reward_type: String) -> PanelContainer:
+	var badge := PanelContainer.new()
+	badge.name = "EquippedCosmeticBadge_%s" % _safe_node_suffix(reward_id)
+	badge.custom_minimum_size = Vector2(0, 30)
+	badge.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	badge.add_theme_stylebox_override("panel", _collection_style(Color("fff0a8"), Color("ff74a8"), 15, 2))
+	badge.set_meta("reward_id", reward_id)
+	badge.set_meta("reward_type", reward_type)
+
+	var label := Label.new()
+	label.name = "EquippedCosmeticBadgeLabel"
+	label.text = "장착 %s" % _reward_type_label(reward_type)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.add_theme_font_size_override("font_size", 13)
+	label.add_theme_color_override("font_color", Color("7a3150"))
+	badge.add_child(label)
+	return badge
 
 
 func _refresh_cosmetic_actions(animal: Dictionary, entry: Dictionary, unlocked: bool) -> void:
@@ -634,21 +691,27 @@ func _collection_style(bg_color: Color, border_color: Color, radius: int, border
 	return style
 
 
-func _card_style(unlocked: bool, is_new: bool, is_selected: bool) -> StyleBoxFlat:
+func _card_style(unlocked: bool, is_new: bool, is_selected: bool, equipped_reward_type: String = "") -> StyleBoxFlat:
 	var bg_color := Color("ffffff") if unlocked else Color("e3e8ef")
 	var border_color := Color("8ee5c5") if unlocked else Color("b7c1cf")
 	var border_width := 2
+	var has_equipped_frame := unlocked and equipped_reward_type == "card_frame"
 	if is_new:
 		bg_color = Color("fff8d9")
 		border_color = Color("ffd15f")
 		border_width = 3
+	if has_equipped_frame:
+		if not is_new:
+			bg_color = Color("fffdfa")
+		border_color = Color("ff74a8")
+		border_width = maxi(border_width, 4)
 	if is_selected:
 		bg_color = Color("fff7fb") if unlocked else Color("edf1f6")
 		border_color = Color("ff6fae")
-		border_width = 4
+		border_width = 5 if has_equipped_frame else 4
 	var style := _collection_style(bg_color, border_color, 20, border_width)
-	style.shadow_color = Color(0.12, 0.18, 0.28, 0.22 if is_selected else 0.14)
-	style.shadow_size = 12 if is_selected else 7
+	style.shadow_color = Color(0.12, 0.18, 0.28, 0.24 if is_selected else (0.18 if has_equipped_frame else 0.14))
+	style.shadow_size = 13 if is_selected else (9 if has_equipped_frame else 7)
 	return style
 
 

@@ -386,6 +386,19 @@
   - 같은 cosmetic 재장착과 미획득 reward 장착은 저장 상태와 analytics를 바꾸지 않는다.
   - 실제 cosmetic 아트 적용, 홈/보드/프로필 반영, 타입별 동시 장착은 후속 작업으로 분리한다.
 
+### PAM-DEV-064: Equipped Cosmetic Visual Application MVP
+
+- 상태: 완료됨. Rescue Book 카드가 장착된 friendship cosmetic을 ID 텍스트만이 아니라 카드 비주얼로 표시한다. `rabbit_sprout_frame`처럼 `card_frame` 타입 reward가 장착되면 카드 테두리/그림자와 `장착 프레임` 배지가 적용되고, 카드 metadata에 `equipped_cosmetic`/`equipped_cosmetic_type`이 남아 scene smoke와 render snapshot이 회귀를 잡는다.
+- 소유: Development Agent + Art Agent + QA Agent
+- 대상 파일:
+  - `scripts/collection_screen.gd`
+  - `scripts/validate_scene_loads.gd`
+  - `scripts/validate_render_snapshots.gd`
+- 완료 기준:
+  - 획득 후 장착된 `rabbit_sprout_frame`이 Rescue Book 카드에서 `장착 프레임` 배지와 frame 스타일로 보인다.
+  - 선택/NEW/잠김 카드 상태와 충돌하지 않고 상세 `장착중` 버튼 상태와 저장 metadata가 일치한다.
+  - no-device scene smoke와 render snapshot이 장착 frame badge, card metadata, 버튼 상태를 함께 검증한다.
+
 ### PAM-DEV-070: 실패 유형 분류와 제안 정책 구현
 
 - 상태: 완료됨. `FailOfferPolicy`가 Near Miss, Strategic Miss, First Fail, Repeat Fail, Hard Level Fail을 분류하고, Level 1-10 광고/IAP/하트 제안 차단과 실패 횟수 저장 기반 반복 실패 분기를 검증한다.

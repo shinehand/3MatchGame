@@ -514,15 +514,24 @@ func _validate_collection_snapshot_regions(image: Image, node: Node, snapshot_id
 	var earned_button := node.find_child("CosmeticButton_rabbit_smile_plus", true, false) as Button
 	var equipped_button := node.find_child("CosmeticButton_rabbit_sprout_frame", true, false) as Button
 	var unearned_button := node.find_child("CosmeticButton_rabbit_rescuer_badge", true, false) as Button
+	var rabbit_card := node.find_child("AnimalCard_rabbit", true, false) as Control
+	var equipped_badge: Control = null
+	var equipped_badge_label: Label = null
+	if rabbit_card != null:
+		equipped_badge = rabbit_card.find_child("EquippedCosmeticBadge_rabbit_sprout_frame", true, false) as Control
+		if equipped_badge != null:
+			equipped_badge_label = equipped_badge.find_child("EquippedCosmeticBadgeLabel", true, false) as Label
 	_validate_control_pixels(image, detail_label, snapshot_id, "CollectionDetailLabel", errors)
 	_validate_control_pixels(image, cosmetic_grid, snapshot_id, "CosmeticEquipGrid", errors)
 	_validate_control_pixels(image, earned_button, snapshot_id, "CosmeticButtonRabbitSmilePlus", errors)
 	_validate_control_pixels(image, equipped_button, snapshot_id, "CosmeticButtonRabbitSproutFrame", errors)
 	_validate_control_pixels(image, unearned_button, snapshot_id, "CosmeticButtonRabbitRescuerBadge", errors)
+	_validate_control_pixels(image, equipped_badge, snapshot_id, "EquippedRabbitFrameBadge", errors)
 	_validate_control_within_image_bounds(cosmetic_grid, snapshot_id, "CosmeticEquipGrid", errors)
 	_validate_control_within_image_bounds(earned_button, snapshot_id, "CosmeticButtonRabbitSmilePlus", errors)
 	_validate_control_within_image_bounds(equipped_button, snapshot_id, "CosmeticButtonRabbitSproutFrame", errors)
 	_validate_control_within_image_bounds(unearned_button, snapshot_id, "CosmeticButtonRabbitRescuerBadge", errors)
+	_validate_control_within_image_bounds(equipped_badge, snapshot_id, "EquippedRabbitFrameBadge", errors)
 	if detail_label == null or not detail_label.text.contains("토끼") or not detail_label.text.contains("Lv.3") or not detail_label.text.contains("토큰 40") or not detail_label.text.contains("우정 보상"):
 		errors.append("%s collection snapshot detail should show selected rabbit Lv.3 token reward track." % snapshot_id)
 	if earned_button == null or earned_button.disabled or not earned_button.text.contains("장착"):
@@ -533,6 +542,10 @@ func _validate_collection_snapshot_regions(image: Image, node: Node, snapshot_id
 		errors.append("%s collection snapshot equipped button should preserve rabbit_sprout_frame tooltip metadata." % snapshot_id)
 	if unearned_button == null or not unearned_button.disabled or not unearned_button.text.contains("대기"):
 		errors.append("%s collection snapshot should show a disabled 대기 button for unearned rabbit cosmetic." % snapshot_id)
+	if equipped_badge_label == null or not equipped_badge_label.text.contains("장착 프레임"):
+		errors.append("%s collection snapshot should show an equipped rabbit frame badge on the animal card." % snapshot_id)
+	if rabbit_card == null or String(rabbit_card.get_meta("equipped_cosmetic", "")) != "rabbit_sprout_frame" or String(rabbit_card.get_meta("equipped_cosmetic_type", "")) != "card_frame":
+		errors.append("%s collection snapshot rabbit card should expose equipped cosmetic metadata." % snapshot_id)
 	var state_animals := Dictionary(GameSession.get_rescue_book_state().get("animals", {}))
 	var rabbit_entry := Dictionary(state_animals.get("rabbit", {}))
 	if int(rabbit_entry.get("tokens", 0)) != 40 or String(rabbit_entry.get("equipped_cosmetic", "")) != "rabbit_sprout_frame":

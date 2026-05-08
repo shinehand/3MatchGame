@@ -140,7 +140,7 @@ zsh scripts/validate_gameplay.sh
 
 - Rescue Book 카드가 토큰 수, 우정 레벨, `NEW`, 잠김 해금 스테이지 문구를 실제 UI 라벨로 표시한다.
 - Rescue Book friendship reward track은 `rabbit` 40토큰 fixture에서 Lv.3, 보상 3/5, Lv.1-5 상세 `획득`/`대기`, `earned_rewards`, `animal_token_gain`, `animal_friendship_level_up`을 검증한다.
-- Rescue Book cosmetic equip은 `rabbit` 40토큰 fixture에서 획득한 `rabbit_sprout_frame` 장착, save persistence, `animal_cosmetic_equip` payload, 중복/미획득 장착 차단, 상세 버튼 `장착중` 상태를 검증한다.
+- Rescue Book cosmetic equip은 `rabbit` 40토큰 fixture에서 획득한 `rabbit_sprout_frame` 장착, save persistence, `animal_cosmetic_equip` payload, 중복/미획득 장착 차단, 상세 버튼 `장착중` 상태, 카드 `장착 프레임` 배지와 equipped metadata를 검증한다.
 - Stage clear Rescue Book token reward는 Stage 1 실제 클리어 경로에서 `rabbit +3 tokens`, 결과 overlay의 도감 토큰 문구, `source=stage_clear` analytics, 반복 `_check_stage_state()` 중복 지급 차단을 검증한다.
 - 첫 세션 Level 1-5 순차 클리어가 Stage 6과 `frog`/`koala`/`hamster` Rescue Book 신규 카드를 해금하고 `animal_unlock` analytics를 남긴다.
 - Rescue Book 카드 입력 경로가 선택 상세, `NEW` 제거, 토큰/우정 레벨 저장 상태를 유지하는지 확인한다.
