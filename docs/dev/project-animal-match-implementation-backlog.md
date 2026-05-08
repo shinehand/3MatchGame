@@ -624,9 +624,24 @@
   - scene smoke가 성공/near-miss 실패 overlay 본문을 6개 이하의 visible line으로 제한해 문구 과밀 회귀를 차단한다.
   - 기존 보상/별/다음 CTA, 도감 토큰, Zoo-Zoo Time 문구 계약은 유지하고, 실패 유형/booster id/rewarded offer 계약은 화면 본문이 아니라 metadata 검증으로 유지한다.
 
+### PAM-UX-114: Collection Album & Stage Popup Landscape Polish
+
+- 상태: 완료됨. `canvas_items` stretch의 landscape 논리 viewport에서 고정 px가 작게 보이던 문제를 비율 기반 레이아웃으로 정리했다. Collection landscape는 납작한 3열 row가 아니라 6열 앨범 그리드로 바꾸고, 이름/상태는 Button형 표시 칩으로 렌더 안정성을 확보했다. Stage Popup landscape는 화면 중앙의 큰 상용 start modal로 키우고 `PLAY` CTA가 booster보다 강하게 보이도록 폭, 높이, font, 버튼 높이를 상향했다.
+- 소유: Art Agent + Development Agent + QA Agent
+- 대상 파일:
+  - `scripts/collection_screen.gd`
+  - `scripts/stage_select.gd`
+  - `scripts/validate_scene_loads.gd`
+  - `docs/dev/validation-process.md`
+  - `docs/qa/project-animal-match-development-gates.md`
+- 완료 기준:
+  - `844x390` render snapshot에서 Collection이 얇은 표가 아니라 6열 앨범 카드 그리드로 보이고, 동물명/상태/장착 배지가 판독된다.
+  - `844x390` Stage Popup에서 panel이 화면 중심의 상용 modal 크기를 가지며 `PLAY`가 가장 강한 CTA로 보인다.
+  - scene smoke가 Collection 카드/preview collapse, Stage Popup landscape panel 크기, `PLAY` CTA 높이 회귀를 차단한다.
+
 ## 추천 구현 순서
 
-완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
+완료된 초기 구현 카드(`PAM-DEV-050`, `PAM-DEV-052`, `PAM-DEV-053`, `PAM-DEV-055`, `PAM-DEV-060`, `PAM-UX-060`, `PAM-PLAN-061`, `PAM-LIVEOPS-081`, `PAM-ART-091`, `PAM-PLAN-092`, `PAM-QA-041`, `PAM-REL-101`, `PAM-QA-102`, `PAM-REL-103`, `PAM-QA-104`, `PAM-QA-105`, `PAM-QA-111`, `PAM-UX-112`, `PAM-UX-113`, `PAM-UX-114`)는 회귀 검증 대상으로 유지한다. `PAM-QA-104`에는 Stage 31 특수 조합 6종 render snapshot preflight가 포함된다.
 
 다음 고가치 순서:
 

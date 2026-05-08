@@ -281,28 +281,46 @@ func _make_animal_card(animal: Dictionary, entry: Dictionary) -> PanelContainer:
 	name_label.name = "AnimalNameLabel"
 	name_label.text = String(animal.get("display_name", animal_id))
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_label.custom_minimum_size = _collection_name_label_minimum_size(get_viewport_rect().size)
 	name_label.add_theme_font_size_override("font_size", _collection_name_font_size(get_viewport_rect().size))
 	name_label.add_theme_color_override("font_color", Color("213d55") if unlocked else Color("7f8792"))
+	name_label.visible = false
 	stack.add_child(name_label)
+	stack.add_child(_make_card_text_button(
+		"AnimalNameVisual",
+		name_label.text,
+		_collection_name_label_minimum_size(get_viewport_rect().size),
+		_collection_name_font_size(get_viewport_rect().size),
+		Color("213d55") if unlocked else Color("7f8792"),
+		Color(1, 1, 1, 0.38),
+	))
 
 	var status_label := Label.new()
 	status_label.name = "AnimalStatusLabel"
 	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	status_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	status_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	status_label.custom_minimum_size = _collection_status_label_minimum_size(get_viewport_rect().size)
 	status_label.add_theme_font_size_override("font_size", _collection_status_font_size(get_viewport_rect().size))
 	status_label.add_theme_color_override("font_color", Color("3f6f5b") if unlocked else Color("8b93a0"))
 	if unlocked:
 		status_label.text = "Lv.%d · 토큰 %d%s" % [int(entry.get("friendship_level", 1)), int(entry.get("tokens", 0)), " · NEW" if is_new else ""]
 	else:
 		status_label.text = "Stage %d 해금" % int(animal.get("unlock_stage", 1))
+	status_label.visible = false
 	stack.add_child(status_label)
+	stack.add_child(_make_card_text_button(
+		"AnimalStatusVisual",
+		status_label.text,
+		_collection_status_label_minimum_size(get_viewport_rect().size),
+		_collection_status_font_size(get_viewport_rect().size),
+		Color("3f6f5b") if unlocked else Color("8b93a0"),
+		Color(1, 1, 1, 0.42) if unlocked else Color(1, 1, 1, 0.26),
+	))
 
 	if has_equipped_visual:
 		stack.add_child(_make_equipped_cosmetic_badge(equipped_cosmetic, equipped_reward_type))
@@ -315,6 +333,7 @@ func _make_animal_card(animal: Dictionary, entry: Dictionary) -> PanelContainer:
 	if total_reward_count > 0:
 		cosmetic_label.text += " · 보상 %d/%d" % [earned_reward_count, total_reward_count]
 	cosmetic_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cosmetic_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	cosmetic_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	cosmetic_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	cosmetic_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -465,6 +484,22 @@ func _make_equipped_cosmetic_badge(reward_id: String, reward_type: String) -> Pa
 	label.add_theme_color_override("font_color", Color("7a3150"))
 	badge.add_child(label)
 	return badge
+
+
+func _make_card_text_button(button_name: String, text: String, minimum_size: Vector2, font_size: int, font_color: Color, bg_color: Color) -> Button:
+	var button := Button.new()
+	button.name = button_name
+	button.text = text
+	button.disabled = true
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.custom_minimum_size = minimum_size
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	button.add_theme_font_size_override("font_size", font_size)
+	button.add_theme_color_override("font_disabled_color", font_color)
+	button.add_theme_stylebox_override("disabled", _collection_style(bg_color, Color(1, 1, 1, 0.0), 12, 0))
+	return button
 
 
 func _refresh_cosmetic_actions(animal: Dictionary, entry: Dictionary, unlocked: bool) -> void:
@@ -739,26 +774,26 @@ func _apply_responsive_layout() -> void:
 	MobileLayout.apply_safe_area(safe_margin, self, 18)
 	var viewport_size := get_viewport_rect().size
 	var portrait := viewport_size.y >= viewport_size.x
-	card_grid.columns = 3 if portrait else 3
-	card_grid.add_theme_constant_override("h_separation", 12 if portrait else 18)
-	card_grid.add_theme_constant_override("v_separation", 12 if portrait else 18)
+	card_grid.columns = 3 if portrait else 6
+	card_grid.add_theme_constant_override("h_separation", 12 if portrait else 10)
+	card_grid.add_theme_constant_override("v_separation", 12 if portrait else 10)
 	if header_panel != null:
-		header_panel.custom_minimum_size = Vector2(0, 0 if portrait else viewport_size.y * 0.24)
+		header_panel.custom_minimum_size = Vector2(0, 0)
 	if header_margin != null:
-		header_margin.add_theme_constant_override("margin_left", 14 if portrait else 44)
-		header_margin.add_theme_constant_override("margin_top", 12 if portrait else 26)
-		header_margin.add_theme_constant_override("margin_right", 14 if portrait else 44)
-		header_margin.add_theme_constant_override("margin_bottom", 12 if portrait else 26)
+		header_margin.add_theme_constant_override("margin_left", 14 if portrait else 30)
+		header_margin.add_theme_constant_override("margin_top", 12 if portrait else 20)
+		header_margin.add_theme_constant_override("margin_right", 14 if portrait else 30)
+		header_margin.add_theme_constant_override("margin_bottom", 12 if portrait else 20)
 	if back_button != null:
 		back_button.custom_minimum_size = Vector2(96, 50) if portrait else Vector2(128, 78)
 		back_button.add_theme_font_size_override("font_size", 20 if portrait else 34)
 	var title_label := find_child("TitleLabel", true, false) as Label
 	if title_label != null:
-		title_label.add_theme_font_size_override("font_size", 32 if portrait else 54)
+		title_label.add_theme_font_size_override("font_size", 32 if portrait else 46)
 	if summary_label != null:
-		summary_label.add_theme_font_size_override("font_size", 17 if portrait else 30)
+		summary_label.add_theme_font_size_override("font_size", 17 if portrait else 24)
 	if detail_label != null:
-		detail_label.add_theme_font_size_override("font_size", 16 if portrait else 30)
+		detail_label.add_theme_font_size_override("font_size", 16 if portrait else 24)
 	if cosmetic_grid != null:
 		cosmetic_grid.columns = 2 if portrait else 3
 		cosmetic_grid.add_theme_constant_override("h_separation", 7 if portrait else 14)
@@ -790,14 +825,25 @@ func _apply_collection_card_responsive_layout(viewport_size: Vector2) -> void:
 			preview.custom_minimum_size = preview_size
 		var name_label := card.find_child("AnimalNameLabel", true, false) as Label
 		if name_label != null:
-			name_label.custom_minimum_size = _collection_name_label_minimum_size(viewport_size)
 			name_label.add_theme_font_size_override("font_size", name_font)
+		var name_visual := card.find_child("AnimalNameVisual", true, false) as Button
+		if name_visual != null:
+			if name_label != null:
+				name_visual.text = name_label.text
+			name_visual.custom_minimum_size = _collection_name_label_minimum_size(viewport_size)
+			name_visual.add_theme_font_size_override("font_size", name_font)
 		var status_label := card.find_child("AnimalStatusLabel", true, false) as Label
 		if status_label != null:
-			status_label.custom_minimum_size = _collection_status_label_minimum_size(viewport_size)
 			status_label.add_theme_font_size_override("font_size", status_font)
+		var status_visual := card.find_child("AnimalStatusVisual", true, false) as Button
+		if status_visual != null:
+			if status_label != null:
+				status_visual.text = status_label.text
+			status_visual.custom_minimum_size = _collection_status_label_minimum_size(viewport_size)
+			status_visual.add_theme_font_size_override("font_size", status_font)
 		var cosmetic_label := card.find_child("AnimalCosmeticLabel", true, false) as Label
 		if cosmetic_label != null:
+			cosmetic_label.visible = viewport_size.y >= viewport_size.x
 			cosmetic_label.custom_minimum_size = _collection_cosmetic_label_minimum_size(viewport_size)
 			cosmetic_label.add_theme_font_size_override("font_size", cosmetic_font)
 		var badge := card.find_child("EquippedCosmeticBadge*", true, false) as Control
@@ -812,45 +858,45 @@ func _collection_card_minimum_size(viewport_size: Vector2) -> Vector2:
 	var portrait := viewport_size.y >= viewport_size.x
 	if portrait:
 		return Vector2(0, maxf(340.0, viewport_size.y * 0.145))
-	return Vector2(0, maxf(620.0, viewport_size.y * 0.32))
+	return Vector2(0, maxf(450.0, viewport_size.y * 0.24))
 
 
 func _collection_preview_size(viewport_size: Vector2) -> Vector2:
 	var portrait := viewport_size.y >= viewport_size.x
-	var side := maxf(144.0, viewport_size.y * (0.065 if portrait else 0.14))
+	var side := maxf(144.0, viewport_size.y * (0.065 if portrait else 0.115))
 	return Vector2(side, side)
 
 
 func _collection_name_font_size(viewport_size: Vector2) -> int:
-	return 42 if viewport_size.y >= viewport_size.x else 72
+	return 42 if viewport_size.y >= viewport_size.x else 42
 
 
 func _collection_name_label_minimum_size(viewport_size: Vector2) -> Vector2:
-	return Vector2(0, 54 if viewport_size.y >= viewport_size.x else 96)
+	return Vector2(0, 54 if viewport_size.y >= viewport_size.x else 54)
 
 
 func _collection_status_font_size(viewport_size: Vector2) -> int:
-	return 30 if viewport_size.y >= viewport_size.x else 52
+	return 30 if viewport_size.y >= viewport_size.x else 32
 
 
 func _collection_status_label_minimum_size(viewport_size: Vector2) -> Vector2:
-	return Vector2(0, 42 if viewport_size.y >= viewport_size.x else 76)
+	return Vector2(0, 42 if viewport_size.y >= viewport_size.x else 44)
 
 
 func _collection_cosmetic_font_size(viewport_size: Vector2) -> int:
-	return 24 if viewport_size.y >= viewport_size.x else 40
+	return 24 if viewport_size.y >= viewport_size.x else 30
 
 
 func _collection_cosmetic_label_minimum_size(viewport_size: Vector2) -> Vector2:
-	return Vector2(0, 36 if viewport_size.y >= viewport_size.x else 64)
+	return Vector2(0, 36 if viewport_size.y >= viewport_size.x else 42)
 
 
 func _equipped_badge_minimum_size(viewport_size: Vector2) -> Vector2:
-	return Vector2(0, 48 if viewport_size.y >= viewport_size.x else 88)
+	return Vector2(0, 48 if viewport_size.y >= viewport_size.x else 58)
 
 
 func _equipped_badge_font_size(viewport_size: Vector2) -> int:
-	return 22 if viewport_size.y >= viewport_size.x else 38
+	return 22 if viewport_size.y >= viewport_size.x else 28
 
 
 func _cosmetic_action_button_minimum_size(viewport_size: Vector2) -> Vector2:

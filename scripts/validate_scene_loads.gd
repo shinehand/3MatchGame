@@ -523,7 +523,7 @@ func _validate_collection_viewport_layout(node: Node, viewport_size: Vector2i, e
 		return
 	var portrait := viewport_size.y >= viewport_size.x
 	var card_rect := first_card.get_global_rect()
-	var minimum_card_height := float(viewport_size.y) * (0.13 if portrait else 0.28)
+	var minimum_card_height := float(viewport_size.y) * (0.13 if portrait else 0.22)
 	if card_rect.size.y < minimum_card_height:
 		errors.append("%s AnimalCard should not collapse into a thin row at %s, got height %.1f below %.1f." % [COLLECTION_SCENE_PATH, viewport_size, card_rect.size.y, minimum_card_height])
 	var preview := first_card.find_child("AnimalPreview", true, false) as Control
