@@ -169,6 +169,7 @@ var _overlay_expression_tween: Tween
 var _overlay_expression_state := "idle"
 var last_zoo_zoo_bonus_score := 0
 var last_zoo_zoo_moves_spent := 0
+var last_rescue_book_token_reward: Dictionary = {}
 var stage_selected_boosters: Array = []
 var fever_analytics_open := false
 var fever_turns_spent_current := 0
@@ -303,6 +304,7 @@ func _start_stage(stage_index: int) -> void:
 	_last_worried_moves = -1
 	last_zoo_zoo_bonus_score = 0
 	last_zoo_zoo_moves_spent = 0
+	last_rescue_book_token_reward = {}
 	_clear_selection()
 	_reset_collected_counts()
 	_setup_board_mask()
@@ -1718,6 +1720,13 @@ func _track_stage_complete_analytics(star_count: int) -> void:
 	GameSession.record_analytics_event("stage_complete", params)
 
 
+func _grant_stage_clear_rescue_book_tokens() -> void:
+	var target_animals := []
+	for animal_id in _stage_collect_targets().keys():
+		target_animals.append(String(animal_id))
+	last_rescue_book_token_reward = GameSession.grant_stage_clear_rescue_book_tokens(_current_stage_id(), target_animals, 3)
+
+
 func _track_stage_fail_analytics(fail_offer: Dictionary) -> void:
 	var params := _analytics_stage_base()
 	params["fail_type"] = String(fail_offer.get("type", "general_shortfall"))
@@ -2850,6 +2859,7 @@ func _check_stage_state() -> void:
 		_play_fx_method("play_star_reveal", [star_count])
 		var prev_best := GameSession.get_best_stars(_current_stage_id())
 		GameSession.record_stage_result(_current_stage_id(), score, star_count)
+		_grant_stage_clear_rescue_book_tokens()
 		if fever_analytics_open:
 			_track_fever_end_analytics("stage_complete")
 		_track_stage_complete_analytics(star_count)
@@ -3786,6 +3796,11 @@ func _build_clear_overlay_body(star_count: int, unlock_text: String, campaign_co
 		"%s" % _format_star_rating(star_count),
 		"보상  골드 %d · 별 %d개 · 점수 %d" % [reward_gold, star_count, score],
 	]
+	if bool(last_rescue_book_token_reward.get("granted", false)):
+		lines.append("도감  %s 토큰 +%d" % [
+			ANIMAL_NAMES.get(String(last_rescue_book_token_reward.get("animal_id", "")), String(last_rescue_book_token_reward.get("animal_id", ""))),
+			int(last_rescue_book_token_reward.get("amount", 0)),
+		])
 	if last_zoo_zoo_moves_spent > 0:
 		lines.append("Zoo-Zoo Time  이동 %d회 폭발 · 보너스 +%d" % [last_zoo_zoo_moves_spent, last_zoo_zoo_bonus_score])
 	lines.append("목표  %s" % _build_goal_result_summary())

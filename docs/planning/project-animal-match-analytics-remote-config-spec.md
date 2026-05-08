@@ -57,7 +57,7 @@
 | `animal_friendship_level_up` | 우정 레벨 상승 | `animal_id`, `level_before`, `level_after`, `reward_id` |
 | `animal_cosmetic_equip` | 장착 변경 | `animal_id`, `cosmetic_id`, `cosmetic_type`, `entry_point` |
 
-현재 Godot 런타임은 stage clear로 Rescue Book 카드가 신규 해금될 때 `animal_unlock`을 기록한다. `source=stage_clear`, 방금 클리어한 `stage_id`, 해금 직후 `token_balance`를 필수로 남기고, 선택 파라미터 `unlock_stage`에 동물 데이터의 해금 스테이지를 함께 남긴다. 토큰 지급은 `animal_token_gain`으로 기록하고, 토큰 누적으로 friendship level이 올라가 cosmetic reward가 자동 획득되면 `animal_friendship_level_up`을 기록한다. MVP 보상은 `rabbit`, `frog`, `koala` 3종의 Lv.1-5 cosmetic track으로 시작하며, 장착 UI와 `animal_cosmetic_equip` 실사용은 후속 작업으로 둔다.
+현재 Godot 런타임은 stage clear로 Rescue Book 카드가 신규 해금될 때 `animal_unlock`을 기록한다. `source=stage_clear`, 방금 클리어한 `stage_id`, 해금 직후 `token_balance`를 필수로 남기고, 선택 파라미터 `unlock_stage`에 동물 데이터의 해금 스테이지를 함께 남긴다. Stage clear 토큰 지급은 첫 클리어 기준 첫 번째 목표 동물 1종에 `+3 tokens`를 지급하고, `stage_id + animal_id` claim key로 중복 지급을 막으며 `animal_token_gain`에 `source=stage_clear`를 남긴다. 토큰 누적으로 friendship level이 올라가 cosmetic reward가 자동 획득되면 `animal_friendship_level_up`을 기록한다. MVP 보상은 `rabbit`, `frog`, `koala` 3종의 Lv.1-5 cosmetic track으로 시작하며, 장착 UI와 `animal_cosmetic_equip` 실사용은 후속 작업으로 둔다.
 
 ### 2.4 Fail Offer / Ads / IAP
 

@@ -352,7 +352,7 @@
 
 ### PAM-DEV-060: Rescue Book 데이터 모델과 저장 구현
 
-- 상태: 완료됨. `data/animals.json`, `CollectionState`, `GameSession` 저장 경로가 18종 해금/토큰/우정 레벨/장착 cosmetic/new badge를 저장·정규화하고, token 누적으로 friendship level이 상승한다. `rabbit`, `frog`, `koala`는 Lv.1-5 cosmetic friendship reward track을 가지며, 레벨 기준 보상을 자동 획득해 `earned_rewards`에 idempotent하게 저장한다. `GameSession.add_rescue_book_tokens()`는 `animal_token_gain`과 `animal_friendship_level_up` analytics를 기록한다.
+- 상태: 완료됨. `data/animals.json`, `CollectionState`, `GameSession` 저장 경로가 18종 해금/토큰/우정 레벨/장착 cosmetic/new badge를 저장·정규화하고, token 누적으로 friendship level이 상승한다. `rabbit`, `frog`, `koala`는 Lv.1-5 cosmetic friendship reward track을 가지며, 레벨 기준 보상을 자동 획득해 `earned_rewards`에 idempotent하게 저장한다. Stage clear는 첫 번째 목표 동물 1종에 첫 클리어 기준 `+3 tokens`를 지급하고 `stage_id:animal_id` claim key로 중복 지급을 막는다. `GameSession.add_rescue_book_tokens()`와 stage clear grant는 `animal_token_gain`과 `animal_friendship_level_up` analytics를 기록한다.
 - 소유: Development Agent
 - 대상 파일 후보:
   - 신규 `scripts/collection_state.gd`

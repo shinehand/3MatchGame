@@ -136,6 +136,7 @@
 - 스테이지 보상과 컬렉션 토큰 지급이 중복 지급되지 않는다.
 - 자동 scene smoke가 Rescue Book 카드의 잠김/해금, `NEW`, 토큰 수, 우정 레벨 라벨 회귀를 잡는다.
 - 자동 scene smoke가 `rabbit`/`frog`/`koala` Lv.1-5 cosmetic reward data, token 기반 `earned_rewards`, 카드 보상 획득 수, 상세 `획득`/`대기` reward track, `animal_token_gain`, `animal_friendship_level_up` analytics를 검증한다.
+- 자동 scene smoke가 Stage 1 실제 clear 경로의 첫 목표 동물 `+3 tokens`, `source=stage_clear`, 결과 overlay 도감 토큰 문구, 같은 stage clear 중복 지급 방지를 검증한다.
 - 자동 scene smoke가 Rescue Book 카드 입력 후 상세 갱신, `NEW` 제거, 토큰/우정 레벨 보존을 검증한다.
 - 자동 scene smoke가 Rescue Book 미리보기 Tween을 최대 4개로 제한하고, 비활성/숨김 상태에서 정지하는지 검증한다.
 - 홈, 결과 화면, 이벤트에서 컬렉션 진입과 복귀가 가능하다.

@@ -1152,6 +1152,20 @@ func _analytics_event_count(event_name: String) -> int:
 	return count
 
 
+func _rescue_book_token_count(animal_id: String) -> int:
+	var animals := Dictionary(GameSession.get_rescue_book_state().get("animals", {}))
+	return int(Dictionary(animals.get(animal_id, {})).get("tokens", 0))
+
+
+func _validation_save_data() -> Dictionary:
+	if not FileAccess.file_exists(SESSION_VALIDATION_SAVE_PATH):
+		return {}
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(SESSION_VALIDATION_SAVE_PATH))
+	if parsed is Dictionary:
+		return Dictionary(parsed)
+	return {}
+
+
 func _analytics_event_params_by_name_and_key(event_name: String, key: String, value: String) -> Dictionary:
 	var events := GameSession.get_analytics_events()
 	for index in range(events.size() - 1, -1, -1):
@@ -2735,6 +2749,8 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 	_complete_current_stage_goals(node)
 	node.set("remaining_moves", 0)
 	var complete_events_before := _analytics_event_count("stage_complete")
+	var token_events_before := _analytics_event_count("animal_token_gain")
+	var rabbit_tokens_before := _rescue_book_token_count("rabbit")
 	await node.call("_check_stage_state")
 	var overlay := node.get_node_or_null("Overlay") as CanvasItem
 	var overlay_title := node.get_node_or_null("Overlay/OverlayCenter/OverlayPanel/OverlayMargin/OverlayColumn/OverlayTitle") as Label
@@ -2752,6 +2768,8 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s clear overlay should show a clear title." % GAMEPLAY_SCENE_PATH)
 	if overlay_body == null or not overlay_body.text.contains("보상") or not overlay_body.text.contains("별") or not overlay_body.text.contains("다음"):
 		errors.append("%s clear overlay body should show reward, stars, and next action text." % GAMEPLAY_SCENE_PATH)
+	if overlay_body == null or not overlay_body.text.contains("도감") or not overlay_body.text.contains("토큰 +3"):
+		errors.append("%s clear overlay body should show the Rescue Book token reward." % GAMEPLAY_SCENE_PATH)
 	if overlay_mascot == null or overlay_mascot.texture == null:
 		errors.append("%s clear overlay should show a non-null success mascot texture." % GAMEPLAY_SCENE_PATH)
 	if overlay_primary == null or overlay_primary.text != "다음 스테이지":
@@ -2764,6 +2782,26 @@ func _validate_result_overlay_runtime(node: Node, errors: PackedStringArray) -> 
 		errors.append("%s clear overlay mascot should run a fallback expression tween." % GAMEPLAY_SCENE_PATH)
 	if _analytics_event_count("stage_complete") <= complete_events_before:
 		errors.append("%s clear overlay runtime smoke should emit stage_complete analytics." % GAMEPLAY_SCENE_PATH)
+	var token_reward := Dictionary(node.get("last_rescue_book_token_reward"))
+	if not bool(token_reward.get("granted", false)) or String(token_reward.get("animal_id", "")) != "rabbit" or int(token_reward.get("amount", 0)) != 3:
+		errors.append("%s Stage 1 clear should grant rabbit Rescue Book tokens once." % GAMEPLAY_SCENE_PATH)
+	if _rescue_book_token_count("rabbit") != rabbit_tokens_before + 3:
+		errors.append("%s Stage 1 clear should add exactly 3 rabbit tokens." % GAMEPLAY_SCENE_PATH)
+	if _analytics_event_count("animal_token_gain") != token_events_before + 1:
+		errors.append("%s Stage 1 clear should emit one animal_token_gain event." % GAMEPLAY_SCENE_PATH)
+	var stage_clear_token_event := _last_analytics_event_by_name("animal_token_gain")
+	var stage_clear_token_params: Dictionary = Dictionary(stage_clear_token_event.get("params", {}))
+	if String(stage_clear_token_params.get("animal_id", "")) != "rabbit" or String(stage_clear_token_params.get("source", "")) != "stage_clear" or int(stage_clear_token_params.get("stage_id", 0)) != 1 or int(stage_clear_token_params.get("amount", 0)) != 3:
+		errors.append("%s Stage 1 token analytics should identify stage_clear rabbit +3." % GAMEPLAY_SCENE_PATH)
+	await node.call("_check_stage_state")
+	if _rescue_book_token_count("rabbit") != rabbit_tokens_before + 3 or _analytics_event_count("animal_token_gain") != token_events_before + 1:
+		errors.append("%s repeated Stage 1 clear state check should not duplicate Rescue Book tokens or analytics." % GAMEPLAY_SCENE_PATH)
+	var persisted_save := _validation_save_data()
+	var persisted_animals := Dictionary(Dictionary(persisted_save.get("rescue_book", {})).get("animals", {}))
+	var persisted_rabbit := Dictionary(persisted_animals.get("rabbit", {}))
+	var persisted_claim_ids := Array(persisted_save.get("claimed_stage_token_reward_ids", []))
+	if int(persisted_rabbit.get("tokens", -1)) != rabbit_tokens_before + 3 or not persisted_claim_ids.has("1:rabbit"):
+		errors.append("%s Stage 1 Rescue Book token reward and claim key should persist in the same save." % GAMEPLAY_SCENE_PATH)
 
 	node.call("_start_stage", 0)
 	GameSession.set_stage_fail_count_for_testing(1, 0)

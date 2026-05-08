@@ -4,6 +4,7 @@ const SAVE_PATH := "user://save_game.json"
 const ANALYTICS_CONTRACT_PATH := "res://data/analytics_events.json"
 const MAX_ANALYTICS_EVENTS := 320
 const MAX_REWARD_TRANSACTION_IDS := 240
+const MAX_STAGE_TOKEN_REWARD_IDS := 240
 const CollectionState = preload("res://scripts/collection_state.gd")
 const AnalyticsGateway = preload("res://scripts/analytics_gateway.gd")
 
@@ -29,6 +30,7 @@ static var _save_data := {
 		"boosters": {},
 	},
 	"granted_reward_transaction_ids": [],
+	"claimed_stage_token_reward_ids": [],
 	"analytics_events": [],
 	"session_id": "",
 }
@@ -61,6 +63,7 @@ static func load_state() -> void:
 	_save_data["live_events"] = _normalize_live_events(Dictionary(parsed.get("live_events", {})))
 	_save_data["wallet"] = _normalize_wallet(Dictionary(parsed.get("wallet", {})))
 	_save_data["granted_reward_transaction_ids"] = _normalize_reward_transaction_ids(Array(parsed.get("granted_reward_transaction_ids", [])))
+	_save_data["claimed_stage_token_reward_ids"] = _normalize_stage_token_reward_ids(Array(parsed.get("claimed_stage_token_reward_ids", [])))
 	_save_data["analytics_events"] = Array(parsed.get("analytics_events", []))
 	_save_data["session_id"] = String(parsed.get("session_id", ""))
 	if String(_save_data["session_id"]).is_empty():
@@ -107,6 +110,7 @@ static func _reset_save_data_to_defaults() -> void:
 			"boosters": {},
 		},
 		"granted_reward_transaction_ids": [],
+		"claimed_stage_token_reward_ids": [],
 		"analytics_events": [],
 		"session_id": "",
 	}
@@ -158,6 +162,18 @@ static func _normalize_reward_transaction_ids(transaction_ids: Array) -> Array:
 			continue
 		normalized.append(transaction_id)
 	while normalized.size() > MAX_REWARD_TRANSACTION_IDS:
+		normalized.pop_front()
+	return normalized
+
+
+static func _normalize_stage_token_reward_ids(reward_ids: Array) -> Array:
+	var normalized := []
+	for value in reward_ids:
+		var reward_id := String(value).strip_edges()
+		if reward_id.is_empty() or normalized.has(reward_id):
+			continue
+		normalized.append(reward_id)
+	while normalized.size() > MAX_STAGE_TOKEN_REWARD_IDS:
 		normalized.pop_front()
 	return normalized
 
@@ -507,6 +523,42 @@ static func _track_rescue_book_token_gain(animal_id: String, token_count: int, s
 		if not event_id.is_empty():
 			level_params["event_id"] = event_id
 		record_analytics_event("animal_friendship_level_up", level_params)
+
+
+static func grant_stage_clear_rescue_book_tokens(stage_id: int, target_animals: Array, token_amount: int = 3) -> Dictionary:
+	load_state()
+	if stage_id <= 0 or token_amount <= 0:
+		return {"granted": false, "reason": "invalid_request"}
+	var animal_id := _first_stage_token_reward_animal(target_animals)
+	if animal_id.is_empty():
+		return {"granted": false, "reason": "missing_target_animal"}
+	if not Dictionary(get_rescue_book_state().get("animals", {})).has(animal_id):
+		return {"granted": false, "reason": "unknown_animal", "animal_id": animal_id}
+
+	var claim_key := "%d:%s" % [stage_id, animal_id]
+	var claimed_ids := _normalize_stage_token_reward_ids(Array(_save_data.get("claimed_stage_token_reward_ids", [])))
+	if claimed_ids.has(claim_key):
+		return {"granted": false, "reason": "already_claimed", "animal_id": animal_id, "amount": token_amount, "claim_key": claim_key}
+	claimed_ids.append(claim_key)
+
+	var before_state := CollectionState.normalize_state(Dictionary(_save_data.get("rescue_book", {})))
+	var before_entry := Dictionary(Dictionary(before_state.get("animals", {})).get(animal_id, {}))
+	var after_state := CollectionState.add_tokens(before_state, animal_id, token_amount)
+	var after_entry := Dictionary(Dictionary(after_state.get("animals", {})).get(animal_id, {}))
+	_save_data["claimed_stage_token_reward_ids"] = _normalize_stage_token_reward_ids(claimed_ids)
+	_save_data["rescue_book"] = after_state
+	save_state()
+	if token_amount > 0 and not after_entry.is_empty():
+		_track_rescue_book_token_gain(animal_id, token_amount, "stage_clear", stage_id, claim_key, before_entry, after_entry)
+	return {"granted": true, "animal_id": animal_id, "amount": token_amount, "claim_key": claim_key}
+
+
+static func _first_stage_token_reward_animal(target_animals: Array) -> String:
+	for value in target_animals:
+		var animal_id := String(value).strip_edges()
+		if not animal_id.is_empty():
+			return animal_id
+	return ""
 
 
 static func mark_rescue_book_seen(animal_id: String) -> void:

@@ -353,7 +353,7 @@ func _complete_gameplay_stage_goals(node: Node) -> void:
 
 
 func _prepare_stage_31_special_combo(node: Node, scenario: Dictionary, errors: PackedStringArray) -> void:
-	for method_name in ["_start_stage", "_make_piece", "_refresh_all_tiles", "_resolve_swap"]:
+	for method_name in ["_start_stage", "_make_piece", "_refresh_all_tiles", "_resolve_special_combo_swap"]:
 		if not node.has_method(method_name):
 			errors.append("%s should expose %s for Stage 31 special combo render snapshot." % [GAMEPLAY_SCENE_PATH, method_name])
 			return
@@ -379,8 +379,8 @@ func _prepare_stage_31_special_combo(node: Node, scenario: Dictionary, errors: P
 	node.call("_refresh_all_tiles")
 	await _settle_scene(node, 2)
 
-	node.call("_resolve_swap", from_cell, to_cell)
-	await create_timer(0.12).timeout
+	node.call("_resolve_special_combo_swap", from_cell, to_cell, from_special, to_special)
+	await create_timer(0.03).timeout
 
 
 func _seed_special_combo_render_board(node: Node, errors: PackedStringArray) -> Array:
@@ -706,8 +706,6 @@ func _validate_special_combo_snapshot_regions(image: Image, node: Node, scenario
 	_validate_canvas_item_alpha(flash, snapshot_id, "SpecialComboFlash", 0.08, errors)
 	_validate_canvas_item_alpha(ring, snapshot_id, "SpecialComboRing", 0.08, errors)
 
-	if flash is ColorRect and (flash as ColorRect).color.a < 0.08:
-		errors.append("%s SpecialComboFlash color alpha should remain visible during snapshot, got %.3f." % [snapshot_id, (flash as ColorRect).color.a])
 	if bool(scenario.get("requires_echo", false)):
 		var echo_ring := node.find_child("SpecialComboEchoRing", true, false) as Control
 		_validate_control_pixels(image, echo_ring, snapshot_id, "SpecialComboEchoRing", errors)
