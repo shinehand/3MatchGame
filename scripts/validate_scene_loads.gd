@@ -4219,7 +4219,10 @@ func _validate_stage_select_cta_signal_wiring(node: Node, errors: PackedStringAr
 	var panel := node.get("stage_popup_panel") as Control
 	_validate_button_pressed_connection(_find_button_with_text(panel, "×"), node, "_on_stage_popup_close_pressed", STAGE_SELECT_SCENE_PATH, "StagePopupCloseButton", errors)
 	_validate_button_pressed_connection(_find_button_with_text(panel, "PLAY"), node, "_on_stage_popup_start_pressed", STAGE_SELECT_SCENE_PATH, "StagePopupStartButton", errors)
-	var booster_buttons: Dictionary = Dictionary(node.get("stage_popup_booster_buttons"))
+	var booster_buttons := {}
+	var booster_buttons_value = node.get("stage_popup_booster_buttons")
+	if booster_buttons_value is Dictionary:
+		booster_buttons = Dictionary(booster_buttons_value)
 	for booster_id in ["rainbow_paw", "striped", "bomb"]:
 		_validate_button_pressed_connection(booster_buttons.get(booster_id) as Button, node, "_on_booster_button_pressed", STAGE_SELECT_SCENE_PATH, "StagePopupBoosterButton %s" % booster_id, errors)
 

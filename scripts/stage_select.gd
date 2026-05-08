@@ -1012,10 +1012,11 @@ func _world_node_positions() -> Array[Vector2]:
 	var viewport_size: Vector2 = get_viewport_rect().size
 	var portrait: bool = MobileLayout.is_portrait(self)
 	var left: float = 72.0 if portrait else viewport_size.x * 0.15
-	var top: float = 282.0 if portrait else 246.0
+	var top: float = viewport_size.y * 0.25 if portrait else 246.0
 	var width: float = viewport_size.x - left * 2.0
-	var bottom_reserved: float = 245.0 if portrait else 198.0
-	var height: float = maxf(520.0, viewport_size.y - top - bottom_reserved)
+	var bottom_reserved: float = 198.0
+	var available_height := viewport_size.y - top - bottom_reserved
+	var height: float = viewport_size.y * 0.46 if portrait else clampf(available_height, 520.0, 820.0)
 	var positions: Array[Vector2] = []
 	for normalized: Vector2 in WORLD_NODE_POSITIONS:
 		positions.append(Vector2(left + normalized.x * width, top + normalized.y * height))
@@ -1066,9 +1067,10 @@ func _make_stage_world_node(stage_def: Dictionary, center_position: Vector2) -> 
 	var best_stars := GameSession.get_best_stars(stage_id)
 	var current := stage_id == GameSession.get_selected_stage_id()
 	var finale := stage_id % 10 == 0
-	var node_size := 112.0 if not finale else 124.0
+	var portrait := MobileLayout.is_portrait(self)
+	var node_size := (112.0 if portrait else 150.0) if not finale else (124.0 if portrait else 166.0)
 	if current:
-		node_size = 132.0
+		node_size = 132.0 if portrait else 180.0
 
 	var button := Button.new()
 	button.name = "WorldStageNode%d" % stage_id
@@ -1105,6 +1107,11 @@ func _make_stage_world_node(stage_def: Dictionary, center_position: Vector2) -> 
 
 
 func _add_world_node_content(button: Button, stage_id: int, unlocked: bool, best_stars: int, current: bool, finale: bool) -> void:
+	if current:
+		_add_world_node_current_ring(button)
+	if finale:
+		_add_world_node_ribbon(button, "WorldNodeFinaleRibbon", "BOSS", Color("8d5cff"), Color("fff2a8"), -14.0)
+
 	var shine := PanelContainer.new()
 	shine.name = "WorldNodeShine"
 	shine.set_anchors_preset(Control.PRESET_TOP_WIDE)
@@ -1123,46 +1130,103 @@ func _add_world_node_content(button: Button, stage_id: int, unlocked: bool, best
 	number.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	number.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	number.text = str(stage_id)
-	number.add_theme_font_size_override("font_size", 40 if current else 32)
+	number.add_theme_font_size_override("font_size", int(clampf(button.size.x * (0.32 if current else 0.30), 32.0, 58.0)))
 	number.add_theme_color_override("font_color", Color("24405d") if unlocked else Color("8d95a3"))
 	number.add_theme_color_override("font_shadow_color", Color(1, 1, 1, 0.55))
 	number.add_theme_constant_override("shadow_offset_y", 2)
 	number.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(number)
 
-	var stars := Label.new()
-	stars.name = "WorldStageStars"
-	stars.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	stars.offset_left = 0.0
-	stars.offset_top = -34.0
-	stars.offset_right = 0.0
-	stars.offset_bottom = -8.0
-	stars.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	stars.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	stars.text = _compact_stars_text(best_stars)
-	stars.add_theme_font_size_override("font_size", 17 if current else 14)
-	stars.add_theme_color_override("font_color", Color("1c5c83") if best_stars > 0 else Color(1, 1, 1, 0.72))
-	stars.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	button.add_child(stars)
+	if current:
+		_add_world_node_ribbon(button, "WorldNodePlayRibbon", "PLAY", Color("ff6fae"), Color("ffffff"), -22.0)
+	if unlocked and best_stars > 0:
+		_add_world_node_star_tray(button, best_stars)
+	elif not unlocked:
+		_add_world_node_lock_badge(button)
 
-	if current or finale:
-		var badge := PanelContainer.new()
-		badge.name = "WorldNodeBadge"
-		badge.position = Vector2(button.size.x * 0.5 - 37.0, -18.0)
-		badge.size = Vector2(74, 34)
-		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		badge.add_theme_stylebox_override("panel", _rounded_style(Color("ff6fae") if current else Color("b98cff"), Color("ffffff"), 18, 3))
-		button.add_child(badge)
 
-		var badge_label := Label.new()
-		badge_label.set_anchors_preset(Control.PRESET_FULL_RECT)
-		badge_label.text = "PLAY" if current else "BOSS"
-		badge_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		badge_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		badge_label.add_theme_font_size_override("font_size", 15)
-		badge_label.add_theme_color_override("font_color", Color("ffffff"))
-		badge_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		badge.add_child(badge_label)
+func _add_world_node_current_ring(button: Button) -> void:
+	var ui_scale := _world_node_ui_scale(button)
+	var ring := PanelContainer.new()
+	ring.name = "WorldNodeCurrentRing"
+	ring.position = Vector2(-10, -10) * ui_scale
+	ring.size = button.size + Vector2(20, 20) * ui_scale
+	ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ring.add_theme_stylebox_override("panel", _rounded_style(Color(1, 1, 1, 0.0), Color("ff6fae"), int(82 * ui_scale), int(5 * ui_scale)))
+	button.add_child(ring)
+
+
+func _add_world_node_ribbon(button: Button, ribbon_name: String, text: String, bg_color: Color, border_color: Color, y_position: float) -> void:
+	var ui_scale := _world_node_ui_scale(button)
+	var ribbon := PanelContainer.new()
+	ribbon.name = ribbon_name
+	var ribbon_size := Vector2(86, 34) * ui_scale
+	ribbon.position = Vector2(button.size.x * 0.5 - ribbon_size.x * 0.5, y_position * ui_scale)
+	ribbon.size = ribbon_size
+	ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ribbon.add_theme_stylebox_override("panel", _rounded_style(bg_color, border_color, int(18 * ui_scale), int(3 * ui_scale)))
+	button.add_child(ribbon)
+
+	var ribbon_label := Label.new()
+	ribbon_label.name = "%sLabel" % ribbon_name
+	ribbon_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	ribbon_label.text = text
+	ribbon_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ribbon_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	ribbon_label.add_theme_font_size_override("font_size", int(15 * ui_scale))
+	ribbon_label.add_theme_color_override("font_color", Color("ffffff"))
+	ribbon_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ribbon.add_child(ribbon_label)
+
+
+func _add_world_node_star_tray(button: Button, best_stars: int) -> void:
+	var ui_scale := _world_node_ui_scale(button)
+	var tray := PanelContainer.new()
+	tray.name = "WorldNodeStarTray"
+	var tray_size := Vector2(86, 30) * ui_scale
+	tray.position = Vector2(button.size.x * 0.5 - tray_size.x * 0.5, button.size.y - 23.0 * ui_scale)
+	tray.size = tray_size
+	tray.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tray.add_theme_stylebox_override("panel", _rounded_style(Color("fff4bf"), Color("ffbf32"), int(16 * ui_scale), int(3 * ui_scale)))
+	button.add_child(tray)
+
+	var tray_label := Label.new()
+	tray_label.name = "WorldNodeStarTrayLabel"
+	tray_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tray_label.text = _compact_stars_text(best_stars)
+	tray_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	tray_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	tray_label.add_theme_font_size_override("font_size", int(16 * ui_scale))
+	tray_label.add_theme_color_override("font_color", Color("9a5b00"))
+	tray_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tray.add_child(tray_label)
+
+
+func _add_world_node_lock_badge(button: Button) -> void:
+	var ui_scale := _world_node_ui_scale(button)
+	var badge := PanelContainer.new()
+	badge.name = "WorldNodeLockBadge"
+	var badge_size := Vector2(78, 28) * ui_scale
+	badge.position = Vector2(button.size.x * 0.5 - badge_size.x * 0.5, button.size.y - 24.0 * ui_scale)
+	badge.size = badge_size
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.add_theme_stylebox_override("panel", _rounded_style(Color(0.84, 0.87, 0.92, 0.92), Color(1, 1, 1, 0.76), int(15 * ui_scale), int(2 * ui_scale)))
+	button.add_child(badge)
+
+	var badge_label := Label.new()
+	badge_label.name = "WorldNodeLockBadgeLabel"
+	badge_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	badge_label.text = "LOCK"
+	badge_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	badge_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	badge_label.add_theme_font_size_override("font_size", int(13 * ui_scale))
+	badge_label.add_theme_color_override("font_color", Color("6c7482"))
+	badge_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.add_child(badge_label)
+
+
+func _world_node_ui_scale(button: Button) -> float:
+	return clampf(button.size.x / 132.0, 0.90, 1.36)
 
 
 func _compact_stars_text(best_stars: int) -> String:
@@ -1657,18 +1721,18 @@ func _layout_stage_world_layer(portrait: bool) -> void:
 		world_selected_label.add_theme_font_size_override("font_size", int(clampf(viewport_size.y * (0.014 if portrait else 0.020), 23.0 if portrait else 34.0, 30.0 if portrait else 44.0)))
 	if world_play_button:
 		if portrait:
-			world_play_button.custom_minimum_size = Vector2(clampf(viewport_size.x * 0.24, 260.0, 330.0), clampf(viewport_size.y * 0.058, 126.0, 138.0))
+			world_play_button.custom_minimum_size = Vector2(clampf(viewport_size.x * 0.24, 250.0, 320.0), clampf(viewport_size.y * 0.052, 112.0, 126.0))
 			world_play_button.add_theme_font_size_override("font_size", int(clampf(viewport_size.y * 0.020, 34.0, 42.0)))
 		else:
 			world_play_button.custom_minimum_size = Vector2(clampf(viewport_size.x * 0.24, 820.0, 1040.0), clampf(viewport_size.y * 0.132, 230.0, 286.0))
 			world_play_button.add_theme_font_size_override("font_size", int(clampf(viewport_size.y * 0.040, 64.0, 82.0)))
-	var selected_panel := stage_world_layer.find_child("WorldSelectedPanel", true, false) as PanelContainer
+	var selected_panel = stage_world_layer.find_child("WorldSelectedPanel", true, false) as PanelContainer
 	if selected_panel != null:
 		if portrait:
 			selected_panel.offset_left = 22.0
-			selected_panel.offset_top = -190.0
+			selected_panel.offset_top = -164.0
 			selected_panel.offset_right = -22.0
-			selected_panel.offset_bottom = -22.0
+			selected_panel.offset_bottom = -18.0
 		else:
 			selected_panel.offset_left = 72.0
 			selected_panel.offset_top = -clampf(viewport_size.y * 0.24, 390.0, 500.0)
@@ -1677,7 +1741,7 @@ func _layout_stage_world_layer(portrait: bool) -> void:
 		var margin := selected_panel.get_child(0) as MarginContainer
 		if margin != null:
 			var horizontal := 22 if portrait else 56
-			var vertical := 18 if portrait else 38
+			var vertical := 14 if portrait else 38
 			margin.add_theme_constant_override("margin_left", horizontal)
 			margin.add_theme_constant_override("margin_top", vertical)
 			margin.add_theme_constant_override("margin_right", horizontal)

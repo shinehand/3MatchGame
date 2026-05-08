@@ -15,6 +15,7 @@ const SCENARIOS := [
 	{"id": "home", "scene": MAIN_SCENE_PATH, "setup": "home"},
 	{"id": "home_live_event_ended_detail", "scene": MAIN_SCENE_PATH, "setup": "home_event_detail_ended"},
 	{"id": "stage_select_world_map", "scene": STAGE_SELECT_SCENE_PATH, "setup": "stage_select_world_map"},
+	{"id": "stage_select_world_progress", "scene": STAGE_SELECT_SCENE_PATH, "setup": "stage_select_world_progress"},
 	{"id": "stage_popup", "scene": STAGE_SELECT_SCENE_PATH, "setup": "stage_popup"},
 	{"id": "gameplay_stage4_buddy_initial", "scene": GAMEPLAY_SCENE_PATH, "setup": "gameplay_stage4", "buddy_state": "initial", "buddy_charges": 0},
 	{"id": "gameplay_stage4_buddy_charged", "scene": GAMEPLAY_SCENE_PATH, "setup": "gameplay_stage4", "buddy_state": "charged", "buddy_charges": 2},
@@ -180,6 +181,8 @@ func _capture_scenario(scenario: Dictionary, viewport_size: Vector2i, errors: Pa
 	var setup_id := str(scenario.get("setup", ""))
 	if setup_id == "collection":
 		_prepare_collection_state()
+	elif setup_id == "stage_select_world_progress":
+		_prepare_stage_select_progress_state()
 
 	root.size = viewport_size
 	var scene_path := str(scenario.get("scene", ""))
@@ -221,6 +224,13 @@ func _prepare_collection_state() -> void:
 	GameSession.add_rescue_book_tokens("frog", 3)
 	GameSession.add_rescue_book_tokens("koala", 2)
 	GameSession.add_rescue_book_tokens("hamster", 2)
+
+
+func _prepare_stage_select_progress_state() -> void:
+	GameSession.record_stage_result(1, 14000, 3)
+	GameSession.record_stage_result(2, 12000, 2)
+	GameSession.record_stage_result(3, 9000, 1)
+	GameSession.set_selected_stage_id(4)
 
 
 func _settle_scene(node: Node, frame_count: int = 5) -> void:
@@ -554,6 +564,9 @@ func _validate_scenario_regions(image: Image, node: Node, scenario: Dictionary, 
 			_validate_home_event_detail_snapshot_regions(image, node, snapshot_id, errors)
 		"stage_select_world_map":
 			_validate_stage_select_world_map_snapshot_regions(image, node, snapshot_id, errors)
+		"stage_select_world_progress":
+			_validate_stage_select_world_map_snapshot_regions(image, node, snapshot_id, errors)
+			_validate_stage_select_world_progress_snapshot_regions(image, node, snapshot_id, errors)
 		"stage_popup":
 			var popup_panel := node.get("stage_popup_panel") as Control
 			_validate_control_pixels(image, popup_panel, snapshot_id, "StagePopupPanel", errors)
@@ -639,11 +652,14 @@ func _label_texts_under(root: Node) -> Array[String]:
 func _validate_stage_select_world_map_snapshot_regions(image: Image, node: Node, snapshot_id: String, errors: PackedStringArray) -> void:
 	var world_layer := node.find_child("StageWorldLayer", true, false) as Control
 	var path_root := node.find_child("WorldMapPathRoot", true, false) as Control
+	var selected_panel := node.find_child("WorldSelectedPanel", true, false) as Control
 	var play_button := node.find_child("WorldPlayButton", true, false) as Control
 	var popup_overlay := node.find_child("StagePopupOverlay", true, false) as CanvasItem
 	_validate_control_pixels(image, world_layer, snapshot_id, "StageWorldLayer", errors)
 	_validate_control_pixels(image, path_root, snapshot_id, "WorldMapPathRoot", errors)
+	_validate_control_pixels(image, selected_panel, snapshot_id, "WorldSelectedPanel", errors)
 	_validate_control_pixels(image, play_button, snapshot_id, "WorldPlayButton", errors)
+	_validate_control_within_image_bounds(selected_panel, snapshot_id, "WorldSelectedPanel", errors)
 	_validate_control_within_image_bounds(play_button, snapshot_id, "WorldPlayButton", errors)
 	_validate_control_image_minimum_size(image, play_button, snapshot_id, "WorldPlayButton", Vector2(92, 44) if image.get_height() >= image.get_width() else Vector2(190, 48), errors)
 	if popup_overlay != null and popup_overlay.visible:
@@ -660,6 +676,52 @@ func _validate_stage_select_world_map_snapshot_regions(image: Image, node: Node,
 		_validate_control_within_image_bounds(button, snapshot_id, String(button.name), errors)
 	if visible_stage_nodes != 10:
 		errors.append("%s should render 10 visible world stage nodes, got %d." % [snapshot_id, visible_stage_nodes])
+
+
+func _validate_stage_select_world_progress_snapshot_regions(image: Image, node: Node, snapshot_id: String, errors: PackedStringArray) -> void:
+	var current_node := node.find_child("WorldStageNode4", true, false) as Button
+	var cleared_node := node.find_child("WorldStageNode1", true, false) as Button
+	var locked_node := node.find_child("WorldStageNode5", true, false) as Button
+	var finale_node := node.find_child("WorldStageNode10", true, false) as Button
+	var selected_panel := node.find_child("WorldSelectedPanel", true, false) as Control
+	_validate_world_node_child_region(image, current_node, "WorldNodeCurrentRing", snapshot_id, "WorldStageNode4 current ring", errors)
+	_validate_world_node_child_region(image, current_node, "WorldNodePlayRibbon", snapshot_id, "WorldStageNode4 PLAY ribbon", errors)
+	_validate_world_node_child_region(image, cleared_node, "WorldNodeStarTray", snapshot_id, "WorldStageNode1 cleared star tray", errors)
+	_validate_world_node_child_region(image, locked_node, "WorldNodeLockBadge", snapshot_id, "WorldStageNode5 lock badge", errors)
+	_validate_world_node_child_region(image, finale_node, "WorldNodeFinaleRibbon", snapshot_id, "WorldStageNode10 finale ribbon", errors)
+	_validate_controls_do_not_overlap(current_node, selected_panel, snapshot_id, "WorldStageNode4", "WorldSelectedPanel", errors)
+	_validate_controls_do_not_overlap(cleared_node, selected_panel, snapshot_id, "WorldStageNode1", "WorldSelectedPanel", errors)
+	if current_node == null or current_node.disabled:
+		errors.append("%s WorldStageNode4 should be the unlocked current node." % snapshot_id)
+	if locked_node == null or not locked_node.disabled:
+		errors.append("%s WorldStageNode5 should remain locked in the progress fixture." % snapshot_id)
+	var play_ribbon_label := _first_label_text_under(current_node, "WorldNodePlayRibbonLabel")
+	if play_ribbon_label != "PLAY":
+		errors.append("%s WorldStageNode4 PLAY ribbon expected PLAY, got %s." % [snapshot_id, play_ribbon_label])
+	var star_text := _first_label_text_under(cleared_node, "WorldNodeStarTrayLabel")
+	if not star_text.contains("★"):
+		errors.append("%s WorldStageNode1 cleared star tray should show earned stars, got %s." % [snapshot_id, star_text])
+	var lock_text := _first_label_text_under(locked_node, "WorldNodeLockBadgeLabel")
+	if lock_text != "LOCK":
+		errors.append("%s WorldStageNode5 lock badge expected LOCK, got %s." % [snapshot_id, lock_text])
+	var finale_text := _first_label_text_under(finale_node, "WorldNodeFinaleRibbonLabel")
+	if finale_text != "BOSS":
+		errors.append("%s WorldStageNode10 finale ribbon expected BOSS, got %s." % [snapshot_id, finale_text])
+
+
+func _validate_world_node_child_region(image: Image, world_node: Node, child_name: String, snapshot_id: String, label: String, errors: PackedStringArray) -> void:
+	var child: Control = null
+	if world_node != null:
+		child = world_node.find_child(child_name, true, false) as Control
+	_validate_control_pixels(image, child, snapshot_id, label, errors)
+	_validate_control_within_image_bounds(child, snapshot_id, label, errors)
+
+
+func _first_label_text_under(root: Node, label_name: String) -> String:
+	if root == null:
+		return ""
+	var label := root.find_child(label_name, true, false) as Label
+	return "" if label == null else label.text
 
 
 func _validate_collection_snapshot_regions(image: Image, node: Node, snapshot_id: String, errors: PackedStringArray) -> void:
